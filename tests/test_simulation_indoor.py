@@ -233,7 +233,7 @@ class SimulationIndoorTest(unittest.TestCase):
             exp_gain = self.simulation.bs.antenna[k]._beam_gain(expected_es_loc[k][0],
                                                                 expected_es_loc[k][1],
                                                                 beam)
-            self.assertAlmostEqual(np.asscalar(calc_gain[k]),np.asscalar(exp_gain),places=1)
+            self.assertAlmostEqual(np.ndarray.item(calc_gain[k]),np.ndarray.item(exp_gain),places=1)
             
 if __name__ == '__main__':
     unittest.main()

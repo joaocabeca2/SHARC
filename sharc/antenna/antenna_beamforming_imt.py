@@ -105,7 +105,7 @@ class AntennaBeamformingImt(Antenna):
             theta_etilt (float): elevation electrical tilt angle [degrees]
         """
         phi, theta = self.to_local_coord(phi_etilt, theta_etilt)
-        self.beams_list.append((np.asscalar(phi), np.asscalar(theta-90)))
+        self.beams_list.append((np.ndarray.item(phi), np.ndarray.item(theta-90)))
         self.w_vec_list.append(self._weight_vector(phi, theta-90))
         
         if self.normalize:

@@ -62,7 +62,7 @@ class AntennaS1855(Antenna):
         phi_list = kwargs["off_axis_angle_vec"]
         theta_list = kwargs["theta_vec"]
 
-        gain = np.empty(phi_list.shape, dtype = np.float)
+        gain = np.empty(phi_list.shape, dtype = float)
 
         for i in range(len(phi_list)):
             gain[i] = self.get_gain_pair(phi_list[i], theta_list[i])
@@ -70,7 +70,7 @@ class AntennaS1855(Antenna):
         return gain
 
 
-    def get_gain_pair(self, phi: np.float, theta: np.float) -> np.float:
+    def get_gain_pair(self, phi: float, theta: float) -> float:
         """
         Calculates the gain of the antenna of a pair of angles.
 
