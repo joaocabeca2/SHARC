@@ -70,3 +70,6 @@ target/
 # pyenv python configuration file
 .python-version
 /sharc/antenna/figs
+
+.DS_Store
+venv/
