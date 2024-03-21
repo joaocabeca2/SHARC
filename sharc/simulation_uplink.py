@@ -126,6 +126,7 @@ class SimulationUplink(Simulation):
                     + np.power(10, 0.1*interference))
 
             # calculate N
+            # thermal noise in dBm
             self.bs.thermal_noise[bs] = \
                 10*np.log10(self.parameters.imt.BOLTZMANN_CONSTANT*self.parameters.imt.noise_temperature*1e3) + \
                 10*np.log10(self.bs.bandwidth[bs] * 1e6) + \
