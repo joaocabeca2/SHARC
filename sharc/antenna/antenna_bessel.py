@@ -3,15 +3,14 @@
 @Created: Luciano Camilo Tue Fev 04 16:27:25 2021
 
 """
-
 import numpy as np
-from sharc.parameters.parameters_fs import ParametersFs
 from scipy import special
-import math
 
+from sharc.parameters.parameters_fs import ParametersFs
 class AntennaBessel(object):
     """
-    Implements a parabolic dish antenna pattern, Bessel model, based on Interference Analysis[John Pahl] book
+    Implements a parabolic dish antenna pattern, Bessel model, based on 
+    Interference Analysis[John Pahl] book
     - Please there is an errata in this book on equation 3.79 and the correct equation is:
     G(theta) = 10*log10((2j1(x)/x)^2)  - Equation 3.79
 
@@ -34,6 +33,19 @@ class AntennaBessel(object):
         self.speed = 299792458
 
     def calculate_gain(self, **kwargs) -> np.array:
+        """
+        Calculates the Bessel antenna gain and returns in an array
+
+        Parameters
+        ---------
+            off_axis_angle_vec (np.array): array of angle vectors in local
+            coordinate system
+
+        Returns
+        -------
+        np.array
+            array of antenna gains with the same size as off_axis_angle_vec
+        """
 
         phi = np.absolute(kwargs["off_axis_angle_vec"])
         lambda1 = self.speed / (self.frequency * 1E6)
@@ -47,10 +59,11 @@ class AntennaBessel(object):
 
 if __name__ == '__main__':
 
-    from sharc.parameters.parameters_fs import ParametersFs
     from matplotlib import pyplot as plt
+    
     """
-    Test routine - Comparison between SHARC code and Figure 3.36 of Interference Analysis book.
+    Test routine - Comparison between SHARC code and Figure 3.36 of 
+    Interference Analysis book.
     """
 
     param = ParametersFs()
