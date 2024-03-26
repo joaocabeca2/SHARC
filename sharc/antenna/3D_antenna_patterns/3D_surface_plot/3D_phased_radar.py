@@ -57,7 +57,7 @@ for i in range(len(theta)):
 x, y = np.meshgrid(np.linspace(-89, 89, 200), np.linspace(-89, 89, 200))
 X, Y = np.meshgrid(g, g1, sparse=False)
 fig = plt.figure(figsize=(10, 10))
-ax = fig.gca(projection='3d')
+ax = fig.add_subplot(projection='3d')
 surf = ax.plot_surface(x, y, X+Y+g_max, cstride=1, rstride=1,  cmap='rainbow', antialiased=True, alpha=1)
 fig.colorbar(surf, ax=ax, shrink=0.5, aspect=20, ticks=np.linspace(-450, 46, 20))
 ax.set_title('Phased Radar Antenna')

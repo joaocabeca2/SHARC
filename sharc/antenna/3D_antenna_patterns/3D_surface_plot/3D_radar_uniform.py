@@ -44,7 +44,7 @@ for i in range(len(phi)):
 x, y = np.meshgrid(np.linspace(-90, 90, 300), np.linspace(-90, 90, 300))
 X, Y = np.meshgrid(g, g1, sparse=False)
 fig = plt.figure(figsize=(10, 10))
-ax = fig.gca(projection='3d')
+ax = fig.add_subplot(projection='3d')
 surf = ax.plot_surface(x, y, X+Y+g_max, cstride=1, rstride=1,  cmap='rainbow', antialiased=True, alpha=1)
 fig.colorbar(surf, ax=ax, shrink=0.5, aspect=20, ticks=np.linspace(-60, 0, 20))
 ax.set_title('Meteorological Radar Antenna Pattern - Uniform')

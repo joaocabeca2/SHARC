@@ -32,22 +32,19 @@ for i in range(-90, len(theta)):
     if theta[i] < -theta_3db / 0.88 or theta[i] >= 90:
         g[i] = -55
 
-g = g
-
-
 # Antenna pattern - Horizontal (Azimuth)
-phi = np.linspace(-90, 90, 90)
+phi_array = np.linspace(-90, 90, 90)
 const = np.pi * 68.8
-g1 = np.zeros(len(phi))
-mi1 = np.zeros(len(phi))
+g1 = np.zeros(len(phi_array))
+mi1 = np.zeros(len(phi_array))
 phi_3db = 1.5
 
-for i in range(len(phi)):
-    if -phi_3db <= phi[i] < phi_3db:
-        mi1[i] = const * np.sin(np.radians(phi[i])) / phi_3db
+for i, phi in enumerate(phi_array):
+    if -phi_3db <= phi < phi_3db:
+        mi1[i] = const * np.sin(np.radians(phi)) / phi_3db
         g1[i] = 20 * np.log10((np.pi / 2) * ((np.cos(mi[i])) / ((np.pi / 2) ** 2 - (mi[i]) ** 2))) + 4.32 - 0.392
-    if phi_3db <= phi[i] <= 180 or -phi_3db >= phi[i] >= -180:
-        g1[i] = -17.51 * np.log(2.33 * (np.abs((phi[i])) / phi_3db)) - 4.32  # cos2
+    if phi_3db <= phi <= 180 or -phi_3db >= phi >= -180:
+        g1[i] = -17.51 * np.log(2.33 * (np.abs((phi)) / phi_3db)) - 4.32  # cos2
         if g1[i] < -50:
             g1[i] = -50
 
@@ -55,7 +52,8 @@ for i in range(len(phi)):
 x, y = np.meshgrid(np.linspace(-90, 90, 100), np.linspace(-90, 90, 90))
 X, Y = np.meshgrid(g, g1, sparse=False)
 fig = plt.figure(figsize=(10, 10))
-ax = fig.gca(projection='3d')
+ax = fig.add_subplot(projection='3d')
+# ax = fig.gca()
 clevs1 = np.arange(-72, 40, 1)
 surf = ax.plot_surface(x, y, X+Y+g_max, cstride=1, rstride=1,  cmap='rainbow', antialiased=True, alpha=1)
 fig.colorbar(surf, ax=ax, shrink=0.5, aspect=20, ticks=np.linspace(-72, 33, 20))
