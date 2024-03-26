@@ -194,6 +194,7 @@ class SimulationDownlink(Simulation):
                 self.ue.rx_interference[ue] = 10 * np.log10(np.power(10, 0.1 * self.ue.rx_interference[ue]) +
                                                             np.power(10, 0.1 * interference))
 
+        # Thermal noise in dBm
         self.ue.thermal_noise = \
             10 * math.log10(self.parameters.imt.BOLTZMANN_CONSTANT * self.parameters.imt.noise_temperature * 1e3) + \
             10 * np.log10(self.ue.bandwidth * 1e6) + \

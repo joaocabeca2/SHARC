@@ -79,4 +79,3 @@
  - HIBS Topology (1, 3, 7 and 19 sectors);
  - Added in view.py HIBS section;
  - Added conducted power differences in HIBS Base Stations;
-

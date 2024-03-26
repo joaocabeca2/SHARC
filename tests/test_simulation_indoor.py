@@ -234,5 +234,6 @@ class SimulationIndoorTest(unittest.TestCase):
                                                                 expected_es_loc[k][1],
                                                                 beam)
             self.assertAlmostEqual(np.ndarray.item(calc_gain[k]),np.ndarray.item(exp_gain),places=1)
+
 if __name__ == '__main__':
     unittest.main()
