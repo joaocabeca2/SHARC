@@ -4,10 +4,9 @@ Created on Sat Apr 15 15:35:51 2017
 @author: Calil
 @modified: Luciano Camilo Tue Jan 26 13:49:25 2021
 """
-
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
 
 from sharc.antenna.antenna_element_imt_m2101 import AntennaElementImtM2101
 from sharc.antenna.antenna_element_imt_f1336 import AntennaElementImtF1336
@@ -64,7 +63,7 @@ class AntennaBeamformingImt(Antenna):
         elif par.element_pattern.upper() == "FIXED":
             self.element = AntennaElementImtConst(par)
         else:
-            sys.stderr.write("ERROR\nantenna element type {} not supported".format(par.element_pattern))
+            sys.stderr.write(f"ERROR\nantenna element type {par.element_pattern} not supported")
             sys.exit(1)
 
         self.azimuth = azimuth
@@ -136,7 +135,7 @@ class AntennaBeamformingImt(Antenna):
 
         # Check if antenna gain has to be calculated on the co-channel or
         # on the adjacent channel
-        if "co_channel" in kwargs.keys():
+        if "co_channel" in kwargs:
             co_channel = kwargs["co_channel"]
         else:
             co_channel = True
@@ -154,7 +153,7 @@ class AntennaBeamformingImt(Antenna):
                                  self.adjacent_antenna_model)
                 sys.exit(1)
 
-        if "beams_l" in kwargs.keys():
+        if "beams_l" in kwargs:
             beams_l = np.asarray(kwargs["beams_l"], dtype=int)
             correction_factor = self.co_correction_factor_list
             correction_factor_idx = beams_l
@@ -191,6 +190,9 @@ class AntennaBeamformingImt(Antenna):
         return gains
 
     def reset_beams(self):
+        """
+        Reset the beams calculations
+        """        
         self.beams_list = []
         self.w_vec_list = []
         self.co_correction_factor_list = []
@@ -280,6 +282,21 @@ class AntennaBeamformingImt(Antenna):
         return gain
 
     def to_local_coord(self, phi: float, theta: float) -> tuple:
+        """
+        Brings the coordinates to the antenna reference coordinate system
+
+        Parameters
+        ----------
+        phi : float
+            elevation angle from original coordinate system
+        theta : float
+            azimuth angle from original coordinate system
+
+        Returns
+        -------
+        tuple
+            elevation and azimuth in the antenna reference coordinate system
+        """
 
         phi_rad = np.ravel(np.array([np.deg2rad(phi)]))
         theta_rad = np.ravel(np.array([np.deg2rad(theta)]))
@@ -296,6 +313,10 @@ class AntennaBeamformingImt(Antenna):
         return lo_phi, lo_theta
 
     def _calculate_rotation_matrix(self):
+        """
+        Generate the rotation matrix to transform for the antenna coordinate
+        system
+        """        
 
         alpha = np.deg2rad(self.azimuth)
         beta = np.deg2rad(self.elevation)
@@ -322,7 +343,29 @@ class PlotAntennaPattern(object):
     def plot_element_pattern(self,
                              antenna: AntennaBeamformingImt,
                              sta_type: str,
-                             plot_type: str):
+                             plot_type: str,
+                             save_fig=False):
+        """
+        Generates the element pattern plot
+
+        Parameters
+        ----------
+        antenna : AntennaBeamformingImt
+            reference to an AntennaBeamformingImt object
+        sta_type : str
+            Station type string. Either "User Equipment" or "Base Station"
+        plot_type : str
+            Speficies the plot type.
+            "ELEMENT" plots the element diagram
+            "ARRAY" plots the array diagram
+
+        save_fig: bool
+            If set to true the image is saved to figs_dir
+
+        Returns
+        -------
+        None
+        """
 
         phi_escan = 0
         theta_tilt = 90
@@ -385,31 +428,54 @@ class PlotAntennaPattern(object):
             top_y_lim = np.ceil(np.max(gain)/10)*10
         ax2.set_ylim(top_y_lim - 100, top_y_lim)
 
-        if sta_type == "BS":
-            file_name = self.figs_dir + "bs_"
-        else:  # sta_type == "UE":
-            file_name = self.figs_dir + "ue_"
+        if save_fig:
+            if sta_type == "BS":
+                file_name = self.figs_dir + "bs_"
+            else:  # sta_type == "UE":
+                file_name = self.figs_dir + "ue_"
 
-        if plot_type == "ELEMENT":
-            file_name = file_name + "element_pattern.png"
-        elif plot_type == "ARRAY":
-            file_name = file_name + "array_pattern.png"
+            if plot_type == "ELEMENT":
+                file_name = file_name + "element_pattern.png"
+            elif plot_type == "ARRAY":
+                file_name = file_name + "array_pattern.png"
 
-        # plt.savefig(file_name)
+            plt.savefig(file_name)
+        
         plt.show()
         return fig
 
 class PlotAntennaPattern3D(object):
     """
-    Plots imt antenna pattern.
+    Plots imt antenna pattern in 3D
     """
     def __init__(self, figs_dir):
         self.figs_dir = figs_dir
 
-    def plot_element_pattern3D(self,
-                             antenna: AntennaBeamformingImt,
-                             sta_type: str,
-                             plot_type: str):
+    def plot_element_pattern_3d(self,
+                                antenna: AntennaBeamformingImt,
+                                sta_type: str,
+                                plot_type: str,
+                                save_fig=False):
+        """
+        Generates the element pattern plot in 3D
+
+        Parameters
+        ----------
+        antenna : AntennaBeamformingImt
+            reference to an AntennaBeamformingImt object
+        sta_type : str
+            Station type string. Either "User Equipment" or "Base Station"
+        plot_type : str
+            Speficies the plot type.
+            "ELEMENT" plots the element diagram
+            "ARRAY" plots the array diagram
+        save_fig: bool
+            If set to true the image is saved to figs_dir
+
+        Returns
+        -------
+        None
+        """
 
         phi_escan = 0
         theta_tilt = 90
@@ -419,128 +485,68 @@ class PlotAntennaPattern3D(object):
         theta = theta_tilt*np.ones(np.size(phi))
 
         if plot_type == "ELEMENT":
-            gain = antenna.element.element_pattern(phi, theta)
+            gainh = antenna.element.element_pattern(phi, theta)
         elif plot_type == "ARRAY":
             antenna.add_beam(phi_escan, theta_tilt)
             gainh = antenna.calculate_gain(phi_vec=phi,
                                           theta_vec=theta,
                                           beams_l=np.zeros_like(phi, dtype=int))
-            gainh = gainh
-
-
 
         top_y_lim = np.ceil(np.max(gainh)/10)*10
-
-        fig = plt.figure(figsize=(15, 5), facecolor='w', edgecolor='k')
-        ax1 = fig.add_subplot(121)
-        ax1.grid(True)
-        ax1.set_xlabel(r"$\varphi$ [deg]")
-        ax1.set_ylabel("Gain [dBi]")
-
-        if plot_type == "ELEMENT":
-            ax1.set_title("HIBS" + sta_type + " element horizontal antenna pattern")
-        elif plot_type == "ARRAY":
-            ax1.set_title("HIBS" + sta_type + " horizontal antenna pattern")
-
-        ax1.set_xlim(-180, 180)
 
         # Plot vertical pattern
         theta = np.linspace(0, 180, num=360)
         phi = phi_escan*np.ones(np.size(theta))
 
         if plot_type == "ELEMENT":
-            gain = antenna.element.element_pattern(phi, theta)
+            gainv = antenna.element.element_pattern(phi, theta)
         elif plot_type == "ARRAY":
             gainv = antenna.calculate_gain(phi_vec=phi,
                                           theta_vec=theta,
                                           beams_l=np.zeros_like(phi, dtype=int))
-            gainv=gainv
 
-        ax2 = fig.add_subplot(122, sharey=ax1)
-
-        ax2.grid(True)
-        ax2.set_xlabel(r"$\theta$ [deg]")
-        ax2.set_ylabel("Gain [dBi]")
-
-        if plot_type == "ELEMENT":
-            ax2.set_title("HIBS" + sta_type + " element vertical antenna pattern")
-        elif plot_type == "ARRAY":
-            ax2.set_title("HIBS" + sta_type + " vertical antenna pattern")
-
-        ax2.set_xlim(0, 180)
         if np.max(gainv) > top_y_lim:
             top_y_lim = np.ceil(np.max(gainv)/10)*10
-        ax2.set_ylim(top_y_lim - 100, top_y_lim)
 
-        if sta_type == "BS":
-            file_name = self.figs_dir + "bs_"
-        else:  # sta_type == "UE":
-            file_name = self.figs_dir + "ue_"
-
-        if plot_type == "ELEMENT":
-            file_name = file_name + "element_pattern.png"
-        elif plot_type == "ARRAY":
-            file_name = file_name + "array_pattern.png"
-
-        #plt.savefig(file_name)
-
-
-
-        ######################################################################################################
-        ######################################################################################################
-        ######################################################################################################
-        # #spherical coordinates
-        # PHI, THETA = np.meshgrid(np.linspace(0, 360, 360), np.linspace(0, 180, 360))
-        # #THETA, PHI = np.meshgrid(x, y)
-        #
-        # X, Y = np.sin(np.radians(PHI)) * np.cos(np.radians(THETA)), np.sin(np.radians(PHI)) * np.sin(np.radians(THETA))
-        #
-        # Z=Z = np.cos(np.radians(THETA))+(gainv+gainh-np.max(gainv))
-        #
-        # fig = plt.figure(figsize=(10, 10))
-        # ax = fig.gca(projection='3d')
-        # # surf = ax.plot_surface(x, y, X + Y-np.max(gainv), cstride=1, rstride=1, cmap='rainbow', antialiased=True, alpha=1)
-        # surf = ax.plot_surface(X, Y, Z, cstride=1, rstride=1, cmap='rainbow', antialiased=True, alpha=1)
-        # fig.colorbar(surf, ax=ax,
-        #              shrink=0.5,
-        #              aspect=20, ticks=np.linspace(-250, np.max(gainv), 10))
-        # ax.view_init(elev=25., azim=0)
-        # ax.set_title('3D Antenna Pattern')
-        # ax.set_xlabel('azimuth [degrees]')
-        # ax.set_ylabel('elevation [degrees]')
-        # ax.grid(False)
-        # plt.show()
-
-        ######################################################################################################
-        ######################################################################################################
-        ######################################################################################################
         x, y = np.meshgrid(np.linspace(-180, 180, 360), np.linspace(0, 180, 360))
-
         X, Y = np.meshgrid(gainh, gainv, sparse=False)
-        clevs1 = np.arange(-250, np.max(gainv)+10, 1)
-        #cs1 = plt.contourf(x, y, X + Y-np.max(gainv), clevs1, cmap='viridis', alpha=1)
-        #plt.colorbar(cs1)
         plt.xlabel('azimuth [degrees]')
         plt.ylabel('elevation [degrees]')
 
         fig = plt.figure(figsize=(10, 10))
-        ax = fig.gca(projection='3d')
-        surf = ax.plot_surface(x, y, X + Y-np.max(gainv), cstride=1, rstride=1, cmap='rainbow', antialiased=True, alpha=1)
-        #surf = ax.plot_surface(X, Y, Z, cstride=1, rstride=1, cmap='rainbow', antialiased=True, alpha=1)
+        ax = fig.add_subplot(projection='3d')
+        surf = ax.plot_surface(x, y, X + Y - np.max(gainv), cstride=1, rstride=1, 
+                               cmap='rainbow', antialiased=True, alpha=1)
         fig.colorbar(surf, ax=ax,
                      shrink=0.5,
                      aspect=20, ticks=np.linspace(-350, np.max(gainv), 10))
-        #ax.view_init(elev=35., azim=0)
-        ax.set_title('3D Antenna Pattern')
+        if plot_type == "ELEMENT":
+            ax.set_title("HIBS" + sta_type + " element vertical antenna pattern")
+        elif plot_type == "ARRAY":
+            ax.set_title("HIBS" + sta_type + " vertical antenna pattern")
         ax.set_xlabel('azimuth [degrees]')
         ax.set_ylabel('elevation [degrees]')
         ax.grid(False)
         plt.show()
+
+        if save_fig:
+            if sta_type == "BS":
+                file_name = self.figs_dir + "bs_"
+            else:  # sta_type == "UE":
+                file_name = self.figs_dir + "ue_"
+
+            if plot_type == "ELEMENT":
+                file_name = file_name + "element_pattern.png"
+            elif plot_type == "ARRAY":
+                file_name = file_name + "array_pattern.png"
+
+            plt.savefig(file_name)
+
         return fig
 
 
 if __name__ == '__main__':
-    figs_dir = "figs/"
+    FIGS_DIR = "figs/"
 
     param = ParametersAntennaImt()
     param.co_channel = True
@@ -578,8 +584,8 @@ if __name__ == '__main__':
     param.ue_element_vert_spacing = 0.5
     param.ue_multiplication_factor = 12
 
-    plot = PlotAntennaPattern(figs_dir)
-    plot3D = PlotAntennaPattern3D(figs_dir)
+    plot = PlotAntennaPattern(FIGS_DIR)
+    plot3D = PlotAntennaPattern3D(FIGS_DIR)
 
     # Plot BS TX radiation patterns
     par = param.get_antenna_parameters(StationType.IMT_BS)
@@ -589,12 +595,12 @@ if __name__ == '__main__':
     f = plot.plot_element_pattern(bs_array, " Base Station", "ARRAY")
     #f.savefig(figs_dir + "BS_array.pdf", bbox_inches='tight')
 
-    #d = plot3D.plot_element_pattern3D(bs_array, " Base Station", "ARRAY")
-
     # Plot UE TX radiation patterns
     par = param.get_antenna_parameters(StationType.IMT_UE)
     ue_array = AntennaBeamformingImt(par, 0, 0)
     plot.plot_element_pattern(ue_array, " User Equipment", "ELEMENT")
     plot.plot_element_pattern(ue_array, " User Equipment", "ARRAY")
+
+    fig_el_pat_3d = plot3D.plot_element_pattern_3d(bs_array, " Base Station", "ELEMENT")
 
     print('END')
