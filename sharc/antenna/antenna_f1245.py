@@ -133,7 +133,7 @@ if __name__ == '__main__':
     #plt.semilogx(phi, gain_gt, "-b", label = "$f = 10.7$ $GHz,$ $D = 3$ $m$")
     plt.semilogx(phi, gain_lt, "--b", label="$f = 2032$ $MHz,$ $D = 4$ $m$")
 
-    # plt.title("ITU-R F.699 antenna radiation pattern")
+    plt.title("ITU-R F.1245 antenna radiation pattern")
     plt.xlabel("Off-axis angle $\phi$ [degrees]", fontsize=18, color='black', **csfont)
     plt.ylabel("Gain relative to $G_m$ [dB]", fontsize=18, color='black', **csfont)
     # plt.legend(loc="lower left")

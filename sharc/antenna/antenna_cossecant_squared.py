@@ -3,10 +3,9 @@
 @Created: Luciano Camilo on Thu Jun 17 22:34:00 2021
 
 """
+import numpy as np
 from sharc.antenna.antenna import Antenna
 from sharc.parameters.parameters_arns import ParametersArns
-
-import numpy as np
 
 
 class AntennaCossecantSquared(Antenna):

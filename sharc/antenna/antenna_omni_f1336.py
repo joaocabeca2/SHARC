@@ -10,7 +10,8 @@ from sharc.parameters.parameters_fs import ParametersFs
 
 class AntennaOmniF1336(object):
     """
-    Implements a omni-directional antenna pattern of an FS antenna array following ITU-R F.1336-5, Annex I
+    Implements a omni-directional antenna pattern of an FS antenna array 
+    following ITU-R F.1336-5, Annex I
 
     Attributes
     ----------
@@ -49,8 +50,6 @@ class AntennaOmniF1336(object):
 
 
 if __name__ == '__main__':
-
-    from sharc.parameters.parameters_fs import ParametersFs
     from matplotlib import pyplot as plt
     """
     Test routine - Comparison between SHARC code and Annex I of ITU R - F.1336-5

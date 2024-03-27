@@ -79,7 +79,7 @@ if __name__ == '__main__':
     # plt.plot(phi, antenna.calculate_gain(off_axis_angle_vec=phi), 'b--',
     #         label='Bessel')
 
-    plt.semilogx(phi, antenna.calculate_gain(off_axis_angle_vec=phi), 'b--',
+    plt.semilogx(phi, antenna.calculate_gain(off_axis_angle_vec=phi), 'r-',
                  label="Bessel $f = 2032$ $MHz,$ $D = 4$ $m$")
     plt.legend(loc="lower left")
     plt.xlim(0, 180)
