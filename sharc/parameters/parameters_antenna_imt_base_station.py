@@ -6,10 +6,11 @@ Created on Thu Marc 26 14:42:43 2021
 """
 
 import sys
+from numpy import load
 
 from sharc.support.named_tuples import AntennaPar
 from sharc.support.enumerations import StationType
-from numpy import load
+
 
 class ParametersAntennaImtBaseStation(object):
     """
@@ -24,6 +25,19 @@ class ParametersAntennaImtBaseStation(object):
     # Named tuples which contain antenna types
 
     def get_antenna_parameters(self, sta_type: StationType)-> AntennaPar:
+        """
+        Get the IMT antenna parameters based on the StationType
+
+        Parameters
+        ----------
+        sta_type : StationType
+            StationType enum
+
+        Returns
+        -------
+        AntennaPar
+            AntennaPar objects with IMT antenna parameters.
+        """ 
         if sta_type is StationType.IMT_BS:
             if self.bs_normalization:
                 # Load data, save it in dict and close it

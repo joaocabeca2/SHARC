@@ -5,12 +5,9 @@ Created on Thu Nov 16 17:34:11 2017
 @author: Calil
 @modified: Luciano Camilo Tue Jan 26 13:49:25 2021
 """
-
+import numpy as np
 from sharc.antenna.antenna import Antenna
 from sharc.parameters.parameters_ras import ParametersRas
-
-import numpy as np
-
 
 class AntennaSA509(Antenna):
     """
@@ -37,6 +34,17 @@ class AntennaSA509(Antenna):
         self.phi_2 = 10**((49-self.g_0)/25)
 
     def calculate_gain(self, *args, **kwargs) -> np.array:
+        """
+        Calculates the gain in the given direction.
+
+        Parameters
+        ----------
+            off_axis_angle_vec (np.array): off axis angle vector [degrees]
+
+        Returns
+        -------
+            gain (np.array): gain corresponding to each of the given directions
+        """
         phi = np.absolute(kwargs["off_axis_angle_vec"])
 
         gain = np.zeros_like(phi)

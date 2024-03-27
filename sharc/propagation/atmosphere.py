@@ -393,10 +393,10 @@ if __name__ == '__main__':
 
     params = Parameters()
 
-    propagation_path = os.getcwd()
+    propagation_path = os.path.dirname(__file__)
     sharc_path = os.path.dirname(propagation_path)
-    #param_file = os.path.join(sharc_path, "parameters", "parameters.ini")
-    param_file = os.path.join(sharc_path, "input", "parameters_RAS.ini")
+    param_file = os.path.join(sharc_path, "input", "parameters_.ini")
+    # param_file = os.path.join(sharc_path, "input", "parameters_RAS.ini")
 
 
     params.set_file_name(param_file)

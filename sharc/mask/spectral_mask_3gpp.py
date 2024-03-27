@@ -7,15 +7,39 @@ Created on Tue Dec  5 11:06:56 2017
 @modified: Luciano Camilo Tue Jan 26 13:49:25 2021
 """
 
-from sharc.support.enumerations import StationType
-from sharc.mask.spectral_mask import SpectralMask
-
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
+from sharc.support.enumerations import StationType
+from sharc.mask.spectral_mask import SpectralMask
 
 class SpectralMask3Gpp(SpectralMask):
+    """
+    Implements spectral emission mask from 3GPP 36.104 Table 6.6.3.1-6 for
+    Wide Area BS operating with 5, 10, 15 or 20 MHz channel bandwidth.
+
+    Also implements spectral emission mask from 3GPP 36.101 Table 6.6.2.1.1-1
+    for UE operating with 5, 10, 15 or 20 MHz channel bandwidth.
+
+    In order to characterize Cat-A or Cat-B base stations, it is necessary
+    to adjust the input parameter that defines the spurious emission level:
+        Cat-A: -13 dBm/MHz
+        Cat-B: -30 dBm/MHz
+    
+    Parameters
+    ----------
+    sta_type : StationType
+        StationType enumerator
+    freq_mhz : float
+        center frequency in MHz
+    band_mhz : float
+        band in MHz
+    spurious_emissions : float
+        Spurious emissions level in dBm/MHz
+    scenario : str, optional
+        IMT scenario description, by default "HIBS"
+    """
 
     def __init__(self,
                  sta_type: StationType,
@@ -23,18 +47,7 @@ class SpectralMask3Gpp(SpectralMask):
                  band_mhz: float,
                  spurious_emissions: float,
                  scenario="HIBS"):
-        """
-        Implements spectral emission mask from 3GPP 36.104 Table 6.6.3.1-6 for
-        Wide Area BS operating with 5, 10, 15 or 20 MHz channel bandwidth.
 
-        Also implements spectral emission mask from 3GPP 36.101 Table 6.6.2.1.1-1
-        for UE operating with 5, 10, 15 or 20 MHz channel bandwidth.
-
-        In order to characterize Cat-A or Cat-B base stations, it is necessary
-        to adjust the input parameter that defines the spurious emission level:
-            Cat-A: -13 dBm/MHz
-            Cat-B: -30 dBm/MHz
-        """
         # Spurious domain limits [dDm/MHz]
         self.spurious_limits = -13
         # Mask delta f breaking limits [MHz]
@@ -71,7 +84,19 @@ class SpectralMask3Gpp(SpectralMask):
         """
         Calculates the frequency limits of the spectrum emission masks. This
         implementation is valid only for bandwidths equal to 5, 10, 15 or 20 MHz.
-        """
+
+        Parameters
+        ----------
+        sta_type : StationType
+            StationType enumerator
+        bandwidth : float
+            bandwidth in MHz. Possible values are 5, 10, 15 or 20MHz
+
+        Returns
+        -------
+        np.array
+            The frequency limits of the spectrum emission masks in MHz
+        """        
 
         if sta_type is StationType.IMT_BS:
             # Mask delta f breaking limits [MHz]
@@ -90,6 +115,15 @@ class SpectralMask3Gpp(SpectralMask):
         return delta_f_lim
 
     def set_mask(self, power=0):
+        """
+
+        Set the emission mask
+
+        Parameters
+        ----------
+        power : int, optional
+            emission power in dB, by default 0
+        """        
         emission_limits = self.get_emission_limits(self.sta_type,
                                                    self.band_mhz,
                                                    self.spurious_emissions)
@@ -104,6 +138,23 @@ class SpectralMask3Gpp(SpectralMask):
                             sta_type: StationType,
                             bandwidth: float,
                             spurious_emissions: float) -> np.array:
+        """
+        Get the emission limmits for a certain bandwidth in MHz
+
+        Parameters
+        ----------
+        sta_type : StationType
+            StationType enum
+        bandwidth : float
+            bandwidth in MHz. Possible values are 5, 10, 15 or 20MHz
+        spurious_emissions : float
+            Spurious emissions level in dBm/MHz
+
+        Returns
+        -------
+        np.array
+            the emission limits
+        """        
         if sta_type is StationType.IMT_BS:
             # emission limits in dBm/MHz
             emission_limits = 3 - 7 / 5 * (np.arange(.05, 5, .1) - .05)

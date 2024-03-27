@@ -32,6 +32,19 @@ class AntennaCosineRadar(object):
         self.maximum_csc = param.csc2_angle
 
     def calculate_gain(self, **kwargs) -> np.array:
+        """
+        Returns the gain of the antenna in the given off axis angle vector
+
+        Parameter
+        ---------
+            **kwards : (np.array)
+            theta_vec array contains the off-axis vector
+
+        Returns
+        -------
+        np.array
+            the antenna gains in the theta_vec directions
+        """   
 
         phi = np.absolute(kwargs["off_axis_angle_vec"])
         const = np.pi * 68.8

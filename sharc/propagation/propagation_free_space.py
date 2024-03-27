@@ -4,10 +4,9 @@ Created on Thu Feb 16 12:04:27 2017
 
 @author: edgar
 """
+import numpy as np
 
 from sharc.propagation.propagation import Propagation
-
-import numpy as np
 
 class PropagationFreeSpace(Propagation):
     """

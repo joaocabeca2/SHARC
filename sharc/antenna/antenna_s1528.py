@@ -59,6 +59,17 @@ class AntennaS1528(Antenna):
         self.y = self.b * self.psi_b * math.pow(10, 0.04 * (self.peak_gain + self.l_s - self.l_f))
 
     def calculate_gain(self, *args, **kwargs) -> np.array:
+        """
+        Calculates the gain in the given direction.
+
+        Parameters
+        ----------
+            off_axis_angle_vec (np.array): azimuth angles (phi_vec) [degrees]
+
+        Returns
+        -------
+            gain (np.array): gain corresponding to each of the given directions
+        """
         psi = np.absolute(kwargs["off_axis_angle_vec"])
 
         gain = np.zeros(len(psi))

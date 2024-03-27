@@ -52,7 +52,7 @@ class AntennaRadarPhasedArray(object):
 
         Parameters
         ----------
-            phi_vec (np.array): azimuth angles [degrees]
+            off_axis_angle_vec (np.array): azimuth angles (phi_vec) [degrees]
             theta_vec (np.array): elevation angles [degrees]
 
         Returns

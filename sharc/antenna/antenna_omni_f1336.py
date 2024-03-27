@@ -35,14 +35,28 @@ class AntennaOmniF1336(object):
         self.n = 2.7832 / ((2 * np.pi * (3 / 4)) * (np.sin(np.radians(self.theta_3db / 2))))
 
     def calculate_gain(self, **kwargs) -> np.array:
+        """
+        Returns the gain of the antenna in the given off axis angle vector
 
+        Parameter
+        ---------
+            **kwards : (np.array)
+            theta_vec array contains the off-axis vector
+
+        Returns
+        -------
+        np.array
+            the antenna gains in the theta_vec directions
+        """   
         theta = np.asarray(kwargs["theta_vec"])
         g1 = self.g_max - 12 * ((theta / self.theta_3db) ** 2)
-        # k - increase side-lobes above what would be expected for an antenna with improved side-lobe performance
+        # k - increase side-lobes above what would be expected for an 
+        # antenna with improved side-lobe performance
         k = 0
         g2 = self.g_max - 12 + 10 * np.log10((np.maximum((abs(theta) / self.theta_3db), 1) ** -1.5) + k)
         gain = np.maximum(g1, g2)
-        # For normalized pattern test please put the maximum gain in Gn variable and uncomment the code
+        # For normalized pattern test please put the maximum gain in Gn 
+        # variable and uncomment the code
         # Gn=13
         # gain = gain - Gn
         # print(gain)

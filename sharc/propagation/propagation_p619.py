@@ -32,7 +32,8 @@ class PropagationP619(Propagation):
 
         self.clutter = PropagationClutterLoss(self.random_number_gen)
         self.free_space = PropagationFreeSpace(self.random_number_gen)
-        self.building_entry = PropagationBuildingEntryLoss(self.random_number_gen)
+        self.building_entry = PropagationBuildingEntryLoss(
+            self.random_number_gen)
         self.scintillation = Scintillation(self.random_number_gen)
         self.atmosphere = ReferenceAtmosphere()
 
@@ -62,7 +63,8 @@ class PropagationP619(Propagation):
         frequency_MHz = kwargs["frequency_MHz"]
         apparent_elevation = kwargs["apparent_elevation"]
         sat_params = kwargs["sat_params"]
-        surf_water_vapour_density = kwargs.pop("surf_water_vapour_density", False)
+        surf_water_vapour_density = kwargs.pop(
+            "surf_water_vapour_density", False)
 
         earth_radius_km = sat_params.EARTH_RADIUS/1000
         a_acc = 0.  # accumulated attenuation (in dB)
@@ -74,11 +76,12 @@ class PropagationP619(Propagation):
         if not surf_water_vapour_density:
             dummy, dummy, surf_water_vapour_density = \
                 self.atmosphere.get_reference_atmosphere_p835(sat_params.imt_lat_deg,
-                                                               0, season=sat_params.season)
+                                                              0, season=sat_params.season)
 
         # first, check if atmospheric loss was already calculated
         if len(self.elevation_has_atmospheric_loss):
-            elevation_diff = np.abs(apparent_elevation - np.array(self.elevation_has_atmospheric_loss))
+            elevation_diff = np.abs(
+                apparent_elevation - np.array(self.elevation_has_atmospheric_loss))
             indices = np.where(elevation_diff <= self.elevation_delta)
             if indices[0].size:
                 index = np.argmin(elevation_diff)
@@ -87,36 +90,44 @@ class PropagationP619(Propagation):
                     loss = self.atmospheric_loss[index]
                     return loss
 
-        rho_s = surf_water_vapour_density * np.exp(h/2)  # water vapour density at h
+        rho_s = surf_water_vapour_density * \
+            np.exp(h/2)  # water vapour density at h
         if apparent_elevation < 0:
             # get temperature (t), dry-air pressure (p), water-vapour pressure (e),
             #     refractive index (n) and specific attenuation (gamma)
-            t, p, e, n, gamma = self.atmosphere.get_atmospheric_params(h, rho_s, frequency_MHz)
+            t, p, e, n, gamma = self.atmosphere.get_atmospheric_params(
+                h, rho_s, frequency_MHz)
             delta = .0001 + 0.01 * max(h, 0)  # layer thickness
             r = earth_radius_km + h - delta  # radius of lower edge
             while True:
                 m = (r + delta) * np.sin(beta) - r
                 if m >= 0:
-                    dh = 2 * np.sqrt(2*r*(delta-m)+delta**2-m**2)  # horizontal path
+                    dh = 2 * np.sqrt(2*r*(delta-m)+delta**2 -
+                                     m**2)  # horizontal path
                     a_acc += dh * gamma
                     break
                 ds = (r+delta)*np.cos(beta)-np.sqrt((r+delta)**2 * np.cos(beta)**2 -
-                                                    (2*r*delta + delta**2))  # slope distance
+                                                    # slope distance
+                                                    (2*r*delta + delta**2))
                 a_acc += ds*gamma
-                alpha = np.arcsin((r+delta)/r * np.sin(beta))  # angle to vertical
+                alpha = np.arcsin((r+delta)/r * np.sin(beta)
+                                  )  # angle to vertical
                 h -= delta
                 r -= delta
-                t, p, e, n_new, gamma = self.atmosphere.get_atmospheric_params(h, rho_s, frequency_MHz)
+                t, p, e, n_new, gamma = self.atmosphere.get_atmospheric_params(
+                    h, rho_s, frequency_MHz)
                 delta = 0.0001 + 0.01 * max(h, 0)
                 beta = np.arcsin(n/n_new * np.sin(alpha))
                 n = n_new
 
-        t, p, e, n, gamma = self.atmosphere.get_atmospheric_params(h, rho_s, frequency_MHz)
+        t, p, e, n, gamma = self.atmosphere.get_atmospheric_params(
+            h, rho_s, frequency_MHz)
         delta = .0001 + .01 * max(h, 0)
         r = earth_radius_km + h
 
         while True:
-            ds = np.sqrt(r**2 * np.cos(beta)**2 + 2*r*delta + delta**2) - r * np.cos(beta)
+            ds = np.sqrt(r**2 * np.cos(beta)**2 + 2*r *
+                         delta + delta**2) - r * np.cos(beta)
             a_acc += ds * gamma
             alpha = np.arcsin(r/(r+delta) * np.sin(beta))
             h += delta
@@ -131,7 +142,8 @@ class PropagationP619(Propagation):
         self.atmospheric_loss.append(a_acc)
         self.elevation_has_atmospheric_loss.append(apparent_elevation)
         self.freq_has_atmospheric_loss.append(frequency_MHz)
-        self.surf_water_dens_has_atmospheric_loss.append(surf_water_vapour_density)
+        self.surf_water_dens_has_atmospheric_loss.append(
+            surf_water_vapour_density)
 
         return a_acc
 
@@ -155,7 +167,7 @@ class PropagationP619(Propagation):
         altitude_km = altitude / 1000
 
         numerator = .5411 + .07446 * elevation + altitude_km * (.06272 + .0276 * elevation) \
-                    + altitude_km ** 2 * .008288
+            + altitude_km ** 2 * .008288
         denominator = (1.728 + .5411 * elevation + .03723 * elevation ** 2 +
                        altitude_km * (.1815 + .06272 * elevation + .0138 * elevation ** 2) +
                        (altitude_km ** 2) * (.01727 + .008288 * elevation))**2
@@ -203,7 +215,8 @@ class PropagationP619(Propagation):
             error_message = "different frequencies not supported in P619"
             raise ValueError(error_message)
         atmospheric_gasses_loss = self._get_atmospheric_gasses_loss(frequency_MHz=freq_set,
-                                                                    apparent_elevation=np.mean(elevation["apparent"]),
+                                                                    apparent_elevation=np.mean(
+                                                                        elevation["apparent"]),
                                                                     sat_params=sat_params)
         beam_spreading_attenuation = self._get_beam_spreading_att(elevation["free_space"],
                                                                   sat_params.imt_altitude,
@@ -211,7 +224,8 @@ class PropagationP619(Propagation):
         diffraction_loss = 0
 
         if single_entry:
-            elevation_sectors = np.repeat(elevation["free_space"], number_of_sectors)
+            elevation_sectors = np.repeat(
+                elevation["free_space"], number_of_sectors)
             tropo_scintillation_loss = \
                 self.scintillation.get_tropospheric_attenuation(elevation=elevation_sectors,
                                                                 antenna_gain_dB=earth_station_antenna_gain,
@@ -220,7 +234,8 @@ class PropagationP619(Propagation):
 
             loss = (free_space_loss + self.depolarization_loss +
                     atmospheric_gasses_loss + beam_spreading_attenuation + diffraction_loss)
-            loss = np.repeat(loss, number_of_sectors, 1) + tropo_scintillation_loss
+            loss = np.repeat(loss, number_of_sectors, 1) + \
+                tropo_scintillation_loss
         else:
             if hibs_enable == 'System 1':
                 loss = (free_space_loss + self.depolarization_loss +
@@ -229,7 +244,8 @@ class PropagationP619(Propagation):
             else:
                 clutter_loss = self.clutter.get_loss(frequency=f, distance=d, elevation=elevation["free_space"],
                                                      station_type=StationType.FSS_SS)
-                building_loss = self.building_entry.get_loss(f, elevation["apparent"]) * indoor_stations
+                building_loss = self.building_entry.get_loss(
+                    f, elevation["apparent"]) * indoor_stations
                 loss = (free_space_loss + clutter_loss + building_loss + self.polarization_mismatch_loss +
                         atmospheric_gasses_loss + beam_spreading_attenuation + diffraction_loss)
                 loss = np.repeat(loss, number_of_sectors, 1)
@@ -238,15 +254,14 @@ class PropagationP619(Propagation):
 
 
 if __name__ == '__main__':
-    from sharc.parameters.parameters import Parameters
     import matplotlib.pyplot as plt
     import os
 
     params = Parameters()
 
-    propagation_path = os.getcwd()
+    propagation_path = os.path.dirname(__file__)
     sharc_path = os.path.dirname(propagation_path)
-    param_file = os.path.join(sharc_path, "input", "parameters.ini")
+    param_file = os.path.join(sharc_path, "input", "parameters_.ini")
 
     params.set_file_name(param_file)
     params.read_params()
@@ -272,7 +287,8 @@ if __name__ == '__main__':
 
     print("Plotting atmospheric loss:")
     for index in range(len(apparent_elevation)):
-        print("\tApparent Elevation: {} degrees".format(apparent_elevation[index]))
+        print("\tApparent Elevation: {} degrees".format(
+            apparent_elevation[index]))
 
         surf_water_vapour_density = 2.5
         loss_2_5[index] = propagation._get_atmospheric_gasses_loss(frequency_MHz=frequency_MHz,
