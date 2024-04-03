@@ -12,7 +12,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from sharc.model import Model
 from sharc.gui.view_cli import ViewCli
 from sharc.controller import Controller
-from sharc.support.logging1 import Logging
+from sharc.support.logging_sharc import Logging
 
 
 def main(argv):
