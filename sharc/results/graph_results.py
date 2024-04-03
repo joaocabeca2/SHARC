@@ -1,21 +1,35 @@
 """
-Module used to import output simulation files in format(.txt) to plot the results in one or multiples graphics
+Module used to import output simulation files in format(.txt) to plot the 
+results in one or multiples graphics
+
 Author: Luciano Camilo Tue Nov 20 10:00:25 2020
 
 """
-
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import math
+
+
 """
 Copy the result file in output folder from SHARC to this folder
 "[SYS] CDF of system INR.txt" = replace by the results that you want to plot
 
-Any questions please contact Luciano Camilo, luciano-camilo@hotmail.com or lcamilo@tmgtelecom.com
+Any questions please contact Luciano Camilo, luciano-camilo@hotmail.com or 
+lcamilo@tmgtelecom.com
+
 """
-data = pd.read_csv('[SYS] CDF of system INR.txt', skiprows=1, sep='	', header=None)
+
+file_path = os.path.join(os.path.dirname(__file__),
+                         "../output/",
+                         "[SYS] CDF of system INR.txt")
+
+data = pd.read_csv(file_path,
+                   skiprows=1,
+                   sep='	',
+                   header=None)
 # data = pd.read_csv('file path',skiprows=1, sep='	', header=None)
 # data1 = pd.read_csv('file path',skiprows=1, sep='	', header=None)
 # data2 = pd.read_csv('file path',skiprows=1, sep='	', header=None)
@@ -148,8 +162,8 @@ plt.semilogy(x, y, 'r-', linewidth=1.5, color='brown', label=' 0 km ')
 
 # plt.ylim(0, 1)
 # plt.legend(prop={'family': 'Times New Roman'})
-#plt.xscale('linear')
-#plt.yscale('log')
+# plt.xscale('linear')
+# plt.yscale('log')
 # plt.gca().yaxis.set_major_formatter(FuncFormatter(lambda x,y: '{}'.format(y)))
 # plt.plot(x8, y8,'r-', linewidth=1.5, color = 'black', label= ' 10000 km ')
 
@@ -160,12 +174,14 @@ plt.semilogy(x, y, 'r-', linewidth=1.5, color='brown', label=' 0 km ')
 # plt.xscale('linear')
 # plt.yscale('log')
 # plt.gca().yaxis.set_major_formatter(FuncFormatter(lambda x,y: '{}'.format(y)))
-plt.plot(x_limite, y_limite, 'r--', linewidth=1.5, color='black', label=' Protection Criteria ')
+plt.plot(x_limite, y_limite, 'r--', linewidth=1.5,
+         color='black', label=' Protection Criteria ')
 # plt.title('CDF of Interference Power')
 plt.ylabel('Probability of INR < X', fontsize=10, color='black')
 plt.xlabel('INR [dB]', fontsize=10, color='black')
 
-plt.legend(loc='upper right', bbox_to_anchor=(1.33, 1), fancybox=True, shadow=True, ncol=1)
+plt.legend(loc='upper right', bbox_to_anchor=(
+    1.33, 1), fancybox=True, shadow=True, ncol=1)
 plt.grid(which='minor', alpha=0.5)
 plt.grid(which='major', alpha=0.5)
 plt.grid(True, color='b', linestyle='--', linewidth=0.2)
