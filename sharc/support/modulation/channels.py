@@ -1,7 +1,12 @@
-from numpy import sum,isrealobj,sqrt
+"""
+AWGN channel implementation
+"""
+
+import numpy as np
 from numpy.random import standard_normal
 
-def awgn(s,SNRdB,L=1):
+
+def awgn(s, SNRdB, L=1):
     """
     AWGN channel
     Add AWGN noise to input signal. The function adds AWGN noise vector to signal
@@ -19,13 +24,14 @@ def awgn(s,SNRdB,L=1):
     """
     gamma = 10 ** (SNRdB / 10)  # SNR to linear scale
     if s.ndim == 1:  # if s is single dimensional vector
-        P = L * sum(abs(s) ** 2) / len(s)  # Actual power in the vector
+        P = L * np.sum(abs(s) ** 2) / len(s)  # Actual power in the vector
     else:  # multi-dimensional signals like MFSK
-        P = L * sum(sum(abs(s) ** 2)) / len(s)  # if s is a matrix [MxN]
+        P = L * np.sum(np.sum(abs(s) ** 2)) / len(s)  # if s is a matrix [MxN]
     N0 = P / gamma  # Find the noise spectral density
-    if isrealobj(s):  # check if input is real/complex object type
-        n = sqrt(N0 / 2) * standard_normal(s.shape)  # computed noise
+    if np.isrealobj(s):  # check if input is real/complex object type
+        n = np.sqrt(N0 / 2) * standard_normal(s.shape)  # computed noise
     else:
-        n = sqrt(N0 / 2) * (standard_normal(s.shape) + 1j * standard_normal(s.shape))
+        n = np.sqrt(N0 / 2) * (standard_normal(s.shape) +
+                               1j * standard_normal(s.shape))
     r = s + n  # received signal
     return r
