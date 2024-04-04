@@ -6,7 +6,8 @@ Author: Luciano Camilo Alexandre (luciano-camilo@hotmail.com)
 
 Date: Thu 17 Jun 22:00:00 2021
 
-    Python script to calculate satellite/pseudo-satellite horizon visibility according Rec. ITU-R P.619 Annex I
+    Python script to calculate satellite/pseudo-satellite horizon 
+    visibility according Rec. ITU-R P.619 Annex I
 """
 
 #x = -4.68 # longitude difference to calculate distance [degrees]
