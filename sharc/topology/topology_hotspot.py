@@ -6,9 +6,9 @@ Created on Tue May 16 16:59:40 2017
 @author: edgar
 """
 
+import math
 import sys
 import numpy as np
-import math
 import matplotlib.pyplot as plt
 import matplotlib.axes
 import matplotlib.patches as patches

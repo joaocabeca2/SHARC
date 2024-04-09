@@ -14,20 +14,19 @@ import numpy as np
 
 class TopologyHIBS(Topology):
     """
-    ____________________________________________________________________________________
     Generates the coordinates of the HIBS sites based on the macrocell network topology.
-    ____________________________________________________________________________________
     """
 
     ALLOWED_NUM_CLUSTERS = [0, 1]
+    ALLOWED_NUM_SECTORS = [1, 3, 7, 19]
 
     def __init__(self,
                  intersite_distance_hibs: float,
                  cell_radius_hibs: int,
                  num_clusters_hibs: int,
-                 number_of_sectors=None,
+                 number_of_sectors=3,
                  bs_height_hibs=20000,
-                 azimuth3_hibs=None,
+                 azimuth3_hibs='60,180,300',
                  azimuth7_hibs=None,
                  azimuth19_hibs=None,
                  elevation3_hibs=None,
@@ -37,18 +36,52 @@ class TopologyHIBS(Topology):
         Constructor method that sets the parameters and already calls the
         calculation methods.
 
+        A cluster is defined as a 7 HIBS sites with footprints modeled as congruent hexagons.
+        The sectors are defined as azimuths from the center of the hexagon.
+
         Parameters
         ----------
-            intersite_distance_hibs : Distance between two sites
-            num_clusters_hibs : Number of clusters, should be 1 or 7
+        intersite_distance_hibs : float
+            Distance between two sites
+        cell_radius_hibs : int
+            Cell radius in meters
+        num_clusters_hibs : int
+            Number of clusters, should be 0, 1 where 0 means no cluster (single base station)
+            deployment.
+        number_of_sectors : int, optional
+            The number of sectors of the HIBS site.
+            Allowed values are 1, 3, 7 and 19.
+            Default value is 3.
+        bs_height_hibs : int, optional
+            HIBS station altitue in meters, by default 20000m.
+        azimuth3_hibs : str, optional
+            A string with comma-separated values for the azimuths for 3 sector deployment, 
+            by default '60,180,300'.
+        azimuth7_hibs : str, optional
+            A string with comma-separated values for the 7 sector deployment, by default None
+        azimuth19_hibs : _type_, optional
+            A string with comma-separated values for the 19 sector deployment, by default None
+        elevation3_hibs : _type_, optional
+            _description_, by default None
+        elevation7_hibs : _type_, optional
+            _description_, by default None
+        elevation19_hibs : _type_, optional
+            _description_, by default None
+
+        Raises
+        ------
+        ValueError
+            _description_
+        ValueError
+            _description_
         """
 
         if num_clusters_hibs not in TopologyHIBS.ALLOWED_NUM_CLUSTERS:
-            error_message = "invalid number of clusters ({})".format(num_clusters_hibs)
+            error_message = f"invalid number of clusters ({num_clusters_hibs})"
             raise ValueError(error_message)
 
-        if number_of_sectors not in [1, 3, 7, 19]:
-            error_message = "invalid number of sectors ({})".format(num_clusters_hibs)
+        if number_of_sectors not in TopologyHIBS.ALLOWED_NUM_SECTORS:
+            error_message = "invalid number of sectors ({num_clusters_hibs})"
             raise ValueError(error_message)
 
         # cell_radius = intersite_distance / np.sqrt(3)
@@ -93,7 +126,7 @@ class TopologyHIBS(Topology):
                 self.azimuth3 = [int(i) for i in aux_azi3]
 
                 aux_azi7 = self.azimuth7.split(',')
-                self.azimuth7 =  [int(i) for i in aux_azi7]
+                self.azimuth7 = [int(i) for i in aux_azi7]
 
                 aux_azi19 = self.azimuth19.split(',')
                 self.azimuth19 = [int(i) for i in aux_azi19]
@@ -117,14 +150,15 @@ class TopologyHIBS(Topology):
                 aux_ele19 = self.elevation19.split(',')
                 self.elevation19 = [int(i) for i in aux_ele19]
 
-
             d = self.intersite_distance
             h = self.cell_radius
 
             # these are the coordinates of the central cluster
-            if self.num_clusters ==1:
+            if self.num_clusters == 1:
                 x_central = np.array([0, d, -d, d/2, -d/2, d/2, -d/2])
-                y_central = np.array([0, 0, 0, ((d/np.sqrt(3))+h/2), -((d/np.sqrt(3))+h/2), -((d/np.sqrt(3))+h/2), ((d/np.sqrt(3))+h/2) ])
+                y_central = np.array([0, 0, 0, ((d/np.sqrt(3)) + h/2),
+                                      -((d/np.sqrt(3)) + h/2), -((d/np.sqrt(3))+h/2),
+                                      ((d/np.sqrt(3)) + h/2)])
             else:
                 x_central = np.array([0])
                 y_central = np.array([0])
@@ -211,8 +245,8 @@ class TopologyHIBS(Topology):
             elif self.num_clusters == 1:
                 if self.num_sectors == 7:
                     x = x - self.intersite_distance / 2
-                    y = y - r /2
-                    #y = y - self.intersite_distance
+                    y = y - r / 2
+                    # y = y - self.intersite_distance
                     angle = int(az - 30)
 
             elif self.num_clusters == 0:
@@ -222,12 +256,11 @@ class TopologyHIBS(Topology):
                     y = y
                     angle = int(az - 60)
 
-
-        # create the dodecagon for 19 Sectors
-            elif self.num_sectors == 19:
-                x = x
-                y = y
-                angle = int(az)
+                # create the dodecagon for 19 Sectors
+                elif self.num_sectors == 19:
+                    x = x
+                    y = y
+                    angle = int(az)
 
             se = list([[x, y]])
 
@@ -248,7 +281,8 @@ class TopologyHIBS(Topology):
                         [[se[-1][0] + r / 2 * math.cos(math.radians(angle)), se[-1][1] +
                           r / 2 * math.sin(math.radians(angle))]])
                     angle += 60
-                sector = plt.Polygon(se, fill=None, edgecolor='blue', linewidth=1, alpha=1)
+                sector = plt.Polygon(
+                    se, fill=None, edgecolor='blue', linewidth=1, alpha=1)
                 axis.add_patch(sector)
 
             # plot polygon - 7 Sectors
@@ -278,9 +312,9 @@ class TopologyHIBS(Topology):
 
 if __name__ == '__main__':
 
-    cell_radius = 90000
+    cell_radius = 100000
     intersite_distance = cell_radius * np.sqrt(3)
-    num_clusters = 0
+    num_clusters = 1
     num_sectors = 7
     bs_height = 20000
     azimuth3 = '60,180,300'
@@ -290,17 +324,28 @@ if __name__ == '__main__':
     azimuth19 = '0,15,30,45,75,90,105,135,150,165,195,210,225,255,270,285,315,330,345'
     elevation19 = '-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30'
 
-    topology = TopologyHIBS(intersite_distance, cell_radius, num_clusters, num_sectors, bs_height, azimuth3, azimuth7,
-                            azimuth19, elevation3, elevation7, elevation19)
+    topology = TopologyHIBS(intersite_distance,
+                            cell_radius,
+                            num_clusters,
+                            num_sectors,
+                            bs_height,
+                            azimuth3,
+                            azimuth7,
+                            azimuth19,
+                            elevation3,
+                            elevation7,
+                            elevation19)
+    
     topology.calculate_coordinates()
 
-    fig = plt.figure(figsize=(8, 8), facecolor='w', edgecolor='k')  # create a figure object
+    fig = plt.figure(figsize=(8, 8), facecolor='w',
+                     edgecolor='k')  # create a figure object
     ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
 
     topology.plot(ax)
 
     plt.axis('image')
-    plt.title("HIBS System 1 Topology - 7 Sector")
+    plt.title("HIBS System 1 Topology - Single Site with 3 sectors")
 
     plt.xlabel("x-coordinate [m]")
     plt.ylabel("y-coordinate [m]")

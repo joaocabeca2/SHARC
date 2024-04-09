@@ -70,7 +70,7 @@ class TopologySingleBaseStation(Topology):
 
 if __name__ == '__main__':
     cell_radius = 100
-    num_clusters = 2
+    num_clusters = 1
     topology = TopologySingleBaseStation(cell_radius, num_clusters)
     topology.calculate_coordinates()
 

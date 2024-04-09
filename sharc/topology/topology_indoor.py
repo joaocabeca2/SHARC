@@ -5,14 +5,13 @@ Created on Tue Dec  5 15:45:26 2017
 
 @author: edgar
 """
-
-from sharc.topology.topology import Topology
-from sharc.parameters.parameters_indoor import ParametersIndoor
+from itertools import product
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.axes
 
-import numpy as np
-from itertools import product
+from sharc.topology.topology import Topology
+from sharc.parameters.parameters_indoor import ParametersIndoor
 
 
 class TopologyIndoor(Topology):

@@ -6,12 +6,12 @@ Created on Tue Feb 14 12:51:22 2017
 @author: edgar
 """
 
-from sharc.topology.topology import Topology
+import math
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.axes
 
-import math
-import numpy as np
+from sharc.topology.topology import Topology
 
 
 class TopologyMacrocell(Topology):
