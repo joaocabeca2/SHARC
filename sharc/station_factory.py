@@ -60,6 +60,10 @@ from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 
 
 class StationFactory(object):
+    """Factory class for system stations.
+    
+    This class generates the StationManager containers based on the system topogy and parameters.
+    """
 
     @staticmethod
     def generate_imt_ue(param: ParametersImt,
@@ -77,6 +81,24 @@ class StationFactory(object):
                                 param_ant: ParametersAntennaImt,
                                 random_number_gen: np.random.RandomState,
                                 topology: Topology) -> StationManager:
+        """Generates outdoor IMT UE stations
+
+        Parameters
+        ----------
+        param : ParametersImt
+            IMT parameters
+        param_ant : ParametersAntennaImt
+            IMT Antenna parameters
+        random_number_gen : np.random.RandomState
+            numpy random number generator object
+        topology : Topology
+            IMT Topology object
+
+        Returns
+        -------
+        StationManager
+            StationManager container with UE IMT stations.
+        """
         num_bs = topology.num_base_stations
         num_ue_per_bs = param.ue_k * param.ue_k_m
 
@@ -90,22 +112,26 @@ class StationFactory(object):
 
         # Calculate UE pointing
         azimuth_range = (-60, 60)
-        azimuth = (azimuth_range[1] - azimuth_range[0]) * random_number_gen.random_sample(num_ue) + azimuth_range[0]
+        azimuth = (azimuth_range[1] - azimuth_range[0]) * \
+            random_number_gen.random_sample(num_ue) + azimuth_range[0]
         # Remove the randomness from azimuth and you will have a perfect pointing
         elevation_range = (-90, 90)
-        elevation = (elevation_range[1] - elevation_range[0]) * random_number_gen.random_sample(num_ue) + \
-                    elevation_range[0]
+        elevation = (elevation_range[1] - elevation_range[0]) * \
+            random_number_gen.random_sample(num_ue) + \
+            elevation_range[0]
 
         if param.ue_distribution_type.upper() == "UNIFORM":
 
             if not (type(topology) is TopologyMacrocell or TopologyHIBS):
-                sys.stderr.write("ERROR\nUniform UE distribution is currently supported only with Macrocell topology")
+                sys.stderr.write(
+                    "ERROR\nUniform UE distribution is currently supported only with Macrocell topology")
                 sys.exit(1)
 
             [ue_x, ue_y, theta, distance] = StationFactory.get_random_position(num_ue, topology, random_number_gen,
                                                                                param.minimum_separation_distance_bs_ue,
                                                                                deterministic_cell=True)
-            psi = np.degrees(np.arctan((param.bs_height - param.ue_height) / distance))
+            psi = np.degrees(
+                np.arctan((param.bs_height - param.ue_height) / distance))
 
             imt_ue.azimuth = (azimuth + theta + np.pi / 2)
             imt_ue.elevation = elevation + psi
@@ -124,9 +150,11 @@ class StationFactory(object):
                 radius_scale = topology.cell_radius / 3.0345
                 radius = random_number_gen.rayleigh(radius_scale, num_ue)
             elif param.ue_distribution_distance.upper() == "UNIFORM":
-                radius = topology.cell_radius * random_number_gen.random_sample(num_ue)
+                radius = topology.cell_radius * \
+                    random_number_gen.random_sample(num_ue)
             else:
-                sys.stderr.write("ERROR\nInvalid UE distance distribution: " + param.ue_distribution_distance)
+                sys.stderr.write(
+                    "ERROR\nInvalid UE distance distribution: " + param.ue_distribution_distance)
                 sys.exit(1)
 
             if param.ue_distribution_azimuth.upper() == "NORMAL":
@@ -137,21 +165,25 @@ class StationFactory(object):
                 N = 1.4
                 angle_scale = 30
                 angle_mean = 0
-                angle_n = random_number_gen.normal(angle_mean, angle_scale, int(N * num_ue))
+                angle_n = random_number_gen.normal(
+                    angle_mean, angle_scale, int(N * num_ue))
 
                 angle_cutoff = 60
-                idx = np.where((angle_n < angle_cutoff) & (angle_n > -angle_cutoff))[0][:num_ue]
+                idx = np.where((angle_n < angle_cutoff) & (
+                    angle_n > -angle_cutoff))[0][:num_ue]
                 angle = angle_n[idx]
             elif param.ue_distribution_azimuth.upper() == "UNIFORM":
                 azimuth_range = (-60, 60)
                 angle = (azimuth_range[1] - azimuth_range[0]) * random_number_gen.random_sample(num_ue) \
-                        + azimuth_range[0]
+                    + azimuth_range[0]
             else:
-                sys.stderr.write("ERROR\nInvalid UE azimuth distribution: " + param.ue_distribution_distance)
+                sys.stderr.write(
+                    "ERROR\nInvalid UE azimuth distribution: " + param.ue_distribution_distance)
                 sys.exit(1)
 
             for bs in range(num_bs):
-                idx = [i for i in range(bs * num_ue_per_bs, bs * num_ue_per_bs + num_ue_per_bs)]
+                idx = [i for i in range(
+                    bs * num_ue_per_bs, bs * num_ue_per_bs + num_ue_per_bs)]
                 # theta is the horizontal angle of the UE wrt the serving BS
                 theta = topology.azimuth[bs] + angle[idx]
                 # calculate UE position in x-y coordinates
@@ -165,11 +197,14 @@ class StationFactory(object):
 
                 # calculate elevation angle
                 # psi is the vertical angle of the UE wrt the serving BS
-                distance = np.sqrt((topology.x[bs] - x) ** 2 + (topology.y[bs] - y) ** 2)
-                psi = np.degrees(np.arctan((param.bs_height - param.ue_height) / distance))
+                distance = np.sqrt(
+                    (topology.x[bs] - x) ** 2 + (topology.y[bs] - y) ** 2)
+                psi = np.degrees(
+                    np.arctan((param.bs_height - param.ue_height) / distance))
                 imt_ue.elevation[idx] = elevation[idx] + psi
         else:
-            sys.stderr.write("ERROR\nInvalid UE distribution type: " + param.ue_distribution_type)
+            sys.stderr.write(
+                "ERROR\nInvalid UE distribution type: " + param.ue_distribution_type)
             sys.exit(1)
 
         imt_ue.x = np.array(ue_x)
@@ -177,7 +212,8 @@ class StationFactory(object):
 
         imt_ue.active = np.zeros(num_ue, dtype=bool)
         imt_ue.height = param.ue_height * np.ones(num_ue)
-        imt_ue.indoor = random_number_gen.random_sample(num_ue) <= (param.ue_indoor_percent / 100)
+        imt_ue.indoor = random_number_gen.random_sample(
+            num_ue) <= (param.ue_indoor_percent / 100)
         imt_ue.rx_interference = -500 * np.ones(num_ue)
         imt_ue.ext_interference = -500 * np.ones(num_ue)
 
@@ -236,18 +272,22 @@ class StationFactory(object):
 
         # Calculate UE pointing
         azimuth_range = (-60, 60)
-        azimuth = (azimuth_range[1] - azimuth_range[0]) * random_number_gen.random_sample(num_ue) + azimuth_range[0]
+        azimuth = (azimuth_range[1] - azimuth_range[0]) * \
+            random_number_gen.random_sample(num_ue) + azimuth_range[0]
         # Remove the randomness from azimuth and you will have a perfect pointing
         # azimuth = np.zeros(num_ue)
         elevation_range = (-90, 90)
         elevation = (elevation_range[1] - elevation_range[0]) * random_number_gen.random_sample(num_ue) + \
-                    elevation_range[0]
+            elevation_range[0]
 
-        delta_x = (topology.b_w / math.sqrt(topology.ue_indoor_percent) - topology.b_w) / 2
-        delta_y = (topology.b_d / math.sqrt(topology.ue_indoor_percent) - topology.b_d) / 2
+        delta_x = (topology.b_w /
+                   math.sqrt(topology.ue_indoor_percent) - topology.b_w) / 2
+        delta_y = (topology.b_d /
+                   math.sqrt(topology.ue_indoor_percent) - topology.b_d) / 2
 
         for bs in range(num_bs):
-            idx = [i for i in range(bs * num_ue_per_bs, bs * num_ue_per_bs + num_ue_per_bs)]
+            idx = [i for i in range(
+                bs * num_ue_per_bs, bs * num_ue_per_bs + num_ue_per_bs)]
             # Right most cell of first floor
             if bs % topology.num_cells == 0 and bs < topology.total_bs_level:
                 x_min = topology.x[bs] - topology.cell_radius - delta_x
@@ -270,22 +310,28 @@ class StationFactory(object):
                 y_min = topology.y[bs] - topology.b_d / 2
                 y_max = topology.y[bs] + topology.b_d / 2
 
-            x = (x_max - x_min) * random_number_gen.random_sample(num_ue_per_bs) + x_min
-            y = (y_max - y_min) * random_number_gen.random_sample(num_ue_per_bs) + y_min
-            z = [topology.height[bs] - topology.b_h + param.ue_height for k in range(num_ue_per_bs)]
+            x = (x_max - x_min) * \
+                random_number_gen.random_sample(num_ue_per_bs) + x_min
+            y = (y_max - y_min) * \
+                random_number_gen.random_sample(num_ue_per_bs) + y_min
+            z = [topology.height[bs] - topology.b_h +
+                 param.ue_height for k in range(num_ue_per_bs)]
             ue_x.extend(x)
             ue_y.extend(y)
             ue_z.extend(z)
 
             # theta is the horizontal angle of the UE wrt the serving BS
-            theta = np.degrees(np.arctan2(y - topology.y[bs], x - topology.x[bs]))
+            theta = np.degrees(np.arctan2(
+                y - topology.y[bs], x - topology.x[bs]))
             # calculate UE azimuth wrt serving BS
             imt_ue.azimuth[idx] = (azimuth[idx] + theta + 180) % 360
 
             # calculate elevation angle
             # psi is the vertical angle of the UE wrt the serving BS
-            distance = np.sqrt((topology.x[bs] - x) ** 2 + (topology.y[bs] - y) ** 2)
-            psi = np.degrees(np.arctan((param.bs_height - param.ue_height) / distance))
+            distance = np.sqrt(
+                (topology.x[bs] - x) ** 2 + (topology.y[bs] - y) ** 2)
+            psi = np.degrees(
+                np.arctan((param.bs_height - param.ue_height) / distance))
             imt_ue.elevation[idx] = elevation[idx] + psi
 
             # check if UE is indoor
@@ -339,7 +385,25 @@ class StationFactory(object):
         return imt_ue
 
     @staticmethod
-    def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState):
+    def generate_system(parameters: Parameters,
+                        topology: Topology,
+                        random_number_gen: np.random.RandomState):
+        """Generate the stations for non-IMT systems
+
+        Parameters
+        ----------
+        parameters : Parameters
+            system parameters
+        topology : Topology
+            system Topology object
+        random_number_gen : np.random.RandomState
+            numpy RandomState object
+
+        Returns
+        -------
+        StationManager
+            generate a StationManager object with data related to the system's parameters.
+        """      
         if parameters.general.system == "EESS_PASSIVE":
             return StationFactory.generate_eess_passive_sensor(parameters.eess_passive)
         if parameters.general.system == "FSS_ES":
@@ -361,7 +425,8 @@ class StationFactory(object):
         elif parameters.general.system == "IMT_UE":
             return StationFactory.generate_imt_mobile_station(parameters.imt_mobile_station, random_number_gen)
         else:
-            sys.stderr.write("ERROR\nInvalid system: " + parameters.general.system)
+            sys.stderr.write("ERROR\nInvalid system: " +
+                             parameters.general.system)
             sys.exit(1)
 
     @staticmethod
@@ -378,18 +443,22 @@ class StationFactory(object):
 
         # calculate distances to the centre of the Earth
         dist_sat_centre_earth_km = (param.EARTH_RADIUS + param.altitude) / 1000
-        dist_imt_centre_earth_km = (param.EARTH_RADIUS + param.imt_altitude) / 1000
+        dist_imt_centre_earth_km = (
+            param.EARTH_RADIUS + param.imt_altitude) / 1000
 
         # calculate Cartesian coordinates of satellite, with origin at centre of the Earth
         sat_lat_rad = param.lat_deg * np.pi / 180.
         imt_long_diff_rad = param.imt_long_diff_deg * np.pi / 180.
-        x1 = dist_sat_centre_earth_km * np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
-        y1 = dist_sat_centre_earth_km * np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
+        x1 = dist_sat_centre_earth_km * \
+            np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
+        y1 = dist_sat_centre_earth_km * \
+            np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
         z1 = dist_sat_centre_earth_km * np.sin(sat_lat_rad)
 
         # rotate axis and calculate coordinates with origin at IMT system
         imt_lat_rad = param.imt_lat_deg * np.pi / 180.
-        ss_mleo_space_station.x = np.array([x1 * np.sin(imt_lat_rad) - z1 * np.cos(imt_lat_rad)]) * 1000
+        ss_mleo_space_station.x = np.array(
+            [x1 * np.sin(imt_lat_rad) - z1 * np.cos(imt_lat_rad)]) * 1000
         ss_mleo_space_station.y = np.array([y1]) * 1000
         ss_mleo_space_station.height = np.array([(z1 * np.sin(imt_lat_rad) + x1 * np.cos(imt_lat_rad)
                                                   - dist_imt_centre_earth_km) * 1000])
@@ -403,13 +472,15 @@ class StationFactory(object):
         ss_mleo_space_station.rx_interference = -500
 
         if param.antenna_pattern == "OMNI":
-            ss_mleo_space_station.antenna = np.array([AntennaOmni(param.antenna_gain)])
+            ss_mleo_space_station.antenna = np.array(
+                [AntennaOmni(param.antenna_gain)])
         elif param.antenna_pattern == "ITU-R S.672":
             ss_mleo_space_station.antenna = np.array([AntennaS672(param)])
         elif param.antenna_pattern == "ITU-R S.1528 LEO":
             ss_mleo_space_station.antenna = np.array([AntennaS1528_LEO(param)])
         else:
-            sys.stderr.write("ERROR\nInvalid SS-MLEO antenna pattern: " + param.antenna_pattern)
+            sys.stderr.write(
+                "ERROR\nInvalid SS-MLEO antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
         ss_mleo_space_station.bandwidth = param.bandwidth
@@ -428,18 +499,22 @@ class StationFactory(object):
         # ITU-R P619-1, Attachment A
         # calculate distances to the centre of the Earth
         dist_sat_centre_earth_km = (param.EARTH_RADIUS + param.altitude) / 1000
-        dist_imt_centre_earth_km = (param.EARTH_RADIUS + param.imt_altitude) / 1000
+        dist_imt_centre_earth_km = (
+            param.EARTH_RADIUS + param.imt_altitude) / 1000
 
         # calculate Cartesian coordinates of satellite, with origin at centre of the Earth
         sat_lat_rad = param.lat_deg * np.pi / 180.
         imt_long_diff_rad = param.imt_long_diff_deg * np.pi / 180.
-        x1 = dist_sat_centre_earth_km * np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
-        y1 = dist_sat_centre_earth_km * np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
+        x1 = dist_sat_centre_earth_km * \
+            np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
+        y1 = dist_sat_centre_earth_km * \
+            np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
         z1 = dist_sat_centre_earth_km * np.sin(sat_lat_rad)
 
         # rotate axis and calculate coordinates with origin at IMT system
         imt_lat_rad = param.imt_lat_deg * np.pi / 180.
-        fss_space_station.x = np.array([x1 * np.sin(imt_lat_rad) - z1 * np.cos(imt_lat_rad)]) * 1000
+        fss_space_station.x = np.array(
+            [x1 * np.sin(imt_lat_rad) - z1 * np.cos(imt_lat_rad)]) * 1000
         fss_space_station.y = np.array([y1]) * 1000
         fss_space_station.height = np.array([(z1 * np.sin(imt_lat_rad) + x1 * np.cos(imt_lat_rad)
                                               - dist_imt_centre_earth_km) * 1000])
@@ -448,11 +523,13 @@ class StationFactory(object):
         fss_space_station.elevation = param.elevation
 
         fss_space_station.active = np.array([True])
-        fss_space_station.tx_power = np.array([param.tx_power_density + 10 * math.log10(param.bandwidth * 1e6) + 30])
+        fss_space_station.tx_power = np.array(
+            [param.tx_power_density + 10 * math.log10(param.bandwidth * 1e6) + 30])
         fss_space_station.rx_interference = -500
 
         if param.antenna_pattern == "OMNI":
-            fss_space_station.antenna = np.array([AntennaOmni(param.antenna_gain)])
+            fss_space_station.antenna = np.array(
+                [AntennaOmni(param.antenna_gain)])
         elif param.antenna_pattern == "ITU-R S.672":
             fss_space_station.antenna = np.array([AntennaS672(param)])
         elif param.antenna_pattern == "ITU-R S.1528":
@@ -460,7 +537,8 @@ class StationFactory(object):
         elif param.antenna_pattern == "FSS_SS":
             fss_space_station.antenna = np.array([AntennaFssSs(param)])
         else:
-            sys.stderr.write("ERROR\nInvalid FSS SS antenna pattern: " + param.antenna_pattern)
+            sys.stderr.write(
+                "ERROR\nInvalid FSS SS antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
         fss_space_station.bandwidth = param.bandwidth
@@ -503,18 +581,22 @@ class StationFactory(object):
             # FSS ES is randomly (uniform) created inside a circle of radius
             # equal to param.max_dist_to_bs
             if param.min_dist_to_bs < 0:
-                sys.stderr.write("ERROR\nInvalid minimum distance from FSS ES to BS: {}".format(param.min_dist_to_bs))
+                sys.stderr.write("ERROR\nInvalid minimum distance from FSS ES to BS: {}".format(
+                    param.min_dist_to_bs))
                 sys.exit(1)
             while True:
-                dist_x = random_number_gen.uniform(-param.max_dist_to_bs, param.max_dist_to_bs)
-                dist_y = random_number_gen.uniform(-param.max_dist_to_bs, param.max_dist_to_bs)
+                dist_x = random_number_gen.uniform(
+                    -param.max_dist_to_bs, param.max_dist_to_bs)
+                dist_y = random_number_gen.uniform(
+                    -param.max_dist_to_bs, param.max_dist_to_bs)
                 radius = np.sqrt(dist_x ** 2 + dist_y ** 2)
                 if (radius > param.min_dist_to_bs) & (radius < param.max_dist_to_bs):
                     break
             fss_earth_station.x[0] = dist_x
             fss_earth_station.y[0] = dist_y
         else:
-            sys.stderr.write("ERROR\nFSS-ES location type {} not supported".format(param.location))
+            sys.stderr.write(
+                "ERROR\nFSS-ES location type {} not supported".format(param.location))
             sys.exit(1)
 
         fss_earth_station.height = np.array([param.height])
@@ -524,15 +606,18 @@ class StationFactory(object):
         else:
             fss_earth_station.azimuth = float(param.azimuth)
 
-        elevation = random_number_gen.uniform(param.elevation_min, param.elevation_max)
+        elevation = random_number_gen.uniform(
+            param.elevation_min, param.elevation_max)
         fss_earth_station.elevation = np.array([elevation])
 
         fss_earth_station.active = np.array([True])
-        fss_earth_station.tx_power = np.array([param.tx_power_density + 10 * math.log10(param.bandwidth * 1e6) + 30])
+        fss_earth_station.tx_power = np.array(
+            [param.tx_power_density + 10 * math.log10(param.bandwidth * 1e6) + 30])
         fss_earth_station.rx_interference = -500
 
         if param.antenna_pattern.upper() == "OMNI":
-            fss_earth_station.antenna = np.array([AntennaOmni(param.antenna_gain)])
+            fss_earth_station.antenna = np.array(
+                [AntennaOmni(param.antenna_gain)])
         elif param.antenna_pattern.upper() == "ITU-R S.1855":
             fss_earth_station.antenna = np.array([AntennaS1855(param)])
         elif param.antenna_pattern.upper() == "ITU-R S.465":
@@ -542,7 +627,8 @@ class StationFactory(object):
         elif param.antenna_pattern.upper() == "ITU-R S.580":
             fss_earth_station.antenna = np.array([AntennaS580(param)])
         else:
-            sys.stderr.write("ERROR\nInvalid FSS ES antenna pattern: " + param.antenna_pattern)
+            sys.stderr.write(
+                "ERROR\nInvalid FSS ES antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
         fss_earth_station.noise_temperature = param.noise_temperature
@@ -561,19 +647,24 @@ class StationFactory(object):
         if (param.channel_model == "P619"):
             # Coordinates according to ITU-R P619-1, Attachment A
             # calculate distances to the centre of the Earth
-            dist_hibs_centre_earth_km = (param.EARTH_RADIUS + param.altitude) / 1000
-            dist_system_centre_earth_km = (param.EARTH_RADIUS + param.imt_altitude) / 1000
+            dist_hibs_centre_earth_km = (
+                param.EARTH_RADIUS + param.altitude) / 1000
+            dist_system_centre_earth_km = (
+                param.EARTH_RADIUS + param.imt_altitude) / 1000
 
             # calculate Cartesian coordinates of satellite, with origin at centre of the Earth
             sat_lat_rad = param.hibs_lat_deg * np.pi / 180.
             imt_long_diff_rad = param.imt_long_diff_deg * np.pi / 180.
-            x1 = dist_hibs_centre_earth_km * np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
-            y1 = dist_hibs_centre_earth_km * np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
+            x1 = dist_hibs_centre_earth_km * \
+                np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
+            y1 = dist_hibs_centre_earth_km * \
+                np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
             z1 = dist_hibs_centre_earth_km * np.sin(sat_lat_rad)
 
             # rotate axis and calculate coordinates with origin at System
             sys_lat_rad = param.imt_lat_deg * np.pi / 180.
-            fs_station.x = np.array([x1 * np.sin(sys_lat_rad) - z1 * np.cos(sys_lat_rad)]) * 1000
+            fs_station.x = np.array(
+                [x1 * np.sin(sys_lat_rad) - z1 * np.cos(sys_lat_rad)]) * 1000
             fs_station.y = np.array([y1]) * 1000
             z2 = np.array(
                 [(z1 * np.sin(sys_lat_rad) + x1 * np.cos(sys_lat_rad) - dist_system_centre_earth_km)]) * 1000
@@ -586,21 +677,29 @@ class StationFactory(object):
             if (param.distribution_type == "UNIFORM"):
                 if (type(param.azimuth_distribution)) != list:
                     aux_azimuth = param.azimuth_distribution.split(',')
-                    param.azimuth_distribution = [float(i) for i in aux_azimuth]
+                    param.azimuth_distribution = [
+                        float(i) for i in aux_azimuth]
                     aux_elevation = param.elevation_distribution.split(',')
-                    param.elevation_distribution = [float(i) for i in aux_elevation]
-                param.azimuth = np.random.uniform(param.azimuth_distribution[0], param.azimuth_distribution[1])
-                param.elevation = np.random.uniform(param.elevation_distribution[0], param.elevation_distribution[1])
+                    param.elevation_distribution = [
+                        float(i) for i in aux_elevation]
+                param.azimuth = np.random.uniform(
+                    param.azimuth_distribution[0], param.azimuth_distribution[1])
+                param.elevation = np.random.uniform(
+                    param.elevation_distribution[0], param.elevation_distribution[1])
                 fs_station.azimuth = np.array([param.azimuth])
                 fs_station.elevation = np.array([param.elevation])
             elif (param.distribution_type == "UNIFORM_NORMAL"):
                 if (type(param.azimuth_distribution)) != list:
                     aux_azimuth = param.azimuth_distribution.split(',')
-                    param.azimuth_distribution = [float(i) for i in aux_azimuth]
+                    param.azimuth_distribution = [
+                        float(i) for i in aux_azimuth]
                     aux_elevation = param.elevation_distribution.split(',')
-                    param.elevation_distribution = [float(i) for i in aux_elevation]
-                param.azimuth = np.random.uniform(param.azimuth_distribution[0], param.azimuth_distribution[1])
-                param.elevation = np.random.normal(param.elevation_distribution[0], param.elevation_distribution[1])
+                    param.elevation_distribution = [
+                        float(i) for i in aux_elevation]
+                param.azimuth = np.random.uniform(
+                    param.azimuth_distribution[0], param.azimuth_distribution[1])
+                param.elevation = np.random.normal(
+                    param.elevation_distribution[0], param.elevation_distribution[1])
                 fs_station.azimuth = np.array([param.azimuth])
                 fs_station.elevation = np.array([param.elevation])
         else:
@@ -608,7 +707,8 @@ class StationFactory(object):
             fs_station.elevation = np.array([param.elevation])
 
         fs_station.active = np.array([True])
-        fs_station.tx_power = np.array([param.tx_power_density + 10 * math.log10(param.bandwidth * 1e6) + 30])
+        fs_station.tx_power = np.array(
+            [param.tx_power_density + 10 * math.log10(param.bandwidth * 1e6) + 30])
         fs_station.rx_interference = -500
 
         if param.antenna_pattern == "OMNI":
@@ -622,7 +722,8 @@ class StationFactory(object):
         elif param.antenna_pattern == "ITU-R F.1245":
             fs_station.antenna = np.array([AntennaF1245(param)])
         else:
-            sys.stderr.write("ERROR\nInvalid FS antenna pattern: " + param.antenna_pattern)
+            sys.stderr.write(
+                "ERROR\nInvalid FS antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
         fs_station.noise_temperature = param.noise_temperature
@@ -661,7 +762,8 @@ class StationFactory(object):
             for i in range(num_haps):
                 haps.antenna[i] = AntennaF1891(param)
         else:
-            sys.stderr.write("ERROR\nInvalid HAPS (airbone) antenna pattern: " + param.antenna_pattern)
+            sys.stderr.write(
+                "ERROR\nInvalid HAPS (airbone) antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
         haps.bandwidth = np.array([param.bandwidth])
@@ -682,17 +784,21 @@ class StationFactory(object):
         azimuth = np.array([-30, 30])
         elevation = np.array([-30, 5])
 
-        rns.azimuth = 90 + (azimuth[1] - azimuth[0]) * random_number_gen.random_sample(num_rns) + azimuth[0]
-        rns.elevation = (elevation[1] - elevation[0]) * random_number_gen.random_sample(num_rns) + elevation[0]
+        rns.azimuth = 90 + (azimuth[1] - azimuth[0]) * \
+            random_number_gen.random_sample(num_rns) + azimuth[0]
+        rns.elevation = (elevation[1] - elevation[0]) * \
+            random_number_gen.random_sample(num_rns) + elevation[0]
 
         rns.active = np.ones(num_rns, dtype=bool)
 
         if param.antenna_pattern == "OMNI":
             rns.antenna = np.array([AntennaOmni(param.antenna_gain)])
         elif param.antenna_pattern == "ITU-R M.1466":
-            rns.antenna = np.array([AntennaM1466(param.antenna_gain, rns.azimuth, rns.elevation)])
+            rns.antenna = np.array(
+                [AntennaM1466(param.antenna_gain, rns.azimuth, rns.elevation)])
         else:
-            sys.stderr.write("ERROR\nInvalid RNS antenna pattern: " + param.antenna_pattern)
+            sys.stderr.write(
+                "ERROR\nInvalid RNS antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
         rns.bandwidth = np.array([param.bandwidth])
@@ -713,66 +819,80 @@ class StationFactory(object):
         if (param.channel_model == "P619"):
             # Coordinates according to  ITU-R P619-1, Attachment A
             # calculate distances to the centre of the Earth
-            dist_hibs_centre_earth_km = (param.EARTH_RADIUS + param.altitude) / 1000
-            dist_system_centre_earth_km = (param.EARTH_RADIUS + param.imt_altitude) / 1000
+            dist_hibs_centre_earth_km = (
+                param.EARTH_RADIUS + param.altitude) / 1000
+            dist_system_centre_earth_km = (
+                param.EARTH_RADIUS + param.imt_altitude) / 1000
 
             # calculate Cartesian coordinates of satellite, with origin at centre of the Earth
             sat_lat_rad = param.hibs_lat_deg * np.pi / 180.
             imt_long_diff_rad = param.imt_long_diff_deg * np.pi / 180.
-            x1 = dist_hibs_centre_earth_km * np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
-            y1 = dist_hibs_centre_earth_km * np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
+            x1 = dist_hibs_centre_earth_km * \
+                np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
+            y1 = dist_hibs_centre_earth_km * \
+                np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
             z1 = dist_hibs_centre_earth_km * np.sin(sat_lat_rad)
 
             # rotate axis and calculate coordinates with origin at System
             sys_lat_rad = param.imt_lat_deg * np.pi / 180.
-            arns.x = np.array([x1 * np.sin(sys_lat_rad) - z1 * np.cos(sys_lat_rad)]) * 1000
+            arns.x = np.array([x1 * np.sin(sys_lat_rad) -
+                              z1 * np.cos(sys_lat_rad)]) * 1000
             arns.y = np.array([y1]) * 1000
-            z2 = np.array([(z1 * np.sin(sys_lat_rad) + x1 * np.cos(sys_lat_rad) - dist_system_centre_earth_km)]) * 1000
+            z2 = np.array([(z1 * np.sin(sys_lat_rad) + x1 *
+                          np.cos(sys_lat_rad) - dist_system_centre_earth_km)]) * 1000
             arns.height = param.altitude - z2
-            #print(arns.height)
+            # print(arns.height)
         else:
             arns.x = np.array([param.x])
             arns.y = np.array([param.y])
             arns.height = np.array([param.height])
 
-        if (param.antenna_pattern=="PHASED ARRAY"):
+        if (param.antenna_pattern == "PHASED ARRAY"):
             positions = [-180, -90, 0, 90]
             arns.azimuth = np.array([np.random.choice(positions)])
             arns.elevation = np.array([param.elevation])
-            param.beamsteeringangle_az = np.random.uniform(-45,45)
-            #param.beamsteeringangle_el = np.random.normal(-20,85)
-            param.beamsteeringangle_el = np.random.uniform(-2.5,2.5)
-            #print(param.beamsteeringangle_az)
-            #print(param.beamsteeringangle_el)
+            param.beamsteeringangle_az = np.random.uniform(-45, 45)
+            # param.beamsteeringangle_el = np.random.normal(-20,85)
+            param.beamsteeringangle_el = np.random.uniform(-2.5, 2.5)
+            # print(param.beamsteeringangle_az)
+            # print(param.beamsteeringangle_el)
 
         else:
             if (param.distribution_enable == "ON"):
                 if (param.distribution_type == "UNIFORM"):
                     if (type(param.azimuth_distribution)) != list:
                         aux_azimuth = param.azimuth_distribution.split(',')
-                        param.azimuth_distribution = [float(i) for i in aux_azimuth]
+                        param.azimuth_distribution = [
+                            float(i) for i in aux_azimuth]
                         aux_elevation = param.elevation_distribution.split(',')
-                        param.elevation_distribution = [float(i) for i in aux_elevation]
-                    param.azimuth = np.random.uniform(param.azimuth_distribution[0], param.azimuth_distribution[1])
-                    param.elevation = np.random.uniform(param.elevation_distribution[0], param.elevation_distribution[1])
+                        param.elevation_distribution = [
+                            float(i) for i in aux_elevation]
+                    param.azimuth = np.random.uniform(
+                        param.azimuth_distribution[0], param.azimuth_distribution[1])
+                    param.elevation = np.random.uniform(
+                        param.elevation_distribution[0], param.elevation_distribution[1])
                     arns.azimuth = np.array([param.azimuth])
                     arns.elevation = np.array([param.elevation])
                 elif (param.distribution_type == "UNIFORM_NORMAL"):
                     if (type(param.azimuth_distribution)) != list:
                         aux_azimuth = param.azimuth_distribution.split(',')
-                        param.azimuth_distribution = [float(i) for i in aux_azimuth]
+                        param.azimuth_distribution = [
+                            float(i) for i in aux_azimuth]
                         aux_elevation = param.elevation_distribution.split(',')
-                        param.elevation_distribution = [float(i) for i in aux_elevation]
-                    param.azimuth = np.random.uniform(param.azimuth_distribution[0], param.azimuth_distribution[1])
-                    param.elevation = np.random.normal(param.elevation_distribution[0], param.elevation_distribution[1])
+                        param.elevation_distribution = [
+                            float(i) for i in aux_elevation]
+                    param.azimuth = np.random.uniform(
+                        param.azimuth_distribution[0], param.azimuth_distribution[1])
+                    param.elevation = np.random.normal(
+                        param.elevation_distribution[0], param.elevation_distribution[1])
                     arns.azimuth = np.array([param.azimuth])
                     arns.elevation = np.array([param.elevation])
             else:
                 arns.azimuth = np.array([param.azimuth])
                 arns.elevation = np.array([param.elevation])
 
-        #print(arns.azimuth)
-        #print(arns.elevation)
+        # print(arns.azimuth)
+        # print(arns.elevation)
 
         arns.active = np.ones(num_arns, dtype=bool)
 
@@ -787,7 +907,8 @@ class StationFactory(object):
         elif param.antenna_pattern == "PHASED ARRAY":
             arns.antenna = np.array([AntennaRadarPhasedArray(param)])
         else:
-            sys.stderr.write("ERROR\nInvalid RNS antenna pattern: " + param.antenna_pattern)
+            sys.stderr.write(
+                "ERROR\nInvalid RNS antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
         arns.bandwidth = np.array([param.bandwidth])
@@ -805,21 +926,27 @@ class StationFactory(object):
         if (param.channel_model == "P619"):
             # Coordinates according to  ITU-R P619-1, Attachment A
             # calculate distances to the centre of the Earth
-            dist_hibs_centre_earth_km = (param.EARTH_RADIUS + param.altitude) / 1000
-            dist_system_centre_earth_km = (param.EARTH_RADIUS + param.imt_altitude) / 1000
+            dist_hibs_centre_earth_km = (
+                param.EARTH_RADIUS + param.altitude) / 1000
+            dist_system_centre_earth_km = (
+                param.EARTH_RADIUS + param.imt_altitude) / 1000
 
             # calculate Cartesian coordinates of satellite, with origin at centre of the Earth
             sat_lat_rad = param.hibs_lat_deg * np.pi / 180.
             imt_long_diff_rad = param.imt_long_diff_deg * np.pi / 180.
-            x1 = dist_hibs_centre_earth_km * np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
-            y1 = dist_hibs_centre_earth_km * np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
+            x1 = dist_hibs_centre_earth_km * \
+                np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
+            y1 = dist_hibs_centre_earth_km * \
+                np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
             z1 = dist_hibs_centre_earth_km * np.sin(sat_lat_rad)
 
             # rotate axis and calculate coordinates with origin at System
             sys_lat_rad = param.imt_lat_deg * np.pi / 180.
-            ras_station.x = np.array([x1 * np.sin(sys_lat_rad) - z1 * np.cos(sys_lat_rad)]) * 1000
+            ras_station.x = np.array(
+                [x1 * np.sin(sys_lat_rad) - z1 * np.cos(sys_lat_rad)]) * 1000
             ras_station.y = np.array([y1]) * 1000
-            z2 = np.array([(z1 * np.sin(sys_lat_rad) + x1 * np.cos(sys_lat_rad) - dist_system_centre_earth_km)]) * 1000
+            z2 = np.array([(z1 * np.sin(sys_lat_rad) + x1 *
+                          np.cos(sys_lat_rad) - dist_system_centre_earth_km)]) * 1000
             ras_station.height = param.altitude - z2
         else:
             ras_station.x = np.array([param.x])
@@ -832,9 +959,12 @@ class StationFactory(object):
                     aux_azimuth = param.azimuth_distribution.split(',')
                     param.azimuth_distribution = [int(i) for i in aux_azimuth]
                     aux_elevation = param.elevation_distribution.split(',')
-                    param.elevation_distribution = [int(i) for i in aux_elevation]
-                param.azimuth = np.random.uniform(param.azimuth_distribution[0], param.azimuth_distribution[1])
-                param.elevation = np.random.uniform(param.elevation_distribution[0], param.elevation_distribution[1])
+                    param.elevation_distribution = [
+                        int(i) for i in aux_elevation]
+                param.azimuth = np.random.uniform(
+                    param.azimuth_distribution[0], param.azimuth_distribution[1])
+                param.elevation = np.random.uniform(
+                    param.elevation_distribution[0], param.elevation_distribution[1])
                 ras_station.azimuth = np.array([param.azimuth])
                 ras_station.elevation = np.array([param.elevation])
         else:
@@ -851,10 +981,12 @@ class StationFactory(object):
         elif param.antenna_pattern == "ITU-R SA.509":
             ras_station.antenna = np.array([AntennaSA509(param)])
         else:
-            sys.stderr.write("ERROR\nInvalid RAS antenna pattern: " + param.antenna_pattern)
+            sys.stderr.write(
+                "ERROR\nInvalid RAS antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
-        ras_station.noise_temperature = np.array(param.antenna_noise_temperature + param.receiver_noise_temperature)
+        ras_station.noise_temperature = np.array(
+            param.antenna_noise_temperature + param.receiver_noise_temperature)
         ras_station.bandwidth = np.array(param.bandwidth)
 
         return ras_station
@@ -870,15 +1002,17 @@ class StationFactory(object):
 
         # distance to field of view centre according to Rec. ITU-R RS.1861-0
         distance = param.EARTH_RADIUS * \
-                   math.sin(math.radians(incidence_angle - param.nadir_angle)) / \
-                   math.sin(math.radians(param.nadir_angle))
+            math.sin(math.radians(incidence_angle - param.nadir_angle)) / \
+            math.sin(math.radians(param.nadir_angle))
 
         # Elevation at ground (centre of the footprint)
         theta_grd_elev = 90 - incidence_angle
 
         eess_passive_sensor.x = np.array([0])
-        eess_passive_sensor.y = np.array([distance * math.cos(math.radians(theta_grd_elev))])
-        eess_passive_sensor.height = np.array([distance * math.sin(math.radians(theta_grd_elev))])
+        eess_passive_sensor.y = np.array(
+            [distance * math.cos(math.radians(theta_grd_elev))])
+        eess_passive_sensor.height = np.array(
+            [distance * math.sin(math.radians(theta_grd_elev))])
 
         # Elevation and azimuth at sensor wrt centre of the footprint
         # It is assumed the sensor is at y-axis, hence azimuth is 270 deg
@@ -889,7 +1023,8 @@ class StationFactory(object):
         eess_passive_sensor.rx_interference = -500
 
         if param.antenna_pattern == "OMNI":
-            eess_passive_sensor.antenna = np.array([AntennaOmni(param.antenna_gain)])
+            eess_passive_sensor.antenna = np.array(
+                [AntennaOmni(param.antenna_gain)])
         elif param.antenna_pattern == "ITU-R RS.1813":
             eess_passive_sensor.antenna = np.array([AntennaRS1813(param)])
         elif param.antenna_pattern == "ITU-R RS.1861 9a":
@@ -899,7 +1034,8 @@ class StationFactory(object):
         elif param.antenna_pattern == "ITU-R RS.1861 9c":
             eess_passive_sensor.antenna = np.array([AntennaRS1861_9C()])
         else:
-            sys.stderr.write("ERROR\nInvalid EESS PASSIVE antenna pattern: " + param.antenna_pattern)
+            sys.stderr.write(
+                "ERROR\nInvalid EESS PASSIVE antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
         eess_passive_sensor.bandwidth = param.bandwidth
@@ -921,31 +1057,37 @@ class StationFactory(object):
         if (param.channel_model == "P619"):
             # Coordinates according to  ITU-R P619-1, Attachment A
             # calculate distances to the centre of the Earth
-            dist_hibs_centre_earth_km = (param.EARTH_RADIUS + param.altitude) / 1000
-            dist_system_centre_earth_km = (param.EARTH_RADIUS + param.imt_altitude) / 1000
+            dist_hibs_centre_earth_km = (
+                param.EARTH_RADIUS + param.altitude) / 1000
+            dist_system_centre_earth_km = (
+                param.EARTH_RADIUS + param.imt_altitude) / 1000
 
             # calculate Cartesian coordinates of satellite, with origin at centre of the Earth
             sat_lat_rad = param.hibs_lat_deg * np.pi / 180.
             imt_long_diff_rad = param.imt_long_diff_deg * np.pi / 180.
-            x1 = dist_hibs_centre_earth_km * np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
-            y1 = dist_hibs_centre_earth_km * np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
+            x1 = dist_hibs_centre_earth_km * \
+                np.cos(sat_lat_rad) * np.cos(imt_long_diff_rad)
+            y1 = dist_hibs_centre_earth_km * \
+                np.cos(sat_lat_rad) * np.sin(imt_long_diff_rad)
             z1 = dist_hibs_centre_earth_km * np.sin(sat_lat_rad)
 
             # rotate axis and calculate coordinates with origin at System
             sys_lat_rad = param.imt_lat_deg * np.pi / 180.
-            imt_mobile_station.x = np.array([x1 * np.sin(sys_lat_rad) - z1 * np.cos(sys_lat_rad)]) * 1000
+            imt_mobile_station.x = np.array(
+                [x1 * np.sin(sys_lat_rad) - z1 * np.cos(sys_lat_rad)]) * 1000
             imt_mobile_station.y = np.array([y1]) * 1000
-            z2 = np.array([(z1 * np.sin(sys_lat_rad) + x1 * np.cos(sys_lat_rad) - dist_system_centre_earth_km)]) * 1000
+            z2 = np.array([(z1 * np.sin(sys_lat_rad) + x1 *
+                          np.cos(sys_lat_rad) - dist_system_centre_earth_km)]) * 1000
             imt_mobile_station.height = param.altitude - z2
             # print(arns.height)
         else:
-            #xis=np.random.uniform(0,500000)
-            #yis=np.random.uniform(0,500000)
-            #imt_mobile_station.x = np.array([xis])
-            #print(f'X position is: = {imt_mobile_station.x}')
+            # xis=np.random.uniform(0,500000)
+            # yis=np.random.uniform(0,500000)
+            # imt_mobile_station.x = np.array([xis])
+            # print(f'X position is: = {imt_mobile_station.x}')
             imt_mobile_station.x = np.array([param.x])
-            #imt_mobile_station.y = np.array([yis])
-            #print(f'Y position is: = {imt_mobile_station.y}')
+            # imt_mobile_station.y = np.array([yis])
+            # print(f'Y position is: = {imt_mobile_station.y}')
             imt_mobile_station.y = np.array([param.y])
             imt_mobile_station.height = np.array([param.height])
 
@@ -953,22 +1095,29 @@ class StationFactory(object):
             if (param.distribution_type == "UNIFORM"):
                 if (type(param.azimuth_distribution)) != list:
                     aux_azimuth = param.azimuth_distribution.split(',')
-                    param.azimuth_distribution = [float(i) for i in aux_azimuth]
+                    param.azimuth_distribution = [
+                        float(i) for i in aux_azimuth]
                     aux_elevation = param.elevation_distribution.split(',')
-                    param.elevation_distribution = [float(i) for i in aux_elevation]
-                param.azimuth = np.random.uniform(param.azimuth_distribution[0], param.azimuth_distribution[1])
+                    param.elevation_distribution = [
+                        float(i) for i in aux_elevation]
+                param.azimuth = np.random.uniform(
+                    param.azimuth_distribution[0], param.azimuth_distribution[1])
                 param.elevation = np.random.uniform(param.elevation_distribution[0],
-                                                        param.elevation_distribution[1])
+                                                    param.elevation_distribution[1])
                 imt_mobile_station.azimuth = np.array([param.azimuth])
                 imt_mobile_station.elevation = np.array([param.elevation])
             elif (param.distribution_type == "UNIFORM_NORMAL"):
                 if (type(param.azimuth_distribution)) != list:
                     aux_azimuth = param.azimuth_distribution.split(',')
-                    param.azimuth_distribution = [float(i) for i in aux_azimuth]
+                    param.azimuth_distribution = [
+                        float(i) for i in aux_azimuth]
                     aux_elevation = param.elevation_distribution.split(',')
-                    param.elevation_distribution = [float(i) for i in aux_elevation]
-                param.azimuth = np.random.uniform(param.azimuth_distribution[0], param.azimuth_distribution[1])
-                param.elevation = np.random.normal(param.elevation_distribution[0], param.elevation_distribution[1])
+                    param.elevation_distribution = [
+                        float(i) for i in aux_elevation]
+                param.azimuth = np.random.uniform(
+                    param.azimuth_distribution[0], param.azimuth_distribution[1])
+                param.elevation = np.random.normal(
+                    param.elevation_distribution[0], param.elevation_distribution[1])
                 imt_mobile_station.azimuth = np.array([param.azimuth])
                 imt_mobile_station.elevation = np.array([param.elevation])
         else:
@@ -981,11 +1130,13 @@ class StationFactory(object):
         imt_mobile_station.active = np.ones(num_imt_mobile_station, dtype=bool)
 
         if param.antenna_pattern == "OMNI":
-            imt_mobile_station.antenna = np.array([AntennaOmni(param.antenna_gain)])
-        #elif param.antenna_pattern == "COSSECANT SQUARED":
-            #arns.antenna = np.array([AntennaCossecantSquared(param)])
+            imt_mobile_station.antenna = np.array(
+                [AntennaOmni(param.antenna_gain)])
+        # elif param.antenna_pattern == "COSSECANT SQUARED":
+            # arns.antenna = np.array([AntennaCossecantSquared(param)])
         else:
-            sys.stderr.write("ERROR\nInvalid RNS antenna pattern: " + param.antenna_pattern)
+            sys.stderr.write(
+                "ERROR\nInvalid RNS antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
         imt_mobile_station.bandwidth = np.array([param.bandwidth])
@@ -1006,12 +1157,14 @@ class StationFactory(object):
 
         while not min_dist_ok:
             # generate UE uniformly in a triangle
-            x = random_number_gen.uniform(0, hexagon_radius * np.cos(np.pi / 6), num_stas)
+            x = random_number_gen.uniform(
+                0, hexagon_radius * np.cos(np.pi / 6), num_stas)
             y = random_number_gen.uniform(0, hexagon_radius / 2, num_stas)
 
             invert_index = np.arctan(y / x) > np.pi / 6
             y[invert_index] = -(hexagon_radius / 2 - y[invert_index])
-            x[invert_index] = (hexagon_radius * np.cos(np.pi / 6) - x[invert_index])
+            x[invert_index] = (
+                hexagon_radius * np.cos(np.pi / 6) - x[invert_index])
 
             if any(np.sqrt(x ** 2 + y ** 2) < min_dist_to_bs):
                 min_dist_ok = False
@@ -1028,7 +1181,8 @@ class StationFactory(object):
 
         # randomly choose a cell
         if central_cell:
-            central_cell_indices = np.where((topology.x == 0) & (topology.y == 0))
+            central_cell_indices = np.where(
+                (topology.x == 0) & (topology.y == 0))
             cell = central_cell_indices[0][random_number_gen.random_integers(0, len(central_cell_indices[0]) - 1,
                                                                              num_stas)]
         elif deterministic_cell:
@@ -1042,8 +1196,10 @@ class StationFactory(object):
         cell_x = topology.x[cell]
         cell_y = topology.y[cell]
 
-        x = x + cell_x + hexagon_radius * np.cos(topology.azimuth[cell] * np.pi / 180)
-        y = y + cell_y + hexagon_radius * np.sin(topology.azimuth[cell] * np.pi / 180)
+        x = x + cell_x + hexagon_radius * \
+            np.cos(topology.azimuth[cell] * np.pi / 180)
+        y = y + cell_y + hexagon_radius * \
+            np.sin(topology.azimuth[cell] * np.pi / 180)
 
         x = list(x)
         y = list(y)
@@ -1085,86 +1241,98 @@ class StationFactory(object):
         else:
             imt_base_stations.height = param.bs_height * np.ones(num_bs)
 
-        imt_base_stations.active = random_number_gen.rand(num_bs) < param.bs_load_probability
+        imt_base_stations.active = random_number_gen.rand(
+            num_bs) < param.bs_load_probability
 
-        """ HIBs Base Station Conducted Power
-                   ################################################################################
-                   3 Cell Simulation
-                   No modifications = bs_conducted_power
-                   ################################################################################
-                   7 Cell Simulation
+        # HIBs Base Station Conducted Power
+        #   3 Cell Simulation
+        #   No modifications = bs_conducted_power
+        #   ################################################################################
+        #   7 Cell Simulation
 
-                   1st Layer conducted power: Cell 0 has to power modification = bs_conducted_power
-                                              Cell 1 to 6 you can add back-off power (Default = 3dB)
-                   ################################################################################
-                   19 Cell Simulation
-                   No modifications = bs_conducted_power
-                   ################################################################################
-                   49 Cell Simulation (HIBS Cluster) - in development
-
-                   1st Layer conducted power: Cell 0, 14, 21, 28, 35, 42 has to power modification = bs_conducted_power
-                                              Other Cells - you can add back-off power (Default = 3dB)
-        """
+        #   1st Layer conducted power: Cell 0 has to power modification = bs_conducted_power
+        #                              Cell 1 to 6 you can add back-off power (Default = 3dB)
+        #   ################################################################################
+        #   19 Cell Simulation
+        #   No modifications = bs_conducted_power
+        #   ################################################################################
+        #   49 Cell Simulation (HIBS Cluster) - in development
+        #   1st Layer conducted power: Cell 0, 14, 21, 28, 35, 42 has to power modification =
+        #   bs_conducted_power
+        #                              Other Cells - you can add back-off power (Default = 3dB)
+        #
 
         if param.topology == 'HIBS':
             if num_bs == 1:
-                imt_base_stations.tx_power = param_h.bs_conducted_power * np.ones(num_bs)
+                imt_base_stations.tx_power = param_h.bs_conducted_power * \
+                    np.ones(num_bs)
 
             elif num_bs == 3:
-                imt_base_stations.tx_power = param_h.bs_conducted_power * np.ones(num_bs)
+                imt_base_stations.tx_power = param_h.bs_conducted_power * \
+                    np.ones(num_bs)
 
             elif num_bs == 7:
-                imt_base_stations.tx_power =     [param_h.bs_conducted_power,
-                                                  param_h.bs_conducted_power - bs_back_off_power,
-                                                  param_h.bs_conducted_power - bs_back_off_power,
-                                                  param_h.bs_conducted_power - bs_back_off_power,
-                                                  param_h.bs_conducted_power - bs_back_off_power,
-                                                  param_h.bs_conducted_power - bs_back_off_power,
-                                                  param_h.bs_conducted_power - bs_back_off_power]
-
-            elif num_bs == 19:
-                imt_base_stations.tx_power = param_h.bs_conducted_power * np.ones(num_bs)
-
-            elif num_bs == 49:
-                imt_base_stations.tx_power = 7*[param_h.bs_conducted_power,
+                imt_base_stations.tx_power = [param_h.bs_conducted_power,
                                               param_h.bs_conducted_power - bs_back_off_power,
                                               param_h.bs_conducted_power - bs_back_off_power,
                                               param_h.bs_conducted_power - bs_back_off_power,
                                               param_h.bs_conducted_power - bs_back_off_power,
                                               param_h.bs_conducted_power - bs_back_off_power,
                                               param_h.bs_conducted_power - bs_back_off_power]
+
+            elif num_bs == 19:
+                imt_base_stations.tx_power = param_h.bs_conducted_power * \
+                    np.ones(num_bs)
+
+            elif num_bs == 49:
+                imt_base_stations.tx_power = 7*[param_h.bs_conducted_power,
+                                                param_h.bs_conducted_power - bs_back_off_power,
+                                                param_h.bs_conducted_power - bs_back_off_power,
+                                                param_h.bs_conducted_power - bs_back_off_power,
+                                                param_h.bs_conducted_power - bs_back_off_power,
+                                                param_h.bs_conducted_power - bs_back_off_power,
+                                                param_h.bs_conducted_power - bs_back_off_power]
         else:
-            imt_base_stations.tx_power = param.bs_conducted_power * np.ones(num_bs)
+            imt_base_stations.tx_power = param.bs_conducted_power * \
+                np.ones(num_bs)
 
         #############################################################################
 
-        imt_base_stations.rx_power = dict([(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
-        imt_base_stations.rx_interference = dict([(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
-        imt_base_stations.ext_interference = dict([(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
-        imt_base_stations.total_interference = dict([(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
+        imt_base_stations.rx_power = dict(
+            [(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
+        imt_base_stations.rx_interference = dict(
+            [(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
+        imt_base_stations.ext_interference = dict(
+            [(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
+        imt_base_stations.total_interference = dict(
+            [(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
 
-        imt_base_stations.snr = dict([(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
-        imt_base_stations.sinr = dict([(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
-        imt_base_stations.sinr_ext = dict([(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
-        imt_base_stations.inr = dict([(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
+        imt_base_stations.snr = dict(
+            [(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
+        imt_base_stations.sinr = dict(
+            [(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
+        imt_base_stations.sinr_ext = dict(
+            [(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
+        imt_base_stations.inr = dict(
+            [(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
 
-        imt_base_stations.antenna = np.empty(num_bs, dtype=AntennaBeamformingImt)
+        imt_base_stations.antenna = np.empty(
+            num_bs, dtype=AntennaBeamformingImt)
 
         if param_ant.bs_antenna_type == 'BEAMFORMING':
-            """ HIBs Base Station Antenna Array modification for 7 Cell Simulation
-                            Configurate the antenna array number (row x colunn) per sector
-
-                            ###################################################################################
-                            For Cell 0 imt_base_stations.antenna[0]
-                            change: par.bs_tx_n_rows = 2
-                                    par.bs_tx_n_columns = 2
-                            ###################################################################################
-                            For other cells from 1 to 6
-                            change:
-                                    par.bs_tx_n_rows = 4
-                                    par.bs_tx_n_columns = 2
-                            ###################################################################################
-             """
+            # HIBs Base Station Antenna Array modification for 7 Cell Simulation
+            #   Configurate the antenna array number (row x colunn) per sector
+            #   ###################################################################################
+            #   For Cell 0 imt_base_stations.antenna[0]
+            #   change: par.bs_tx_n_rows = 2
+            #           par.bs_tx_n_columns = 2
+            #   ###################################################################################
+            #   For other cells from 1 to 6
+            #   change:
+            #           par.bs_tx_n_rows = 4
+            #           par.bs_tx_n_columns = 2
+            #   ###################################################################################
+            pass
 
         if param.topology == 'HIBS':
             if num_bs == 7:
@@ -1172,19 +1340,21 @@ class StationFactory(object):
                 par.bs_n_rows = 2
                 par.bs_n_columns = 2
                 par = par.get_antenna_parameters(StationType.IMT_BS)
-                imt_base_stations.antenna[0] = AntennaBeamformingImt(par, imt_base_stations.azimuth[0],
-                                                                     imt_base_stations.elevation[0])
+                imt_base_stations.antenna[0] = \
+                    AntennaBeamformingImt(par, imt_base_stations.azimuth[0],
+                                          imt_base_stations.elevation[0])
                 # For Cells from 1 to 6
                 par = param_ant
                 par.bs_n_rows = 4
                 par.bs_n_columns = 2
                 par = par.get_antenna_parameters(StationType.IMT_BS)
                 for i in range(1, num_bs):
-                    imt_base_stations.antenna[i] = AntennaBeamformingImt(par, imt_base_stations.azimuth[i],
-                                                                         imt_base_stations.elevation[i])
-            """ HIBs Base Station Antenna Array modification for 49 Cell Simulation (Cluster - in development)
-                                        Configurate the antenna array number (row x colunn) per sector
-            """
+                    imt_base_stations.antenna[i] = \
+                        AntennaBeamformingImt(par, imt_base_stations.azimuth[i],
+                                              imt_base_stations.elevation[i])
+            # HIBs Base Station Antenna Array modification for 49 Cell Simulation
+            # (Cluster - in development)
+            # Configurate the antenna array number (row x colunn) per sector
             if num_bs == 49:
                 # Cell 0
                 par = param_ant
@@ -1196,11 +1366,11 @@ class StationFactory(object):
                 imt_base_stations.antenna[7] = AntennaBeamformingImt(par, imt_base_stations.azimuth[7],
                                                                      imt_base_stations.elevation[7])
                 imt_base_stations.antenna[14] = AntennaBeamformingImt(par, imt_base_stations.azimuth[14],
-                                                                     imt_base_stations.elevation[14])
+                                                                      imt_base_stations.elevation[14])
                 imt_base_stations.antenna[21] = AntennaBeamformingImt(par, imt_base_stations.azimuth[21],
                                                                       imt_base_stations.elevation[21])
                 imt_base_stations.antenna[28] = AntennaBeamformingImt(par, imt_base_stations.azimuth[28],
-                                                                     imt_base_stations.elevation[28])
+                                                                      imt_base_stations.elevation[28])
                 imt_base_stations.antenna[35] = AntennaBeamformingImt(par, imt_base_stations.azimuth[35],
                                                                       imt_base_stations.elevation[35])
                 imt_base_stations.antenna[42] = AntennaBeamformingImt(par, imt_base_stations.azimuth[42],
@@ -1210,7 +1380,7 @@ class StationFactory(object):
                 par.bs_n_rows = 4
                 par.bs_n_columns = 2
                 par = par.get_antenna_parameters(StationType.IMT_BS)
-                #for i in range(1, num_bs):
+                # for i in range(1, num_bs):
                 for i in range(1, 7):
                     imt_base_stations.antenna[i] = AntennaBeamformingImt(par, imt_base_stations.azimuth[i],
                                                                          imt_base_stations.elevation[i])
@@ -1242,7 +1412,8 @@ class StationFactory(object):
         # imt_base_stations.antenna = [AntennaOmni(0) for bs in range(num_bs)]
         imt_base_stations.bandwidth = param.bandwidth * np.ones(num_bs)
         imt_base_stations.center_freq = param.frequency * np.ones(num_bs)
-        imt_base_stations.noise_figure = param.bs_noise_figure * np.ones(num_bs)
+        imt_base_stations.noise_figure = param.bs_noise_figure * \
+            np.ones(num_bs)
         imt_base_stations.thermal_noise = -500 * np.ones(num_bs)
 
         if param.spectral_mask == "IMT-2020":
@@ -1281,12 +1452,11 @@ if __name__ == '__main__':
             self.elevation3 = '-90,-90,-90'
             self.azimuth7 = '0,0,60,120,180,240,300'
             self.elevation7 = '-90,-23,-23,-23,-23,-23,-23'
-            #self.elevation7 = '-90,-33,-33,-33,-33,-33,-33'
+            # self.elevation7 = '-90,-33,-33,-33,-33,-33,-33'
             self.azimuth19 = '0,15,30,45,75,90,105,135,150,165,195,210,225,255,270,285,315,330,345'
             self.elevation19 = '-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30'
             self.bs_conducted_power = 37
             self.bs_backoff_power = 3
-
 
     class ParamsAux(object):
         def __init__(self):
@@ -1306,7 +1476,6 @@ if __name__ == '__main__':
             self.spurious_emissions = -13
             self.bs_load_probability = 1
             self.bs_noise_figure = 5
-
 
     params = ParamsAux()
     ant_param = ParametersAntennaImt()
@@ -1371,10 +1540,13 @@ if __name__ == '__main__':
     ant_param.ue_multiplication_factor = 1
     ant_param.ue_minimum_array_gain = -200
 
-    imt_bs = factory.generate_imt_base_stations(params, param_hibs_teste, ant_param, topology, np.random.RandomState())
-    imt_ue = factory.generate_imt_ue(params, ant_param, topology, np.random.RandomState())
+    imt_bs = factory.generate_imt_base_stations(
+        params, param_hibs_teste, ant_param, topology, np.random.RandomState())
+    imt_ue = factory.generate_imt_ue(
+        params, ant_param, topology, np.random.RandomState())
 
-    fig = plt.figure(figsize=(8, 8), linewidth=2, facecolor='w', edgecolor='k')  # create a figure object
+    fig = plt.figure(figsize=(8, 8), linewidth=2, facecolor='w',
+                     edgecolor='k')  # create a figure object
     ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
 
     topology.plot(ax)
@@ -1384,7 +1556,8 @@ if __name__ == '__main__':
     plt.xlabel("x-coordinate [km]")
     plt.ylabel("y-coordinate [km]")
 
-    plt.plot(imt_ue.x, imt_ue.y, "o", label="HIBS User Equipments", color='red')
+    plt.plot(imt_ue.x, imt_ue.y, "o",
+             label="HIBS User Equipments", color='red')
     plt.legend()
 
     plt.tight_layout()

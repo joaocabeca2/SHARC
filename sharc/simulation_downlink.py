@@ -106,14 +106,12 @@ class SimulationDownlink(Simulation):
         # pwr_1 is the transmit power from bs_1 to ue_1, pwr_2 is the transmit
         # power from bs_1 to ue_2, etc
         bs_active = np.where(self.bs.active)[0]
-        """
-             For HIBS Topology
-             1 Sector : HIBs conducted power for all UEs
-             7 Sector : Cell 0 - HIBs conducted power
-                        Cell 1 to 6 - HIBs conducted power - backoffpower
-             19 Sector : HIBs conducted power
+        # For HIBS Topology
+        #   1 Sector : HIBs conducted power for all UEs
+        #   7 Sector : Cell 0 - HIBs conducted power
+        #       Cell 1 to 6 - HIBs conducted power - backoffpower
+        # 19 Sector : HIBs conducted power
 
-        """
         if self.parameters.imt.topology == 'HIBS':
             if self.parameters.hibs.num_sectors == 1:
                 for bs in bs_active:

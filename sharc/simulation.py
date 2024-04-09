@@ -207,7 +207,7 @@ class Simulation(ABC, Observable):
             station_b.station_type is StationType.IMT_UE and \
             self.parameters.imt.topology == "INDOOR":
             elevation_angles = np.transpose(station_b.get_elevation(station_a))
-        elif station_a.station_type is StationType.FSS_ES or \
+        elif station_a.station_type is StationType.FSS_ES and self.parameters.imt.topology == "HIBS" or \
             station_a.station_type is StationType.FS and self.parameters.imt.topology == "HIBS" or \
             station_a.station_type is StationType.RAS and self.parameters.imt.topology == "HIBS" or \
             station_a.station_type is StationType.ARNS and self.parameters.imt.topology == "HIBS" or \

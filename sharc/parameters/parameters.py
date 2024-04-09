@@ -256,6 +256,7 @@ class Parameters(object):
         self.fss_es.min_dist_to_bs          = config.getfloat("FSS_ES", "min_dist_to_bs")
         self.fss_es.max_dist_to_bs          = config.getfloat("FSS_ES", "max_dist_to_bs")
         self.fss_es.height                  = config.getfloat("FSS_ES", "height")
+        self.fss_es.altitude = self.fss_es.height
         self.fss_es.elevation_min           = config.getfloat("FSS_ES", "elevation_min")
         self.fss_es.elevation_max           = config.getfloat("FSS_ES", "elevation_max")
         self.fss_es.azimuth                 = config.get("FSS_ES", "azimuth")
