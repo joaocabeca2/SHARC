@@ -27,7 +27,7 @@ class SimulationTestHIBSRAS(unittest.TestCase):
 
         self.param.imt.topology = "HIBS"
         self.param.imt.wrap_around = False
-        self.param.imt.num_clusters = 1
+        self.param.imt.num_clusters = 0
         self.param.imt.intersite_distance = 173205
         self.param.imt.minimum_separation_distance_bs_ue = 0.5
         self.param.imt.interfered_with = False
@@ -92,6 +92,8 @@ class SimulationTestHIBSRAS(unittest.TestCase):
         self.param.antenna_imt.bs_element_vert_spacing = 0.5
         self.param.antenna_imt.bs_multiplication_factor = 12
         self.param.antenna_imt.bs_downtilt = -6
+        self.param.antenna_imt.bf_enable = "ON"
+        self.param.antenna_imt.bs_antenna_type = "BEAMFORMING"
 
         self.param.antenna_imt.ue_normalization_file = None
         self.param.antenna_imt.ue_normalization = False
@@ -108,8 +110,8 @@ class SimulationTestHIBSRAS(unittest.TestCase):
         self.param.antenna_imt.ue_element_vert_spacing = 0.5
         self.param.antenna_imt.ue_multiplication_factor = 12
 
-        self.param.hibs.num_sectors = 1
-        self.param.hibs.num_clusters = 1
+        self.param.hibs.num_sectors = 7
+        self.param.hibs.num_clusters = 0
         self.param.hibs.bs_height = 20000
         self.param.hibs.cell_radius = 100000
         self.param.hibs.intersite_distance = 173205
@@ -136,14 +138,18 @@ class SimulationTestHIBSRAS(unittest.TestCase):
         self.param.ras.diameter = 10
         self.param.ras.acs = 20
         self.param.ras.antenna_pattern = "OMNI"
+        self.param.ras.distribution_type = "UNIFORM"
+        self.param.ras.azimuth_distribution = "-180,180"
+        self.param.ras.elevation_distribution = "-0.2,0.9"
+        self.param.ras.altitude = self.param.ras.height
         self.param.ras.channel_model = "FSPL"
         self.param.ras.line_of_sight_prob = 1
+        self.param.ras.distribution_enable = "OFF"
         self.param.ras.BOLTZMANN_CONSTANT = 1.38064852e-23
         self.param.ras.EARTH_RADIUS = 6371000
         self.param.ras.SPEED_OF_LIGHT = 299792458
 
     def test_power_per_sector_hibs_system1(self):
-
         """
              Test TX Power of HIBS Base Station (1/3/7 Sector) - System 1
 
@@ -157,7 +163,8 @@ class SimulationTestHIBSRAS(unittest.TestCase):
         self.simulation.bs = StationFactory.generate_imt_base_stations(self.param.imt,
                                                                        self.param.hibs,
                                                                        self.param.antenna_imt,
-                                                                       self.simulation.topology, random_number_gen)
+                                                                       self.simulation.topology,
+                                                                       random_number_gen)
 
         if self.param.hibs.num_sectors == 1:
             npt.assert_equal(self.simulation.bs.tx_power, 37)
@@ -172,7 +179,6 @@ class SimulationTestHIBSRAS(unittest.TestCase):
                 npt.assert_equal(self.simulation.bs.tx_power[i], 34)
 
     def test_antenna_array_per_sector_hibs_system1(self):
-
         """
             Test the antenna array configuration of HIBS Base Station (1/3/7 Sector) - System 1
 
@@ -186,7 +192,8 @@ class SimulationTestHIBSRAS(unittest.TestCase):
         self.simulation.bs = StationFactory.generate_imt_base_stations(self.param.imt,
                                                                        self.param.hibs,
                                                                        self.param.antenna_imt,
-                                                                       self.simulation.topology, random_number_gen)
+                                                                       self.simulation.topology,
+                                                                       random_number_gen)
 
         num_bs = self.simulation.topology.num_base_stations
 
@@ -210,7 +217,6 @@ class SimulationTestHIBSRAS(unittest.TestCase):
                     npt.assert_equal(self.simulation.bs.antenna[i].n_cols, 2)
 
     def test_azimuth_elevation_hibs_system1(self):
-
         """
             Test the azimuth/elevation of HIBS Base Station (1/73/7 Sector) - System 1
 
@@ -224,7 +230,8 @@ class SimulationTestHIBSRAS(unittest.TestCase):
         self.simulation.bs = StationFactory.generate_imt_base_stations(self.param.imt,
                                                                        self.param.hibs,
                                                                        self.param.antenna_imt,
-                                                                       self.simulation.topology, random_number_gen)
+                                                                       self.simulation.topology, 
+                                                                       random_number_gen)
 
         num_bs = self.simulation.topology.num_base_stations
 
@@ -271,38 +278,49 @@ class SimulationTestHIBSRAS(unittest.TestCase):
         self.simulation.bs = StationFactory.generate_imt_base_stations(self.param.imt,
                                                                        self.param.hibs,
                                                                        self.param.antenna_imt,
-                                                                       self.simulation.topology, random_number_gen)
+                                                                       self.simulation.topology,
+                                                                       random_number_gen)
 
         self.simulation.ue = StationFactory.generate_imt_ue(self.param.imt,
                                                             self.param.antenna_imt,
                                                             self.simulation.topology,
                                                             random_number_gen)
 
-        self.simulation.propagation_imt = PropagationFactory.create_propagation(self.param.imt.channel_model,
-                                                                                self.param, random_number_gen)
-        self.simulation.propagation_system = PropagationFactory.create_propagation(self.param.ras.channel_model,
-                                                                                   self.param, random_number_gen)
+        self.simulation.propagation_imt = \
+            PropagationFactory.create_propagation(self.param.imt.channel_model,
+                                                  self.param, random_number_gen)
+        self.simulation.propagation_system = \
+            PropagationFactory.create_propagation(self.param.ras.channel_model,
+                                                  self.param, random_number_gen)
 
         self.simulation.connect_ue_to_bs()
         self.simulation.select_ue(random_number_gen)
-        #self.simulation.coupling_loss_imt = self.simulation.calculate_coupling_loss(self.simulation.bs,
-        #                                                                            self.simulation.ue,
-        #                                                                            self.simulation.propagation_imt)
+        # self.simulation.coupling_loss_imt = \
+        #     self.simulation.calculate_coupling_loss(self.simulation.bs,
+        #                                             self.simulation.ue,
+        #                                             self.simulation.propagation_imt)
         self.simulation.scheduler()
         self.simulation.power_control()
 
-
-        self.simulation.system = StationFactory.generate_ras_station(self.param.ras)
+        self.simulation.system = StationFactory.generate_ras_station(
+            self.param.ras)
 
         # now we evaluate interference from HIBS to RAS
         self.simulation.calculate_sinr()
         self.simulation.calculate_external_interference()
 
         print(f"Path Loss {self.simulation.imt_system_path_loss}")
-        print(f"Perda por acoplamento {self.simulation.coupling_loss_imt_system_adjacent}")
-        print(f"Valor de RX Interference {self.simulation.system.rx_interference}")
+        print(f"Perda por acoplamento {
+              self.simulation.coupling_loss_imt_system_adjacent}")
+        print(f"Valor de RX Interference {
+              self.simulation.system.rx_interference}")
         print(f"Valor de Ruido Térmico {self.simulation.system.thermal_noise}")
 
-        print(f"RX Interference - Ruido termico {self.simulation.system.rx_interference-self.simulation.system.thermal_noise}")
+        print(f"RX Interference - Ruido termico {
+              self.simulation.system.rx_interference-self.simulation.system.thermal_noise}")
         print(f"Valor de System INR {self.simulation.system.inr}")
         print(f"Valor de System PFD {self.simulation.system.pfd}")
+
+
+if __name__ == '__main__':
+    unittest.main()
