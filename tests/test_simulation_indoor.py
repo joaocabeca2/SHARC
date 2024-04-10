@@ -17,6 +17,7 @@ from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.station_factory import StationFactory
 from sharc.propagation.propagation_factory import PropagationFactory
 
+
 class SimulationIndoorTest(unittest.TestCase):
 
     def setUp(self):
@@ -74,8 +75,10 @@ class SimulationIndoorTest(unittest.TestCase):
 
         self.param.antenna_imt.adjacent_antenna_model = "SINGLE_ELEMENT"
         self.param.antenna_imt.bs_normalization = False
-        self.param.antenna_imt.bs_normalization_file = path.join('..','sharc','antenna','beamforming_normalization','bs_indoor_norm.npz')
-        self.param.antenna_imt.ue_normalization_file = path.join('..','sharc','antenna','beamforming_normalization','ue_norm.npz')
+        self.param.antenna_imt.bs_normalization_file = path.join(
+            '..', 'sharc', 'antenna', 'beamforming_normalization', 'bs_indoor_norm.npz')
+        self.param.antenna_imt.ue_normalization_file = path.join(
+            '..', 'sharc', 'antenna', 'beamforming_normalization', 'ue_norm.npz')
         self.param.antenna_imt.bs_element_pattern = "M2101"
         self.param.antenna_imt.bs_minimum_array_gain = -200
         self.param.antenna_imt.bs_element_max_g = 5
@@ -89,6 +92,8 @@ class SimulationIndoorTest(unittest.TestCase):
         self.param.antenna_imt.bs_element_vert_spacing = 0.5
         self.param.antenna_imt.bs_multiplication_factor = 12
         self.param.antenna_imt.bs_downtilt = 90
+        self.param.antenna_imt.bf_enable = "ON"
+        self.param.antenna_imt.bs_antenna_type = "BEAMFORMING"
 
         self.param.antenna_imt.ue_element_pattern = "M2101"
         self.param.antenna_imt.ue_normalization = False
@@ -115,6 +120,20 @@ class SimulationIndoorTest(unittest.TestCase):
         self.param.indoor.num_cells = 4
         self.param.indoor.num_floors = 1
 
+        self.param.hibs.num_sectors = 7
+        self.param.hibs.num_clusters = 0
+        self.param.hibs.bs_height = 20000
+        self.param.hibs.cell_radius = 100000
+        self.param.hibs.intersite_distance = 173205
+        self.param.hibs.azimuth3 = '60,180,300'
+        self.param.hibs.azimuth7 = '0,0,60,120,180,240,300'
+        self.param.hibs.azimuth19 = '0,15,30,45,75,90,105,135,150,165,195,210,225,255,270,285,315,330,345'
+        self.param.hibs.elevation3 = '-90,-90,-90'
+        self.param.hibs.elevation7 = '-90,-23,-23,-23,-23,-23,-23'
+        self.param.hibs.elevation19 = '-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30'
+        self.param.hibs.bs_conducted_power = 37
+        self.param.hibs.bs_backoff_power = 3
+
         self.param.fss_es.x = 135
         self.param.fss_es.y = 65
         self.param.fss_es.location = "FIXED"
@@ -135,7 +154,6 @@ class SimulationIndoorTest(unittest.TestCase):
         self.param.fss_es.BOLTZMANN_CONSTANT = 1.38064852e-23
         self.param.fss_es.EARTH_RADIUS = 6371000
 
-
     def test_simulation_fss_es(self):
         # Initialize stations
         self.param.general.system = "FSS_ES"
@@ -145,7 +163,8 @@ class SimulationIndoorTest(unittest.TestCase):
 
         random_number_gen = np.random.RandomState(101)
 
-        self.simulation.bs = generate_imt_base_stations(self.param.imt,
+        self.simulation.bs = StationFactory.generate_imt_base_stations(self.param.imt,
+                                                                       self.param.hibs,
                                                                        self.param.antenna_imt,
                                                                        self.simulation.topology,
                                                                        random_number_gen)
@@ -161,7 +180,7 @@ class SimulationIndoorTest(unittest.TestCase):
 
 #        print("Random position:")
 #        self.simulation.plot_scenario()
-        self.simulation.ue.x = np.array([0.0, 45.0, 75.0,120.0])
+        self.simulation.ue.x = np.array([0.0, 45.0, 75.0, 120.0])
         self.simulation.ue.y = np.array([0.0, 50.0,  0.0, 50.0])
 #        print("Forced position:")
 #        self.simulation.plot_scenario()
@@ -170,13 +189,14 @@ class SimulationIndoorTest(unittest.TestCase):
         self.simulation.connect_ue_to_bs()
         self.simulation.select_ue(random_number_gen)
         self.assertTrue(np.all(self.simulation.ue.active))
-        self.assertDictEqual(self.simulation.link,{0:[0],1:[1],2:[2],3:[3]})
+        self.assertDictEqual(self.simulation.link, {
+                             0: [0], 1: [1], 2: [2], 3: [3]})
 
         # Test BS-to-UE angles in the IMT coord system
         expected_azi = np.array([[-120.96,  39.80, -22.62,  13.39],
                                  [-150.95,  90.00, -39.81,  18.43],
                                  [-161.57, 140.19, -90.00,  29.06],
-                                 [-166.61, 157.38,-140.19,  59.03]])
+                                 [-166.61, 157.38, -140.19,  59.03]])
         npt.assert_allclose(self.simulation.bs_to_ue_phi,
                             expected_azi,
                             atol=1e-2)
@@ -189,51 +209,56 @@ class SimulationIndoorTest(unittest.TestCase):
                             atol=1e-2)
 
         # Test BS-to-UE angles in the local coord system
-        expected_loc = [(np.array([-86.57]),np.array([120.92])),
-                        (np.array([ 86.57]),np.array([ 90.00])),
-                        (np.array([-86.57]),np.array([ 90.00])),
-                        (np.array([ 86.57]),np.array([ 59.08]))]
-        expected_beam = [(-86.57,30.92),
-                         ( 86.57, 0.00),
+        expected_loc = [(np.array([-86.57]), np.array([120.92])),
+                        (np.array([86.57]), np.array([90.00])),
+                        (np.array([-86.57]), np.array([90.00])),
+                        (np.array([86.57]), np.array([59.08]))]
+        expected_beam = [(-86.57, 30.92),
+                         (86.57, 0.00),
                          (-86.57, 0.00),
-                         ( 86.57,-30.92)]
+                         (86.57, -30.92)]
         for k in range(self.simulation.bs.num_stations):
 
-            self.assertEqual(self.simulation.bs.antenna[k].azimuth,0.0)
-            self.assertEqual(self.simulation.bs.antenna[k].elevation,-90.0)
+            self.assertEqual(self.simulation.bs.antenna[k].azimuth, 0.0)
+            self.assertEqual(self.simulation.bs.antenna[k].elevation, -90.0)
 
-            lo_angles = self.simulation.bs.antenna[k].to_local_coord(expected_azi[k,k],
-                                                                  expected_ele[k,k])
-            npt.assert_array_almost_equal(lo_angles,expected_loc[k],decimal=2)
+            lo_angles = self.simulation.bs.antenna[k].to_local_coord(expected_azi[k, k],
+                                                                     expected_ele[k, k])
+            npt.assert_array_almost_equal(
+                lo_angles, expected_loc[k], decimal=2)
             npt.assert_array_almost_equal(self.simulation.bs.antenna[k].beams_list[0],
-                                          expected_beam[k],decimal=2)
+                                          expected_beam[k], decimal=2)
 
         # Test angle to ES in the IMT coord system
-        phi_es, theta_es = self.simulation.bs.get_pointing_vector_to(self.simulation.system)
-        expected_phi_es = np.array([[18.44],[23.96],[33.69],[53.13]])
-        npt.assert_array_almost_equal(phi_es,expected_phi_es,decimal=2)
-        expected_theta_es = np.array([[86.83],[85.94],[84.46],[82.03]])
-        npt.assert_array_almost_equal(theta_es,expected_theta_es,decimal=2)
+        phi_es, theta_es = self.simulation.bs.get_pointing_vector_to(
+            self.simulation.system)
+        expected_phi_es = np.array([[18.44], [23.96], [33.69], [53.13]])
+        npt.assert_array_almost_equal(phi_es, expected_phi_es, decimal=2)
+        expected_theta_es = np.array([[86.83], [85.94], [84.46], [82.03]])
+        npt.assert_array_almost_equal(theta_es, expected_theta_es, decimal=2)
 
         # Test angle to ES in the local coord system
-        expected_es_loc = [(np.array([99.92]),np.array([18.70])),
-                           (np.array([99.92]),np.array([24.28])),
-                           (np.array([99.92]),np.array([34.09])),
-                           (np.array([99.92]),np.array([53.54]))]
+        expected_es_loc = [(np.array([99.92]), np.array([18.70])),
+                           (np.array([99.92]), np.array([24.28])),
+                           (np.array([99.92]), np.array([34.09])),
+                           (np.array([99.92]), np.array([53.54]))]
         for k in range(self.simulation.bs.num_stations):
             lo_angles = self.simulation.bs.antenna[k].to_local_coord(expected_phi_es[k],
                                                                      expected_theta_es[k])
-            npt.assert_array_almost_equal(lo_angles,expected_es_loc[k],decimal=2)
+            npt.assert_array_almost_equal(
+                lo_angles, expected_es_loc[k], decimal=2)
 
         # Test gain to ES
         calc_gain = self.simulation.calculate_gains(self.simulation.bs,
-                                               self.simulation.system)
+                                                    self.simulation.system)
         for k in range(self.simulation.bs.num_stations):
             beam = 0
             exp_gain = self.simulation.bs.antenna[k]._beam_gain(expected_es_loc[k][0],
                                                                 expected_es_loc[k][1],
                                                                 beam)
-            self.assertAlmostEqual(np.ndarray.item(calc_gain[k]),np.ndarray.item(exp_gain),places=1)
+            self.assertAlmostEqual(np.ndarray.item(
+                calc_gain[k]), np.ndarray.item(exp_gain), places=1)
+
 
 if __name__ == '__main__':
     unittest.main()
