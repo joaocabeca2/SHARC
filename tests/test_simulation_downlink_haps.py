@@ -77,6 +77,22 @@ class SimulationDownlinkHapsTest(unittest.TestCase):
         self.param.imt.noise_temperature = 290
         self.param.imt.BOLTZMANN_CONSTANT = 1.38064852e-23
 
+        self.param.hibs.num_sectors = 7
+        self.param.hibs.num_clusters = 1
+        self.param.hibs.bs_height = 20000
+        self.param.hibs.cell_radius = 100000
+        self.param.hibs.intersite_distance = 155884
+        self.param.hibs.azimuth3 = '60,180,300'
+        self.param.hibs.azimuth7 = '0,0,60,120,180,240,300'
+        self.param.hibs.azimuth19 = '0,15,30,45,75,90,105,135,150,165,195,210,225,255,270,285,315,330,345'
+        self.param.hibs.elevation3 = '-90,-90,-90'
+        self.param.hibs.elevation7 = '-90,-23,-23,-23,-23,-23,-23'
+        self.param.hibs.elevation19 = '-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30'
+        self.param.hibs.bs_conducted_power = 37
+        # For 19 Sectors
+        # self.param.hibs.bs_conducted_power = 20.1
+        self.param.hibs.bs_backoff_power = 3
+
         self.param.antenna_imt.adjacent_antenna_model = "SINGLE_ELEMENT"
         self.param.antenna_imt.bs_normalization = False
         self.param.antenna_imt.bs_normalization_file = None
@@ -93,6 +109,8 @@ class SimulationDownlinkHapsTest(unittest.TestCase):
         self.param.antenna_imt.bs_element_vert_spacing = 1
         self.param.antenna_imt.bs_multiplication_factor = 12
         self.param.antenna_imt.bs_downtilt = 10
+        self.param.antenna_imt.bf_enable = "ON"
+        self.param.antenna_imt.bs_antenna_type = "BEAMFORMING"
 
         self.param.antenna_imt.ue_normalization_file = None
         self.param.antenna_imt.ue_normalization = False
@@ -146,7 +164,8 @@ class SimulationDownlinkHapsTest(unittest.TestCase):
         random_number_gen = np.random.RandomState()
 
 
-        self.simulation.bs = generate_imt_base_stations(self.param.imt,
+        self.simulation.bs = StationFactory.generate_imt_base_stations(self.param.imt,
+                                                                       self.param.hibs,
                                                                        self.param.antenna_imt,
                                                                        self.simulation.topology,
                                                                        random_number_gen)
