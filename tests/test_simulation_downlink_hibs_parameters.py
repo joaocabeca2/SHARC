@@ -106,9 +106,11 @@ class HIBSTestParameters(unittest.TestCase):
         self.param.antenna_imt.ue_element_horiz_spacing = 0.5
         self.param.antenna_imt.ue_element_vert_spacing = 0.5
         self.param.antenna_imt.ue_multiplication_factor = 12
+        self.param.antenna_imt.bf_enable = "ON"
+        self.param.antenna_imt.bs_antenna_type = "BEAMFORMING"
 
         self.param.hibs.num_sectors = 7
-        self.param.hibs.num_clusters = 1
+        self.param.hibs.num_clusters = 0
         self.param.hibs.bs_height = 20000
         self.param.hibs.cell_radius = 100000
         self.param.hibs.intersite_distance = 155884
@@ -158,7 +160,8 @@ class HIBSTestParameters(unittest.TestCase):
         self.simulation.bs = StationFactory.generate_imt_base_stations(self.param.imt,
                                                                        self.param.hibs,
                                                                        self.param.antenna_imt,
-                                                                       self.simulation.topology, random_number_gen)
+                                                                       self.simulation.topology, 
+                                                                       random_number_gen)
 
         if self.param.hibs.num_sectors == 1:
             npt.assert_equal(self.simulation.bs.tx_power, 37)
@@ -211,7 +214,8 @@ class HIBSTestParameters(unittest.TestCase):
         self.simulation.bs = StationFactory.generate_imt_base_stations(self.param.imt,
                                                                        self.param.hibs,
                                                                        self.param.antenna_imt,
-                                                                       self.simulation.topology, random_number_gen)
+                                                                       self.simulation.topology, 
+                                                                       random_number_gen)
 
         num_bs = self.simulation.topology.num_base_stations
 
@@ -348,3 +352,6 @@ class HIBSTestParameters(unittest.TestCase):
 
             for i in range(1, num_bs):
                 npt.assert_equal(self.simulation.bs.antenna[i].elevation, -30)
+
+if __name__ == '__main__':
+    unittest.main()
