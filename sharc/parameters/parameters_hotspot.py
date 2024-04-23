@@ -1,11 +1,28 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed May 17 15:47:05 2017
-
-@author: edgar
+Parameters definitions for Hotspot systems
 """
+from dataclasses import dataclass
+from sharc.parameters.parameters_base import ParametersBase
 
-class ParametersHotspot(object):
+@dataclass
+class ParametersHotspot(ParametersBase):
+    num_hotspots_per_cell: int = 1
+    max_dist_hotspot_ue: int = 100
+    min_dist_bs_hotspot: int = 0   
 
-    def __init__(self):
-        pass
+    def load_parameters_from_file(self, config_file: str):
+        """
+        Load the parameters from a file and run a sanity check.
+
+        Parameters
+        ----------
+        config_file : str
+            The path to the configuration file.
+
+        Raises
+        ------
+        ValueError
+            If a parameter is not valid.
+        """
+        super().load_parameters_from_file(config_file)
