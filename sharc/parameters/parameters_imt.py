@@ -8,6 +8,7 @@ from dataclasses import dataclass
 class ParametersImt:
     """Dataclass containing the IMT system parameters
     """
+    section_name: str = "IMT"
     topology: str = "MACROCELL"
     wrap_around: bool = False
     num_clusters: int = 1
@@ -37,11 +38,54 @@ class ParametersImt:
     ue_distribution_azimuth: str = "NORMAL"
     ue_tx_power_control: bool = True
     ue_p_o_pusch: float = -95
+    ue_alpha: float = 1
+    ue_p_cmax: float = 22
+    ue_power_dynamic_range: float = 63
+    ue_height: float = 1.5
+    ue_noise_figure: float = 10
+    ue_ohmic_loss: float = 3
+    ue_body_loss: float = 4
+    dl_attenuation_factor: float = 0.6
+    dl_sinr_min: float = -10
+    dl_sinr_max: float = 30
+    channel_model: str = "UMi"
+    los_adjustment_factor: float = 18
+    shadowing: bool = True
+    noise_temperature: float = 290
+    BOLTZMANN_CONSTANT: float = 1.38064852e-23
 
+    def load_parameters_from_file(self, config_file: str):
+        """Load the parameters from file an run a sanity check
 
+        Parameters
+        ----------
+        file_name : str
+            the path to the configuration file
 
+        Raises
+        ------
+        ValueError
+            if a parameter is not valid
+        """
+        config = configparser.ConfigParser()
+        config.read(config_file)
 
+        # Load all the parameters from the configuration file
+        attr_list = [a for a in dir(self) if not a.startswith('__') and not
+                     callable(getattr(self, a)) and not "section_name"]
+        for param in attr_list:
+            if isinstance(param, str):
+                setattr(self, param, config.get(self.section_name, param))
+            elif isinstance(param, int):
+                setattr(self, param, config.getint(self.section_name, param))
+            elif isinstance(param, float):
+                setattr(self, param, config.getfloat(self.section_name, param))
+            elif isinstance(param, bool):
+                setattr(self, param, config.getboolean(self.section_name, param))
 
-
-
-
+        # Now do the sanity check for some parameters    
+        if self.topology.upper() not in ["MACROCELL", "HOTSPOT", "SINGLE_BS", "INDOOR"]:
+            raise ValueError(f"ParamtersImt: Invalid topology name {self.topology}")
+        
+        if self.spectral_mask.upper() not in ["IMT-2020", "3GPP E-UTRA"]:
+            raise ValueError(f"ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}")
