@@ -24,6 +24,11 @@ class ParametersBase:
         config = configparser.ConfigParser()
         config.read(config_file)
 
+        if not self.section_name in config.sections():
+            print(f"ParameterBase: section {self.section_name} not in parameter file.\
+                  Only default parameters where loaded.")
+            return
+
         # Load all the parameters from the configuration file
         attr_list = [a for a in dir(self) if not a.startswith('__') and not
                      callable(getattr(self, a)) and not "section_name"]
