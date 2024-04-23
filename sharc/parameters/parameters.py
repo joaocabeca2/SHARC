@@ -5,6 +5,8 @@ Created on Wed Aug  9 19:35:52 2017
 @author: edgar
 """
 
+import sys
+import os
 import configparser
 
 from sharc.parameters.parameters_general import ParametersGeneral
@@ -44,24 +46,32 @@ class Parameters(object):
 
 
     def set_file_name(self, file_name: str):
+        """sets the configuration file name
+
+        Parameters
+        ----------
+        file_name : str
+            configuration file path
+        """
         self.file_name = file_name
 
 
     def read_params(self):
+        """Read the parameters from the config file
+        """
+        if not os.path.isfile(self.file_name):
+            err_msg = f"PARAMETER ERROR [{self.__class__.__name__}]: \
+                Could not find the configuration file {self.file_name}"
+            sys.stderr.write(err_msg)
+            sys.exit(1)
+
         config = configparser.ConfigParser()
         config.read(self.file_name)
 
         #######################################################################
         # GENERAL
         #######################################################################
-        self.general.num_snapshots   = config.getint("GENERAL", "num_snapshots")
-        self.general.imt_link        = config.get("GENERAL", "imt_link")
-        self.general.system          = config.get("GENERAL", "system")
-        self.general.enable_cochannel = config.getboolean("GENERAL", "enable_cochannel")
-        self.general.enable_adjacent_channel = config.getboolean("GENERAL", "enable_adjacent_channel")
-        self.general.seed            = config.getint("GENERAL", "seed")
-        self.general.overwrite_output = config.getboolean("GENERAL", "overwrite_output")
-
+        self.general.load_parameters_from_file(self.file_name)
 
         #######################################################################
         # IMT
