@@ -3,9 +3,10 @@ import configparser
 from dataclasses import dataclass
 
 from sharc.sharc_definitions import SHARC_IMPLEMENTED_SYSTEMS
+from sharc.parameters.parameters_base import ParametersBase
 
 @dataclass
-class ParametersGeneral:
+class ParametersGeneral(ParametersBase):
     """Dataclass containing the general parameters for the simulator
     """
     section_name: str = "GENERAL"
@@ -30,21 +31,13 @@ class ParametersGeneral:
         ValueError
             if a parameter is not valid
         """
-        config = configparser.ConfigParser()
-        config.read(config_file)
+        super().load_parameters_from_file(config_file)
 
-        self.num_snapshots = config.getint(self.section_name, "num_snapshots")
-        self.imt_link = config.get(self.section_name, "imt_link")
+        # Now do the sanity check for some parameters
         if self.imt_link not in ["DOWNLINK", "UPLINK"]:
             raise ValueError(f"ParametersGeneral: \
                              invalid value for parameter imt_link - {self.imt_link} \
                              Possible values are DOWNLINK and UPLINK")
-        self.system = config.get(self.section_name, "system")
+        
         if self.system not in SHARC_IMPLEMENTED_SYSTEMS:
             raise ValueError(f"Invalid system name {self.system}")
-        self.enable_adjacent_channel = config.getboolean(self.section_name,
-                                                         "enable_adjacent_channel")
-        self.enable_cochannel = config.getboolean(self.section_name,
-                                                         "enable_cochannel")
-        self.seed = config.getint(self.section_name, "seed")
-        self.overwrite_output = config.getboolean(self.section_name, "overwrite_output")
