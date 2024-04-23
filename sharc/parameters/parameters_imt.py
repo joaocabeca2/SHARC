@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """Parameters definitions for IMT systems
 """
-import configparser
 from dataclasses import dataclass
 
+from sharc.parameters.parameters_base import ParametersBase
+
 @dataclass
-class ParametersImt:
+class ParametersImt(ParametersBase):
     """Dataclass containing the IMT system parameters
     """
     section_name: str = "IMT"
@@ -67,25 +68,11 @@ class ParametersImt:
         ValueError
             if a parameter is not valid
         """
-        config = configparser.ConfigParser()
-        config.read(config_file)
+        super().load_parameters_from_file(config_file)
 
-        # Load all the parameters from the configuration file
-        attr_list = [a for a in dir(self) if not a.startswith('__') and not
-                     callable(getattr(self, a)) and not "section_name"]
-        for param in attr_list:
-            if isinstance(param, str):
-                setattr(self, param, config.get(self.section_name, param))
-            elif isinstance(param, int):
-                setattr(self, param, config.getint(self.section_name, param))
-            elif isinstance(param, float):
-                setattr(self, param, config.getfloat(self.section_name, param))
-            elif isinstance(param, bool):
-                setattr(self, param, config.getboolean(self.section_name, param))
-
-        # Now do the sanity check for some parameters    
+        # Now do the sanity check for some parameters
         if self.topology.upper() not in ["MACROCELL", "HOTSPOT", "SINGLE_BS", "INDOOR"]:
             raise ValueError(f"ParamtersImt: Invalid topology name {self.topology}")
-        
+     
         if self.spectral_mask.upper() not in ["IMT-2020", "3GPP E-UTRA"]:
             raise ValueError(f"ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}")
