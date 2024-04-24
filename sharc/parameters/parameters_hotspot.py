@@ -1,15 +1,20 @@
-# -*- coding: utf-8 -*-
-"""
-Parameters definitions for Hotspot systems
-"""
 from dataclasses import dataclass
 from sharc.parameters.parameters_base import ParametersBase
 
 @dataclass
 class ParametersHotspot(ParametersBase):
-    num_hotspots_per_cell: int = 1
-    max_dist_hotspot_ue: int = 100
-    min_dist_bs_hotspot: int = 0   
+    """
+    Parameters definitions for Hotspot systems.
+    """
+    # Number of hotspots per macro cell (sector).
+    num_hotspots_per_cell:int = 1
+
+    # Maximum 2D distance between hotspot and UE [m].
+    # This is the hotspot radius.
+    max_dist_hotspot_ue:float = 100
+
+    # Minimum 2D distance between macro cell base station and hotspot [m].
+    min_dist_bs_hotspot:float = 0
 
     def load_parameters_from_file(self, config_file: str):
         """
@@ -26,3 +31,13 @@ class ParametersHotspot(ParametersBase):
             If a parameter is not valid.
         """
         super().load_parameters_from_file(config_file)
+
+        # Implement sanity checks for non-negative values
+        if self.num_hotspots_per_cell < 0:
+            raise ValueError("num_hotspots_per_cell must be non-negative")
+
+        if self.max_dist_hotspot_ue < 0:
+            raise ValueError("max_dist_hotspot_ue must be non-negative")
+
+        if self.min_dist_bs_hotspot < 0:
+            raise ValueError("min_dist_bs_hotspot must be non-negative")
