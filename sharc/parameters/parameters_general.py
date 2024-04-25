@@ -35,8 +35,8 @@ class ParametersGeneral(ParametersBase):
         # Now do the sanity check for some parameters
         if self.imt_link not in ["DOWNLINK", "UPLINK"]:
             raise ValueError(f"ParametersGeneral: \
-                             invalid value for parameter imt_link - {self.imt_link} \
+                             Invalid value for parameter imt_link - {self.imt_link} \
                              Possible values are DOWNLINK and UPLINK")
-        
+       
         if self.system not in SHARC_IMPLEMENTED_SYSTEMS:
             raise ValueError(f"Invalid system name {self.system}")
