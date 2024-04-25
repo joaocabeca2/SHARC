@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from sharc.parameters.parameters_base import ParametersBase
-from constants import PhysicalConstants
 
 @dataclass
 class ParametersFs(ParametersBase):
     """
     Parameters definitions for fixed wireless service systems.
     """
+
+    section_name: str = "FS"
 
     # x-y coordinates [meters]
     x:float = 1000
@@ -49,10 +50,6 @@ class ParametersFs(ParametersBase):
     # Channel model, possible values are "FSPL" (free-space path loss),
     # "TerrestrialSimple" (FSPL + clutter loss)
     channel_model:str = "FSPL"
-
-    # Constants
-    BOLTZMANN_CONSTANT:PhysicalConstants = PhysicalConstants.BOLTZMANN_CONSTANT  # Boltzmann constant
-    EARTH_RADIUS:PhysicalConstants = PhysicalConstants.EARTH_RADIUS  # Earth radius in meters
 
     def load_parameters_from_file(self, config_file: str):
         """

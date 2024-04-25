@@ -9,6 +9,8 @@ class ParametersFssEs(ParametersBase):
     """Dataclass containing the Fixed Satellite Services - Earth Station
     parameters for the simulator
     """
+    section_name: str = "FSS_ES"
+    
     # type of FSS-ES location:
     # FIXED - position must be given
     # CELL - random within central cell
@@ -144,12 +146,15 @@ class ParametersFssEs(ParametersBase):
 
         if self.azimuth.isnumeric():
             self.azimuth = float(self.azimuth)
-        elif self.azimuth.upper() is not "RANDOM":
-            raise ValueError(f"ParametersFssEs: \
-                             Invalid value for parameter azimuth - {self.azimuth}. \
-                             Allowed values are \"RANDOM\" or a angle in degrees.")
+        elif self.azimuth.upper() != "RANDOM":
+            if self.azimuth.isnumeric():
+                self.azimuth = float(self.azimuth)
+            else:
+                raise ValueError(f"""ParametersFssEs:
+                                Invalid value for parameter azimuth - {self.azimuth}.
+                                Allowed values are \"RANDOM\" or a angle in degrees.""")
 
-        if self.polarization.lower() not in ["horizonal", "vertical"]:
+        if self.polarization.lower() not in ["horizontal", "vertical"]:
             raise ValueError(f"ParametersFssEss: \
                              Invalid value for parameter polarization - {self.polarization}. \
                              Allowed values are: \"horizontal\", \"vertical\"")

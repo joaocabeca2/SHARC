@@ -19,7 +19,6 @@ class AntennaSA509Test(unittest.TestCase):
         self.par.diameter = 10
         self.par.antenna_efficiency = 1
         self.par.frequency = 30000
-        self.par.SPEED_OF_LIGHT = 3e8
 
         self.antenna = AntennaSA509(self.par)
 

@@ -14,6 +14,7 @@ from sharc.simulation_downlink import SimulationDownlink
 from sharc.parameters.parameters import Parameters
 from sharc.station_factory import StationFactory
 from sharc.propagation.propagation_factory import PropagationFactory
+from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
 
 class SimulationDownlinkTvroTest(unittest.TestCase):
 
@@ -73,7 +74,6 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
         self.param.imt.line_of_sight_prob = 0.75 # probability of line-of-sight (not for FSPL)
         self.param.imt.shadowing = False
         self.param.imt.noise_temperature = 290
-        self.param.imt.BOLTZMANN_CONSTANT = 1.38064852e-23
 
         self.param.antenna_imt.adjacent_antenna_model = "BEAMFORMING"
         self.param.antenna_imt.bs_normalization = False
@@ -127,8 +127,6 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
         self.param.fss_es.antenna_envelope_gain = 0
         self.param.fss_es.channel_model = "FSPL"
         self.param.fss_es.line_of_sight_prob = 1
-        self.param.fss_es.BOLTZMANN_CONSTANT = 1.38064852e-23
-        self.param.fss_es.EARTH_RADIUS = 6371000
 
 
     def test_simulation_1bs_1ue_tvro(self):

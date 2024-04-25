@@ -15,6 +15,7 @@ from sharc.parameters.parameters import Parameters
 from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.station_factory import StationFactory
 from sharc.propagation.propagation_factory import PropagationFactory
+from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
 
 class SimulationDownlinkHapsTest(unittest.TestCase):
 
@@ -75,7 +76,6 @@ class SimulationDownlinkHapsTest(unittest.TestCase):
         self.param.imt.line_of_sight_prob = 0.75 # probability of line-of-sight (not for FSPL)
         self.param.imt.shadowing = False
         self.param.imt.noise_temperature = 290
-        self.param.imt.BOLTZMANN_CONSTANT = 1.38064852e-23
 
         self.param.antenna_imt.adjacent_antenna_model = "SINGLE_ELEMENT"
         self.param.antenna_imt.bs_normalization = False
@@ -125,10 +125,6 @@ class SimulationDownlinkHapsTest(unittest.TestCase):
         self.param.haps.season = "SUMMER"
         self.param.haps.channel_model = "FSPL"
         self.param.haps.antenna_l_n = -25
-        self.param.haps.BOLTZMANN_CONSTANT = 1.38064852e-23
-        self.param.haps.EARTH_RADIUS = 6371000
-
-
 
     def test_simulation_2bs_4ue_1haps(self):
         """

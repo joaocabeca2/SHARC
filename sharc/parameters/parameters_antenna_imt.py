@@ -20,6 +20,7 @@ class ParametersAntennaImt(ParametersBase):
     Defines the antenna model and related parameters to be used in compatibility
     studies between IMT and other services in adjacent bands.
     """
+    section_name:str = "IMT_ANTENNA"
     # Antenna model for adjacent band studies.
     adjacent_antenna_model:str = "SINGLE_ELEMENT"
 
@@ -41,7 +42,7 @@ class ParametersAntennaImt(ParametersBase):
 
     # Mechanical downtilt [degrees].
     bs_downtilt:float = 6
-    ue_downtilt:float = 6  # Assuming you need this attribute as well
+ #   ue_downtilt:float = 6  # Assuming you need this attribute as well
 
     # BS/UE maximum transmit/receive element gain [dBi].
     bs_element_max_g:float = 5

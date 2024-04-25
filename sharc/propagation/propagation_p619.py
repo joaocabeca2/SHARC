@@ -15,6 +15,7 @@ from sharc.propagation.propagation_building_entry_loss import PropagationBuildin
 from sharc.propagation.atmosphere import ReferenceAtmosphere
 from sharc.support.enumerations import StationType
 from sharc.propagation.scintillation import Scintillation
+from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
 
 
 class PropagationP619(Propagation):
@@ -63,7 +64,7 @@ class PropagationP619(Propagation):
 
         surf_water_vapour_density = kwargs.pop("surf_water_vapour_density", False)
 
-        earth_radius_km = sat_params.EARTH_RADIUS/1000
+        earth_radius_km = EARTH_RADIUS/1000
         a_acc = 0. # accumulated attenuation (in dB)
         h = sat_params.imt_altitude/1000 # ray altitude in km
         beta = (90-abs(apparent_elevation)) * np.pi / 180. # incidence angle

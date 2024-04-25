@@ -31,13 +31,18 @@ class ParametersBase:
 
         # Load all the parameters from the configuration file
         attr_list = [a for a in dir(self) if not a.startswith('__') and not
-                     callable(getattr(self, a)) and not "section_name"]
-        for param in attr_list:
-            if isinstance(param, str):
-                setattr(self, param, config.get(self.section_name, param))
-            elif isinstance(param, int):
-                setattr(self, param, config.getint(self.section_name, param))
-            elif isinstance(param, float):
-                setattr(self, param, config.getfloat(self.section_name, param))
-            elif isinstance(param, bool):
-                setattr(self, param, config.getboolean(self.section_name, param))
+                     callable(getattr(self, a)) and a != "section_name"]
+        
+        for attr_name in attr_list:
+            try:
+                attr_val = getattr(self, attr_name)
+                if isinstance(attr_val, str):
+                    setattr(self, attr_name, config.get(self.section_name, attr_name))
+                elif isinstance(attr_val, bool):
+                    setattr(self, attr_name, config.getboolean(self.section_name, attr_name))
+                elif isinstance(attr_val, float):
+                    setattr(self, attr_name, config.getfloat(self.section_name, attr_name))
+                elif isinstance(attr_val, int):
+                    setattr(self, attr_name, config.getint(self.section_name, attr_name))
+            except configparser.NoOptionError:
+                print(f"ParametersBase: WARNING configuration parameter {attr_name} not set in configuration file. Using default value {attr_val}")

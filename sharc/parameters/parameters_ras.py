@@ -9,6 +9,7 @@ class ParametersRas(ParametersBase):
     """
     Simulation parameters for Radio Astronomy Service
     """
+    section_name: str = "RAS"
     # x-y coordinates [m]
     x: float = 81000
     y: float = 0
@@ -93,7 +94,7 @@ class ParametersRas(ParametersBase):
             raise ValueError(f"ParametersRas: \
                              Invalid value for parameter antenna_pattern - {self.antenna_pattern}. \
                              Allowed values are: \"ITU-R SA.509\", \"OMNI\"")
-        if self.polarization.lower() not in ["horizonal", "vertical"]:
+        if self.polarization.lower() not in ["horizontal", "vertical"]:
             raise ValueError(f"ParametersRas: \
                              Invalid value for parameter polarization - {self.polarization}. \
                              Allowed values are: \"horizontal\", \"vertical\"")

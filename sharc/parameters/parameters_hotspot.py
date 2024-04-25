@@ -6,6 +6,7 @@ class ParametersHotspot(ParametersBase):
     """
     Parameters definitions for Hotspot systems.
     """
+    section_name: str = "HOTSPOT"
     # Number of hotspots per macro cell (sector).
     num_hotspots_per_cell:int = 1
 
