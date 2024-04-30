@@ -10,9 +10,9 @@ class ParametersHaps(ParametersBase):
     """
     section_name: str = "HAPS"
     # HAPS center frequency [MHz]
-    frequency: float = 27250
+    frequency: float = 27250.0
     # HAPS bandwidth [MHz]
-    bandwidth: float = 200
+    bandwidth: float = 200.0
     # HAPS peak antenna gain [dBi]
     antenna_gain: float = 28.1
     # EIRP spectral density [dBW/MHz]
@@ -20,12 +20,12 @@ class ParametersHaps(ParametersBase):
     # tx antenna power density [dBW/MHz]
     tx_power_density: float = eirp_density - antenna_gain - 60
     # HAPS altitude [m] and latitude [deg]
-    altitude: float = 20000
-    lat_deg: float = 0
+    altitude: float = 20000.0
+    lat_deg: float = 0.0
     # Elevation angle [deg]
-    elevation: float = 270
+    elevation: float = 270.0
     # Azimuth angle [deg]
-    azimuth: float = 0
+    azimuth: float = 0.0
     # Antenna pattern of the HAPS (airbone) station
     # Possible values: "ITU-R F.1891", "OMNI"
     antenna_pattern: str = "ITU-R F.1891"
@@ -34,13 +34,13 @@ class ParametersHaps(ParametersBase):
     #    latitude of IMT system (in degrees)
     #    difference between longitudes of IMT and satellite system
     #      (positive if space-station is to the East of earth-station)
-    imt_altitude: float = 0
-    imt_lat_deg: float = 0
-    imt_long_diff_deg: float = 0
+    imt_altitude: float = 0.0
+    imt_lat_deg: float = 0.0
+    imt_long_diff_deg: float = 0.0
     # Season of the year for the channel model
     season: str = "SUMMER"
     # Adjacent channel selectivity [dB]
-    acs: float = 30
+    acs: float = 30.0
     # Channel parameters
     # channel model, possible values are "FSPL" (free-space path loss),
     #                                    "SatelliteSimple" (FSPL + 4 + clutter loss)
@@ -48,7 +48,7 @@ class ParametersHaps(ParametersBase):
     channel_model: str = "P619"
     # Near side-lobe level (dB) relative to the peak gain required by the system
     # design, and has a maximum value of −25 dB
-    antenna_l_n: float = -25
+    antenna_l_n: float = -25.0
 
     def load_parameters_from_file(self, config_file: str):
         """Load the parameters from file an run a sanity check
@@ -76,7 +76,8 @@ class ParametersHaps(ParametersBase):
             raise ValueError(f"ParametersHaps: \
                              Invalid value for parameter season - {self.season}. \
                              Possible values are \"SUMMER\", \"WINTER\".")
-   
-        # post-loaded attributes
+        
+        # Post initialization
         # tx antenna power density [dBW/MHz]
         self.tx_power_density = self.eirp_density - self.antenna_gain - 60
+

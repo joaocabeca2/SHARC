@@ -45,4 +45,4 @@ class ParametersBase:
                 elif isinstance(attr_val, int):
                     setattr(self, attr_name, config.getint(self.section_name, attr_name))
             except configparser.NoOptionError:
-                print(f"ParametersBase: WARNING configuration parameter {attr_name} not set in configuration file. Using default value {attr_val}")
+                print(f"ParametersBase: NOTICE! Configuration parameter \"{self.section_name}.{attr_name}\" is not set in configuration file. Using default value {attr_val}")

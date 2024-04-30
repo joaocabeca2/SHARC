@@ -27,10 +27,10 @@ class ParametersIndoor(ParametersBase):
     num_imt_buildings: str = "ALL"
     
     # Street width (building separation) [m]
-    street_width: float = 30
+    street_width: float = 30.0
     
     # Intersite distance [m]
-    intersite_distance: float = 40
+    intersite_distance: float = 40.0
     
     # Number of cells per floor
     num_cells: int = 3
@@ -62,11 +62,14 @@ class ParametersIndoor(ParametersBase):
         super().load_parameters_from_file(config_file)
 
         # Now do the sanity check for some parameters
-        if self.basic_path_loss.upper() not in ["FSPL","INH_OFFICE"]:
+        if self.basic_path_loss.upper() not in ["FSPL", "INH_OFFICE"]:
             raise ValueError(f"ParamtersIndoor: Invalid topology name {self.basic_path_loss}")
         
-        if self.num_imt_buildings.upper() not in ["ALL"]:
-            raise ValueError(f"ParamtersIndoor: Invalid topology name {self.num_imt_buildings}")
+        if self.num_imt_buildings.upper() != "ALL":
+            if self.num_imt_buildings.isnumeric():
+                self.num_imt_buildings = int(self.num_imt_buildings)
+            else:
+                raise ValueError(f"ParamtersIndoor: Invalid topology name {self.num_imt_buildings}")
      
         if self.building_class.upper() not in ["TRADITIONAL" , "THERMALLY_EFFICIENT"]:
             raise ValueError(f"ParametersIndoor: Inavlid Spectral Mask Name {self.building_class}")

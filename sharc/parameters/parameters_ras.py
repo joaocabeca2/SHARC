@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
 
+from sharc.support.sharc_utils import is_float
 from sharc.parameters.parameters_base import ParametersBase
 
 
@@ -11,33 +12,33 @@ class ParametersRas(ParametersBase):
     """
     section_name: str = "RAS"
     # x-y coordinates [m]
-    x: float = 81000
-    y: float = 0
+    x: float = 81000.0
+    y: float = 0.0
     # antenna height [m]
-    height: float = 15
+    height: float = 15.0
     # Elevation angle [deg]
-    elevation: float = 45
+    elevation: float = 45.0
     # Azimuth angle [deg]
-    azimuth: float = -90
+    azimuth: float = -90.0
     # center frequency [MHz]
-    frequency: float = 43000
+    frequency: float = 43000.0
     # bandwidth [MHz]
-    bandwidth: float = 1000
+    bandwidth: float = 1000.0
     # Antenna noise temperature [K]
-    antenna_noise_temperature: float = 25
+    antenna_noise_temperature: float = 25.0
     # Receiver noise temperature [K]
-    receiver_noise_temperature: float = 65
+    receiver_noise_temperature: float = 65.0
     # adjacent channel selectivity (dB)
-    adjacent_ch_selectivity: float = 20
+    adjacent_ch_selectivity: float = 20.0
     # Antenna efficiency
-    antenna_efficiency: float = 1
+    antenna_efficiency: float = 1.0
     # Antenna pattern of the FSS Earth station
     # Possible values: "ITU-R SA.509", "OMNI"
     antenna_pattern: str = "ITU-R SA.509"
     # Antenna gain for "OMNI" pattern
-    antenna_gain: float = 0
+    antenna_gain: float = 0.0
     # Diameter of antenna [m]
-    diameter: float = 15
+    diameter: float = 15.0
     # Channel parameters
     # channel model, possible values are "FSPL" (free-space path loss),
     #                                    "TerrestrialSimple" (FSPL + clutter loss)
@@ -46,23 +47,23 @@ class ParametersRas(ParametersBase):
 
     # P452 parameters
     # Total air pressure in hPa
-    atmospheric_pressure: float = 935
+    atmospheric_pressure: float = 935.0
     # Temperature in Kelvin
-    air_temperature: float = 300
+    air_temperature: float = 300.0
     # Sea-level surface refractivity (use the map)
     N0: float = 352.58
     # Average radio-refractive (use the map)
     delta_N: float = 43.127
     # Percentage p. Float (0 to 100) or RANDOM
-    percentage_p: str = "0.2"
+    percentage_p: str = "RANDOM"
     # Distance over land from the transmit and receive antennas to the coast (km)
-    Dct: float = 70
+    Dct: float = 70.0
     # Distance over land from the transmit and receive antennas to the coast (km)
-    Dcr: float = 70
+    Dcr: float = 70.0
     # Effective height of interfering antenna (m)
-    Hte: float = 20
+    Hte: float = 20.0
     # Effective height of interfered-with antenna (m)
-    Hre: float = 3
+    Hre: float = 3.0
     # Latitude of transmitter
     tx_lat: float = -23.55028
     # Latitude of receiver
@@ -98,3 +99,9 @@ class ParametersRas(ParametersBase):
             raise ValueError(f"ParametersRas: \
                              Invalid value for parameter polarization - {self.polarization}. \
                              Allowed values are: \"horizontal\", \"vertical\"")
+        if is_float(self.percentage_p):
+            self.percentage_p = float(self.percentage_p)
+        elif self.percentage_p.upper() != "RANDOM":
+            raise ValueError(f"""ParametersRas:
+                            Invalid value for parameter percentage_p - {self.percentage_p}.
+                            Allowed values are \"RANDOM\" or a percentage ]0,1]""")

@@ -12,10 +12,10 @@ class ParametersHotspot(ParametersBase):
 
     # Maximum 2D distance between hotspot and UE [m].
     # This is the hotspot radius.
-    max_dist_hotspot_ue:float = 100
+    max_dist_hotspot_ue:float = 100.0
 
     # Minimum 2D distance between macro cell base station and hotspot [m].
-    min_dist_bs_hotspot:float = 0
+    min_dist_bs_hotspot:float = 0.0
 
     def load_parameters_from_file(self, config_file: str):
         """

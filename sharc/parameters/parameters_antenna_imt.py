@@ -37,24 +37,24 @@ class ParametersAntennaImt(ParametersBase):
     ue_element_pattern:str = "M2101"
 
     # Minimum array gain for the beamforming antenna [dBi].
-    bs_minimum_array_gain:float = -200
-    ue_minimum_array_gain:float = -200
+    bs_minimum_array_gain:float = -200.0
+    ue_minimum_array_gain:float = -200.0
 
     # Mechanical downtilt [degrees].
-    bs_downtilt:float = 6
+    bs_downtilt:float = 6.0
  #   ue_downtilt:float = 6  # Assuming you need this attribute as well
 
     # BS/UE maximum transmit/receive element gain [dBi].
-    bs_element_max_g:float = 5
-    ue_element_max_g:float = 5
+    bs_element_max_g:float = 5.0
+    ue_element_max_g:float = 5.0
 
     # BS/UE horizontal 3dB beamwidth of single element [degrees].
-    bs_element_phi_3db:float = 65
-    ue_element_phi_3db:float = 90
+    bs_element_phi_3db:float = 65.0
+    ue_element_phi_3db:float = 90.0
 
     # BS/UE vertical 3dB beamwidth of single element [degrees].
-    bs_element_theta_3db:float = 65
-    ue_element_theta_3db:float = 90
+    bs_element_theta_3db:float = 65.0
+    ue_element_theta_3db:float = 90.0
 
     # BS/UE number of rows and columns in antenna array.
     bs_n_rows:int = 8
@@ -97,7 +97,7 @@ class ParametersAntennaImt(ParametersBase):
         # Additional sanity checks specific to antenna parameters can be implemented here
 
          # Sanity check for adjacent_antenna_model
-        if self.adjacent_antenna_model != "SINGLE_ELEMENT":
+        if self.adjacent_antenna_model not in  ["SINGLE_ELEMENT", "BEAMFORMING"]:
             raise ValueError("adjacent_antenna_model must be 'SINGLE_ELEMENT'")
 
         # Sanity checks for normalization flags
@@ -108,11 +108,11 @@ class ParametersAntennaImt(ParametersBase):
             raise ValueError("ue_normalization must be a boolean value")
 
         # Sanity checks for element patterns
-        if self.bs_element_pattern != "M2101":
-            raise ValueError("bs_element_pattern must be 'M2101'")
+        if self.bs_element_pattern.upper() not in ["M2101", "F1336", "FIXED"]:
+            raise ValueError(f"Invalid bs_element_pattern value {self.bs_element_pattern}")
 
-        if self.ue_element_pattern != "M2101":
-            raise ValueError("ue_element_pattern must be 'M2101'")
+        if self.ue_element_pattern.upper() not in ["M2101", "F1336", "FIXED"]:
+            raise ValueError(f"Invalid ue_element_pattern value {self.ue_element_pattern}")
 
     ###########################################################################
     # Named tuples which contain antenna types

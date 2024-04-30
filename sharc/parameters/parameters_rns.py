@@ -11,20 +11,20 @@ class ParametersRns(ParametersBase):
     """
     section_name: str = "RNS"
     # x-y coordinates [m]
-    x: float = 660
-    y: float = -370
+    x: float = 660.0
+    y: float = -370.0
     # altitude [m]
-    altitude: float = 150
+    altitude: float = 150.0
     # center frequency [MHz]
-    frequency: float = 32000
+    frequency: float = 32000.0
     # bandwidth [MHz]
-    bandwidth: float = 60
+    bandwidth: float = 60.0
     # System receive noise temperature [K]
-    noise_temperature: float = 1154
+    noise_temperature: float = 1154.0
     # Peak transmit power spectral density (clear sky) [dBW/Hz]
     tx_power_density: float = -70.79
     # antenna peak gain [dBi]
-    antenna_gain: float = 30
+    antenna_gain: float = 30.0
     # Antenna pattern of the fixed wireless service
     # Possible values: "ITU-R M.1466", "OMNI"
     antenna_pattern: str = "ITU-R M.1466"
@@ -39,10 +39,10 @@ class ParametersRns(ParametersBase):
     #    latitude of IMT system (in degrees)
     #    difference between longitudes of IMT and satellite system
     #      (positive if space-station is to the East of earth-station)
-    imt_altitude: float = 0
-    imt_lat_deg: float = 0
+    imt_altitude: float = 0.0
+    imt_lat_deg: float = 0.0
     # Adjacent channel selectivity [dB]
-    acs: float = 30
+    acs: float = 30.0
 
     def load_parameters_from_file(self, config_file: str):
         """Load the parameters from file an run a sanity check

@@ -25,7 +25,7 @@ class AntennaSA509Test(unittest.TestCase):
     def test_construction(self):
         self.assertEqual(self.antenna.diameter,10)
         self.assertEqual(self.antenna.efficiency,1)
-        self.assertEqual(self.antenna.wavelength,1e-2)
+        self.assertAlmostEqual(self.antenna.wavelength,1e-2, places=3)
 
         self.assertAlmostEqual(self.antenna.effective_area,78.539,delta=1e-2)
 

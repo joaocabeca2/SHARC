@@ -10,29 +10,29 @@ class ParametersFs(ParametersBase):
     section_name: str = "FS"
 
     # x-y coordinates [meters]
-    x:float = 1000
-    y:float = 0
+    x:float = 1000.0
+    y:float = 0.0
 
     # Antenna height [meters]
-    height:float = 15
+    height:float = 15.0
 
     # Elevation angle [degrees]
-    elevation:float = -10
+    elevation:float = -10.0
 
     # Azimuth angle [degrees]
-    azimuth:float = 180
+    azimuth:float = 180.0
 
     # Center frequency [MHz]
-    frequency:float = 27250
+    frequency:float = 27250.0
 
     # Bandwidth [MHz]
-    bandwidth:float = 112
+    bandwidth:float = 112.0
 
     # System receive noise temperature [Kelvin]
-    noise_temperature:float = 290
+    noise_temperature:float = 290.0
 
     # Adjacent channel selectivity [dB]
-    adjacent_ch_selectivity:float = 20
+    adjacent_ch_selectivity:float = 20.0
 
     # Peak transmit power spectral density (clear sky) [dBW/Hz]
     tx_power_density:float = -68.3

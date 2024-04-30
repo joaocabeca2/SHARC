@@ -10,23 +10,23 @@ class ParametersFssSs(ParametersBase):
     """
     section_name: str = "FSS_SS"
     # satellite center frequency [MHz]
-    frequency: float = 43000
+    frequency: float = 43000.0
     # satellite bandwidth [MHz]
-    bandwidth: float = 200
+    bandwidth: float = 200.0
     # Peak transmit power spectral density (clear sky) [dBW/Hz]
-    tx_power_density: float = -5
+    tx_power_density: float = -5.0
     # satellite altitude [m]
-    altitude: float = 35780000
+    altitude: float = 35780000.0
     # satellite latitude [deg]
-    lat_deg: float = 0
+    lat_deg: float = 0.0
     # Elevation angle [deg]
-    elevation: float = 270
+    elevation: float = 270.0
     # Azimuth angle [deg]
-    azimuth: float = 0
+    azimuth: float = 0.0
     # System receive noise temperature [K]
-    noise_temperature: float = 950
+    noise_temperature: float = 950.0
     # Adjacent channel selectivity (dB)
-    adjacent_ch_selectivity: float = 0
+    adjacent_ch_selectivity: float = 0.0
     # Satellite peak receive antenna gain [dBi]
     antenna_gain: float = 46.6
     # Antenna pattern of the FSS space station
@@ -37,9 +37,9 @@ class ParametersFssSs(ParametersBase):
     #    latitude of IMT system (in degrees)
     #    difference between longitudes of IMT and satellite system
     #      (positive if space-station is to the East of earth-station)
-    imt_altitude: float = 0
-    imt_lat_deg: float = 0
-    imt_long_diff_deg: float = 0
+    imt_altitude: float = 0.0
+    imt_lat_deg: float = 0.0
+    imt_long_diff_deg: float = 0.0
     # Season of the year used by the channel model.
     season: str = "SUMMER"
     # Channel parameters
@@ -49,7 +49,7 @@ class ParametersFssSs(ParametersBase):
     channel_model: str = "P619"
     # The required near-in-side-lobe level (dB) relative to peak gain
     # according to ITU-R S.672-4
-    antenna_l_s: float = -20
+    antenna_l_s: float = -20.0
     # 3 dB beamwidth angle (3 dB below maximum gain) [degrees]
     antenna_3_dB: float = 0.65
 

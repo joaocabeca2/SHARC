@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
 
+from sharc.support.sharc_utils import is_float
 from sharc.parameters.parameters_base import ParametersBase
 
 
@@ -19,38 +20,38 @@ class ParametersFssEs(ParametersBase):
     #                between min_dist_to_bs and max_dist_to_bs
     location: str = "UNIFORM_DIST"
     # x-y coordinates [m] (only if FIXED location is chosen)
-    x: float = 10000
-    y: float = 0
+    x: float = 10000.0
+    y: float = 0.0
     # minimum distance from BSs [m]
-    min_dist_to_bs: float = 10
+    min_dist_to_bs: float = 10.0
     # maximum distance from centre BSs [m] (only if UNIFORM_DIST is chosen)
-    max_dist_to_bs: float = 10
+    max_dist_to_bs: float = 10.0
     # antenna height [m]
-    height: float = 6
+    height: float = 6.0
     # Elevation angle [deg], minimum and maximum, values
-    elevation_min: float = 48
-    elevation_max: float = 80
+    elevation_min: float = 48.0
+    elevation_max: float = 80.0
     # Azimuth angle [deg]
     # either a specific angle or string 'RANDOM'
-    azimuth: str = "RANDOM"
+    azimuth: str = "0.2"
     # center frequency [MHz]
-    frequency: float = 43000
+    frequency: float = 43000.0
     # bandwidth [MHz]
-    bandwidth: float = 6
+    bandwidth: float = 6.0
     # adjacent channel selectivity (dB)
-    adjacent_ch_selectivity: float = 0
+    adjacent_ch_selectivity: float = 0.0
     # Peak transmit power spectral density (clear sky) [dBW/Hz]
     tx_power_density: float = -68.3
     # System receive noise temperature [K]
-    noise_temperature: float = 950
+    noise_temperature: float = 950.0
     # antenna peak gain [dBi]
-    antenna_gain: float = 0
+    antenna_gain: float = 0.0
     # Antenna pattern of the FSS Earth station
     # Possible values: "ITU-R S.1855", "ITU-R S.465", "ITU-R S.580", "OMNI",
     #                  "Modified ITU-R S.465"
     antenna_pattern: str = "Modified ITU-R S.465"
     # Antenna envelope gain (dBi) - only relevant for "Modified ITU-R S.465" model
-    antenna_envelope_gain: float = 0
+    antenna_envelope_gain: float = 0.0
     # Diameter of the antenna [m]
     diameter: float = 1.8
     # Channel parameters
@@ -64,9 +65,9 @@ class ParametersFssEs(ParametersBase):
 
     # P452 parameters
     # Total air pressure in hPa
-    atmospheric_pressure: float = 935
+    atmospheric_pressure: float = 935.0
     # Temperature in Kelvin
-    air_temperature: float = 300
+    air_temperature: float = 300.0
     # Sea-level surface refractivity (use the map)
     N0: float = 352.58
     # Average radio-refractive (use the map)
@@ -74,13 +75,13 @@ class ParametersFssEs(ParametersBase):
     # Percentage p. Float (0 to 100) or RANDOM
     percentage_p: str = "0.2"
     # Distance over land from the transmit and receive antennas to the coast (km)
-    Dct: float = 70
+    Dct: float = 70.0
     # Distance over land from the transmit and receive antennas to the coast (km)
-    Dcr: float = 70
+    Dcr: float = 70.0
     # Effective height of interfering antenna (m)
-    Hte: float = 20
+    Hte: float = 20.0
     # Effective height of interfered-with antenna (m)
-    Hre: float = 3
+    Hre: float = 3.0
     # Latitude of transmitter
     tx_lat: float = -23.55028
     # Latitude of receiver
@@ -144,7 +145,7 @@ class ParametersFssEs(ParametersBase):
                              \"ITU-R S.1855\", \"ITU-R S.465\", \"ITU-R S.580\", \"OMNI\", \
                              \"Modified ITU-R S.465\"")
 
-        if self.azimuth.isnumeric():
+        if is_float(self.azimuth):
             self.azimuth = float(self.azimuth)
         elif self.azimuth.upper() != "RANDOM":
             if self.azimuth.isnumeric():
@@ -153,6 +154,13 @@ class ParametersFssEs(ParametersBase):
                 raise ValueError(f"""ParametersFssEs:
                                 Invalid value for parameter azimuth - {self.azimuth}.
                                 Allowed values are \"RANDOM\" or a angle in degrees.""")
+
+        if is_float(self.percentage_p):
+            self.percentage_p = float(self.percentage_p)
+        elif self.percentage_p.upper() != "RANDOM":
+            raise ValueError(f"""ParametersFssEs:
+                            Invalid value for parameter azimuth - {self.percentage_p}.
+                            Allowed values are \"RANDOM\" or a percentage ]0,1]""")
 
         if self.polarization.lower() not in ["horizontal", "vertical"]:
             raise ValueError(f"ParametersFssEss: \
