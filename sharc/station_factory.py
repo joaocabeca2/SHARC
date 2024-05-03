@@ -409,6 +409,7 @@ class StationFactory(object):
     def generate_fss_space_station(param: ParametersFssSs):
         fss_space_station = StationManager(1)
         fss_space_station.station_type = StationType.FSS_SS
+        fss_space_station.is_space_station = True
 
         # now we set the coordinates according to
         # ITU-R P619-1, Attachment A
@@ -577,6 +578,7 @@ class StationFactory(object):
         num_haps = 1
         haps = StationManager(num_haps)
         haps.station_type = StationType.HAPS
+        haps.is_space_station = True
 
 #        d = intersite_distance
 #        h = (d/3)*math.sqrt(3)/2
@@ -616,6 +618,7 @@ class StationFactory(object):
         num_rns = 1
         rns = StationManager(num_rns)
         rns.station_type = StationType.RNS
+        rns.is_space_station = True
 
         rns.x = np.array([param.x])
         rns.y = np.array([param.y])
@@ -682,6 +685,7 @@ class StationFactory(object):
     def generate_eess_passive_sensor(param: ParametersEessPassive):
         eess_passive_sensor = StationManager(1)
         eess_passive_sensor.station_type = StationType.EESS_PASSIVE
+        eess_passive_sensor.is_space_station = True
 
         # incidence angle according to Rec. ITU-R RS.1861-0
         incidence_angle = math.degrees(math.asin(
