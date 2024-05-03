@@ -20,6 +20,7 @@ class PropagationSatSimple(Propagation):
 
     def __init__(self, random_number_gen: np.random.RandomState):
         super().__init__(random_number_gen)
+        self.is_earth_space_model = True
         self.clutter = PropagationClutterLoss(random_number_gen)
         self.free_space = PropagationFreeSpace(random_number_gen)
         self.building_entry = PropagationBuildingEntryLoss(self.random_number_gen)
