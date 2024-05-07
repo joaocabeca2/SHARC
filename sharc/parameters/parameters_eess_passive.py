@@ -48,6 +48,17 @@ class ParametersEessPassive(ParametersBase):
     earth_station_long_diff_deg: float = 0.0
     season:str = "SUMMER"
 
+    ###########Creates a statistical distribution of nadir angle###############
+    ##############following variables nadir_angle_distribution#################
+    # if distribution_enable = ON, nadir_angle will vary statistically#########
+    # if distribution_enable = OFF, nadir_angle follow nadir_angle variable ###
+    # distribution_type = UNIFORM
+    # UNIFORM = UNIFORM distribution in nadir_angle
+    # 			- nadir_angle_distribution = initial nadir angle, final nadir angle
+    distribution_enable:bool =  False
+    distribution_type:str = "UNIFORM"
+    nadir_angle_distribution: tuple = (18.5, 49.3)
+
     def load_parameters_from_file(self, config_file: str):
         """
         Load the parameters from a file and run a sanity check.
@@ -68,7 +79,9 @@ class ParametersEessPassive(ParametersBase):
         if not (0 <= self.antenna_efficiency or self.antenna_efficiency <= 1):
             raise ValueError("antenna_efficiency must be between 0 and 1")
 
-        if self.antenna_pattern not in ["ITU-R RS.1813", "ITU-R RS.1861 9a", "ITU-R RS.1861 9b", "ITU-R RS.1861 9c", "OMNI"]:
+        if self.antenna_pattern not in ["ITU-R RS.1813", "ITU-R RS.1861 9a",
+                                        "ITU-R RS.1861 9b", "ITU-R RS.1861 9c", 
+                                        "ITU-R RS.2043", "OMNI"]:
             raise ValueError(f"Invalid antenna_pattern: {self.antenna_pattern}")
 
         # Check channel model
