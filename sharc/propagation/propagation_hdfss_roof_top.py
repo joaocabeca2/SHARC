@@ -8,6 +8,7 @@ Created on Mon Jul 30 17:28:47 2018
 import numpy as np
 import sys
 from shapely.geometry import LineString, Polygon, Point
+from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
 
 from sharc.parameters.parameters_fss_es import ParametersFssEs
 from sharc.propagation.propagation import Propagation
@@ -47,7 +48,7 @@ class PropagationHDFSSRoofTop(Propagation):
         self.propagation_p1411 = PropagationP1411(random_number_gen)
         self.building_entry = PropagationBuildingEntryLoss(self.random_number_gen)
         
-        self.SPEED_OF_LIGHT = 299792458.0
+        self.SPEED_OF_LIGHT = SPEED_OF_LIGHT
         
     def get_loss(self, *args, **kwargs) -> np.array:
         """
