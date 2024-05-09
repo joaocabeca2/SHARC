@@ -310,11 +310,8 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.arns.maximum_csc2_angle ,40.0)
         self.assertEqual(self.parameters.arns.highbeam_csc2, 0.0)
         self.assertEqual(self.parameters.arns.element_space, 0.4)
-        self.assertEqual(self.parameters.arns.number_elements, 31.0)
-        self.assertEqual(self.parameters.arns.channel_model, "P619")
-        self.assertEqual(self.parameters.arns.imt_altitude, 21.1)
-        self.assertEqual(self.parameters.arns.imt_lat_deg, -22.9)
-        self.assertEqual(self.parameters.arns.season, "WINTER")
+        self.assertEqual(self.parameters.arns.number_elements, 31)
+        self.assertEqual(self.parameters.arns.channel_model, "FSPL")
 
 if __name__ == '__main__':
     unittest.main()

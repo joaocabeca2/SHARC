@@ -70,21 +70,12 @@ class ParametersArns(ParametersBase):
     highbeam_csc2: float = 0.0
     ############## Phased Array Antenna Pattern parameters ####################
     element_space: float = 0.5
-    number_elements: float = 30.0
+    number_elements: int = 30
     ###########################################################################
     # Channel parameters
     # channel model, possible values are "FSPL" (free-space path loss),
-    #                                    "SatelliteSimple" (FSPL + 4 dB + clutter loss)
-    #                                    "P619"
-    channel_model: str = "P619"
-    ###########################################################################
-    # Relevant IMT parameters which apply for ITU-R P.619
-    #    altitude of IMT system (in meters)
-    #    latitude of IMT system (in degrees)
-    #    season of the year: "SUMMER", "WINTER"
-    imt_altitude: float = 20.0
-    imt_lat_deg: float = -22.9
-    season: str = "SUMMER"
+    #                                    "TerrestrialSimple" (FSPL + clutter loss)
+    channel_model: str = "FSPL"
 
     def load_parameters_from_file(self, config_file: str):
         """Load the parameters from file an run a sanity check
@@ -109,8 +100,3 @@ class ParametersArns(ParametersBase):
             raise ValueError(f"ParametersArns: \
                              Invalid value for paramter channel_model = {self.channel_model}. \
                              Possible values are \"FSPL\", \"SatelliteSimple\", \"P619\".")
-
-        if self.season.upper() not in ["SUMMER", "WINTER"]:
-            raise ValueError(f"ParametersArns: \
-                             Invalid value for parameter season - {self.season}. \
-                             Possible values are \"SUMMER\", \"WINTER\".")
