@@ -286,5 +286,35 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.eess_passive.imt_lat_deg, -22.9)
         self.assertEqual(self.parameters.eess_passive.season, "WINTER")
 
+    def test_parameters_arns(self):
+        """Test ParametersArns
+        """
+        self.assertEqual(self.parameters.arns.x, 0.0)
+        self.assertEqual(self.parameters.arns.y, 0.0)
+        self.assertEqual(self.parameters.arns.height, 30.0)
+        self.assertEqual(self.parameters.arns.elevation, 0.0)
+        self.assertEqual(self.parameters.arns.azimuth, 0.0)
+        self.assertEqual(self.parameters.arns.distribution_enable, True)
+        self.assertEqual(self.parameters.arns.distribution_type, "UNIFORM")
+        self.assertEqual(self.parameters.arns.azimuth_distribution, (-180, 180))
+        self.assertEqual(self.parameters.arns.elevation_distribution, (-2, 60))
+        self.assertEqual(self.parameters.arns.frequency, 2700.5)
+        self.assertEqual(self.parameters.arns.bandwidth, 0.5)
+        self.assertEqual(self.parameters.arns.noise_temperature, 2013.552)
+        self.assertEqual(self.parameters.arns.tx_power_density, -70.79)
+        self.assertEqual(self.parameters.arns.acs, 30.0)
+        self.assertEqual(self.parameters.arns.antenna_pattern, "COSSECANT SQUARED")
+        self.assertEqual(self.parameters.arns.antenna_gain, 38.0)
+        self.assertEqual(self.parameters.arns.beamwidth_el, 2.0)
+        self.assertEqual(self.parameters.arns.beamwidth_az, 2.0)
+        self.assertEqual(self.parameters.arns.maximum_csc2_angle ,40.0)
+        self.assertEqual(self.parameters.arns.highbeam_csc2, 0.0)
+        self.assertEqual(self.parameters.arns.element_space, 0.4)
+        self.assertEqual(self.parameters.arns.number_elements, 31.0)
+        self.assertEqual(self.parameters.arns.channel_model, "P619")
+        self.assertEqual(self.parameters.arns.imt_altitude, 21.1)
+        self.assertEqual(self.parameters.arns.imt_lat_deg, -22.9)
+        self.assertEqual(self.parameters.arns.season, "WINTER")
+
 if __name__ == '__main__':
     unittest.main()
