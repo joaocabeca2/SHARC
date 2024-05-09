@@ -32,7 +32,7 @@ class ParametersBase:
         # Load all the parameters from the configuration file
         attr_list = [a for a in dir(self) if not a.startswith('__') and not
                      callable(getattr(self, a)) and a != "section_name"]
-        
+
         for attr_name in attr_list:
             try:
                 attr_val = getattr(self, attr_name)
@@ -44,5 +44,17 @@ class ParametersBase:
                     setattr(self, attr_name, config.getfloat(self.section_name, attr_name))
                 elif isinstance(attr_val, int):
                     setattr(self, attr_name, config.getint(self.section_name, attr_name))
+                elif isinstance(attr_val, tuple):
+                    # Check if the string defines a list of floats
+                    try:
+                        param_val = config.get(self.section_name, attr_name)
+                        tmp_val = list(map(float, param_val.split(",")))
+                        setattr(self, attr_name, tuple(tmp_val))
+                    except ValueError:
+                        # its a regular string. Let the specific class implementation
+                        # do the sanity check
+                        print(f"ParametersBase: could not convert string to tuple \"{self.section_name}.{attr_name}\"")
+                        exit()
+
             except configparser.NoOptionError:
                 print(f"ParametersBase: NOTICE! Configuration parameter \"{self.section_name}.{attr_name}\" is not set in configuration file. Using default value {attr_val}")
