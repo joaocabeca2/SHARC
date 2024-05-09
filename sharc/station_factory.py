@@ -21,6 +21,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_ntn import ParametersNTN
+from sharc.parameters.parameters_arns import ParametersArns
 from sharc.parameters.constants import EARTH_RADIUS , BOLTZMANN_CONSTANT
 from sharc.station_manager import StationManager
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
@@ -42,6 +43,10 @@ from sharc.antenna.antenna_s1528 import AntennaS1528
 from sharc.antenna.antenna_s1855 import AntennaS1855
 from sharc.antenna.antenna_sa509 import AntennaSA509
 from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
+from sharc.antenna.antenna_cossecant_squared import AntennaCossecantSquared
+from sharc.antenna.antenna_meteorological_radar_cosine_n1 import AntennaMeteorologicalRadarCosine1
+from sharc.antenna.antenna_metereological_radar_uniform import AntennaMeteorologicalRadarUniform
+from sharc.antenna.antenna_radar_phased_array import AntennaRadarPhasedArray
 from sharc.topology.topology import Topology
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
@@ -411,6 +416,8 @@ class StationFactory(object):
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         elif parameters.general.system == "RAS":
             return StationFactory.generate_ras_station(parameters.ras)
+        elif parameters.general.system == "ARNS":
+            return StationFactory.generate_arns(parameters.arns)
         else:
             sys.stderr.write("ERROR\nInvalid system: " + parameters.general.system)
             sys.exit(1)
@@ -813,6 +820,87 @@ class StationFactory(object):
         
 
         return x, y, theta, distance
+
+    @staticmethod
+    def generate_arns(param: ParametersArns):
+
+        num_arns = 1
+        arns = StationManager(num_arns)
+        arns.station_type = StationType.ARNS
+        arns.x = np.array([param.x])
+        arns.y = np.array([param.y])
+        arns.height = np.array([param.height])
+
+        if (param.antenna_pattern == "PHASED ARRAY"):
+            positions = [-180, -90, 0, 90]
+            arns.azimuth = np.array([np.random.choice(positions)])
+            arns.elevation = np.array([param.elevation])
+            param.beamsteeringangle_az = np.random.uniform(-45, 45)
+            # param.beamsteeringangle_el = np.random.normal(-20,85)
+            param.beamsteeringangle_el = np.random.uniform(-2.5, 2.5)
+            # print(param.beamsteeringangle_az)
+            # print(param.beamsteeringangle_el)
+
+        else:
+            if (param.distribution_enable == "ON"):
+                if (param.distribution_type == "UNIFORM"):
+                    if (type(param.azimuth_distribution)) != list:
+                        aux_azimuth = param.azimuth_distribution.split(',')
+                        param.azimuth_distribution = [
+                            float(i) for i in aux_azimuth]
+                        aux_elevation = param.elevation_distribution.split(',')
+                        param.elevation_distribution = [
+                            float(i) for i in aux_elevation]
+                    param.azimuth = np.random.uniform(
+                        param.azimuth_distribution[0], param.azimuth_distribution[1])
+                    param.elevation = np.random.uniform(
+                        param.elevation_distribution[0], param.elevation_distribution[1])
+                    arns.azimuth = np.array([param.azimuth])
+                    arns.elevation = np.array([param.elevation])
+                elif (param.distribution_type == "UNIFORM_NORMAL"):
+                    if (type(param.azimuth_distribution)) != list:
+                        aux_azimuth = param.azimuth_distribution.split(',')
+                        param.azimuth_distribution = [
+                            float(i) for i in aux_azimuth]
+                        aux_elevation = param.elevation_distribution.split(',')
+                        param.elevation_distribution = [
+                            float(i) for i in aux_elevation]
+                    param.azimuth = np.random.uniform(
+                        param.azimuth_distribution[0], param.azimuth_distribution[1])
+                    param.elevation = np.random.normal(
+                        param.elevation_distribution[0], param.elevation_distribution[1])
+                    arns.azimuth = np.array([param.azimuth])
+                    arns.elevation = np.array([param.elevation])
+            else:
+                arns.azimuth = np.array([param.azimuth])
+                arns.elevation = np.array([param.elevation])
+
+        # print(arns.azimuth)
+        # print(arns.elevation)
+
+        arns.active = np.ones(num_arns, dtype=bool)
+
+        if param.antenna_pattern == "OMNI":
+            arns.antenna = np.array([AntennaOmni(param.antenna_gain)])
+        elif param.antenna_pattern == "COSSECANT SQUARED":
+            arns.antenna = np.array([AntennaCossecantSquared(param)])
+        elif param.antenna_pattern == "UNIFORM":
+            arns.antenna = np.array([AntennaMeteorologicalRadarUniform(param)])
+        elif param.antenna_pattern == "COSINE":
+            arns.antenna = np.array([AntennaMeteorologicalRadarCosine1(param)])
+        elif param.antenna_pattern == "PHASED ARRAY":
+            arns.antenna = np.array([AntennaRadarPhasedArray(param)])
+        else:
+            sys.stderr.write(
+                "ERROR\nInvalid RNS antenna pattern: " + param.antenna_pattern)
+            sys.exit(1)
+
+        arns.bandwidth = np.array([param.bandwidth])
+        arns.noise_temperature = param.noise_temperature
+        arns.thermal_noise = -500
+        arns.total_interference = -500
+        arns.rx_interference = -500
+        return arns
 
 
 if __name__ == '__main__':

@@ -39,3 +39,5 @@ class StationType(Enum):
     RNS    = 7  # Radionavigation service
     RAS    = 8  # Radio Astronomy Service
     EESS_PASSIVE = 9 # EESS passive sensor
+    ARNS = 10 # Aeronautical Radionavigation Service
+    STATION_TYPE_MAX = 11
