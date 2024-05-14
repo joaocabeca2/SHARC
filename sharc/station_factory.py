@@ -707,7 +707,7 @@ class StationFactory(object):
                 incidence_angle = math.degrees(math.asin(math.sin(math.radians(param.nadir_angle)) *
                                                          (1 + (param.altitude / EARTH_RADIUS))))
                 # distance to field of view centre according to Rec. ITU-R RS.1861-0
-                distance = param.EARTH_RADIUS * \
+                distance = EARTH_RADIUS * \
                            math.sin(math.radians(incidence_angle - param.nadir_angle)) / \
                            math.sin(math.radians(param.nadir_angle))
         else:
