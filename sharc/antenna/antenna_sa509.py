@@ -7,6 +7,7 @@ Created on Thu Nov 16 17:34:11 2017
 
 from sharc.antenna.antenna import Antenna
 from sharc.parameters.parameters_ras import ParametersRas
+from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
 
 import numpy as np
 
@@ -21,7 +22,7 @@ class AntennaSA509(Antenna):
         # Set basic attributes
         self.diameter = param.diameter
         self.efficiency = param.antenna_efficiency
-        self.wavelength = param.SPEED_OF_LIGHT/(param.frequency*1e6)
+        self.wavelength = SPEED_OF_LIGHT/(param.frequency*1e6)
 
         # Effective area
         self.effective_area = self.efficiency*(np.pi*self.diameter**2)/4
@@ -68,7 +69,6 @@ if __name__ == '__main__':
     par.diameter = 1
     par.antenna_efficiency = 1
     par.frequency = 43000
-    par.SPEED_OF_LIGHT = 3e8
 
     antenna1 = AntennaSA509(par)
     par.diameter = 7
