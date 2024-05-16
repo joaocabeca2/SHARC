@@ -12,7 +12,7 @@ class TopologyNTN(Topology):
 
     # Define allowed configurations for validation purposes
     ALLOWED_NUM_CLUSTERS = [0, 1]  # Supported cluster configurations
-    ALLOWED_NUM_SECTORS = [1, 3, 7, 19]  # Supported sector configurations
+    ALLOWED_NUM_SECTORS = [1, 3, 7]  # Supported sector configurations
 
     def __init__(self, intersite_distance: float, cell_radius: int, bs_height: float, num_clusters: int, azimuth_ntn: np.array, elevation_ntn: np.array):
         """
@@ -28,7 +28,7 @@ class TopologyNTN(Topology):
         """
         # Validate the number of clusters and sectors to ensure they are allowed
         if num_clusters not in self.ALLOWED_NUM_CLUSTERS:
-            raise ValueError(f"Invalid number of clusters ({num_cluster}). Allowed values are {self.ALLOWED_NUM_CLUSTERS}.")
+            raise ValueError(f"Invalid number of clusters ({num_clusters}). Allowed values are {self.ALLOWED_NUM_CLUSTERS}.")
 
         if len(azimuth_ntn) not in self.ALLOWED_NUM_SECTORS:
             raise ValueError(f"Number of sectors ({len(azimuth_ntn)}) not allowed. Allowed values are {self.ALLOWED_NUM_SECTORS}.")
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     cell_radius = 100000  # meters
     intersite_distance = cell_radius * np.sqrt(3)  # meters
     bs_height = 20000  # meters
-    num_clusters = 1  # number of clusters
+    num_clusters = 0  # number of clusters
 
     # Three Sectors
 
@@ -188,8 +188,7 @@ if __name__ == '__main__':
     azimuth_ntn = np.array([0,0,60,120,180,240,300])
     elevation_ntn = np.array([-90,-23,-23,-23,-23,-23,-23])
 
-    #azimuth_ntn = np.array([0,15,30,45,75,90,105,135,150,165,195,210,225,255,270,285,315,330,345])
-    #elevation_ntn = np.array([30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30,-30])
+
 
 
 
