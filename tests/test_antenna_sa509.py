@@ -19,14 +19,13 @@ class AntennaSA509Test(unittest.TestCase):
         self.par.diameter = 10
         self.par.antenna_efficiency = 1
         self.par.frequency = 30000
-        self.par.SPEED_OF_LIGHT = 3e8
 
         self.antenna = AntennaSA509(self.par)
 
     def test_construction(self):
         self.assertEqual(self.antenna.diameter,10)
         self.assertEqual(self.antenna.efficiency,1)
-        self.assertEqual(self.antenna.wavelength,1e-2)
+        self.assertAlmostEqual(self.antenna.wavelength,1e-2, places=3)
 
         self.assertAlmostEqual(self.antenna.effective_area,78.539,delta=1e-2)
 

@@ -12,6 +12,7 @@ from sharc.simulation import Simulation
 from sharc.parameters.parameters import Parameters
 from sharc.station_factory import StationFactory
 from sharc.support.enumerations import StationType
+from sharc.parameters.constants import BOLTZMANN_CONSTANT
 
 from sharc.propagation.propagation_factory import PropagationFactory
 
@@ -128,7 +129,7 @@ class SimulationUplink(Simulation):
             # calculate N
             # thermal noise in dBm
             self.bs.thermal_noise[bs] = \
-                10*np.log10(self.parameters.imt.BOLTZMANN_CONSTANT*self.parameters.imt.noise_temperature*1e3) + \
+                10*np.log10(BOLTZMANN_CONSTANT*self.parameters.imt.noise_temperature*1e3) + \
                 10*np.log10(self.bs.bandwidth[bs] * 1e6) + \
                 self.bs.noise_figure[bs]
 
@@ -223,9 +224,9 @@ class SimulationUplink(Simulation):
         self.system.rx_interference = 10*np.log10(rx_interference)
         # calculate N
         self.system.thermal_noise = \
-            10*np.log10(self.param_system.BOLTZMANN_CONSTANT *
-                        self.system.noise_temperature*1e3) + \
-            10*math.log10(self.param_system.bandwidth * 1e6)
+            10*np.log10(BOLTZMANN_CONSTANT* \
+                          self.system.noise_temperature*1e3) + \
+                          10*math.log10(self.param_system.bandwidth * 1e6)
 
         # calculate INR at the system
         self.system.inr = np.array(

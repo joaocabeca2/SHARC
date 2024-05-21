@@ -44,6 +44,8 @@ from sharc.topology.topology import Topology
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 
+from sharc.parameters.constants import SPEED_OF_LIGHT, EARTH_RADIUS
+
 
 class StationFactory(object):
 
@@ -415,8 +417,8 @@ class StationFactory(object):
         # ITU-R P619-1, Attachment A
 
         # calculate distances to the centre of the Earth
-        dist_sat_centre_earth_km = (param.EARTH_RADIUS + param.altitude)/1000
-        dist_imt_centre_earth_km = (param.EARTH_RADIUS + param.imt_altitude)/1000
+        dist_sat_centre_earth_km = (EARTH_RADIUS + param.altitude)/1000
+        dist_imt_centre_earth_km = (EARTH_RADIUS + param.imt_altitude)/1000
 
         # calculate Cartesian coordinates of satellite, with origin at centre of the Earth
         sat_lat_rad = param.lat_deg * np.pi / 180.
@@ -667,7 +669,7 @@ class StationFactory(object):
 
         if param.antenna_pattern == "OMNI":
             ras_station.antenna = np.array([AntennaOmni(param.antenna_gain)])
-            ras_station.antenna[0].effective_area = param.SPEED_OF_LIGHT**2/(4*np.pi*(param.frequency*1e6)**2)
+            ras_station.antenna[0].effective_area = SPEED_OF_LIGHT**2/(4*np.pi*(param.frequency*1e6)**2)
         elif param.antenna_pattern == "ITU-R SA.509":
             ras_station.antenna = np.array([AntennaSA509(param)])
         else:
@@ -689,10 +691,10 @@ class StationFactory(object):
 
         # incidence angle according to Rec. ITU-R RS.1861-0
         incidence_angle = math.degrees(math.asin(
-                math.sin(math.radians(param.nadir_angle))*(1 + (param.altitude/param.EARTH_RADIUS))))
+                math.sin(math.radians(param.nadir_angle))*(1 + (param.altitude/EARTH_RADIUS))))
 
         # distance to field of view centre according to Rec. ITU-R RS.1861-0
-        distance = param.EARTH_RADIUS * \
+        distance = EARTH_RADIUS * \
                     math.sin(math.radians(incidence_angle - param.nadir_angle)) / \
                     math.sin(math.radians(param.nadir_angle))
 

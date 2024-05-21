@@ -12,6 +12,7 @@ from sharc.simulation import Simulation
 from sharc.parameters.parameters import Parameters
 from sharc.station_factory import StationFactory
 from sharc.support.enumerations import StationType
+from sharc.parameters.constants import BOLTZMANN_CONSTANT
 
 from sharc.propagation.propagation_factory import PropagationFactory
 
@@ -125,7 +126,7 @@ class SimulationDownlink(Simulation):
 
         # Thermal noise in dBm
         self.ue.thermal_noise = \
-            10*math.log10(self.parameters.imt.BOLTZMANN_CONSTANT*self.parameters.imt.noise_temperature*1e3) + \
+            10*math.log10(BOLTZMANN_CONSTANT*self.parameters.imt.noise_temperature*1e3) + \
             10*np.log10(self.ue.bandwidth * 1e6) + \
             self.ue.noise_figure
 
@@ -220,7 +221,7 @@ class SimulationDownlink(Simulation):
         self.system.rx_interference = 10*np.log10(rx_interference)
         # calculate N
         self.system.thermal_noise = \
-            10*math.log10(self.param_system.BOLTZMANN_CONSTANT *
+            10*math.log10(BOLTZMANN_CONSTANT* \
                           self.system.noise_temperature*1e3) + \
             10*math.log10(self.param_system.bandwidth * 1e6)
 

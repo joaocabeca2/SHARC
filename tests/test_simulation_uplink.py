@@ -16,7 +16,7 @@ from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 from sharc.station_factory import StationFactory
 from sharc.propagation.propagation_factory import PropagationFactory
 from sharc.support.enumerations import StationType
-
+from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
 
 class SimulationUplinkTest(unittest.TestCase):
 
@@ -78,8 +78,7 @@ class SimulationUplinkTest(unittest.TestCase):
         self.param.imt.line_of_sight_prob = 0.75
         self.param.imt.shadowing = False
         self.param.imt.noise_temperature = 290
-        self.param.imt.BOLTZMANN_CONSTANT = 1.38064852e-23
-
+        
         self.param.antenna_imt.adjacent_antenna_model = "SINGLE_ELEMENT"
         self.param.antenna_imt.bs_normalization = False
         self.param.antenna_imt.bs_element_pattern = "M2101"
@@ -132,8 +131,6 @@ class SimulationUplinkTest(unittest.TestCase):
         self.param.fss_ss.time_ratio = 0.5
         self.param.fss_ss.antenna_l_s = -20
         self.param.fss_ss.acs = 0
-        self.param.fss_ss.BOLTZMANN_CONSTANT = 1.38064852e-23
-        self.param.fss_ss.EARTH_RADIUS = 6371000
 
         self.param.fss_es.x = -5000
         self.param.fss_es.y = 0
@@ -151,8 +148,6 @@ class SimulationUplinkTest(unittest.TestCase):
         self.param.fss_es.channel_model = "FSPL"
         self.param.fss_es.line_of_sight_prob = 1
         self.param.fss_es.acs = 0
-        self.param.fss_es.BOLTZMANN_CONSTANT = 1.38064852e-23
-        self.param.fss_es.EARTH_RADIUS = 6371000
 
         self.param.ras.x = -5000
         self.param.ras.y = 0
@@ -173,6 +168,7 @@ class SimulationUplinkTest(unittest.TestCase):
         self.param.ras.BOLTZMANN_CONSTANT = 1.38064852e-23
         self.param.ras.EARTH_RADIUS = 6371000
         self.param.ras.SPEED_OF_LIGHT = 299792458
+
 
     def test_simulation_2bs_4ue_ss(self):
         self.param.general.system = "FSS_SS"
