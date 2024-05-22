@@ -189,9 +189,6 @@ if __name__ == '__main__':
     elevation_ntn = np.array([-90,-23,-23,-23,-23,-23,-23])
 
 
-
-
-
     ntn_topology = TopologyNTN(intersite_distance, cell_radius, bs_height, num_clusters, azimuth_ntn, elevation_ntn)
     ntn_topology.calculate_coordinates()  # Calculate the site coordinates
 
