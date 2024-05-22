@@ -21,6 +21,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_imt_mobile_station import ParametersImtMobileStation
+from sharc.parameters.constants import EARTH_RADIUS , BOLTZMANN_CONSTANT
 from sharc.station_manager import StationManager
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
 from sharc.antenna.antenna import Antenna
@@ -807,8 +808,8 @@ class StationFactory(object):
         if param.channel_model == "P619":
             # Coordinates according to ITU-R P619-1, Attachment A
             # Calculate distances to the center of the Earth
-            dist_ntn_centre_earth_km = (param.EARTH_RADIUS + param.altitude) / 1000
-            dist_system_centre_earth_km = (param.EARTH_RADIUS + param.system_altitude) / 1000
+            dist_ntn_centre_earth_km = (EARTH_RADIUS + param.altitude) / 1000
+            dist_system_centre_earth_km = (EARTH_RADIUS + param.system_altitude) / 1000
 
             # Calculate Cartesian coordinates of satellite, with origin at center of the Earth
             sat_lat_rad = param.hibs_lat_deg * np.pi / 180.
@@ -853,7 +854,7 @@ class StationFactory(object):
 
         imt_mobile_station.bandwidth = np.array([param.bandwidth])
         imt_mobile_station.noise_temperature = param.noise_temperature
-        imt_mobile_station.thermal_noise = -500
+        imt_mobile_station.thermal_noise = -500   #
         imt_mobile_station.total_interference = -500
         imt_mobile_station.rx_interference = -500
 
