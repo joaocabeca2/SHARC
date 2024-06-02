@@ -71,7 +71,7 @@ class ParametersImt(ParametersBase):
         super().load_parameters_from_file(config_file)
 
         # Now do the sanity check for some parameters
-        if self.topology.upper() not in ["MACROCELL", "HOTSPOT", "SINGLE_BS", "INDOOR"]:
+        if self.topology.upper() not in ["MACROCELL", "HOTSPOT", "SINGLE_BS", "INDOOR", "NTN"]:
             raise ValueError(f"ParamtersImt: Invalid topology name {self.topology}")
  
         if self.spectral_mask.upper() not in ["IMT-2020", "3GPP E-UTRA"]:

@@ -21,6 +21,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_imt_mobile_station import ParametersImtMobileStation
+from sharc.parameters.parameters_ntn import ParametersNTN
 from sharc.parameters.constants import EARTH_RADIUS , BOLTZMANN_CONSTANT
 from sharc.station_manager import StationManager
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
@@ -60,7 +61,11 @@ class StationFactory(object):
         num_bs = topology.num_base_stations
         imt_base_stations = StationManager(num_bs)
         imt_base_stations.station_type = StationType.IMT_BS
-        # now we set the coordinates
+        if param.section_name == "NTN":
+
+            imt_base_stations.x = topology.space_station_x
+            imt_base_stations.y = topology.space_station_y
+
         imt_base_stations.x = topology.x
         imt_base_stations.y = topology.y
         imt_base_stations.azimuth = topology.azimuth
@@ -159,7 +164,8 @@ class StationFactory(object):
                                                                                deterministic_cell=True)
             psi = np.degrees(np.arctan((param.bs_height - param.ue_height) / distance))
 
-            imt_ue.azimuth = (azimuth + theta + np.pi/2)
+
+            imt_ue.azimuth = (azimuth + theta + np.pi/2)  
             imt_ue.elevation = elevation + psi
 
 
@@ -790,11 +796,16 @@ class StationFactory(object):
         y = list(y)
 
         # calculate UE azimuth wrt serving BS
-        theta = np.arctan2(y - cell_y, x - cell_x)
+        if topology.is_space_station == False:
+            theta = np.arctan2(y - cell_y, x - cell_x)
 
-        # calculate elevation angle
-        # psi is the vertical angle of the UE wrt the serving BS
-        distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2)
+            # calculate elevation angle
+            # psi is the vertical angle of the UE wrt the serving BS
+            distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2)
+        else:
+            theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
+            distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs_height)**2)
+        
 
         return x, y, theta, distance
     

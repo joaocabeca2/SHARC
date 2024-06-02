@@ -11,10 +11,10 @@ class TopologyNTN(Topology):
     """
 
     # Define allowed configurations for validation purposes
-    ALLOWED_NUM_CLUSTERS = [0, 1]  # Supported cluster configurations
+    
     ALLOWED_NUM_SECTORS = [1, 3, 7]  # Supported sector configurations
 
-    def __init__(self, intersite_distance: float, cell_radius: int, bs_height: float, num_clusters: int, azimuth_ntn: np.array, elevation_ntn: np.array):
+    def __init__(self, intersite_distance: float, cell_radius: int, bs_height: float,  azimuth_ntn: np.array, elevation_ntn: np.array):
         """
         Initializes the NTN topology with specific network settings.
 
@@ -22,13 +22,11 @@ class TopologyNTN(Topology):
         intersite_distance: Distance between adjacent sites in meters.
         cell_radius: Radius of the coverage area for each site in meters.
         bs_height: Altitude of the base station in meters.
-        num_cluster: Number of clusters in the configuration.
+      
         azimuth_ntn: Array of azimuth angles for each sector, defining the horizontal alignment.
         elevation_ntn: Array of elevation angles for each sector, defining the vertical alignment.
         """
-        # Validate the number of clusters and sectors to ensure they are allowed
-        if num_clusters not in self.ALLOWED_NUM_CLUSTERS:
-            raise ValueError(f"Invalid number of clusters ({num_clusters}). Allowed values are {self.ALLOWED_NUM_CLUSTERS}.")
+
 
         if len(azimuth_ntn) not in self.ALLOWED_NUM_SECTORS:
             raise ValueError(f"Number of sectors ({len(azimuth_ntn)}) not allowed. Allowed values are {self.ALLOWED_NUM_SECTORS}.")
@@ -38,33 +36,29 @@ class TopologyNTN(Topology):
 
         # Call to the superclass constructor to set common properties
         super().__init__(intersite_distance, cell_radius)
+        self.is_space_station = True
         self.bs_height = bs_height
-        self.num_clusters = num_clusters
-        self.azimuth_ntn = azimuth_ntn
-        self.elevation_ntn = elevation_ntn
+        self.azimuth = azimuth_ntn
+        self.elevation = elevation_ntn
+        self.space_station_x = None
+        self.space_station_y = None
         self.num_sectors = len(azimuth_ntn)  # Derive the number of sectors from the length of the azimuth array
 
-    def calculate_coordinates(self):
+    
+    def calculate_coordinates(self,random_number_gen=np.random.RandomState()):
         """
         Computes the coordinates of each site. This is where the actual layout calculation would be implemented.
         """
-        # Example: Adjust azimuth and elevation based on cluster configuration
-        self.azimuth   = np.kron(np.ones(7), self.azimuth_ntn)   if self.num_clusters == 1 else self.azimuth_ntn
-        self.elevation = np.kron(np.ones(7), self.elevation_ntn) if self.num_clusters == 1 else self.elevation_ntn
 
         d = self.intersite_distance
         h = self.cell_radius
 
-        # Set coordinates for a single cluster, potentially extending this for multiple clusters
-        x_central = np.array([0, d, -d, d/2, -d/2, d/2, -d/2])
-        y_central = np.array([0, 0, 0, ((d/np.sqrt(3)) + h/2), -((d/np.sqrt(3)) + h/2), -((d/np.sqrt(3)) + h/2), ((d/np.sqrt(3)) + h/2)])
+        # Set coordinates for a single cluster, potentially extending this for multiple clusters (Only for 7 beams)
+        self.x = np.array([0, d, -d, d/2, -d/2, d/2, -d/2])
+        self.y = np.array([0, 0, 0, ((d/np.sqrt(3)) + h/2), -((d/np.sqrt(3)) + h/2), -((d/np.sqrt(3)) + h/2), ((d/np.sqrt(3)) + h/2)])
 
-        # Apply coordinates to single or no cluster configuration
-        x = x_central if self.num_clusters == 1 else np.array([0])
-        y = y_central if self.num_clusters == 1 else np.array([0])
-
-        self.x = np.repeat(x, self.num_sectors)
-        self.y = np.repeat(y, self.num_sectors)
+        self.space_station_x = np.zeros(len(self.x))
+        self.space_station_y = np.zeros(len(self.y))
 
         # Update the number of base stations after setup
         self.num_base_stations = len(self.x)
@@ -104,25 +98,14 @@ class TopologyNTN(Topology):
                 angle = int(az - 30)
 
         # create the hexagon for 7 Sectors
-            elif self.num_clusters == 1:
-                if self.num_sectors == 7:
-                    x = x - self.intersite_distance / 2
-                    y = y - r / 2
-                    # y = y - self.intersite_distance
-                    angle = int(az - 30)
+            
+            if self.num_sectors == 7:
+                x = x - self.intersite_distance / 2
+                y = y - r / 2
+                # y = y - self.intersite_distance
+                angle = int(az - 30)
 
-            elif self.num_clusters == 0:
-                if self.num_sectors == 7:
-                    x = x - self.intersite_distance / np.sqrt(3)
-                    # y = y - r /2
-                    y = y
-                    angle = int(az - 60)
-
-                # create the dodecagon for 19 Sectors
-                elif self.num_sectors == 19:
-                    x = x
-                    y = y
-                    angle = int(az)
+            
 
             se = list([[x, y]])
 
@@ -177,7 +160,7 @@ if __name__ == '__main__':
     cell_radius = 100000  # meters
     intersite_distance = cell_radius * np.sqrt(3)  # meters
     bs_height = 20000  # meters
-    num_clusters = 0  # number of clusters
+    num_clusters = 1  # number of clusters
 
     # Three Sectors
 
@@ -189,7 +172,7 @@ if __name__ == '__main__':
     elevation_ntn = np.array([-90,-23,-23,-23,-23,-23,-23])
 
 
-    ntn_topology = TopologyNTN(intersite_distance, cell_radius, bs_height, num_clusters, azimuth_ntn, elevation_ntn)
+    ntn_topology = TopologyNTN(intersite_distance, cell_radius, bs_height, azimuth_ntn, elevation_ntn)
     ntn_topology.calculate_coordinates()  # Calculate the site coordinates
 
     fig, ax = plt.subplots()

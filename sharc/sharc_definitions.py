@@ -5,5 +5,5 @@ SHARC_IMPLEMENTED_SYSTEMS = [
     "FSS_ES", 
     "FS", 
     "RAS", 
-    "ARNS"
+    "ARNS",
 ]
