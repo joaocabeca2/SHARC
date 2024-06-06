@@ -49,6 +49,7 @@ class StationManager(object):
         self.center_freq = np.empty(n)
         self.spectral_mask = None
         self.station_type = StationType.NONE
+        self.is_space_station = False
         self.intersite_dist = 0.0
 
     def get_station_list(self, id=None) -> list:

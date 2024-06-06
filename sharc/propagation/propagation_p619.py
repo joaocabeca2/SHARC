@@ -29,6 +29,7 @@ class PropagationP619(Propagation):
     def __init__(self, random_number_gen: np.random.RandomState):
         super().__init__(random_number_gen)
 
+        self.is_earth_space_model = True
         self.clutter = PropagationClutterLoss(self.random_number_gen)
         self.free_space = PropagationFreeSpace(self.random_number_gen)
         self.building_entry = PropagationBuildingEntryLoss(self.random_number_gen)
