@@ -51,6 +51,20 @@ class ParametersImt(ParametersBase):
     dl_sinr_min: float = -10.0
     dl_sinr_max: float = 30.0
     channel_model: str = "UMi"
+    # Parameters for the P.619 propagation model
+    # For IMT NTN the model is used for calculating the coupling loss between
+    # the BS space station and the UEs on Earth's surface.
+    # For now, the NTN footprint is centered over the BS nadir point, therefore
+    # the paramters imt_lag_deg and imt_long_diff_deg SHALL be zero.
+    #    earth_station_alt_m - altitude of IMT system (in meters)
+    #    earth_station_lat_deg - latitude of IMT system (in degrees)
+    #    earth_station_long_diff_deg - difference between longitudes of IMT and satellite system
+    #      (positive if space-station is to the East of earth-station)
+    #    season - season of the year.
+    earth_station_alt_m: float = 0.0
+    earth_station_lat_deg: float = 0.0
+    earth_station_long_diff_deg: float = 0.0
+    season:str = "SUMMER"
     los_adjustment_factor: float = 18.0
     shadowing: bool = True
     noise_temperature: float = 290.0
@@ -76,3 +90,13 @@ class ParametersImt(ParametersBase):
  
         if self.spectral_mask.upper() not in ["IMT-2020", "3GPP E-UTRA"]:
             raise ValueError(f"ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}")
+        
+        if self.channel_model.upper() not in ["FSPL","CI", "UMA", "UMI", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619"]:
+            raise ValueError(f"ParamtersImt: \
+                             Invalid value for parameter channel_model - {self.channel_model}. \
+                             Possible values are \"FSPL\",\"CI\", \"UMA\", \"UMI\", \"TVRO-URBAN\", \"TVRO-SUBURBAN\", \"ABG\", \"P619\".")
+        
+        if self.season.upper() not in ["SUMMER", "WINTER"]:
+            raise ValueError(f"ParamtersImt: \
+                             Invalid value for parameter season - {self.season}. \
+                             Possible values are \"SUMMER\", \"WINTER\".")

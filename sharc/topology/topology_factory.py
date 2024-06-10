@@ -27,7 +27,8 @@ class TopologyFactory(object):
         elif parameters.imt.topology == "INDOOR":
             return TopologyIndoor(parameters.indoor)
         elif parameters.imt.topology == "NTN":
-            return TopologyNTN(parameters.ntn.intersite_distance,parameters.ntn.cell_radius,parameters.ntn.bs_height,parameters.ntn.azimuth,parameters.ntn.elevation)
+            return TopologyNTN(parameters.ntn.intersite_distance, parameters.ntn.cell_radius, parameters.ntn.bs_height,
+                               parameters.ntn.azimuth, parameters.ntn.elevation)
         else:
             sys.stderr.write("ERROR\nInvalid topology: " + parameters.imt.topology)
             sys.exit(1)            
