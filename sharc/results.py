@@ -10,6 +10,7 @@ from sharc.plot import Plot
 import numpy as np
 import os
 import datetime
+import re
 
 from shutil import copy
 
@@ -55,29 +56,59 @@ class Results(object):
         self.system_pfd = list()
         self.system_rx_interf = list()
 
+        self.plot_list = None
+
         if not overwrite_output:
             today = datetime.date.today()
 
             results_number = 1
             results_dir_head = 'output_' + today.isoformat() + '_' + "{:02n}"
-            self.create_dir(results_number,results_dir_head)
+            self.create_dir(results_number, results_dir_head)
             copy(parameters_filename, self.output_directory)
         else:
             self.output_directory = 'output'
 
-    def create_dir(self,results_number,dir_head):
+    def create_dir(self, results_number: int, dir_head: str):
+        """Creates the output directory if it doens't exsit.
+
+        Parameters
+        ----------
+        results_number : int
+            Increment used in directory name
+        dir_head : str
+            Directory name prefix
+
+        Returns
+        -------
+        str
+            output directory name
+        """
         
         dir_head_complete = dir_head.format(results_number)
         
         try:
             os.makedirs(dir_head_complete)
             self.output_directory = dir_head_complete
-        except FileExistsError as e:
+        except FileExistsError:
             self.create_dir(results_number + 1, dir_head)
 
 
     def generate_plot_list(self, n_bins):
+        """Generates the plot data
+
+        Parameters
+        ----------
+        n_bins : _type_
+            Number of bins used for the CDF plots
+        """
         self.plot_list = list()
+
+        def plot_title_to_filename(title: str):
+            """
+            Creates the file name from the graph titles by removing spaces and brackes.
+            """
+            return re.sub(r'[\[\]]', "", title).replace(" ", "_")
+
         if len(self.system_imt_antenna_gain) > 0:
             values, base = np.histogram(self.system_imt_antenna_gain, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -86,7 +117,7 @@ class Results(object):
             x_label = "Antenna gain [dBi]"
             y_label = "Probability of antenna gain < $X$"
             title = "[SYS] CDF of system antenna gain towards IMT stations"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             #x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
@@ -98,7 +129,7 @@ class Results(object):
             x_label = "Antenna gain [dBi]"
             y_label = "Probability of antenna gain < $X$"
             title = "[IMT] CDF of IMT station antenna gain towards system"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             #x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
@@ -110,7 +141,7 @@ class Results(object):
             x_label = "Path Loss [dB]"
             y_label = "Probability of path loss < $X$"
             title = "[SYS] CDF of IMT to system path loss"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             #x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
@@ -122,7 +153,7 @@ class Results(object):
             x_label = "Building entry loss [dB]"
             y_label = "Probability of loss < $X$"
             title = "[SYS] CDF of IMT to system building entry loss"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             #x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
@@ -134,7 +165,7 @@ class Results(object):
             x_label = "Building entry loss [dB]"
             y_label = "Probability of loss < $X$"
             title = "[SYS] CDF of IMT to system diffraction loss"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             #x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
@@ -146,7 +177,7 @@ class Results(object):
             x_label = "Antenna gain [dBi]"
             y_label = "Probability of antenna gain < $X$"
             title = "[IMT] CDF of BS antenna gain towards the UE"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -158,7 +189,7 @@ class Results(object):
             x_label = "Antenna gain [dBi]"
             y_label = "Probability of antenna gain < $X$"
             title = "[IMT] CDF of UE antenna gain towards the BS"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -170,7 +201,7 @@ class Results(object):
             x_label = "Transmit power density [dBm/Hz]"
             y_label = "Probability of transmit power density < $X$"
             title = "[IMT] CDF of UE transmit power density"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_ul_tx_power) > 0:
@@ -181,7 +212,7 @@ class Results(object):
             x_label = "Transmit power [dBm]"
             y_label = "Probability of transmit power < $X$"
             title = "[IMT] CDF of UE transmit power"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (-40, 30)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -193,7 +224,7 @@ class Results(object):
             x_label = "SINR [dB]"
             y_label = "Probability of SINR < $X$"
             title = "[IMT] CDF of UL SINR with external interference"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (-15, 20)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -205,7 +236,7 @@ class Results(object):
             x_label = "SINR [dB]"
             y_label = "Probability of SINR < $X$"
             title = "[IMT] CDF of UL SINR"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (-15, 20)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -217,7 +248,7 @@ class Results(object):
             title = "[IMT] CDF of UL SNR"
             x_label = "SNR [dB]"
             y_label = "Probability of SNR < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (-15, 20)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -229,7 +260,7 @@ class Results(object):
             title = "[IMT] CDF of UL interference-to-noise ratio"
             x_label = "$I/N$ [dB]"
             y_label = "Probability of $I/N$ < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             #x_limits = (-15, 20)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
@@ -241,7 +272,7 @@ class Results(object):
             title = "[IMT] CDF of UL throughput with external interference"
             x_label = "Throughput [bits/s/Hz]"
             y_label = "Probability of UL throughput < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_ul_tput) > 0:
@@ -252,7 +283,7 @@ class Results(object):
             title = "[IMT] CDF of UL throughput"
             x_label = "Throughput [bits/s/Hz]"
             y_label = "Probability of UL throughput < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_path_loss) > 0:
@@ -263,7 +294,7 @@ class Results(object):
             title = "[IMT] CDF of path loss"
             x_label = "Path loss [dB]"
             y_label = "Probability of path loss < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (40, 150)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -275,7 +306,7 @@ class Results(object):
             title = "[IMT] CDF of coupling loss"
             x_label = "Coupling loss [dB]"
             y_label = "Probability of coupling loss < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (30, 120)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -287,7 +318,7 @@ class Results(object):
             x_label = "Transmit power [dBm]"
             y_label = "Probability of transmit power < $X$"
             title = "[IMT] CDF of DL transmit power"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_dl_sinr_ext) > 0:
@@ -298,7 +329,7 @@ class Results(object):
             x_label = "SINR [dB]"
             y_label = "Probability of SINR < $X$"
             title = "[IMT] CDF of DL SINR with external interference"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (-20, 80)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -310,7 +341,7 @@ class Results(object):
             x_label = "SINR [dB]"
             y_label = "Probability of SINR < $X$"
             title = "[IMT] CDF of DL SINR"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (-20, 80)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -322,7 +353,7 @@ class Results(object):
             title = "[IMT] CDF of DL SNR"
             x_label = "SNR [dB]"
             y_label = "Probability of SNR < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (-20, 80)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -334,7 +365,7 @@ class Results(object):
             title = "[IMT] CDF of DL interference-to-noise ratio"
             x_label = "$I/N$ [dB]"
             y_label = "Probability of $I/N$ < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             #x_limits = (-15, 20)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
@@ -346,7 +377,7 @@ class Results(object):
             title = "[IMT] CDF of DL throughput with external interference"
             x_label = "Throughput [bits/s/Hz]"
             y_label = "Probability of throughput < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_dl_tput) > 0:
@@ -357,7 +388,7 @@ class Results(object):
             title = "[IMT] CDF of DL throughput"
             x_label = "Throughput [bits/s/Hz]"
             y_label = "Probability of throughput < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.system_inr) > 0:
@@ -368,7 +399,7 @@ class Results(object):
             title = "[SYS] CDF of system INR"
             x_label = "INR [dB]"
             y_label = "Probability of INR < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (-80, 30)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -379,7 +410,7 @@ class Results(object):
             title = "[SYS] INR samples"
             x_label = "Number of samples"
             y_label = "INR [dB]"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             x_limits = (0, 800)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name))
@@ -391,7 +422,7 @@ class Results(object):
             title = "[SYS] CDF of system PFD"
             x_label = "PFD [dBm/m^2]"
             y_label = "Probability of INR < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
 #            x_limits = (-80, -20)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -403,7 +434,7 @@ class Results(object):
             title = "[SYS] CDF of system interference power from IMT UL"
             x_label = "Interference Power [dBm]"
             y_label = "Probability of Power < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             #x_limits = (-80, -20)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
@@ -415,17 +446,23 @@ class Results(object):
             title = "[SYS] CDF of system interference power from IMT DL"
             x_label = "Interference Power [dBm]"
             y_label = "Probability of Power < $X$"
-            file_name = title
+            file_name = plot_title_to_filename(title)
             #x_limits = (-80, -20)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
 
     def write_files(self, snapshot_number: int):
-        n_bins = 200
+        """Writes the sample data to the output file
+
+        Parameters
+        ----------
+        snapshot_number : int
+            Current snapshot number
+        """
+        n_bins = 200 #TODO: Add a parameter for that
         file_extension = ".txt"
         header_text = "Results collected after " + str(snapshot_number) + " snapshots."
         self.generate_plot_list(n_bins)
-
         for plot in self.plot_list:
             np.savetxt(os.path.join(self.output_directory, plot.file_name + file_extension),
                        np.transpose([plot.x, plot.y]),
