@@ -183,8 +183,21 @@ class StationManager(object):
         return elevation
 
     def get_pointing_vector_to(self, station) -> tuple:
+        """calculate the pointing vector (angles) w.r.t. the other station
 
-        point_vec_x = station.x- self.x[:,np.newaxis]
+        Parameters
+        ----------
+        station : StationManager
+            The other station to calculate the pointing vector
+
+        Returns
+        -------
+        tuple
+            phi, theta (phi is calculated with respect to x counter-clock-wise and
+            theta is calculated with respect to z counter-clock-wise)
+        """
+
+        point_vec_x = station.x - self.x[:,np.newaxis]
         point_vec_y = station.y - self.y[:,np.newaxis]
         point_vec_z = station.height - self.height[:,np.newaxis]
 

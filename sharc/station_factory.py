@@ -57,24 +57,24 @@ class StationFactory(object):
                                    param_ant: ParametersAntennaImt,
                                    topology: Topology,
                                    random_number_gen: np.random.RandomState):
-        par = param_ant.get_antenna_parameters(StationType.IMT_BS)
+        param_ant = param_ant.get_antenna_parameters(StationType.IMT_BS)
         num_bs = topology.num_base_stations
         imt_base_stations = StationManager(num_bs)
         imt_base_stations.station_type = StationType.IMT_BS
-        if param.section_name == "NTN":
-
+        if param.topology == "NTN":
             imt_base_stations.x = topology.space_station_x
             imt_base_stations.y = topology.space_station_y
-
-        imt_base_stations.x = topology.x
-        imt_base_stations.y = topology.y
-        imt_base_stations.azimuth = topology.azimuth
-        imt_base_stations.elevation = -par.downtilt*np.ones(num_bs)
-        if param.topology == 'INDOOR':
-            imt_base_stations.height = topology.height
+            imt_base_stations.height = topology.bs_height*np.ones(num_bs)
         else:
-            imt_base_stations.height = param.bs_height*np.ones(num_bs)
-
+            imt_base_stations.x = topology.x
+            imt_base_stations.y = topology.y
+            if param.topology == 'INDOOR':
+                imt_base_stations.height = topology.height
+            else:
+                imt_base_stations.height = param.bs_height*np.ones(num_bs)
+        
+        imt_base_stations.azimuth = topology.azimuth
+        imt_base_stations.elevation = -param_ant.downtilt*np.ones(num_bs)
         imt_base_stations.active = random_number_gen.rand(num_bs) < param.bs_load_probability
         imt_base_stations.tx_power = param.bs_conducted_power*np.ones(num_bs)
         imt_base_stations.rx_power = dict([(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
@@ -91,7 +91,7 @@ class StationFactory(object):
 
         for i in range(num_bs):
             imt_base_stations.antenna[i] = \
-            AntennaBeamformingImt(par, imt_base_stations.azimuth[i],\
+            AntennaBeamformingImt(param_ant, imt_base_stations.azimuth[i],\
                                   imt_base_stations.elevation[i])
 
         #imt_base_stations.antenna = [AntennaOmni(0) for bs in range(num_bs)]
