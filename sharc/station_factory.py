@@ -65,16 +65,19 @@ class StationFactory(object):
             imt_base_stations.x = topology.space_station_x
             imt_base_stations.y = topology.space_station_y
             imt_base_stations.height = topology.bs_height*np.ones(num_bs)
+            
+            imt_base_stations.elevation = topology.elevation
+            
         else:
             imt_base_stations.x = topology.x
             imt_base_stations.y = topology.y
+            imt_base_stations.elevation = -param_ant.downtilt*np.ones(num_bs)
             if param.topology == 'INDOOR':
                 imt_base_stations.height = topology.height
             else:
                 imt_base_stations.height = param.bs_height*np.ones(num_bs)
         
         imt_base_stations.azimuth = topology.azimuth
-        imt_base_stations.elevation = -param_ant.downtilt*np.ones(num_bs)
         imt_base_stations.active = random_number_gen.rand(num_bs) < param.bs_load_probability
         imt_base_stations.tx_power = param.bs_conducted_power*np.ones(num_bs)
         imt_base_stations.rx_power = dict([(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
