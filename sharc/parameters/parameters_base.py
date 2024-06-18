@@ -6,6 +6,7 @@ class ParametersBase:
     """Base class for parameter dataclassess
     """
     section_name: str = "DEFAULT"
+    is_space_to_earth: bool = False # whether the system is a space station or not
 
     def load_parameters_from_file(self, config_file: str):
         """Load the parameters from file.

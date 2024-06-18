@@ -73,7 +73,7 @@ class PropagationP619(Propagation):
         self.space_station_alt_m = space_station_alt_m
         self.earth_station_alt_m = earth_station_alt_m
         self.earth_station_lat_deg = earth_station_lat_deg
-        self.earth_station_long_diff_deg = earth_station_lat_deg
+        self.earth_station_long_diff_deg = earth_station_long_diff_deg
 
         if season.upper() not in ["SUMMER", "WINTER"]:
             raise ValueError(f"PropagationP619: \

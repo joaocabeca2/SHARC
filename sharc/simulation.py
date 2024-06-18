@@ -316,7 +316,7 @@ class Simulation(ABC, Observable):
         """
 
         # Get the elevation angles between IMT stations
-        elevation_angles = np.transpose(imt_bs_station.get_elevation(imt_ue_station))
+        elevation_angles = np.transpose(imt_ue_station.get_elevation(imt_bs_station))
 
         imt_inter_distance_2d = self.bs_to_ue_d_2D
         imt_inter_distance_3d = self.bs_to_ue_d_3D
