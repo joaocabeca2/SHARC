@@ -68,18 +68,20 @@ class PropagationFactory(object):
             return PropagationTerSimple(random_number_gen)
         elif channel_model == "P619":
             if isinstance(param_system, ParametersImt):
-                if param_system.topology == "NTN":
-                    altitude = param.ntn.bs_height
-                else:
-                    raise ValueError(f"PropagationFactory: Channel model P.619 is invalid for topolgy {
-                                     param.imt.topology}")
+                if param_system.topology != "NTN":
+                    raise ValueError(f"PropagationFactory: Channel model P.619 \
+                                       is invalid for topolgy {param.imt.topology}")
             else:
-                altitude = param_system.altitude
+                # P.619 model is used only for space-to-earth links
+                if param.imt.topology != "NTN" and not param_system.is_space_to_earth:
+                    raise ValueError(("PropagationFactory: Channel model P.619"
+                                     f"is invalid for system {param.general.system} and IMT "
+                                     f"topology {param.imt.topology}"))
             return PropagationP619(random_number_gen=random_number_gen,
-                                   space_station_alt_m=altitude,
-                                   earth_station_alt_m=param_system.earth_station_alt_m,
-                                   earth_station_lat_deg=param_system.earth_station_lat_deg,
-                                   earth_station_long_diff_deg=param_system.earth_station_lat_deg,
+                                   space_station_alt_m=param_system.param_p619.space_station_alt_m,
+                                   earth_station_alt_m=param_system.param_p619.earth_station_alt_m,
+                                   earth_station_lat_deg=param_system.param_p619.earth_station_lat_deg,
+                                   earth_station_long_diff_deg=param_system.param_p619.earth_station_lat_deg,
                                    season=param_system.season)
         elif channel_model == "P452":
             return PropagationClearAir(random_number_gen)

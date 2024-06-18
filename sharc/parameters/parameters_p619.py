@@ -44,8 +44,6 @@ class ParametersP619(ParametersBase):
         self.earth_station_lat_deg = param.earth_station_lat_deg
         self.earth_station_long_diff_deg = param.earth_station_long_diff_deg
         self.season = param.season
-        self.los_adjustment_factor = param.los_adjustment_factor
-        self.shadowing = param.shadowing
 
         if self.season.upper() not in ["SUMMER", "WINTER"]:
             raise ValueError(f"{self.__class__.__name__}: \
