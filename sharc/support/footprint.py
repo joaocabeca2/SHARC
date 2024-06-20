@@ -35,14 +35,18 @@ class Footprint(object):
         if 'elevation_deg' in kwargs.keys() and 'sat_height' in kwargs.keys():
             self.elevation_deg = kwargs['elevation_deg']
             self.sat_height = kwargs['sat_height']
+            self.sigma = EARTH_RADIUS / (EARTH_RADIUS + self.sat_height)
             self.bore_lat_deg = 0.0
             self.bore_subsat_long_deg = self.calc_beta(self.elevation_deg, self.sat_height)
         elif 'elevation_deg' in kwargs.keys() and 'sat_height' not in kwargs.keys():
             self.elevation_deg = kwargs['elevation_deg']
             self.bore_lat_deg = 0.0
             self.sat_height = 35786000
+            self.sigma = EARTH_RADIUS / (EARTH_RADIUS + self.sat_height)
             self.bore_subsat_long_deg = self.calc_beta(self.elevation_deg, self.sat_height)
         else:
+            self.sat_height = 35786000
+            self.sigma = EARTH_RADIUS / (EARTH_RADIUS + self.sat_height)
             self.bore_lat_deg = 0.0
             self.bore_subsat_long_deg = 0.0
             if 'bore_lat_deg' in kwargs.keys():
@@ -51,10 +55,11 @@ class Footprint(object):
                 self.bore_subsat_long_deg = kwargs['bore_subsat_long_deg']
             self.elevation_deg = \
                 self.calc_elevation(self.bore_lat_deg,self.bore_subsat_long_deg)
-            self.sat_height = 35786000
+            
         
         self.beam_width_deg = beam_deg
-        
+        # sigma is the relation bewtween earth radius and satellite height
+        # print(self.sigma) 
         # Convert to radians
         self.elevation_rad = deg2rad(self.elevation_deg)
         self.bore_lat_rad = deg2rad(self.bore_lat_deg)
@@ -64,29 +69,28 @@ class Footprint(object):
         # Calculate tilt
         self.beta = arccos(cos(self.bore_lat_rad)*\
                            cos(self.bore_subsat_long_rad))
-        self.bore_tilt = arctan2(sin(self.beta),(6.6235 - cos(self.beta)))
+        self.bore_tilt = arctan2(sin(self.beta),((1/self.sigma) - cos(self.beta)))
         
         # Maximum tilt and latitute coverage
         self.max_gamma_rad = deg2rad(8.6833)
         self.max_beta_rad = deg2rad(81.3164)
         
-    def calc_beta(self,elev_deg: float, sat_height : int):
+    def calc_beta(self,elev_deg: float):
         """
         Calculates elevation angle based on given elevation. Beta is the 
         subpoint to earth station great-circle distance
         
         Input:
             elev_deg (float): elevation in degrees
-            sat_height (int): satellite height in meters
             
         Output:
             beta (float): beta angle in degrees  
         """
         elev_rad = deg2rad(elev_deg)
-        beta = 90 - elev_deg - rad2deg(arcsin(cos(elev_rad)/((EARTH_RADIUS + sat_height)/EARTH_RADIUS)))
+        beta = 90 - elev_deg - rad2deg(arcsin(cos(elev_rad)*self.sigma))
         return beta
     
-    def calc_elevation(self,lat_deg: float, long_deg: float, sat_height: int):
+    def calc_elevation(self,lat_deg: float, long_deg: float):
         """
         Calculates elevation for given latitude of boresight point and 
         longitude of boresight with respect to sub-satellite point.
@@ -96,7 +100,6 @@ class Footprint(object):
             long_deg (float): longitude of boresight with respect
                 to sub-satellite point, taken positive when to the west of the
                 sub-satellite point, in degrees
-            sat_height (int): satellite height in meters
         
         Output:
             elev (float): elevation in degrees
@@ -104,7 +107,7 @@ class Footprint(object):
         lat_rad = deg2rad(lat_deg)
         long_rad = deg2rad(long_deg)
         beta = arccos(cos(lat_rad)*cos(long_rad))
-        elev = arctan2((cos(beta) - 0.1510),sin(beta))
+        elev = arctan2((cos(beta) - self.sigma),sin(beta))
         
         return rad2deg(elev)
     
@@ -124,7 +127,7 @@ class Footprint(object):
         # Calculate tilt
         self.beta = arccos(cos(self.bore_lat_rad)*\
                            cos(self.bore_subsat_long_rad))
-        self.bore_tilt = arctan2(sin(self.beta),(6.6235 - cos(self.beta)))
+        self.bore_tilt = arctan2(sin(self.beta),(1/self.sigma - cos(self.beta)))
         
     def calc_footprint(self, n: int):
         """
@@ -151,7 +154,7 @@ class Footprint(object):
         eps_n = arctan2(sin(self.bore_subsat_long_rad),tan(self.bore_lat_rad)) + \
                 phi_n
                 
-        beta_n = arcsin(6.6235*sin(gamma_n)) - gamma_n
+        beta_n = arcsin((1/self.sigma)*sin(gamma_n)) - gamma_n
         beta_n[where(gamma_n >  self.max_gamma_rad)] = self.max_beta_rad
         
         pt_lat  = arcsin(sin(beta_n)*cos(eps_n))
@@ -168,6 +171,9 @@ class Footprint(object):
         Output:
             a (float): footprint area in km^2
         """
+        
+        #Sob condições ideais, com 90 graus de eleveção, a conta é simplificada como : A = pi * (sat_height * tan(beam_deg * (pi/180))) ^ 2
+        
         long, lat = self.calc_footprint(n)
         
         long_lat = vstack((long, lat)).T
@@ -184,15 +190,13 @@ class Footprint(object):
         return pi/2 - arctan(x)
         
 if __name__ == '__main__':
-    # Earth  [km]
-    R = 6371
     
     #Create 20km footprints
-    footprint_20km_10deg = Footprint(0.325, elevation_deg=10, sat_height=20000)
-    footprint_20km_20deg = Footprint(0.325, elevation_deg=20, sat_height=20000)
-    footprint_20km_30deg = Footprint(0.325, elevation_deg=30, sat_height=20000)
-    footprint_20km_45deg = Footprint(0.325, elevation_deg=45, sat_height=20000)
-    footprint_20km_90deg = Footprint(0.325, elevation_deg=90, sat_height=20000)
+    footprint_20km_10deg = Footprint(5, elevation_deg=10, sat_height=20000)
+    footprint_20km_20deg = Footprint(5, elevation_deg=20, sat_height=20000)
+    footprint_20km_30deg = Footprint(5, elevation_deg=30, sat_height=20000)
+    footprint_20km_45deg = Footprint(5, elevation_deg=45, sat_height=20000)
+    footprint_20km_90deg = Footprint(5, elevation_deg=90, sat_height=20000)
     
     plt.figure(figsize=(15,2))
     n = 100
@@ -207,20 +211,22 @@ if __name__ == '__main__':
     lng,lat = footprint_20km_10deg.calc_footprint(n)
     plt.plot(lng, lat, 'y', label= f'$10^o$')
     
+    plt.title("Footprints at 20km")
     plt.legend(loc='upper right')
     plt.xlabel('Longitude [deg]')
     plt.ylabel('Latitude [deg]')
-    plt.xlim([-5, 6])
+    # plt.xlim([-5, 6])
     plt.grid()
     plt.show()
     
     
     #Create 500km footprints
-    footprint_500km_10deg = Footprint(0.325, elevation_deg=10, sat_height=500000)
-    footprint_500km_20deg = Footprint(0.325, elevation_deg=20, sat_height=500000)
-    footprint_500km_30deg = Footprint(0.325, elevation_deg=30, sat_height=500000)
-    footprint_500km_45deg = Footprint(0.325, elevation_deg=45, sat_height=500000)
-    footprint_500km_90deg = Footprint(0.325, elevation_deg=90, sat_height=500000)
+    footprint_500km_10deg = Footprint(5, elevation_deg=10, sat_height=500000)
+    footprint_500km_20deg = Footprint(5, elevation_deg=20, sat_height=500000)
+    footprint_500km_30deg = Footprint(5, elevation_deg=30, sat_height=500000)
+    footprint_500km_45deg = Footprint(5, elevation_deg=45, sat_height=500000)
+    footprint_500km_90deg = Footprint(5, elevation_deg=90, sat_height=500000)
+    print("Sat at 500km elevation 90 deg: area = {}".format(footprint_500km_90deg.calc_area(n)))
     
     plt.figure(figsize=(15,2))
     n = 100
@@ -235,10 +241,11 @@ if __name__ == '__main__':
     lng,lat = footprint_500km_10deg.calc_footprint(n)
     plt.plot(lng, lat, 'y', label= f'$10^o$')
     
+    plt.title("Footprints at 500km")
     plt.legend(loc='upper right')
     plt.xlabel('Longitude [deg]')
     plt.ylabel('Latitude [deg]')
-    plt.xlim([-5, 20])
+    # plt.xlim([-5, 20])
     plt.grid()
     plt.show()
     
@@ -263,10 +270,12 @@ if __name__ == '__main__':
     plt.plot(long,lat,'g',label='$20^o$')
     long, lat = fprint05.calc_footprint(n)
     plt.plot(long,lat,'y',label='$5^o$')
+    
+    plt.title("Footprints at 35786km (GEO)")
     plt.legend(loc='upper right')
     plt.xlabel('Longitude [deg]')
     plt.ylabel('Latitude [deg]')
-    plt.xlim([-5, 90])
+    # plt.xlim([-5, 90])
     plt.grid()
     plt.show()
     
@@ -296,9 +305,9 @@ if __name__ == '__main__':
     area_500km = zeros_like(elevation)
     area_35786km = zeros_like(elevation)
     
-    fprint_20km = Footprint(0.320,elevation_deg=0, sat_height=20000)
-    fprint_500km = Footprint(0.320,elevation_deg=0, sat_height=500000)
-    fprint_35786km = Footprint(0.320,elevation_deg=0, sat_height=35786000)
+    fprint_20km = Footprint(5,elevation_deg=0, sat_height=20000)
+    fprint_500km = Footprint(5,elevation_deg=0, sat_height=500000)
+    fprint_35786km = Footprint(0.325,elevation_deg=0, sat_height=35786000)
     
     for k in range(len(elevation)):
         fprint_20km.set_elevation(elevation[k])
@@ -310,7 +319,7 @@ if __name__ == '__main__':
         
     plt.plot(elevation,area_20km, color ='r', label='20km')
     plt.plot(elevation,area_500km, color ='g', label='500km')
-    # plt.plot(elevation,area_35786km, color ='b', label='35786km')
+    plt.plot(elevation,area_35786km, color ='b', label='35786km')
     plt.xlabel('Elevation [deg]')
     plt.ylabel('Footprint area [$km^2$]')
     plt.legend(loc='upper right')
