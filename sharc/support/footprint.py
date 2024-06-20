@@ -37,13 +37,13 @@ class Footprint(object):
             self.sat_height = kwargs['sat_height']
             self.sigma = EARTH_RADIUS / (EARTH_RADIUS + self.sat_height)
             self.bore_lat_deg = 0.0
-            self.bore_subsat_long_deg = self.calc_beta(self.elevation_deg, self.sat_height)
+            self.bore_subsat_long_deg = self.calc_beta(self.elevation_deg)
         elif 'elevation_deg' in kwargs.keys() and 'sat_height' not in kwargs.keys():
             self.elevation_deg = kwargs['elevation_deg']
             self.bore_lat_deg = 0.0
             self.sat_height = 35786000
             self.sigma = EARTH_RADIUS / (EARTH_RADIUS + self.sat_height)
-            self.bore_subsat_long_deg = self.calc_beta(self.elevation_deg, self.sat_height)
+            self.bore_subsat_long_deg = self.calc_beta(self.elevation_deg)
         else:
             self.sat_height = 35786000
             self.sigma = EARTH_RADIUS / (EARTH_RADIUS + self.sat_height)
@@ -117,7 +117,7 @@ class Footprint(object):
         """
         self.elevation_deg = elev
         self.bore_lat_deg = 0.0
-        self.bore_subsat_long_deg = self.calc_beta(self.elevation_deg, self.sat_height)
+        self.bore_subsat_long_deg = self.calc_beta(self.elevation_deg)
         
         # Convert to radians
         self.elevation_rad = deg2rad(self.elevation_deg)
