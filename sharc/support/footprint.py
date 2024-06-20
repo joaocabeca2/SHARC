@@ -9,7 +9,6 @@ from area import area as earthArea
 from numpy import cos, sin, tan, arctan, deg2rad, rad2deg, arccos, pi, linspace, arcsin, vstack, arctan2, where, zeros_like
 import matplotlib.pyplot as plt
 from sharc.parameters.constants import EARTH_RADIUS
-
 class Footprint(object):
     """
     Defines a satellite footprint region and calculates its area.
@@ -58,8 +57,10 @@ class Footprint(object):
             
         
         self.beam_width_deg = beam_deg
+        
         # sigma is the relation bewtween earth radius and satellite height
         # print(self.sigma) 
+        
         # Convert to radians
         self.elevation_rad = deg2rad(self.elevation_deg)
         self.bore_lat_rad = deg2rad(self.bore_lat_deg)
@@ -72,8 +73,9 @@ class Footprint(object):
         self.bore_tilt = arctan2(sin(self.beta),((1/self.sigma) - cos(self.beta)))
         
         # Maximum tilt and latitute coverage
-        self.max_gamma_rad = deg2rad(8.6833)
-        self.max_beta_rad = deg2rad(81.3164)
+        self.max_beta_rad = arccos(self.sigma) 
+        self.max_gamma_rad = pi/2 - self.max_beta_rad
+        
         
     def calc_beta(self,elev_deg: float):
         """
@@ -171,8 +173,6 @@ class Footprint(object):
         Output:
             a (float): footprint area in km^2
         """
-        
-        #Sob condições ideais, com 90 graus de eleveção, a conta é simplificada como : A = pi * (sat_height * tan(beam_deg * (pi/180))) ^ 2
         
         long, lat = self.calc_footprint(n)
         
