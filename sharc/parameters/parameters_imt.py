@@ -10,7 +10,7 @@ from sharc.parameters.parameters_base import ParametersBase
 class ParametersImt(ParametersBase):
     """Dataclass containing the IMT system parameters
     """
-    section_name: str = "IMT"
+    section_name: str = "imt"
     topology: str = "MACROCELL"
     wrap_around: bool = False
     num_clusters: int = 1

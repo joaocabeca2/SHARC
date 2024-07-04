@@ -8,7 +8,7 @@ class ParametersFssSs(ParametersBase):
     """Dataclass containing the Fixed Satellite Services - Space Station
     parameters for the simulator
     """
-    section_name: str = "FSS_SS"
+    section_name: str = "fss_ss"
     # satellite center frequency [MHz]
     frequency: float = 43000.0
     # satellite bandwidth [MHz]
