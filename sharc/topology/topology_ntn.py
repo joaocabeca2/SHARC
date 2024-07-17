@@ -11,43 +11,34 @@ class TopologyNTN(Topology):
     based on a specified macrocell network topology.
     """
 
-    # Define allowed configurations for validation purposes
-
-    ALLOWED_NUM_SECTORS = [1, 3, 7]  # Supported sector configurations
-
-    def __init__(self, intersite_distance: float, cell_radius: int, bs_height: float,  azimuth_ntn: np.array, elevation_ntn: np.array):
+    def __init__(self, intersite_distance: float, cell_radius: int, bs_radius: float, bs_azimuth: float, bs_elevation: float, num_sectors=7):
         """
         Initializes the NTN topology with specific network settings.
 
         Parameters:
         intersite_distance: Distance between adjacent sites in meters.
         cell_radius: Radius of the coverage area for each site in meters.
-        bs_height: Altitude of the base station in meters.
-
-        azimuth_ntn: Array of azimuth angles for each sector, defining the horizontal alignment.
-        elevation_ntn: Array of elevation angles for each sector, defining the vertical alignment.
+        bs_radius: Distance of the base station (satellite) from the origin.
+        bs_azimuth: Azimuth angle of the base station in degrees.
+        bs_elevation: Elevation angle of the base station in degrees.
+        num_sectors: Number of sectors for the topology (default is 7).
         """
-
-        if len(azimuth_ntn) not in self.ALLOWED_NUM_SECTORS:
-            raise ValueError(f"Number of sectors ({len(
-                azimuth_ntn)}) not allowed. Allowed values are {self.ALLOWED_NUM_SECTORS}.")
-
-        if len(azimuth_ntn) != len(elevation_ntn):
-            raise ValueError(
-                "Azimuth and elevation arrays must have the same length.")
 
         # Call to the superclass constructor to set common properties
         super().__init__(intersite_distance, cell_radius)
-        self.is_space_station = True
-        self.bs_height = bs_height
-        self.azimuth = azimuth_ntn
-        self.elevation = elevation_ntn
-        self.space_station_x = None
-        self.space_station_y = None
-        # Derive the number of sectors from the length of the azimuth array
-        self.num_sectors = len(azimuth_ntn)
+        self.bs_radius = bs_radius
+        self.bs_azimuth = np.radians(bs_azimuth)
+        self.bs_elevation = np.radians(bs_elevation)
+        self.num_sectors = num_sectors
 
-    def calculate_coordinates(self, random_number_gen=np.random.RandomState()):
+        # Calculate the base station coordinates
+        self.bs_x = bs_radius * np.cos(self.bs_elevation) * np.cos(self.bs_azimuth)
+        self.bs_y = bs_radius * np.cos(self.bs_elevation) * np.sin(self.bs_azimuth)
+        self.bs_z = bs_radius * np.sin(self.bs_elevation)
+
+        self.calculate_coordinates()
+
+    def calculate_coordinates(self):
         """
         Computes the coordinates of each site. This is where the actual layout calculation would be implemented.
         """
@@ -55,134 +46,96 @@ class TopologyNTN(Topology):
         d = self.intersite_distance
         h = self.cell_radius
 
-        # Set coordinates for a single cluster, potentially extending this for multiple clusters (Only for 7 beams)
-        self.x = np.array([0, d, -d, d/2, -d/2, d/2, -d/2])
-        self.y = np.array([0, 0, 0, ((d/np.sqrt(3)) + h/2), -((d/np.sqrt(3)) +
-                          h/2), -((d/np.sqrt(3)) + h/2), ((d/np.sqrt(3)) + h/2)])
+        self.x = [0]
+        self.y = [0]
 
-        self.space_station_x = np.zeros(len(self.x))
-        self.space_station_y = np.zeros(len(self.y))
+        # First ring (6 points)
+        for k in range(6):
+            angle = k * 60
+            self.x.append(d * np.cos(np.radians(angle)))
+            self.y.append(d * np.sin(np.radians(angle)))
+        
+        if self.num_sectors == 19:
+            # Coordinates with 19 sectors
+            # Second ring (12 points)
+            for k in range(6):
+                angle = k * 60
+                self.x.append(2 * d * np.cos(np.radians(angle)))
+                self.y.append(2 * d * np.sin(np.radians(angle)))
+                self.x.append(d * np.cos(np.radians(angle)) + d * np.cos(np.radians(angle + 60)))
+                self.y.append(d * np.sin(np.radians(angle)) + d * np.sin(np.radians(angle + 60)))
+
+
+        self.x = np.array(self.x)
+        self.y = np.array(self.y)
+
+        self.z = np.zeros(len(self.x))  # Assuming all points are at ground level
+
+        # Rotate the anchor points by 30 degrees
+        theta = np.radians(30)
+        cos_theta = np.cos(theta)
+        sin_theta = np.sin(theta)
+        self.x_rotated = self.x * cos_theta - self.y * sin_theta
+        self.y_rotated = self.x * sin_theta + self.y * cos_theta
+
+        # Calculate azimuth and elevation for each point
+        self.azimuth = np.arctan2(self.y_rotated - self.bs_y, self.x_rotated - self.bs_x) * 180 / np.pi
+        distance_xy = np.sqrt((self.x_rotated - self.bs_x)**2 + (self.y_rotated - self.bs_y)**2)
+        self.elevation = np.arctan2(self.z - self.bs_z, distance_xy) * 180 / np.pi
 
         # Update the number of base stations after setup
         self.num_base_stations = len(self.x)
         self.indoor = np.zeros(self.num_base_stations, dtype=bool)
 
+        # Update the number of base stations after setup
+        self.num_base_stations = len(self.x)
+        self.indoor = np.zeros(self.num_base_stations, dtype=bool)
+
+        self.x = self.x_rotated
+        self.y = self.y_rotated
+        
     def plot(self, axis: matplotlib.axes.Axes):
-        # create the hexagons for 1 Sectors
-        global azimuth, r, angle
-        if self.num_sectors == 1:
-            r = self.cell_radius
-            azimuth = np.zeros(self.x.size)
+        r = self.cell_radius
 
-        # create the hexagons for 3 Sectors
-        elif self.num_sectors == 3:
-            r = self.intersite_distance / np.sqrt(3)
-            azimuth = self.azimuth
+        # Plot each sector
+        for x, y in zip(self.x, self.y):
+            hexagon = []
+            for a in range(6):
+                angle_rad = math.radians(a * 60)
+                hexagon.append([x + r * math.cos(angle_rad), y + r * math.sin(angle_rad)])
+            hexagon.append(hexagon[0])  # Close the hexagon
+            hexagon = np.array(hexagon)
 
-        # create the hexagon for 7 Sectors
-        elif self.num_sectors == 7:
-            r = self.cell_radius
-            azimuth = np.zeros(self.x.size)
+            sector = plt.Polygon(hexagon, fill=None, edgecolor='k')
+            axis.add_patch(sector)
 
-        # create the dodecagon for 19 Sectors
-        elif self.num_sectors == 19:
-            r = self.intersite_distance / np.sqrt(3)
-            azimuth = np.zeros(self.x.size)
-
-        # create the hexagons for 3 Sectors
-        for x, y, az in zip(self.x, self.y, azimuth):
-
-            if self.num_sectors == 1:
-                x = x - self.intersite_distance / 2
-                y = y - r / 2
-                angle = int(az - 30)
-
-            elif self.num_sectors == 3:
-                angle = int(az - 30)
-
-        # create the hexagon for 7 Sectors
-
-            if self.num_sectors == 7:
-                x = x - self.intersite_distance / 2
-                y = y - r / 2
-                # y = y - self.intersite_distance
-                angle = int(az - 30)
-
-            se = list([[x, y]])
-
-            # plot polygon - 1 Sectors
-            if self.num_sectors == 1:
-                for a in range(7):
-                    se.extend(
-                        [[se[-1][0] + r * math.cos(math.radians(angle)), se[-1][1] +
-                          r * math.sin(math.radians(angle))]])
-                    angle += 60
-                sector = plt.Polygon(se, fill=None, edgecolor='k')
-                axis.add_patch(sector)
-
-                # plot polygon - 3 Sectors
-            elif self.num_sectors == 3:
-                for a in range(6):
-                    se.extend(
-                        [[se[-1][0] + r / 2 * math.cos(math.radians(angle)), se[-1][1] +
-                          r / 2 * math.sin(math.radians(angle))]])
-                    angle += 60
-                sector = plt.Polygon(
-                    se, fill=None, edgecolor='blue', linewidth=1, alpha=1)
-                axis.add_patch(sector)
-
-            # plot polygon - 7 Sectors
-            elif self.num_sectors == 7:
-                for a in range(7):
-                    se.extend(
-                        [[se[-1][0] + r * math.cos(math.radians(angle)), se[-1][1] +
-                          r * math.sin(math.radians(angle))]])
-                    angle += 60
-                sector = plt.Polygon(se, fill=None, edgecolor='k')
-                axis.add_patch(sector)
-
-                # plot polygon - 19 Sectors
-            elif self.num_sectors == 19:
-                for a in range(25):
-                    se.extend(
-                        [[se[0][0] + r * math.cos(math.radians(angle)),
-                          se[0][0] + r * math.sin(math.radians(angle))]])
-                    angle += 15
-                sector = plt.Polygon(se[::-2], fill=None, edgecolor='k')
-                axis.add_patch(sector)
-
-        # macro cell base stations
+        # Plot base stations
         axis.scatter(self.x, self.y, s=200, marker='v', c='k', edgecolor='k', linewidth=1, alpha=1,
                      label="Anchor Points")
+
 
 
 # Example usage
 if __name__ == '__main__':
     cell_radius = 100000  # meters
     intersite_distance = cell_radius * np.sqrt(3)  # meters
-    bs_height = 20000  # meters
-    num_clusters = 1  # number of clusters
+    bs_radius = 20000  # meters
+    bs_azimuth = 45  # degrees
+    bs_elevation = 90  # degrees
 
-    # Three Sectors
+    # For 7 sectors
+    ntn_topology_7 = TopologyNTN(
+        intersite_distance, cell_radius, bs_radius, bs_azimuth, bs_elevation, num_sectors=7)
+    ntn_topology_7.calculate_coordinates()  # Calculate the site coordinates
 
-    # azimuth_ntn = np.array([60,180,300])
-    # elevation_ntn = np.array([-90,-90,-90])
-
-    # Seven Sectors
-    azimuth_ntn = np.array([0, 0, 60, 120, 180, 240, 300])
-    elevation_ntn = np.array([-90, -23, -23, -23, -23, -23, -23])
-
-    ntn_topology = TopologyNTN(
-        intersite_distance, cell_radius, bs_height, azimuth_ntn, elevation_ntn)
-    ntn_topology.calculate_coordinates()  # Calculate the site coordinates
+    print(ntn_topology_7.azimuth)
+    print(ntn_topology_7.elevation)
 
     fig, ax = plt.subplots()
-    ntn_topology.plot(ax)  # Plot the topology
+    ntn_topology_7.plot(ax)  # Plot the topology
 
     plt.axis('image')
-    name = "NTN System - {} Cluster{} with {} sectors".format(num_clusters, "s" if num_clusters != 1 else "",  # handles pluralization
-                                                              len(azimuth_ntn)
-                                                              )
+    name = "NTN System - 1 Cluster with 7 sectors"
     plt.title(name)
 
     plt.xlabel("x-coordinate [m]")
@@ -190,3 +143,26 @@ if __name__ == '__main__':
     plt.legend()
     plt.tight_layout()
     plt.show()
+
+    # For 19 sectors
+    ntn_topology_19 = TopologyNTN(
+        intersite_distance, cell_radius, bs_radius, bs_azimuth, bs_elevation, num_sectors=19)
+    ntn_topology_19.calculate_coordinates()  # Calculate the site coordinates
+
+    print(ntn_topology_19.azimuth)
+    print(ntn_topology_19.elevation)
+
+    fig, ax = plt.subplots()
+    ntn_topology_19.plot(ax)  # Plot the topology
+
+    plt.axis('image')
+    name = "NTN System - 1 Cluster with 19 sectors"
+    plt.title(name)
+
+    plt.xlabel("x-coordinate [m]")
+    plt.ylabel("y-coordinate [m]")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    
