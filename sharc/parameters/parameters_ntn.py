@@ -20,18 +20,20 @@ class ParametersNTN(ParametersBase):
     cell_radius: float = 90000
     
     # NTN Intersite Distance (m). Intersite distance = Cell Radius * sqrt(3)
-    intersite_distance: float = 155884
+    intersite_distance: float = np.sqrt(3)*cell_radius
     
-    # Antenna azimuth per sector - NTN sector topology [degree]
-    #azimuth: np.array = np.array([90, 210, 330])
-    azimuth: tuple = (0, 0, 60, 120, 180, 240, 300)
-    # azimuth19: tuple = (0, 15, 30, 45, 75, 90, 105, 135, 150, 165, 195, 210, 225, 255, 270, 285, 315, 330, 345)
-    
-    # Elevation (Mechanical Antenna Downtilt) per sector - NTN topology [degree]
-    #elevation: np.array = np.array([-90, -90, -90])
-    elevation: tuple = (-90, -23, -23, -23, -23, -23, -23)
-    # elevation19: tuple = (-30, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30)
-    
+    # BS Distance from earth
+    #bs_height: float = 20000
+
+    # BS azimuth 
+    bs_azimuth: float = 45
+
+    # BS elevation 
+    bs_elevation: float = 90
+
+    # Number of sectors
+    num_sectors: int = 7
+
     # Conducted power per element [dBm/bandwidth]
     bs_conducted_power: int = 37
     
@@ -61,11 +63,11 @@ class ParametersNTN(ParametersBase):
         super().load_parameters_from_file(config_file)
 
         # Now do the sanity check for some parameters
-        if len(self.azimuth) not in [1, 3, 7, 19]:
+        if self.num_sectors not in [7, 19]:
             raise ValueError(f"ParametersNTN: Invalid number of sectors {self.num_sectors}")
 
         if self.bs_height <= 0:
-            raise ValueError(f"ParametersNTN: bs_height must be greater than 0, but is {self.bs_height}")
+            raise ValueError(f"ParametersNTN: bs_distance must be greater than 0, but is {self.bs_distance}")
         
         if self.cell_radius <= 0:
             raise ValueError(f"ParametersNTN: cell_radius must be greater than 0, but is {self.cell_radius}")
@@ -79,8 +81,10 @@ class ParametersNTN(ParametersBase):
         if not isinstance(self.bs_backoff_power, int) or self.bs_backoff_power < 0:
             raise ValueError(f"ParametersNTN: bs_backoff_power must be a non-negative integer, but is {self.bs_backoff_power}")
         
-        if len(self.azimuth) == 7:
-            if self.bs_n_rows_layer1 != 2 or self.bs_n_columns_layer1 != 2:
-                raise ValueError(f"ParametersNTN: For 7 sector topology, Layer 1 must have 2 rows and 2 columns")
-            if self.bs_n_rows_layer2 != 4 or self.bs_n_columns_layer2 != 2:
-                raise ValueError(f"ParametersNTN: For 7 sector topology, Layer 2 must have 4 rows and 2 columns")
+        if not np.all((0 <= self.bs_azimuth) & (self.bs_azimuth <= 360)):
+            raise ValueError(f"ParametersNTN: bs_azimuth values must be between 0 and 360 degrees")
+
+        if not np.all((0 <= self.bs_elevation) & (self.bs_elevation <= 90)):
+            raise ValueError(f"ParametersNTN: bs_elevation values must be between 0 and 90 degrees")
+
+        
