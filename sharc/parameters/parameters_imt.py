@@ -61,8 +61,8 @@ class ParametersImt(ParametersBase):
     #    earth_station_long_diff_deg - difference between longitudes of IMT and satellite system
     #      (positive if space-station is to the East of earth-station)
     #    season - season of the year.
-    earth_station_alt_m: float = 0.0
-    earth_station_lat_deg: float = 0.0
+    earth_station_alt_m: float = 1000
+    earth_station_lat_deg: float = -15.7801
     earth_station_long_diff_deg: float = 0.0
     season:str = "SUMMER"
     los_adjustment_factor: float = 18.0
