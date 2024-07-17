@@ -11,6 +11,8 @@ class TopologyNTN(Topology):
     based on a specified macrocell network topology.
     """
 
+    ALLOWED_NUM_SECTORS = [7, 19]
+
     def __init__(self, intersite_distance: float, cell_radius: int, bs_radius: float, bs_azimuth: float, bs_elevation: float, num_sectors=7):
         """
         Initializes the NTN topology with specific network settings.
@@ -23,6 +25,10 @@ class TopologyNTN(Topology):
         bs_elevation: Elevation angle of the base station in degrees.
         num_sectors: Number of sectors for the topology (default is 7).
         """
+
+        if num_sectors not in self.ALLOWED_NUM_SECTORS:
+            raise ValueError(f"Invalid number of sectors: {num_sectors}. Allowed values are {self.ALLOWED_NUM_SECTORS}.")
+
 
         # Call to the superclass constructor to set common properties
         super().__init__(intersite_distance, cell_radius)
