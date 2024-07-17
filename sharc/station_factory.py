@@ -64,8 +64,7 @@ class StationFactory(object):
         if param.topology == "NTN":
             imt_base_stations.x = topology.space_station_x
             imt_base_stations.y = topology.space_station_y
-            imt_base_stations.height = topology.bs_height*np.ones(num_bs)
-            
+            imt_base_stations.height = topology.bs_height*np.ones(num_bs)            
             imt_base_stations.elevation = topology.elevation
             
         else:

@@ -73,7 +73,7 @@ class PropagationP619(Propagation):
         self.space_station_alt_m = space_station_alt_m
         self.earth_station_alt_m = earth_station_alt_m
         self.earth_station_lat_deg = earth_station_lat_deg
-        self.earth_station_long_diff_deg = earth_station_lat_deg
+        self.earth_station_long_diff_deg = earth_station_long_diff_deg
 
         if season.upper() not in ["SUMMER", "WINTER"]:
             raise ValueError(f"PropagationP619: \
@@ -88,7 +88,7 @@ class PropagationP619(Propagation):
         Parameters
         ----------
             frequency_MHz (float) : center frequencies [MHz]
-            apparent_elevation (float) : apparent elevation angle (degrees)
+            apparent_elevation (float) : apparent elevation angle at the Earth-based station (degrees)
         Returns
         -------
             path_loss (float): scalar with atmospheric loss
@@ -209,7 +209,7 @@ class PropagationP619(Propagation):
 
         return attenuation
 
-    def __apparent_elevation_angle(self, elevation_deg: np.array, space_station_altitude: float) -> np.array:
+    def __apparent_elevation_angle(self, elevation_deg: np.array, earth_station_alt_m: float) -> np.array:
         ##
         # calculate apparent elevation angle according to ITU-R P619, Attachment B
 
@@ -219,8 +219,8 @@ class PropagationP619(Propagation):
         tau_fs3 = 0.01727 + 0.008288 * elev_angles_rad
 
         # change in elevation angle due to refraction
-        tau_fs_deg = 1/(tau_fs1 + space_station_altitude*tau_fs2 +
-                        space_station_altitude**2*tau_fs3)
+        tau_fs_deg = 1/(tau_fs1 + earth_station_alt_m*tau_fs2 +
+                        earth_station_alt_m**2*tau_fs3)
         tau_fs = tau_fs_deg / 180. * np.pi
 
         return np.degrees(elev_angles_rad + tau_fs)
@@ -235,6 +235,7 @@ class PropagationP619(Propagation):
             frequency (np.array) : center frequencies [MHz]
             indoor_stations (np.array) : array indicating stations that are indoor
             elevation (np.array) : free-space elevation angles (degrees)
+            earth_to_space (bool): whether the ray direction is earth-to-space
             single_entry (bool): True for single-entry interference, False for multiple-entry (default = False)
             number_of_sectors (int): number of sectors in a node (default = 1)
 
@@ -257,7 +258,7 @@ class PropagationP619(Propagation):
         elevation = {}
         elevation["free_space"] = kwargs["elevation"]
         elevation["apparent"] = self.__apparent_elevation_angle(elevation["free_space"],
-                                                                self.space_station_alt_m)
+                                                                self.earth_station_alt_m)
         earth_to_space = kwargs["earth_to_space"]
         earth_station_antenna_gain = kwargs["earth_station_antenna_gain"]
         single_entry = kwargs.pop("single_entry", False)

@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
+import numpy as np
 
 from sharc.support.sharc_utils import is_float
 from sharc.parameters.parameters_base import ParametersBase
-
+from sharc.parameters.parameters_p619 import ParametersP619
+from sharc.parameters.constants import EARTH_RADIUS
 
 @dataclass
 class ParametersRas(ParametersBase):
@@ -72,6 +74,20 @@ class ParametersRas(ParametersBase):
     polarization: str = "horizontal"
     # Determine whether clutter loss following ITU-R P.2108 is added (TRUE/FALSE)
     clutter_loss: bool = True
+    # Parameters for the P.619 propagation model
+    # Used between IMT space station and another terrestrial system.
+    #    space_station_alt_m - altitude of IMT space station (BS) (in meters)
+    #    earth_station_alt_m - altitude of the system's earth station (in meters)
+    #    earth_station_lat_deg - latitude of the system's earth station (in degrees)
+    #    earth_station_long_diff_deg - difference between longitudes of IMT space station and system's earth station
+    #      (positive if space-station is to the East of earth-station)
+    #    season - season of the year.
+    param_p619 = ParametersP619()
+    space_station_alt_m: float = 20000.0
+    earth_station_alt_m: float = 0.0
+    earth_station_lat_deg: float = 0.0
+    earth_station_long_diff_deg: float = 0.0
+    season: str = "SUMMER"
 
     def load_parameters_from_file(self, config_file: str):
         """Load the parameters from file an run a sanity check
@@ -87,7 +103,7 @@ class ParametersRas(ParametersBase):
             if a parameter is not valid
         """
         super().load_parameters_from_file(config_file)
-        if self.channel_model.upper() not in ["FSPL", "TERRESTRIALSIMPLE", "P452"]:
+        if self.channel_model.upper() not in ["FSPL", "TERRESTRIALSIMPLE", "P452", "P619"]:
             raise ValueError(f"ParametersRas: \
                              Invalid value for parameter channel_model - {self.channel_model}. \
                              Allowed values are: \"FSPL\", \"TerrestrialSimple\", \"P452\"")
@@ -105,3 +121,8 @@ class ParametersRas(ParametersBase):
             raise ValueError(f"""ParametersRas:
                             Invalid value for parameter percentage_p - {self.percentage_p}.
                             Allowed values are \"RANDOM\" or a percentage ]0,1]""")
+  
+        if self.channel_model == "P619":
+            self.param_p619.load_from_paramters(self)
+            # This is relative to the IMT space station nadir point which is always x=0; y=0.
+            self.param_p619.earth_station_long_diff_deg = np.rad2deg(self.x / EARTH_RADIUS)
