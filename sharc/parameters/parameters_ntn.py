@@ -63,7 +63,7 @@ class ParametersNTN(ParametersBase):
         super().load_parameters_from_file(config_file)
 
         # Now do the sanity check for some parameters
-        if self.num_sectors not in [7, 19]:
+        if self.num_sectors not in [1, 7, 19]:
             raise ValueError(f"ParametersNTN: Invalid number of sectors {self.num_sectors}")
 
         if self.bs_height <= 0:
