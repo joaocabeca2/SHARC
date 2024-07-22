@@ -1,0 +1,20 @@
+Function,Calls,Total Time,Per Call,Cumulative Time,Per Call (Cum)
+/home/araujo/Github/SHARC/profile/detailed_profile_p619.py:39(profile_get_atmospheric_gasses_loss),1,0.001,60.834,60.834,0.001
+/home/araujo/Github/SHARC/sharc/propagation/propagation_p619.py:66(_get_atmospheric_gasses_loss),90,0.063,60.833,0.676,5.673
+/home/araujo/Github/SHARC/sharc/propagation/atmosphere.py:140(get_atmospheric_params),882180,0.000,55.160,0.000,5.071
+/home/araujo/Github/SHARC/sharc/propagation/atmosphere.py:83(_get_specific_attenuation),882180,0.000,49.094,0.000,42.295
+/home/araujo/Github/SHARC/sharc/lib/python3.10/site-packages/numpy/core/fromnumeric.py:2177(sum),1764360,0.000,6.551,0.000,1.502
+/home/araujo/Github/SHARC/sharc/lib/python3.10/site-packages/numpy/core/fromnumeric.py:71(_wrapreduction),1764360,0.000,4.838,0.000,1.683
+{method 'reduce' of 'numpy.ufunc' objects},1764360,0.000,2.362,0.000,2.362
+{built-in method numpy.array},882269,0.000,0.866,0.000,0.866
+/home/araujo/Github/SHARC/sharc/lib/python3.10/site-packages/numpy/core/fromnumeric.py:72(<dictcomp>),1764360,0.000,0.645,0.000,0.645
+/home/araujo/Github/SHARC/sharc/lib/python3.10/site-packages/numpy/core/fromnumeric.py:2172(_sum_dispatcher),1764360,0.000,0.248,0.000,0.248
+{built-in method builtins.isinstance},1764360,0.000,0.211,0.000,0.211
+{method 'items' of 'dict' objects},1764360,0.000,0.148,0.000,0.148
+/home/araujo/Github/SHARC/sharc/lib/python3.10/site-packages/numpy/core/multiarray.py:346(where),882269,0.000,0.129,0.000,0.129
+{built-in method builtins.max},90,0.000,0.000,0.000,0.000
+{method 'append' of 'list' objects},450,0.000,0.000,0.000,0.000
+{built-in method builtins.abs},90,0.000,0.000,0.000,0.000
+{method 'pop' of 'dict' objects},180,0.000,0.000,0.000,0.000
+{built-in method builtins.len},90,0.000,0.000,0.000,0.000
+{method 'disable' of '_lsprof.Profiler' objects},1,0.000,0.000,0.000,0.000

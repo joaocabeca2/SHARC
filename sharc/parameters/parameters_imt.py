@@ -68,8 +68,8 @@ class ParametersImt(ParametersBase):
     #    season - season of the year.
     param_p619 = ParametersP619()
     space_station_alt_m: float = 20000.0
-    earth_station_alt_m: float = 0.0
-    earth_station_lat_deg: float = 0.0
+    earth_station_alt_m: float = 1000
+    earth_station_lat_deg: float = -15.7801
     earth_station_long_diff_deg: float = 0.0
     season: str = "SUMMER"
     los_adjustment_factor: float = 18.0
