@@ -11,12 +11,18 @@ import numpy as np
 import os
 import datetime
 import re
+import pathlib
 
 from shutil import copy
 
 class Results(object):
-
-    def __init__(self, parameters_filename: str, overwrite_output: bool):
+    """Handle the output of the simulator
+    """
+    def __init__(self, parameters_filename: str,
+                 overwrite_output: bool,
+                 output_dir='output',
+                 output_dir_prefix='output',):
+        
         self.imt_ul_tx_power_density = list()
         self.imt_ul_tx_power = list()
         self.imt_ul_sinr_ext = list()
@@ -58,15 +64,18 @@ class Results(object):
 
         self.plot_list = None
 
+        self.__sharc_dir = pathlib.Path(__file__).parent.resolve()
+        self.output_dir_parent = output_dir
+
         if not overwrite_output:
             today = datetime.date.today()
 
             results_number = 1
-            results_dir_head = 'output_' + today.isoformat() + '_' + "{:02n}"
+            results_dir_head = output_dir_prefix + '_' + today.isoformat() + '_' + "{:02n}"
             self.create_dir(results_number, results_dir_head)
             copy(parameters_filename, self.output_directory)
         else:
-            self.output_directory = 'output'
+            self.output_directory = self.__sharc_dir / self.output_dir_parent
 
     def create_dir(self, results_number: int, dir_head: str):
         """Creates the output directory if it doens't exsit.
@@ -84,7 +93,7 @@ class Results(object):
             output directory name
         """
         
-        dir_head_complete = dir_head.format(results_number)
+        dir_head_complete = self.__sharc_dir / self.output_dir_parent / dir_head.format(results_number)
         
         try:
             os.makedirs(dir_head_complete)

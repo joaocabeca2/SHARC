@@ -167,7 +167,9 @@ class Simulation(ABC, Observable):
             self.num_rb_per_bs/self.parameters.imt.ue_k)
 
         self.results = Results(self.parameters_filename,
-                               self.parameters.general.overwrite_output)
+                               self.parameters.general.overwrite_output,
+                               self.parameters.general.output_dir,
+                               self.parameters.general.output_dir_prefix)
 
         if self.parameters.general.system == 'RAS':
             self.polarization_loss = 0.0
