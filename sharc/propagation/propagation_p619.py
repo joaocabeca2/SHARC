@@ -63,9 +63,11 @@ class PropagationP619(Propagation):
         if season.upper() not in ["SUMMER", "WINTER"]:
             raise ValueError(f"PropagationP619: Invalid value for parameter season - {season}. Possible values are \"SUMMER\", \"WINTER\".")
         self.season = season
-
         # Load city name based on latitude
+        self.lookup_table = False
         self.city_name = self._get_city_name_by_latitude()
+        if self.city_name != "Unknown":
+            self.lookup_table = True
 
     def _get_city_name_by_latitude(self):
         localidades_file = os.path.join(os.path.dirname(__file__), 'Dataset/localidades.csv')
@@ -75,6 +77,7 @@ class PropagationP619(Propagation):
                 if abs(float(row['Latitude']) - self.earth_station_lat_deg) < 1e-5:
                     return row['Cidade']
         return 'Unknown'
+    
 
     def _get_atmospheric_gasses_loss(self, *args, **kwargs) -> float:
         """
@@ -247,8 +250,12 @@ class PropagationP619(Propagation):
             error_message = "different frequencies not supported in P619"
             raise ValueError(error_message)
 
-        atmospheric_gasses_loss = self._get_atmospheric_gasses_loss(frequency_MHz=freq_set[0], apparent_elevation=np.mean(elevation["apparent"]), lookupTable=kwargs.get("lookupTable", False))
-        beam_spreading_attenuation = self._get_beam_spreading_att(elevation["free_space"], self.earth_station_alt_m, earth_to_space)
+        atmospheric_gasses_loss = self._get_atmospheric_gasses_loss(frequency_MHz=freq_set[0],
+                                                                    apparent_elevation=np.mean(elevation["apparent"]),
+                                                                    lookupTable=self.lookup_table)
+        beam_spreading_attenuation = self._get_beam_spreading_att(elevation["free_space"],
+                                                                  self.earth_station_alt_m,
+                                                                  earth_to_space)
         diffraction_loss = 0
 
         if single_entry:
@@ -314,7 +321,7 @@ if __name__ == '__main__':
     frequency_MHz = 2680.
     earth_station_alt_m = 1000
 
-    apparent_elevation = np.linspace(0, 90,100)
+    apparent_elevation = np.linspace(0, 90, 91)
 
     loss_false = np.zeros(len(apparent_elevation))
     loss_true = np.zeros(len(apparent_elevation))
