@@ -89,3 +89,10 @@ myenv/Scripts/pythonw.exe
 [SYS]*.txt
 IMT_*.txt
 SYS_*.txt
+
+
+# Ignores campaigns output
+
+/sharc/campaigns/imt_hibs_ras_2600_MHz/output/RAS_distance_csv/*.csv
+/sharc/campaigns/imt_hibs_ras_2600_MHz/output/output_imt*/*.ini
+
