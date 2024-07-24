@@ -3,75 +3,75 @@ import pandas as pd
 import plotly.graph_objects as go
 
 def plot_cdf(file_prefix, label='CDF', valores_label=['0', '45', '90'], passo_xticks=5, xaxis_title='Value'):
-    # Obter o diretório atual do script
+    # Get the current directory of the script
     workfolder = os.path.dirname(os.path.abspath(__file__))
     
-    # Definir o caminho base dinamicamente com base no diretório atual
-    pasta_destino = os.path.abspath(os.path.join(workfolder, '..', "output", "RAS_distance_csv"))
-    pasta_figs = os.path.abspath(os.path.join(workfolder, '..', "output", "RAS_distance_figs"))
+    # Define the base path dynamically based on the current directory
+    csv_folder = os.path.abspath(os.path.join(workfolder, '..', "output", "RAS_distance_csv"))
+    figs_folder = os.path.abspath(os.path.join(workfolder, '..', "output", "RAS_distance_figs"))
 
-    # Verificar se a pasta existe, caso contrário, criar a pasta
-    if not os.path.exists(pasta_destino):
-        os.makedirs(pasta_destino)
+    # Check if the csv folder exists, if not, create it
+    if not os.path.exists(csv_folder):
+        os.makedirs(csv_folder)
 
-    # Verificar se a pasta de figuras existe, caso contrário, criar a pasta
-    if not os.path.exists(pasta_figs):
-        os.makedirs(pasta_figs)
+    # Check if the figs folder exists, if not, create it
+    if not os.path.exists(figs_folder):
+        os.makedirs(figs_folder)
     
-    # Obter todos os arquivos .csv que contêm a label no nome
-    all_files = [f for f in os.listdir(pasta_destino) if f.endswith('.csv') and label in f and file_prefix in f]
+    # Get all .csv files in the directory that contain the label in the name
+    all_files = [f for f in os.listdir(csv_folder) if f.endswith('.csv') and label in f and file_prefix in f]
     
-    # Obter a lista de nomes base de arquivos sem a label
+    # Get the list of base file names without the label
     base_names = set(f.split('km_')[1] for f in all_files if file_prefix in f)
     
-    # Inicializar valores globais para min e max
+    # Initialize global min and max values
     global_min = float('inf')
     global_max = float('-inf')
 
-    # Primeiro, calcular o min e max globais
+    # First, calculate the global min and max values
     for base_name in base_names:
         for valor_label in valores_label:
             file_name = f"RAS_{valor_label}km_{base_name}"
-            file_path = os.path.join(pasta_destino, file_name)
+            file_path = os.path.join(csv_folder, file_name)
             if os.path.exists(file_path):
                 try:
-                    # Ler o arquivo .csv utilizando pandas
+                    # Read the .csv file using pandas
                     data = pd.read_csv(file_path)
                     
-                    # Remover linhas que não contêm valores numéricos válidos
+                    # Remove rows that do not contain valid numeric values
                     data = data.apply(pd.to_numeric, errors='coerce').dropna()
                     
                     if not data.empty:
                         global_min = min(global_min, data.iloc[:, 0].min())
                         global_max = max(global_max, data.iloc[:, 0].max())
                 except Exception as e:
-                    print(f"Erro ao processar o arquivo {file_name}: {e}")
+                    print(f"Error processing the file {file_name}: {e}")
 
-    # Em seguida, plotar os gráficos ajustando os eixos
+    # Then, plot the graphs adjusting the axes
     for base_name in base_names:
         fig = go.Figure()
         for valor_label in valores_label:
             file_name = f"RAS_{valor_label}km_{base_name}"
-            file_path = os.path.join(pasta_destino, file_name)
+            file_path = os.path.join(csv_folder, file_name)
             if os.path.exists(file_path):
                 try:
-                    # Ler o arquivo .csv utilizando pandas
+                    # Read the .csv file using pandas
                     data = pd.read_csv(file_path)
                     
-                    # Remover linhas que não contêm valores numéricos válidos
+                    # Remove rows that do not contain valid numeric values
                     data = data.apply(pd.to_numeric, errors='coerce').dropna()
                     
-                    # Verificar se há dados suficientes para plotar
+                    # Check if there are enough data points to plot
                     if data.empty or data.shape[0] < 2:
-                        print(f"Arquivo {file_name} não tem dados suficientes para plotar.")
+                        print(f"The file {file_name} does not have enough data to plot.")
                         continue
                     
-                    # Plotar a CDF
+                    # Plot the CDF
                     fig.add_trace(go.Scatter(x=data.iloc[:, 0], y=data.iloc[:, 1], mode='lines', name=f'RAS {valor_label} KM'))
                 except Exception as e:
-                    print(f"Erro ao processar o arquivo {file_name}: {e}")
+                    print(f"Error processing the file {file_name}: {e}")
         
-        # Configurações do gráfico
+        # Graph configurations
         fig.update_layout(
             title=f'CDF Plot for {base_name}',
             xaxis_title=xaxis_title,
@@ -81,14 +81,14 @@ def plot_cdf(file_prefix, label='CDF', valores_label=['0', '45', '90'], passo_xt
             legend_title="Labels"
         )
         
-        # Mostrar a figura
+        # Show the figure
         fig.show()
         
-        # Salvar a figura
-        #base_name_no_ext = os.path.splitext(base_name)[0]  # Remover a extensão .csv
-        #fig_file_path = os.path.join(pasta_figs, f"CDF_Plot_{base_name_no_ext}.png")
+        # Save the figure
+        #base_name_no_ext = os.path.splitext(base_name)[0]  # Remove the .csv extension
+        #fig_file_path = os.path.join(figs_folder, f"CDF_Plot_{base_name_no_ext}.png")
         #fig.write_image(fig_file_path)
-        #print(f"Figura salva: {fig_file_path}")
+        #print(f"Figure saved: {fig_file_path}")
 
 def plot_bs_antenna_gain_towards_the_ue(label='CDF', valores_label=['0', '45', '90'], passo_xticks=5):
     plot_cdf('BS_antenna_gain_towards_the_UE', label, valores_label, passo_xticks, xaxis_title='Antenna Gain (dB)')
@@ -135,7 +135,7 @@ def plot_system_pfd(label='CDF', valores_label=['0', '45', '90'], passo_xticks=5
 def plot_inr_samples(label='CDF', valores_label=['0', '45', '90'], passo_xticks=5):
     plot_cdf('INR_samples', label, valores_label, passo_xticks, xaxis_title='INR Samples (dB)')
 
-# Função principal para identificar rótulos e chamar as funções apropriadas
+# Main function to identify labels and call the appropriate functions
 def main():
     valores_label = ['0', '45', '90', "500"]
     plot_bs_antenna_gain_towards_the_ue(valores_label=valores_label)
