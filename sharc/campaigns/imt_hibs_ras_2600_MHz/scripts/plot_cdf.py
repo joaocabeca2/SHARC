@@ -127,7 +127,7 @@ def plot_system_inr(label='CDF', valores_label=['0', '45', '90'], passo_xticks=5
     plot_cdf('system_INR', label, valores_label, passo_xticks, xaxis_title='INR (dB)')
 
 def plot_system_interference_power_from_imt_dl(label='CDF', valores_label=['0', '45', '90'], passo_xticks=5):
-    plot_cdf('system_interference_power_from_IMT_DL', label, valores_label, passo_xticks, xaxis_title='Interference Power (dBm)')
+    plot_cdf('system_interference_power_from_IMT_DL', label, valores_label, passo_xticks, xaxis_title='Interference Power (dBm/MHz)')
 
 def plot_system_pfd(label='CDF', valores_label=['0', '45', '90'], passo_xticks=5):
     plot_cdf('system_PFD', label, valores_label, passo_xticks, xaxis_title='PFD (dBW/m²)')

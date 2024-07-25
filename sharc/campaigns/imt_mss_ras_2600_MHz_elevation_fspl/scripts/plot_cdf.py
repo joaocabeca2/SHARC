@@ -2,17 +2,20 @@ import os
 import pandas as pd
 import plotly.graph_objects as go
 
-def plot_cdf(file_prefix, label='CDF', valores_label=['30', '45', '60'], passo_xticks=5, xaxis_title='Value', buffer_percent=5):
+def plot_cdf(file_prefix, label='CDF', valores_label=['30', '45', '60'], passo_xticks=5, xaxis_title='Value', buffer_percent=10):
     # Get the current directory of the script
     workfolder = os.path.dirname(os.path.abspath(__file__))
     
     # Define the base path dynamically based on the current directory
     csv_folder = os.path.abspath(os.path.join(workfolder, '..', "output", "RAS_elevation_csv"))
-    figs_folder = os.path.abspath(os.path.join(workfolder, '..', "output", "RAS_elevation_figs"))
+    #figs_folder = os.path.abspath(os.path.join(workfolder, '..', "output", "RAS_elevation_figs"))
 
     # Check if the csv folder exists, if not, create it
     if not os.path.exists(csv_folder):
         os.makedirs(csv_folder)
+    # Check if the csv folder exists, if not, create it
+    #if not os.path.exists(csv_folder):
+    #    os.makedirs(figs_folder)
 
     # Get all .csv files in the directory that contain the label in the name
     all_files = [f for f in os.listdir(csv_folder) if f.endswith('.csv') and label in f and file_prefix in f]
@@ -74,7 +77,7 @@ def plot_cdf(file_prefix, label='CDF', valores_label=['30', '45', '60'], passo_x
         
         # Graph configurations
         fig.update_layout(
-            title=f'CDF Plot for {base_name}',
+            title=f'(FSPL)-CDF Plot for {base_name}',
             xaxis_title=xaxis_title,
             yaxis_title='CDF',
             yaxis=dict(tickmode='array', tickvals=[0, 0.25, 0.5, 0.75, 1]),
@@ -82,6 +85,13 @@ def plot_cdf(file_prefix, label='CDF', valores_label=['30', '45', '60'], passo_x
             legend_title="Labels"
         )
         
+        
+
+        # Save the figure
+        #fig_path = os.path.join(figs_folder, f'{base_name}.png')
+        #fig.write_image(fig_path,'png')
+        #print(f"Figure saved at {fig_path}")
+
         # Show the figure
         fig.show()
 
@@ -122,7 +132,7 @@ def plot_system_inr(label='CDF', valores_label=['0', '45', '90'], passo_xticks=5
     plot_cdf('system_INR', label, valores_label, passo_xticks, xaxis_title='INR (dB)')
 
 def plot_system_interference_power_from_imt_dl(label='CDF', valores_label=['0', '45', '90'], passo_xticks=5):
-    plot_cdf('system_interference_power_from_IMT_DL', label, valores_label, passo_xticks, xaxis_title='Interference Power (dBm)')
+    plot_cdf('system_interference_power_from_IMT_DL', label, valores_label, passo_xticks, xaxis_title='Interference Power (dBm/MHz)')
 
 def plot_system_pfd(label='CDF', valores_label=['0', '45', '90'], passo_xticks=5):
     plot_cdf('system_PFD', label, valores_label, passo_xticks, xaxis_title='PFD (dBW/m²)')
