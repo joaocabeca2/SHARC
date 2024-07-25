@@ -7,7 +7,7 @@ def save_to_csv(label, label2,Destination_folder):
     workfolder = os.path.dirname(os.path.abspath(__file__))
     
     # Define the base path dynamically based on the current directory
-    name_campaigns = "imt_mss_ras_2600_MHz"
+    name_campaigns = "imt_mss_ras_2600_MHz_fspl"
     base_path = os.path.abspath(os.path.join(workfolder, '..', 'output'))
     subfolder_name = "output_" + name_campaigns + "_" + label
     input_folder = os.path.join(base_path, subfolder_name)
@@ -45,8 +45,7 @@ def save_to_csv(label, label2,Destination_folder):
 
 if __name__ == '__main__':
     elevation = "30"
-    simulation_id = "01"
-    label = elevation + "deg_2024-07-25_" + simulation_id
+    label = elevation + "deg_2024-07-25_02"
     label2 = elevation + "deg"
     Destination_folder = 'RAS_elevation_csv'
 

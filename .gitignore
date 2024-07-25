@@ -97,3 +97,5 @@ SYS_*.txt
 /sharc/campaigns/imt_hibs_ras_2600_MHz/output/output_imt*/*.ini
 /sharc/campaigns/imt_mss_ras_2600_MHz_elevation/output/RAS_elevation_csv/*.csv
 /sharc/campaigns/imt_mss_ras_2600_MHz_elevation/output/output_imt*/*.ini
+/sharc/campaigns/imt_mss_ras_2600_MHz_elevation_fspl/output/RAS_elevation_csv/*.csv
+/sharc/campaigns/imt_mss_ras_2600_MHz_elevation_fspl/output/output_imt*/*.ini
