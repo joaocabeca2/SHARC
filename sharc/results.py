@@ -453,7 +453,7 @@ class Results(object):
             x = base[:-1]
             y = cumulative / cumulative[-1]
             title = "[SYS] CDF of system interference power from IMT DL"
-            x_label = "Interference Power [dBm]"
+            x_label = "Interference Power [dBm/MHz]"
             y_label = "Probability of Power < $X$"
             file_name = plot_title_to_filename(title)
             #x_limits = (-80, -20)
