@@ -3,7 +3,6 @@ import sys
 from convert_txt_to_csv import save_to_csv
 from plot_cdf import *
 
-# Assuming convert_txt_to_csv.py and plot_cdf.py are in the same directory
 sys.path.append(os.path.dirname(__file__))
 
 def main():
