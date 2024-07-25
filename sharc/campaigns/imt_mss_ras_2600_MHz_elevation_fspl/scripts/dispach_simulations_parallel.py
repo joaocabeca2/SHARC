@@ -20,7 +20,7 @@ def run_command(param_file):
     subprocess.run(command)
 
 # Number of threads
-num_threads = len(parameter_files)
+num_threads = min(len(parameter_files), os.cpu_count())
 
 # Run the commands in parallel
 with ThreadPoolExecutor(max_workers=num_threads) as executor:
