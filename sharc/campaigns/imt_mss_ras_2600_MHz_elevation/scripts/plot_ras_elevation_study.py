@@ -7,7 +7,7 @@ from plot_cdf import *
 sys.path.append(os.path.dirname(__file__))
 
 def main():
-    elevations = ["30", "45", "60"]
+    elevations = ["30", "45", "60","90"]
     labels = [elev + "deg_2024-07-25_01" for elev in elevations]
     labels2 = [elev + "deg" for elev in elevations]
     Destination_folder = 'RAS_elevation_csv'

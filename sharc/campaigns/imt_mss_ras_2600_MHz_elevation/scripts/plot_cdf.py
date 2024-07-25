@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import plotly.graph_objects as go
 
-def plot_cdf(file_prefix, label='CDF', valores_label=['30', '45', '60'], passo_xticks=5, xaxis_title='Value'):
+def plot_cdf(file_prefix, label='CDF', valores_label=['30', '45', '60'], passo_xticks=5, xaxis_title='Value', buffer_percent=5):
     # Get the current directory of the script
     workfolder = os.path.dirname(os.path.abspath(__file__))
     
@@ -14,10 +14,6 @@ def plot_cdf(file_prefix, label='CDF', valores_label=['30', '45', '60'], passo_x
     if not os.path.exists(csv_folder):
         os.makedirs(csv_folder)
 
-    # Check if the figs folder exists, if not, create it
-    #if not os.path.exists(figs_folder):
-    #    os.makedirs(figs_folder)
-    
     # Get all .csv files in the directory that contain the label in the name
     all_files = [f for f in os.listdir(csv_folder) if f.endswith('.csv') and label in f and file_prefix in f]
     
@@ -46,6 +42,11 @@ def plot_cdf(file_prefix, label='CDF', valores_label=['30', '45', '60'], passo_x
                         global_max = max(global_max, data.iloc[:, 0].max())
                 except Exception as e:
                     print(f"Error processing the file {file_name}: {e}")
+
+    # Calculate the buffer for min and max values
+    range_buffer = (global_max - global_min) * buffer_percent / 100
+    adjusted_min = global_min - range_buffer
+    adjusted_max = global_max + range_buffer
 
     # Then, plot the graphs adjusting the axes
     for base_name in base_names:
@@ -77,18 +78,12 @@ def plot_cdf(file_prefix, label='CDF', valores_label=['30', '45', '60'], passo_x
             xaxis_title=xaxis_title,
             yaxis_title='CDF',
             yaxis=dict(tickmode='array', tickvals=[0, 0.25, 0.5, 0.75, 1]),
-            xaxis=dict(tickmode='linear', tick0=int(global_min), dtick=passo_xticks),
+            xaxis=dict(tickmode='linear', tick0=int(adjusted_min), dtick=passo_xticks, range=[adjusted_min, adjusted_max]),
             legend_title="Labels"
         )
         
         # Show the figure
         fig.show()
-        
-        # Save the figure
-        #base_name_no_ext = os.path.splitext(base_name)[0]  # Remove the .csv extension
-        #fig_file_path = os.path.join(figs_folder, f"CDF_Plot_{base_name_no_ext}.png")
-        #fig.write_image(fig_file_path)
-        #print(f"Figure saved: {fig_file_path}")
 
 def plot_bs_antenna_gain_towards_the_ue(label='CDF', valores_label=['0', '45', '90'], passo_xticks=5):
     plot_cdf('BS_antenna_gain_towards_the_UE', label, valores_label, passo_xticks, xaxis_title='Antenna Gain (dB)')
@@ -137,7 +132,7 @@ def plot_inr_samples(label='CDF', valores_label=['0', '45', '90'], passo_xticks=
 
 # Main function to identify labels and call the appropriate functions
 def main():
-    valores_label = ['30', '45', '90']
+    valores_label = ['30', '45', '60', "90"]
     plot_bs_antenna_gain_towards_the_ue(valores_label=valores_label)
     plot_coupling_loss(valores_label=valores_label)
     plot_dl_sinr(valores_label=valores_label)
