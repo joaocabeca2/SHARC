@@ -2,13 +2,13 @@ import os
 import pandas as pd
 import plotly.graph_objects as go
 
-def plot_cdf(file_prefix, label='CDF', valores_label=['0', '45', '90'], passo_xticks=5, xaxis_title='Value'):
+def plot_cdf(file_prefix, label='CDF', valores_label=['30', '45', '60'], passo_xticks=5, xaxis_title='Value'):
     # Get the current directory of the script
     workfolder = os.path.dirname(os.path.abspath(__file__))
     
     # Define the base path dynamically based on the current directory
-    csv_folder = os.path.abspath(os.path.join(workfolder, '..', "output", "RAS_distance_csv"))
-    figs_folder = os.path.abspath(os.path.join(workfolder, '..', "output", "RAS_distance_figs"))
+    csv_folder = os.path.abspath(os.path.join(workfolder, '..', "output", "RAS_elevation_csv"))
+    figs_folder = os.path.abspath(os.path.join(workfolder, '..', "output", "RAS_elevation_figs"))
 
     # Check if the csv folder exists, if not, create it
     if not os.path.exists(csv_folder):
@@ -22,7 +22,7 @@ def plot_cdf(file_prefix, label='CDF', valores_label=['0', '45', '90'], passo_xt
     all_files = [f for f in os.listdir(csv_folder) if f.endswith('.csv') and label in f and file_prefix in f]
     
     # Get the list of base file names without the label
-    base_names = set(f.split('km_')[1] for f in all_files if file_prefix in f)
+    base_names = set(f.split('deg_')[1] for f in all_files if file_prefix in f)
     
     # Initialize global min and max values
     global_min = float('inf')
@@ -31,7 +31,7 @@ def plot_cdf(file_prefix, label='CDF', valores_label=['0', '45', '90'], passo_xt
     # First, calculate the global min and max values
     for base_name in base_names:
         for valor_label in valores_label:
-            file_name = f"RAS_{valor_label}km_{base_name}"
+            file_name = f"RAS_{valor_label}deg_{base_name}"
             file_path = os.path.join(csv_folder, file_name)
             if os.path.exists(file_path):
                 try:
@@ -51,7 +51,7 @@ def plot_cdf(file_prefix, label='CDF', valores_label=['0', '45', '90'], passo_xt
     for base_name in base_names:
         fig = go.Figure()
         for valor_label in valores_label:
-            file_name = f"RAS_{valor_label}km_{base_name}"
+            file_name = f"RAS_{valor_label}deg_{base_name}"
             file_path = os.path.join(csv_folder, file_name)
             if os.path.exists(file_path):
                 try:
@@ -67,7 +67,7 @@ def plot_cdf(file_prefix, label='CDF', valores_label=['0', '45', '90'], passo_xt
                         continue
                     
                     # Plot the CDF
-                    fig.add_trace(go.Scatter(x=data.iloc[:, 0], y=data.iloc[:, 1], mode='lines', name=f'RAS {valor_label} KM'))
+                    fig.add_trace(go.Scatter(x=data.iloc[:, 0], y=data.iloc[:, 1], mode='lines', name=f'Elevation {valor_label} deg'))
                 except Exception as e:
                     print(f"Error processing the file {file_name}: {e}")
         
@@ -137,7 +137,7 @@ def plot_inr_samples(label='CDF', valores_label=['0', '45', '90'], passo_xticks=
 
 # Main function to identify labels and call the appropriate functions
 def main():
-    valores_label = ['0', '45', '90', "500"]
+    valores_label = ['30', '45', '90']
     plot_bs_antenna_gain_towards_the_ue(valores_label=valores_label)
     plot_coupling_loss(valores_label=valores_label)
     plot_dl_sinr(valores_label=valores_label)

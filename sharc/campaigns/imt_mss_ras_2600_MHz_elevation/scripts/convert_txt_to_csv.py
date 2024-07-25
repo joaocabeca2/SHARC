@@ -7,7 +7,7 @@ def save_to_csv(label, label2,Destination_folder):
     workfolder = os.path.dirname(os.path.abspath(__file__))
     
     # Define the base path dynamically based on the current directory
-    name_campaigns = "imt_hibs_ras_2600_MHz"
+    name_campaigns = "imt_mss_ras_2600_MHz"
     base_path = os.path.abspath(os.path.join(workfolder, '..', 'output'))
     subfolder_name = "output_" + name_campaigns + "_" + label
     input_folder = os.path.join(base_path, subfolder_name)
@@ -44,9 +44,9 @@ def save_to_csv(label, label2,Destination_folder):
             print(f"Error processing the file {file}: {e}")
 
 if __name__ == '__main__':
-    dist = "500"
-    label = dist + "km_2024-07-24_01"
-    label2 = dist + "km"
-    Destination_folder = 'RAS_distance_csv'
+    elevation = "30"
+    label = elevation + "deg_2024-07-25_01"
+    label2 = elevation + "deg"
+    Destination_folder = 'RAS_elevation_csv'
 
     save_to_csv(label, label2,Destination_folder)
