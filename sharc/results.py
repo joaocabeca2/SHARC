@@ -12,7 +12,7 @@ import os
 import datetime
 import re
 import pathlib
-
+import pandas as pd
 from shutil import copy
 
 class Results(object):
@@ -76,9 +76,9 @@ class Results(object):
             copy(parameters_filename, self.output_directory)
         else:
             self.output_directory = self.__sharc_dir / self.output_dir_parent
-
+            
     def create_dir(self, results_number: int, dir_head: str):
-        """Creates the output directory if it doens't exsit.
+        """Creates the output directory if it doesn't exist.
 
         Parameters
         ----------
@@ -107,14 +107,14 @@ class Results(object):
 
         Parameters
         ----------
-        n_bins : _type_
+        n_bins : int
             Number of bins used for the CDF plots
         """
         self.plot_list = list()
 
         def plot_title_to_filename(title: str):
             """
-            Creates the file name from the graph titles by removing spaces and brackes.
+            Creates the file name from the graph titles by removing spaces and brackets.
             """
             return re.sub(r'[\[\]]', "", title).replace(" ", "_")
 
@@ -127,7 +127,6 @@ class Results(object):
             y_label = "Probability of antenna gain < $X$"
             title = "[SYS] CDF of system antenna gain towards IMT stations"
             file_name = plot_title_to_filename(title)
-            #x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_system_antenna_gain) > 0:
@@ -139,7 +138,6 @@ class Results(object):
             y_label = "Probability of antenna gain < $X$"
             title = "[IMT] CDF of IMT station antenna gain towards system"
             file_name = plot_title_to_filename(title)
-            #x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_system_path_loss) > 0:
@@ -151,7 +149,6 @@ class Results(object):
             y_label = "Probability of path loss < $X$"
             title = "[SYS] CDF of IMT to system path loss"
             file_name = plot_title_to_filename(title)
-            #x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_system_build_entry_loss) > 0:
@@ -163,7 +160,6 @@ class Results(object):
             y_label = "Probability of loss < $X$"
             title = "[SYS] CDF of IMT to system building entry loss"
             file_name = plot_title_to_filename(title)
-            #x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_system_diffraction_loss) > 0:
@@ -175,7 +171,6 @@ class Results(object):
             y_label = "Probability of loss < $X$"
             title = "[SYS] CDF of IMT to system diffraction loss"
             file_name = plot_title_to_filename(title)
-            #x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_bs_antenna_gain) > 0:
@@ -270,7 +265,6 @@ class Results(object):
             x_label = "$I/N$ [dB]"
             y_label = "Probability of $I/N$ < $X$"
             file_name = plot_title_to_filename(title)
-            #x_limits = (-15, 20)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_ul_tput_ext) > 0:
@@ -375,7 +369,6 @@ class Results(object):
             x_label = "$I/N$ [dB]"
             y_label = "Probability of $I/N$ < $X$"
             file_name = plot_title_to_filename(title)
-            #x_limits = (-15, 20)
             y_limits = (0, 1)
             self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.imt_dl_tput_ext) > 0:
@@ -432,9 +425,8 @@ class Results(object):
             x_label = "PFD [dBm/m^2]"
             y_label = "Probability of INR < $X$"
             file_name = plot_title_to_filename(title)
-#            x_limits = (-80, -20)
             y_limits = (0, 1)
-            self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+            self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.system_ul_interf_power) > 0:
             values, base = np.histogram(self.system_ul_interf_power, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -444,9 +436,8 @@ class Results(object):
             x_label = "Interference Power [dBm]"
             y_label = "Probability of Power < $X$"
             file_name = plot_title_to_filename(title)
-            #x_limits = (-80, -20)
             y_limits = (0, 1)
-            self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+            self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
         if len(self.system_dl_interf_power) > 0:
             values, base = np.histogram(self.system_dl_interf_power, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -456,9 +447,8 @@ class Results(object):
             x_label = "Interference Power [dBm/MHz]"
             y_label = "Probability of Power < $X$"
             file_name = plot_title_to_filename(title)
-            #x_limits = (-80, -20)
             y_limits = (0, 1)
-            self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+            self.plot_list.append(Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
 
     def write_files(self, snapshot_number: int):
         """Writes the sample data to the output file
@@ -468,12 +458,14 @@ class Results(object):
         snapshot_number : int
             Current snapshot number
         """
-        n_bins = 200 #TODO: Add a parameter for that
-        file_extension = ".csv"
+        n_bins = 200  # TODO: Add a parameter for that
         header_text = "Results collected after " + str(snapshot_number) + " snapshots."
         self.generate_plot_list(n_bins)
         for plot in self.plot_list:
-            file_path = os.path.join(self.output_directory, plot.file_name + file_extension)
-            np.savetxt(file_path,
-                       np.transpose([plot.x, plot.y]),
-                       fmt="%.5f", delimiter=",", header=header_text, comments='')
+            file_path = os.path.join(self.output_directory, plot.file_name + ".csv")
+            df = pd.DataFrame({'x': plot.x, 'y': plot.y})
+            # Writing header text as comment
+            with open(file_path, 'w') as f:
+                f.write(f"# {header_text}\n")
+            df.to_csv(file_path, mode='a', index=False)
+

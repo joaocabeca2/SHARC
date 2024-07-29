@@ -93,9 +93,6 @@ SYS_*.txt
 
 # Ignores campaigns output
 
-/sharc/campaigns/imt_hibs_ras_2600_MHz/output/output_imt*/*.csv
-/sharc/campaigns/imt_hibs_ras_2600_MHz/output/output_imt*/*.ini
-/sharc/campaigns/imt_mss_ras_2600_MHz_elevation/output/RAS_elevation_csv/*.csv
-/sharc/campaigns/imt_mss_ras_2600_MHz_elevation/output/output_imt*/*.ini
-/sharc/campaigns/imt_mss_ras_2600_MHz_elevation_fspl/output/*/*.csv
-/sharc/campaigns/imt_mss_ras_2600_MHz_elevation_fspl/output/output_imt*/*.ini
+/sharc/campaigns/imt_*/output/output_imt*/*.csv
+/sharc/campaigns/imt_*/output/output_imt*/*.ini
+/sharc/campaigns/imt_*/output/Figs/*.png
