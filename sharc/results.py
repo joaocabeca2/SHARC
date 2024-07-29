@@ -469,12 +469,11 @@ class Results(object):
             Current snapshot number
         """
         n_bins = 200 #TODO: Add a parameter for that
-        file_extension = ".txt"
+        file_extension = ".csv"
         header_text = "Results collected after " + str(snapshot_number) + " snapshots."
         self.generate_plot_list(n_bins)
         for plot in self.plot_list:
-            np.savetxt(os.path.join(self.output_directory, plot.file_name + file_extension),
+            file_path = os.path.join(self.output_directory, plot.file_name + file_extension)
+            np.savetxt(file_path,
                        np.transpose([plot.x, plot.y]),
-                       fmt="%.5f", delimiter="\t", header=header_text)#,
-                       #newline=os.linesep)
-
+                       fmt="%.5f", delimiter=",", header=header_text, comments='')
