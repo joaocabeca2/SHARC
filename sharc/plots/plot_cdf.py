@@ -160,7 +160,7 @@ def plot_inr_samples(base_dir, label='CDF', passo_xticks=5, legendas=None, subpa
     plot_cdf(base_dir, 'INR_samples', label, passo_xticks, xaxis_title='INR Samples (dB)', legendas=legendas, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
 
 # Main function to identify labels and call the appropriate functions
-def main(base_dir, legendas=None, subpastas=None, save_file=True, show_plot=True):
+def all_plots(base_dir, legendas=None, subpastas=None, save_file=True, show_plot=True):
     plot_bs_antenna_gain_towards_the_ue(base_dir, legendas=legendas, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
     plot_coupling_loss(base_dir, legendas=legendas, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
     plot_dl_sinr(base_dir, legendas=legendas, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
@@ -181,5 +181,5 @@ if __name__ == "__main__":
     name = "imt_hibs_ras_2600_MHz"
     legendas = None  # Replace with a list of legends if needed
     subpastas = None  # Replace with a list of specific subfolders if needed
-    main(name, legendas=legendas, subpastas=subpastas, save_file=True, show_plot=False)
+    all_plots(name, legendas=legendas, subpastas=subpastas, save_file=True, show_plot=False)
 
