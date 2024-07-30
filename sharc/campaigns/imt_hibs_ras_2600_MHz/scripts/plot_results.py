@@ -9,10 +9,10 @@ legends = ["0 Km", "45 Km", "90 Km", "500 Km"]
 
 # Define specific subfolders if needed
 subpastas = [
-    "output_imt_hibs_ras_2600_MHz_0km_2024-07-29_01", 
-    "output_imt_hibs_ras_2600_MHz_45km_2024-07-29_01", 
-    "output_imt_hibs_ras_2600_MHz_90km_2024-07-29_01", 
-    "output_imt_hibs_ras_2600_MHz_500km_2024-07-29_01"
+    "output_imt_hibs_ras_2600_MHz_0km_2024-07-30_01", 
+    "output_imt_hibs_ras_2600_MHz_45km_2024-07-30_01", 
+    "output_imt_hibs_ras_2600_MHz_90km_2024-07-30_01", 
+    "output_imt_hibs_ras_2600_MHz_500km_2024-07-30_01"
 ]
 
 # Run the function with specific subfolders and legends
