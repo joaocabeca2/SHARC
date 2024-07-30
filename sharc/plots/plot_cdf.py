@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import plotly.graph_objects as go
 
-def plot_cdf(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', legends=None, subpastas=None, save_file=True, show_plot=False):
+def plot_cdf(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', legends=None, subfolders=None, save_file=True, show_plot=False):
     
     label='CDF'
     # Ensure at least one of save_file or show_plot is true
@@ -19,8 +19,8 @@ def plot_cdf(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', legends
         os.makedirs(figs_folder)
     
     # List all subfolders in the base directory or only those specified by the user
-    if subpastas:
-        subdirs = [os.path.join(csv_folder, d) for d in subpastas if os.path.isdir(os.path.join(csv_folder, d))]
+    if subfolders:
+        subdirs = [os.path.join(csv_folder, d) for d in subfolders if os.path.isdir(os.path.join(csv_folder, d))]
     else:
         subdirs = [os.path.join(csv_folder, d) for d in os.listdir(csv_folder) 
                    if os.path.isdir(os.path.join(csv_folder, d)) and d.startswith(f"output_{base_dir}_")]
@@ -120,72 +120,72 @@ def plot_cdf(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', legends
         print(f"Figure saved: {fig_file_path}")
 
 # Specific functions for different metrics
-def plot_bs_antenna_gain_towards_the_ue(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'IMT_CDF_of_BS_antenna_gain_towards_the_UE', passo_xticks, xaxis_title='Antenna Gain (dB)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_bs_antenna_gain_towards_the_ue(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_BS_antenna_gain_towards_the_UE', passo_xticks, xaxis_title='Antenna Gain (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_coupling_loss(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'IMT_CDF_of_coupling_loss', passo_xticks, xaxis_title='Coupling Loss (dB)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_coupling_loss(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_coupling_loss', passo_xticks, xaxis_title='Coupling Loss (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_dl_sinr(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'IMT_CDF_of_DL_SINR', passo_xticks, xaxis_title='DL SINR (dB)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_dl_sinr(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_DL_SINR', passo_xticks, xaxis_title='DL SINR (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_dl_snr(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'IMT_CDF_of_DL_SNR', passo_xticks, xaxis_title='DL SNR (dB)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_dl_snr(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_DL_SNR', passo_xticks, xaxis_title='DL SNR (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_dl_throughput(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'IMT_CDF_of_DL_throughput', passo_xticks, xaxis_title='DL Throughput (Mbps)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_dl_throughput(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_DL_throughput', passo_xticks, xaxis_title='DL Throughput (Mbps)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_dl_transmit_power(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'IMT_CDF_of_DL_transmit_power', passo_xticks, xaxis_title='DL Transmit Power (dBm)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_dl_transmit_power(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_DL_transmit_power', passo_xticks, xaxis_title='DL Transmit Power (dBm)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_imt_station_antenna_gain_towards_system(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'IMT_CDF_of_IMT_station_antenna_gain_towards_system', passo_xticks, xaxis_title='Antenna Gain (dB)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_imt_station_antenna_gain_towards_system(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_IMT_station_antenna_gain_towards_system', passo_xticks, xaxis_title='Antenna Gain (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_path_loss(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'IMT_CDF_of_path_loss', passo_xticks, xaxis_title='Path Loss (dB)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_path_loss(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_path_loss', passo_xticks, xaxis_title='Path Loss (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_ue_antenna_gain_towards_the_bs(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'IMT_CDF_of_UE_antenna_gain_towards_the_BS', passo_xticks, xaxis_title='Antenna Gain (dB)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_ue_antenna_gain_towards_the_bs(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_UE_antenna_gain_towards_the_BS', passo_xticks, xaxis_title='Antenna Gain (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_imt_to_system_path_loss(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'SYS_CDF_of_IMT_to_system_path_loss', passo_xticks, xaxis_title='Path Loss (dB)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_imt_to_system_path_loss(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'SYS_CDF_of_IMT_to_system_path_loss', passo_xticks, xaxis_title='Path Loss (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_system_antenna_towards_imt_stations(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'SYS_CDF_of_system_antenna_gain_towards_IMT_stations', passo_xticks, xaxis_title='Antenna Gain (dB)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_system_antenna_towards_imt_stations(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'SYS_CDF_of_system_antenna_gain_towards_IMT_stations', passo_xticks, xaxis_title='Antenna Gain (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_system_inr(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'SYS_CDF_of_system_INR', passo_xticks, xaxis_title='INR (dB)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_system_inr(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'SYS_CDF_of_system_INR', passo_xticks, xaxis_title='INR (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_system_interference_power_from_imt_dl(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'SYS_CDF_of_system_interference_power_from_IMT_DL', passo_xticks, xaxis_title='Interference Power (dBm/MHz)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_system_interference_power_from_imt_dl(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'SYS_CDF_of_system_interference_power_from_IMT_DL', passo_xticks, xaxis_title='Interference Power (dBm/MHz)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_system_pfd(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'SYS_CDF_of_system_PFD', passo_xticks, xaxis_title='PFD (dBW/m²)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_system_pfd(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'SYS_CDF_of_system_PFD', passo_xticks, xaxis_title='PFD (dBW/m²)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
-def plot_inr_samples(base_dir, passo_xticks=5, legends=None, subpastas=None, save_file=True, show_plot=True):
-    plot_cdf(base_dir, 'INR_samples', passo_xticks, xaxis_title='INR Samples (dB)', legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def plot_inr_samples(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'INR_samples', passo_xticks, xaxis_title='INR Samples (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
 # Main function to identify labels and call the appropriate functions
-def all_plots(base_dir, legends=None, subpastas=None, save_file=True, show_plot=False):
-    plot_bs_antenna_gain_towards_the_ue(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_coupling_loss(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_dl_sinr(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_dl_snr(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_dl_throughput(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_dl_transmit_power(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_imt_station_antenna_gain_towards_system(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_path_loss(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_ue_antenna_gain_towards_the_bs(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_imt_to_system_path_loss(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_system_antenna_towards_imt_stations(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_system_inr(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_system_interference_power_from_imt_dl(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
-    plot_system_pfd(base_dir, legends=legends, subpastas=subpastas, save_file=save_file, show_plot=show_plot)
+def all_plots(base_dir, legends=None, subfolders=None, save_file=True, show_plot=False):
+    plot_bs_antenna_gain_towards_the_ue(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_coupling_loss(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_dl_sinr(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_dl_snr(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_dl_throughput(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_dl_transmit_power(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_imt_station_antenna_gain_towards_system(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_path_loss(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_ue_antenna_gain_towards_the_bs(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_imt_to_system_path_loss(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_system_antenna_towards_imt_stations(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_system_inr(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_system_interference_power_from_imt_dl(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_system_pfd(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
 if __name__ == "__main__":
     # Example usage
     name = "imt_hibs_ras_2600_MHz"
     legends = None  # Replace with a list of legends if needed
-    subpastas = None  # Replace with a list of specific subfolders if needed
-    all_plots(name, legends=legends, subpastas=subpastas, save_file=True, show_plot=False)
+    subfolders = None  # Replace with a list of specific subfolders if needed
+    all_plots(name, legends=legends, subfolders=subfolders, save_file=True, show_plot=False)
 
