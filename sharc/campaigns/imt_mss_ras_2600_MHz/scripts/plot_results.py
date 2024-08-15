@@ -9,14 +9,14 @@ legends = ["30 deg (P619)", "45 deg (P619)", "60 deg (P619)", "90 deg (P619)","3
 #legends = None
 # Define specific subfolders if needed
 subfolders = [
-    "output_imt_mss_ras_2600_MHz_30deg_2024-08-01_01", 
-    "output_imt_mss_ras_2600_MHz_45deg_2024-08-01_01", 
-    "output_imt_mss_ras_2600_MHz_60deg_2024-08-01_01", 
-    "output_imt_mss_ras_2600_MHz_90deg_2024-08-01_01",
-    "output_imt_mss_ras_2600_MHz_fspl_30deg_2024-08-01_01", 
-    "output_imt_mss_ras_2600_MHz_fspl_45deg_2024-08-01_01", 
-    "output_imt_mss_ras_2600_MHz_fspl_60deg_2024-08-01_01", 
-    "output_imt_mss_ras_2600_MHz_fspl_90deg_2024-08-01_01"
+    "output_imt_mss_ras_2600_MHz_30deg_2024-08-15_01", 
+    "output_imt_mss_ras_2600_MHz_45deg_2024-08-15_01", 
+    "output_imt_mss_ras_2600_MHz_60deg_2024-08-15_01", 
+    "output_imt_mss_ras_2600_MHz_90deg_2024-08-15_01",
+    "output_imt_mss_ras_2600_MHz_fspl_30deg_2024-08-15_01", 
+    "output_imt_mss_ras_2600_MHz_fspl_45deg_2024-08-15_01", 
+    "output_imt_mss_ras_2600_MHz_fspl_60deg_2024-08-15_01", 
+    "output_imt_mss_ras_2600_MHz_fspl_90deg_2024-08-15_01"
 ]
 #subfolders = None
 # Run the function with specific subfolders and legends
