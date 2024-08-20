@@ -176,9 +176,8 @@ class SimulationAdjacentTest(unittest.TestCase):
                                                                                    self.param, random_number_gen)
 
         # test coupling loss method
-        self.simulation.coupling_loss_imt = self.simulation.calculate_coupling_loss(self.simulation.bs,
-                                                                                    self.simulation.ue,
-                                                                                    self.simulation.propagation_imt)
+        self.simulation.coupling_loss_imt = self.simulation.calculate_intra_imt_coupling_loss(self.simulation.bs,
+                                                                                    self.simulation.ue)
         npt.assert_allclose(self.simulation.coupling_loss_imt,
                             np.array([[88.47-1-10,  99.35-1-11,  103.27-1-22,  107.05-1-23],
                                       [107.55-2-10,  104.72-2-11,  101.53-2-22,  91.99-2-23]]),
@@ -268,9 +267,8 @@ class SimulationAdjacentTest(unittest.TestCase):
                                                                                    self.param, random_number_gen)
 
         # test coupling loss method
-        self.simulation.coupling_loss_imt = self.simulation.calculate_coupling_loss(self.simulation.bs,
-                                                                                    self.simulation.ue,
-                                                                                    self.simulation.propagation_imt)
+        self.simulation.coupling_loss_imt = self.simulation.calculate_intra_imt_coupling_loss(self.simulation.bs,
+                                                                                    self.simulation.ue)
         coupling_loss_imt = np.array([[88.47-1-10,  99.35-1-11,  103.27-1-22,  107.05-1-23],
                                       [107.55-2-10,  104.72-2-11,  101.53-2-22,  91.99-2-23]])
         npt.assert_allclose(self.simulation.coupling_loss_imt,

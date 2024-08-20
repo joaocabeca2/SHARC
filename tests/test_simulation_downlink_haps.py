@@ -164,7 +164,7 @@ class SimulationDownlinkHapsTest(unittest.TestCase):
         self.simulation.connect_ue_to_bs()
         self.simulation.select_ue(random_number_gen)
         self.simulation.link = {0:[0,1],1:[2,3]}
-        self.simulation.coupling_loss_imt = self.simulation.calculate_coupling_loss(self.simulation.bs,
+        self.simulation.coupling_loss_imt = self.simulation.calculate_intra_imt_coupling_loss(self.simulation.bs,
                                                                                     self.simulation.ue,
                                                                                     self.simulation.propagation_imt)
         self.simulation.scheduler()

@@ -14,4 +14,3 @@ testRunner = unittest.runner.TextTestRunner()
 test_results = testRunner.run(tests)
 
 if(test_results.errors != [] or test_results.failures != []): sys.exit(1)
-        
