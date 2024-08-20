@@ -116,7 +116,7 @@ class Simulation(ABC, Observable):
         random_number_gen = np.random.RandomState(self.parameters.general.seed)
         self.propagation_imt = PropagationFactory.create_propagation(self.parameters.imt.channel_model,
                                                                      self.parameters,
-                                                                     self.param_system,
+                                                                     self.parameters.imt,
                                                                      random_number_gen)
         self.propagation_system = PropagationFactory.create_propagation(self.param_system.channel_model,
                                                                         self.parameters,
@@ -167,7 +167,9 @@ class Simulation(ABC, Observable):
             self.num_rb_per_bs/self.parameters.imt.ue_k)
 
         self.results = Results(self.parameters_filename,
-                               self.parameters.general.overwrite_output)
+                               self.parameters.general.overwrite_output,
+                               self.parameters.general.output_dir,
+                               self.parameters.general.output_dir_prefix)
 
         if self.parameters.general.system == 'RAS':
             self.polarization_loss = 0.0
@@ -467,8 +469,8 @@ class Simulation(ABC, Observable):
 
             off_axis_angle = station_1.get_off_axis_angle(station_2)
             distance = station_1.get_distance_to(station_2)
-            theta = np.degrees(np.arctan(
-                (station_1.height - station_2.height)/distance)) + station_1.elevation
+            theta = np.degrees(np.arctan2(
+                (station_1.height - station_2.height), distance)) + station_1.elevation
             gains[0, station_2_active] = station_1.antenna[0].calculate_gain(off_axis_angle_vec=off_axis_angle[0, station_2_active],
                                                                              theta_vec=theta[0, station_2_active])
         else:  # for IMT <-> IMT

@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 
 from sharc.parameters.parameters_base import ParametersBase
+from sharc.parameters.parameters_p619 import ParametersP619
 
 @dataclass
 class ParametersFssSs(ParametersBase):
@@ -9,6 +10,7 @@ class ParametersFssSs(ParametersBase):
     parameters for the simulator
     """
     section_name: str = "FSS_SS"
+    is_space_to_earth: bool = True
     # satellite center frequency [MHz]
     frequency: float = 43000.0
     # satellite bandwidth [MHz]
@@ -38,6 +40,8 @@ class ParametersFssSs(ParametersBase):
     #    earth_station_long_diff_deg - difference between longitudes of IMT and satellite system
     #      (positive if space-station is to the East of earth-station)
     #    season - season of the year.
+    param_p619 = ParametersP619()
+    space_station_alt_m: float = 35780000.0
     earth_station_alt_m: float = 0.0
     earth_station_lat_deg: float = 0.0
     earth_station_long_diff_deg: float = 0.0
@@ -84,3 +88,4 @@ class ParametersFssSs(ParametersBase):
             raise ValueError(f"ParametersFssSs: \
                              Invalid value for paramter channel_model = {self.channel_model}. \
                              Possible values are \"FSPL\", \"SatelliteSimple\", \"P619\".")
+        self.param_p619.load_from_paramters(self)

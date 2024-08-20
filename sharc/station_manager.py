@@ -32,10 +32,10 @@ class StationManager(object):
         self.active = np.ones(n, dtype=bool)
         self.tx_power = np.empty(n)
         self.rx_power = np.empty(n)
-        self.rx_interference = np.empty(n)
-        self.ext_interference = np.empty(n)
+        self.rx_interference = np.empty(n) # Rx interferece in dBW
+        self.ext_interference = np.empty(n) # External interferece in dBW
         self.antenna = np.empty(n, dtype=Antenna)
-        self.bandwidth = np.empty(n)
+        self.bandwidth = np.empty(n) # Bandwidth in MHz
         self.noise_figure = np.empty(n)
         self.noise_temperature = np.empty(n)
         self.thermal_noise = np.empty(n)
@@ -43,8 +43,8 @@ class StationManager(object):
         self.snr = np.empty(n)
         self.sinr = np.empty(n)
         self.sinr_ext = np.empty(n)
-        self.inr = np.empty(n)
-        self.pfd = np.empty(n)
+        self.inr = np.empty(n) # INR in dBm/MHz
+        self.pfd = np.empty(n) # Powerflux density in dBm/m^2
         self.spectral_mask = np.empty(n, dtype=SpectralMask3Gpp)
         self.center_freq = np.empty(n)
         self.spectral_mask = None
@@ -183,8 +183,21 @@ class StationManager(object):
         return elevation
 
     def get_pointing_vector_to(self, station) -> tuple:
+        """calculate the pointing vector (angles) w.r.t. the other station
 
-        point_vec_x = station.x- self.x[:,np.newaxis]
+        Parameters
+        ----------
+        station : StationManager
+            The other station to calculate the pointing vector
+
+        Returns
+        -------
+        tuple
+            phi, theta (phi is calculated with respect to x counter-clock-wise and
+            theta is calculated with respect to z counter-clock-wise)
+        """
+
+        point_vec_x = station.x - self.x[:,np.newaxis]
         point_vec_y = station.y - self.y[:,np.newaxis]
         point_vec_z = station.height - self.height[:,np.newaxis]
 

@@ -20,6 +20,8 @@ from sharc.parameters.parameters_fss_es import ParametersFssEs
 from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
+from sharc.parameters.parameters_ntn import ParametersNTN
+from sharc.parameters.constants import EARTH_RADIUS , BOLTZMANN_CONSTANT
 from sharc.station_manager import StationManager
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
 from sharc.antenna.antenna import Antenna
@@ -54,20 +56,26 @@ class StationFactory(object):
                                    param_ant: ParametersAntennaImt,
                                    topology: Topology,
                                    random_number_gen: np.random.RandomState):
-        par = param_ant.get_antenna_parameters(StationType.IMT_BS)
+        param_ant = param_ant.get_antenna_parameters(StationType.IMT_BS)
         num_bs = topology.num_base_stations
         imt_base_stations = StationManager(num_bs)
         imt_base_stations.station_type = StationType.IMT_BS
-        # now we set the coordinates
-        imt_base_stations.x = topology.x
-        imt_base_stations.y = topology.y
-        imt_base_stations.azimuth = topology.azimuth
-        imt_base_stations.elevation = -par.downtilt*np.ones(num_bs)
-        if param.topology == 'INDOOR':
-            imt_base_stations.height = topology.height
+        if param.topology == "NTN":
+            imt_base_stations.x = topology.space_station_x * np.ones(num_bs)
+            imt_base_stations.y = topology.space_station_y * np.ones(num_bs)
+            imt_base_stations.height = topology.space_station_z*np.ones(num_bs)
+            imt_base_stations.elevation = topology.elevation
+            imt_base_stations.is_space_station = True
         else:
-            imt_base_stations.height = param.bs_height*np.ones(num_bs)
-
+            imt_base_stations.x = topology.x
+            imt_base_stations.y = topology.y
+            imt_base_stations.elevation = -param_ant.downtilt*np.ones(num_bs)
+            if param.topology == 'INDOOR':
+                imt_base_stations.height = topology.height
+            else:
+                imt_base_stations.height = param.bs_height*np.ones(num_bs)
+        
+        imt_base_stations.azimuth = topology.azimuth
         imt_base_stations.active = random_number_gen.rand(num_bs) < param.bs_load_probability
         imt_base_stations.tx_power = param.bs_conducted_power*np.ones(num_bs)
         imt_base_stations.rx_power = dict([(bs, -500 * np.ones(param.ue_k)) for bs in range(num_bs)])
@@ -84,7 +92,7 @@ class StationFactory(object):
 
         for i in range(num_bs):
             imt_base_stations.antenna[i] = \
-            AntennaBeamformingImt(par, imt_base_stations.azimuth[i],\
+            AntennaBeamformingImt(param_ant, imt_base_stations.azimuth[i],\
                                   imt_base_stations.elevation[i])
 
         #imt_base_stations.antenna = [AntennaOmni(0) for bs in range(num_bs)]
@@ -157,7 +165,8 @@ class StationFactory(object):
                                                                                deterministic_cell=True)
             psi = np.degrees(np.arctan((param.bs_height - param.ue_height) / distance))
 
-            imt_ue.azimuth = (azimuth + theta + np.pi/2)
+
+            imt_ue.azimuth = (azimuth + theta + np.pi/2)  
             imt_ue.elevation = elevation + psi
 
 
@@ -481,12 +490,12 @@ class StationFactory(object):
             fss_earth_station.x = np.array([param.x])
             fss_earth_station.y = np.array([param.y])
         elif param.location.upper() == "CELL":
-            x, y, dummy1, dummy2 = StationFactory.get_random_position(1, topology, random_number_gen,
+            x, y, _, _ = StationFactory.get_random_position(1, topology, random_number_gen,
                                                                       param.min_dist_to_bs, True)
             fss_earth_station.x = np.array(x)
             fss_earth_station.y = np.array(y)
         elif param.location.upper() == "NETWORK":
-            x, y, dummy1, dummy2 = StationFactory.get_random_position(1, topology, random_number_gen,
+            x, y, _, _ = StationFactory.get_random_position(1, topology, random_number_gen,
                                                                       param.min_dist_to_bs, False)
             fss_earth_station.x = np.array(x)
             fss_earth_station.y = np.array(y)
@@ -792,11 +801,16 @@ class StationFactory(object):
         y = list(y)
 
         # calculate UE azimuth wrt serving BS
-        theta = np.arctan2(y - cell_y, x - cell_x)
+        if topology.is_space_station == False:
+            theta = np.arctan2(y - cell_y, x - cell_x)
 
-        # calculate elevation angle
-        # psi is the vertical angle of the UE wrt the serving BS
-        distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2)
+            # calculate elevation angle
+            # psi is the vertical angle of the UE wrt the serving BS
+            distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2)
+        else:
+            theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
+            distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs_height)**2)
+        
 
         return x, y, theta, distance
 

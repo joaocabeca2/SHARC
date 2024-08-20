@@ -59,6 +59,7 @@ class PropagationP619(Propagation):
 
         super().__init__(random_number_gen)
 
+        self.is_earth_space_model = True
         self.clutter = PropagationClutterLoss(self.random_number_gen)
         self.free_space = PropagationFreeSpace(self.random_number_gen)
         self.building_entry = PropagationBuildingEntryLoss(
@@ -66,8 +67,8 @@ class PropagationP619(Propagation):
         self.scintillation = Scintillation(self.random_number_gen)
         self.atmosphere = ReferenceAtmosphere()
 
-        self.depolarization_loss = 0  # 1.5
-        self.polarization_mismatch_loss = 0  # 3
+        self.depolarization_loss = 0
+        self.polarization_mismatch_loss = 0
         self.elevation_has_atmospheric_loss = []
         self.freq_has_atmospheric_loss = []
         self.surf_water_dens_has_atmospheric_loss = []
@@ -77,13 +78,27 @@ class PropagationP619(Propagation):
         self.space_station_alt_m = space_station_alt_m
         self.earth_station_alt_m = earth_station_alt_m
         self.earth_station_lat_deg = earth_station_lat_deg
-        self.earth_station_long_diff_deg = earth_station_lat_deg
+        self.earth_station_long_diff_deg = earth_station_long_diff_deg
 
         if season.upper() not in ["SUMMER", "WINTER"]:
-            raise ValueError(f"PropagationP619: \
-                             Invalid value for parameter season - {season}. \
-                             Possible values are \"SUMMER\", \"WINTER\".")
+            raise ValueError(f"PropagationP619: Invalid value for parameter season - {
+                             season}. Possible values are \"SUMMER\", \"WINTER\".")
         self.season = season
+        # Load city name based on latitude
+        self.lookup_table = False
+        self.city_name = self._get_city_name_by_latitude()
+        if self.city_name != "Unknown":
+            self.lookup_table = True
+
+    def _get_city_name_by_latitude(self):
+        localidades_file = os.path.join(
+            os.path.dirname(__file__), 'Dataset/localidades.csv')
+        with open(localidades_file, mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if abs(float(row['Latitude']) - self.earth_station_lat_deg) < 1e-5:
+                    return row['Cidade']
+        return 'Unknown'
 
     def _get_atmospheric_gasses_loss(self, *args, **kwargs) -> float:
         """
@@ -99,22 +114,41 @@ class PropagationP619(Propagation):
         """
         frequency_MHz = kwargs["frequency_MHz"]
         apparent_elevation = kwargs["apparent_elevation"]
-
+        lookupTable = kwargs.pop("lookupTable", True)
         surf_water_vapour_density = kwargs.pop(
             "surf_water_vapour_density", False)
 
-        earth_radius_km = EARTH_RADIUS/1000
+        if lookupTable and self.city_name != 'Unknown':
+            # Define the path to the CSV file
+            output_dir = os.path.join(os.path.dirname(__file__), 'Dataset')
+            csv_file = os.path.join(output_dir, f'{self.city_name}_{int(frequency_MHz)}_{
+                                    int(self.earth_station_alt_m)}m.csv')
+            if os.path.exists(csv_file):
+                elevations = []
+                losses = []
+                with open(csv_file, mode='r') as file:
+                    reader = csv.reader(file)
+                    next(reader)  # Skip header
+                    for row in reader:
+                        elevations.append(float(row[0]))
+                        losses.append(float(row[1]))
+                interpolation_function = interp1d(
+                    elevations, losses, kind='linear', fill_value='extrapolate')
+                return interpolation_function(apparent_elevation)
+
+        earth_radius_km = EARTH_RADIUS / 1000
         a_acc = 0.  # accumulated attenuation (in dB)
-        h = self.earth_station_alt_m/1000  # ray altitude in km
-        beta = (90-abs(apparent_elevation)) * np.pi / 180.  # incidence angle
+        h = self.earth_station_alt_m / 1000  # ray altitude in km
+        beta = (90 - abs(apparent_elevation)) * np.pi / 180.  # incidence angle
 
         if not surf_water_vapour_density:
-            dummy, dummy, surf_water_vapour_density = \
-                self.atmosphere.get_reference_atmosphere_p835(self.earth_station_lat_deg,
-                                                              0, season=self.season)
+            _, _, surf_water_vapour_density = self.atmosphere.get_reference_atmosphere_p835(
+                self.earth_station_lat_deg, 0, season=self.season
+            )
 
-        # first, check if atmospheric loss was already calculated
         if len(self.elevation_has_atmospheric_loss):
+            elevation_diff = np.abs(
+                apparent_elevation - np.array(self.elevation_has_atmospheric_loss))
             elevation_diff = np.abs(
                 apparent_elevation - np.array(self.elevation_has_atmospheric_loss))
             indices = np.where(elevation_diff <= self.elevation_delta)
@@ -122,8 +156,7 @@ class PropagationP619(Propagation):
                 index = np.argmin(elevation_diff)
                 if self.freq_has_atmospheric_loss[index] == frequency_MHz and \
                    self.surf_water_dens_has_atmospheric_loss[index] == surf_water_vapour_density:
-                    loss = self.atmospheric_loss[index]
-                    return loss
+                    return self.atmospheric_loss[index]
 
         rho_s = surf_water_vapour_density * \
             np.exp(h / 2)  # water vapour density at h
@@ -149,7 +182,7 @@ class PropagationP619(Propagation):
                 t, p, e, n_new, gamma = self.atmosphere.get_atmospheric_params(
                     h, rho_s, frequency_MHz)
                 delta = 0.0001 + 0.01 * max(h, 0)
-                beta = np.arcsin(n/n_new * np.sin(alpha))
+                beta = np.arcsin(n / n_new * np.sin(alpha))
                 n = n_new
 
         t, p, e, n, gamma = self.atmosphere.get_atmospheric_params(
@@ -161,7 +194,7 @@ class PropagationP619(Propagation):
             ds = np.sqrt(r ** 2 * np.cos(beta) ** 2 + 2 * r *
                          delta + delta ** 2) - r * np.cos(beta)
             a_acc += ds * gamma
-            alpha = np.arcsin(r/(r+delta) * np.sin(beta))
+            alpha = np.arcsin(r / (r + delta) * np.sin(beta))
             h += delta
             if h >= 100:
                 break
@@ -202,7 +235,7 @@ class PropagationP619(Propagation):
         denominator = (1.728 + .5411 * elevation + .03723 * elevation ** 2 + altitude_km * (.1815 + .06272 *
                        elevation + .0138 * elevation ** 2) + (altitude_km ** 2) * (.01727 + .008288 * elevation)) ** 2
 
-        attenuation = 10 * np.log10(1 - numerator/denominator)
+        attenuation = 10 * np.log10(1 - numerator / denominator)
 
         if earth_to_space:
             attenuation = -attenuation
@@ -287,7 +320,8 @@ class PropagationP619(Propagation):
 
         # Determine the Earth-space path direction and if the interferer is single or multiple-entry.
         # The get_loss interface won't tell us who is the interferer, so we need to get it from the parameters.
-        if station_a.is_imt_station() and station_b.is_imt_station():
+        is_intra_imt = True if station_a.is_imt_station() and station_b.is_imt_station() else False
+        if is_intra_imt:
             # Intra-IMT
             if params.general.imt_link == "UPLINK":
                 is_earth_to_space_link = True
@@ -308,13 +342,17 @@ class PropagationP619(Propagation):
                 is_earth_to_space_link = False if imt_station.is_space_station else True
                 is_single_entry_interf = False
 
-        return self.get_loss(distance,
+        loss = self.get_loss(distance,
                              frequency,
                              indoor_stations,
                              elevation_angles,
                              is_earth_to_space_link,
                              earth_station_antenna_gain,
                              is_single_entry_interf)
+        # FIXME: Need this hack because the other IMT propagtion models returns num_bs x num_ue
+        if is_intra_imt:
+            loss = np.transpose(loss)
+        return loss
     
     @dispatch(np.ndarray, np.ndarray, np.ndarray, dict, bool, np.ndarray, bool)
     def get_loss(self,
@@ -405,9 +443,9 @@ if __name__ == '__main__':
 
     # sat_params = params.fss_ss
 
-    space_station_alt_m = 1000.0
-    earth_station_alt_m = 0.0
-    earth_station_lat_deg = 0.0
+    space_station_alt_m = 20000.0
+    earth_station_alt_m = 1000.0
+    earth_station_lat_deg = -15.7801
     earth_station_long_diff_deg = 0.0
     season = "SUMMER"
 
@@ -422,69 +460,40 @@ if __name__ == '__main__':
     ##########################
     # Plot atmospheric loss
     # compare with benchmark from ITU-R P-619 Fig. 3
-    frequency_MHz = 30000.
+    frequency_MHz = 2680.
     earth_station_alt_m = 1000
 
-    # apparent_elevation = range(-1, 90, 2)
-    apparent_elevation = [88, 90]
+    apparent_elevation = np.linspace(0, 90, 91)
 
-    loss_2_5 = np.zeros(len(apparent_elevation))
-    loss_12_5 = np.zeros(len(apparent_elevation))
+    loss_false = np.zeros(len(apparent_elevation))
+    loss_true = np.zeros(len(apparent_elevation))
 
     print("Plotting atmospheric loss:")
-    for index, _ in enumerate(apparent_elevation):
+    for index in range(len(apparent_elevation)):
         print("\tApparent Elevation: {} degrees".format(
             apparent_elevation[index]))
 
-        SURF_WATER_VAPOUR_DENSITY = 2.5
-        loss_2_5[index] = \
-            propagation._get_atmospheric_gasses_loss(frequency_MHz=frequency_MHz,
-                                                     apparent_elevation=apparent_elevation[index],
-                                                     surf_water_vapour_density=SURF_WATER_VAPOUR_DENSITY)
-        SURF_WATER_VAPOUR_DENSITY = 12.5
-        loss_12_5[index] = \
-            propagation._get_atmospheric_gasses_loss(frequency_MHz=frequency_MHz,
-                                                     apparent_elevation=apparent_elevation[index],
-                                                     surf_water_vapour_density=SURF_WATER_VAPOUR_DENSITY)
+        surf_water_vapour_density = 14.121645412892681
+        table = False
+        loss_false[index] = propagation._get_atmospheric_gasses_loss(frequency_MHz=frequency_MHz,
+                                                                     apparent_elevation=apparent_elevation[index],
+                                                                     surf_water_vapour_density=surf_water_vapour_density,
+                                                                     lookupTable=table)
+        table = True
+        loss_true[index] = propagation._get_atmospheric_gasses_loss(frequency_MHz=frequency_MHz,
+                                                                    apparent_elevation=apparent_elevation[index],
+                                                                    surf_water_vapour_density=surf_water_vapour_density,
+                                                                    lookupTable=table)
 
     plt.figure()
-    plt.semilogy(apparent_elevation, loss_2_5, label='2.5 g/m^3')
-    plt.semilogy(apparent_elevation, loss_12_5, label='12.5 g/m^3')
+    plt.semilogy(apparent_elevation, loss_false, label='No Table')
+    plt.semilogy(apparent_elevation, loss_true, label='With Table')
 
     plt.grid(True)
-
     plt.xlabel("apparent elevation (deg)")
     plt.ylabel("Loss (dB)")
     plt.title("Atmospheric Gasses Attenuation")
     plt.legend()
 
-    altitude_vec = np.arange(0, 6.1, .5) * 1000
-    elevation_vec = np.array([0, .5, 1, 2, 3, 5])
-    attenuation = np.empty([len(altitude_vec), len(elevation_vec)])
-
-    #################################
-    # Plot beam spreading attenuation
-    # compare with benchmark from ITU-R P-619 Fig. 7
-
-    earth_to_space = False
-    print("Plotting beam spreading attenuation:")
-
-    plt.figure()
-    for index, _ in enumerate(altitude_vec):
-        attenuation[index, :] = propagation._get_beam_spreading_att(elevation_vec,
-                                                                    altitude_vec[index],
-                                                                    earth_to_space)
-
-    handles = plt.plot(altitude_vec / 1000, np.abs(attenuation))
-    plt.xlabel("altitude (km)")
-    plt.ylabel("Attenuation (dB)")
-    plt.title("Beam Spreading Attenuation")
-
-    for line_handle, elevation in zip(handles, elevation_vec):
-        line_handle.set_label("{}deg".format(elevation))
-
-    plt.legend(title="Elevation")
-
-    plt.grid(True)
-
-    plt.show()
+    # Save the figures instead of showing them
+    plt.savefig("atmospheric_gasses_attenuation.png")
