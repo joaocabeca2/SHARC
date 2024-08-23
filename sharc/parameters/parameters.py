@@ -5,23 +5,23 @@ Created on Wed Aug  9 19:35:52 2017
 @author: edgar
 """
 
-import configparser
-import os
 import sys
+import os
+import configparser
 
+from sharc.parameters.parameters_general import ParametersGeneral
+from sharc.parameters.parameters_imt import ParametersImt
+from sharc.parameters.parameters_hotspot import ParametersHotspot
+from sharc.parameters.parameters_indoor import ParametersIndoor
 from sharc.parameters.parameters_antenna_imt import ParametersAntennaImt
 from sharc.parameters.parameters_eess_passive import ParametersEessPassive
 from sharc.parameters.parameters_fs import ParametersFs
-from sharc.parameters.parameters_fss_es import ParametersFssEs
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
-from sharc.parameters.parameters_general import ParametersGeneral
+from sharc.parameters.parameters_fss_es import ParametersFssEs
 from sharc.parameters.parameters_haps import ParametersHaps
-from sharc.parameters.parameters_hotspot import ParametersHotspot
-from sharc.parameters.parameters_imt import ParametersImt
-from sharc.parameters.parameters_indoor import ParametersIndoor
-from sharc.parameters.parameters_ntn import ParametersNTN
-from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_rns import ParametersRns
+from sharc.parameters.parameters_ras import ParametersRas
+from sharc.parameters.parameters_ntn import ParametersNTN
 
 
 class Parameters(object):
@@ -46,6 +46,7 @@ class Parameters(object):
         self.rns = ParametersRns()
         self.ras = ParametersRas()
 
+
     def set_file_name(self, file_name: str):
         """sets the configuration file name
 
@@ -56,8 +57,10 @@ class Parameters(object):
         """
         self.file_name = file_name
 
+
     def read_params(self):
-        """Read the parameters from the config file"""
+        """Read the parameters from the config file
+        """
         if not os.path.isfile(self.file_name):
             err_msg = f"PARAMETER ERROR [{self.__class__.__name__}]: \
                 Could not find the configuration file {self.file_name}"
@@ -132,16 +135,11 @@ class Parameters(object):
         #######################################################################
         self.ntn.load_parameters_from_file(self.file_name)
 
-
 if __name__ == "__main__":
     from pprint import pprint
-
     parameters = Parameters()
-    param_sections = [
-        a
-        for a in dir(parameters)
-        if not a.startswith("__") and not callable(getattr(parameters, a))
-    ]
+    param_sections = [a for a in dir(parameters) if not a.startswith('__') and not
+                callable(getattr(parameters, a))]
     print("\n#### Dumping default parameters:")
     for p in param_sections:
         print("\n")

@@ -14,6 +14,7 @@ from sharc.simulation_downlink import SimulationDownlink
 from sharc.parameters.parameters import Parameters
 from sharc.station_factory import StationFactory
 from sharc.propagation.propagation_factory import PropagationFactory
+from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
 
 
 class SimulationDownlinkTvroTest(unittest.TestCase):

@@ -13,7 +13,10 @@ import os.path as path
 
 from sharc.simulation_downlink import SimulationDownlink
 from sharc.parameters.parameters import Parameters
+from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.station_factory import StationFactory
+from sharc.propagation.propagation_factory import PropagationFactory
+from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
 
 class SimulationIndoorTest(unittest.TestCase):
 

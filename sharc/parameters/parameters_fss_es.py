@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
 
+from sharc.support.sharc_utils import is_float
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_p452 import ParametersP452
 from sharc.parameters.parameters_p619 import ParametersP619
-from sharc.support.sharc_utils import is_float
 
 
 @dataclass
@@ -12,9 +12,8 @@ class ParametersFssEs(ParametersBase):
     """Dataclass containing the Fixed Satellite Services - Earth Station
     parameters for the simulator
     """
-
     section_name: str = "FSS_ES"
-
+    
     # type of FSS-ES location:
     # FIXED - position must be given
     # CELL - random within central cell
@@ -53,8 +52,7 @@ class ParametersFssEs(ParametersBase):
     # Possible values: "ITU-R S.1855", "ITU-R S.465", "ITU-R S.580", "OMNI",
     #                  "Modified ITU-R S.465"
     antenna_pattern: str = "Modified ITU-R S.465"
-    # Antenna envelope gain (dBi) - only relevant for "Modified ITU-R S.465"
-    # model
+    # Antenna envelope gain (dBi) - only relevant for "Modified ITU-R S.465" model
     antenna_envelope_gain: float = 0.0
     # Diameter of the antenna [m]
     diameter: float = 1.8
@@ -79,11 +77,9 @@ class ParametersFssEs(ParametersBase):
     delta_N: float = 43.127
     # Percentage p. Float (0 to 100) or RANDOM
     percentage_p: str = "0.2"
-    # Distance over land from the transmit and receive antennas to the coast
-    # (km)
+    # Distance over land from the transmit and receive antennas to the coast (km)
     Dct: float = 70.0
-    # Distance over land from the transmit and receive antennas to the coast
-    # (km)
+    # Distance over land from the transmit and receive antennas to the coast (km)
     Dcr: float = 70.0
     # Effective height of interfering antenna (m)
     Hte: float = 20.0
@@ -95,8 +91,7 @@ class ParametersFssEs(ParametersBase):
     rx_lat: float = -23.17889
     # Antenna polarization
     polarization: str = "horizontal"
-    # Determine whether clutter loss following ITU-R P.2108 is added
-    # (TRUE/FALSE)
+    # Determine whether clutter loss following ITU-R P.2108 is added (TRUE/FALSE)
     clutter_loss: bool = True
 
     # Parameters for the P.619 propagation model used for sharing studies between IMT-NTN and FSS-ES
@@ -111,7 +106,7 @@ class ParametersFssEs(ParametersBase):
     earth_station_alt_m: float = 0.0
     earth_station_lat_deg: float = 0.0
     earth_station_long_diff_deg: float = 0.0
-    season: str = "SUMMER"
+    season:str = "SUMMER"
 
     # HDFSS propagation parameters
     # HDFSS position relative to building it is on. Possible values are
@@ -129,13 +124,13 @@ class ParametersFssEs(ParametersBase):
     # P2109_RANDOM: random probability at P.2109 model, considering elevation
     # P2109_FIXED: fixed probability at P.2109 model, considering elevation.
     #              Probability must be specified in bs_building_entry_loss_prob.
-    # FIXED_VALUE: fixed value per BS. Value must be specified in
+    # FIXED_VALUE: fixed value per BS. Value must be specified in 
     #              bs_building_entry_loss_value.
     bs_building_entry_loss_type: str = "P2109_FIXED"
-    # Probability of building entry loss not exceeded if
+    # Probability of building entry loss not exceeded if 
     # bs_building_entry_loss_type = P2109_FIXED
     bs_building_entry_loss_prob: float = 0.75
-    # Value in dB of building entry loss if
+    # Value in dB of building entry loss if 
     # bs_building_entry_loss_type = FIXED_VALUE
     bs_building_entry_loss_value: float = 35
 
@@ -155,26 +150,17 @@ class ParametersFssEs(ParametersBase):
         super().load_parameters_from_file(config_file)
 
         if self.location not in ["FIXED", "CELL", "NETWORK", "UNIFORM_DIST"]:
-            raise ValueError(
-                f'ParametersFssEs: \
+            raise ValueError(f"ParametersFssEs: \
                              Invalid value for paramter location - {self.location}. \
-                            Allowed values are "FIXED", "CELL", "NETWORK", "UNIFORM_DIST".'
-            )
+                            Allowed values are \"FIXED\", \"CELL\", \"NETWORK\", \"UNIFORM_DIST\".")
 
-        if self.antenna_pattern not in [
-            "ITU-R S.1855",
-            "ITU-R S.465",
-            "ITU-R S.580",
-            "OMNI",
-            "Modified ITU-R S.465",
-        ]:
-            raise ValueError(
-                f'ParametersFssEs: \
+        if self.antenna_pattern not in ["ITU-R S.1855", "ITU-R S.465", "ITU-R S.580", "OMNI",
+                                        "Modified ITU-R S.465"]:
+            raise ValueError(f"ParametersFssEs: \
                              Invalid value for paramter antenna_pattern - {self.antenna_pattern}. \
                              Allowed values are \
-                             "ITU-R S.1855", "ITU-R S.465", "ITU-R S.580", "OMNI", \
-                             "Modified ITU-R S.465"'
-            )
+                             \"ITU-R S.1855\", \"ITU-R S.465\", \"ITU-R S.580\", \"OMNI\", \
+                             \"Modified ITU-R S.465\"")
 
         if is_float(self.azimuth):
             self.azimuth = float(self.azimuth)
@@ -182,58 +168,35 @@ class ParametersFssEs(ParametersBase):
             if self.azimuth.isnumeric():
                 self.azimuth = float(self.azimuth)
             else:
-                raise ValueError(
-                    f"""ParametersFssEs:
+                raise ValueError(f"""ParametersFssEs:
                                 Invalid value for parameter azimuth - {self.azimuth}.
-                                Allowed values are \"RANDOM\" or a angle in degrees."""
-                )
+                                Allowed values are \"RANDOM\" or a angle in degrees.""")
 
         if is_float(self.percentage_p):
             self.percentage_p = float(self.percentage_p)
         elif self.percentage_p.upper() != "RANDOM":
-            raise ValueError(
-                f"""ParametersFssEs:
+            raise ValueError(f"""ParametersFssEs:
                             Invalid value for parameter azimuth - {self.percentage_p}.
-                            Allowed values are \"RANDOM\" or a percentage ]0,1]"""
-            )
+                            Allowed values are \"RANDOM\" or a percentage ]0,1]""")
 
         if self.polarization.lower() not in ["horizontal", "vertical"]:
-            raise ValueError(
-                f'ParametersFssEss: \
+            raise ValueError(f"ParametersFssEss: \
                              Invalid value for parameter polarization - {self.polarization}. \
-                             Allowed values are: "horizontal", "vertical"'
-            )
+                             Allowed values are: \"horizontal\", \"vertical\"")
 
         if self.es_position.upper() not in ["BUILDINGSIDE", "ROOFTOP"]:
-            raise ValueError(
-                f'ParametersFssEss: \
+            raise ValueError(f"ParametersFssEss: \
                              Invalid value for parameter es_position - {self.es_position} \
-                             Allowed values are "BUILDINGSIDE", "ROOFTOP".'
-            )
+                             Allowed values are \"BUILDINGSIDE\", \"ROOFTOP\".")
 
-        if self.bs_building_entry_loss_type not in [
-            "P2109_RANDOM",
-            "P2109_FIXED",
-            "FIXED_VALUE",
-        ]:
-            raise ValueError(
-                f'ParametersFssEs: \
+        if self.bs_building_entry_loss_type not in ["P2109_RANDOM", "P2109_FIXED", "FIXED_VALUE"]:
+            raise ValueError(f"ParametersFssEs: \
                              Invalid value for parameter bs_building_entry_loss_type - \
                              {self.bs_building_entry_loss_type} \
-                             Allowd values are "P2109_RANDOM", "P2109_FIXED", "FIXED_VALUE".'
-            )
-        if self.channel_model.upper() not in [
-            "FSPL",
-            "TERRESTRIALSIMPLE",
-            "P452",
-            "P619",
-            "TVRO-URBAN",
-            "TVRO-SUBURBAN",
-            "HDFSS",
-        ]:
-            raise ValueError(
-                f"ParametersFssEs: Invalid value for parameter channel_model - {self.channel_model}"
-            )
+                             Allowd values are \"P2109_RANDOM\", \"P2109_FIXED\", \"FIXED_VALUE\".")
+        if self.channel_model.upper() not in ["FSPL", "TERRESTRIALSIMPLE", "P452", "P619",
+                                              "TVRO-URBAN", "TVRO-SUBURBAN", "HDFSS"]:
+            raise ValueError(f"ParametersFssEs: Invalid value for parameter channel_model - {self.channel_model}")
 
         if self.channel_model == "P452":
             self.param_p452.load_from_paramters(self)

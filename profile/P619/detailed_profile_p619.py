@@ -7,6 +7,7 @@ Profile script for PropagationP619
 
 import os
 import csv
+import time
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')

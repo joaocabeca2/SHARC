@@ -15,7 +15,7 @@ import numpy.testing as npt
 class AntennaSA509Test(unittest.TestCase):
 
     def setUp(self):
-        self.par = ParametersRas()
+        self.par = ParametersRas();
         self.par.diameter = 10
         self.par.antenna_efficiency = 1
         self.par.frequency = 30000

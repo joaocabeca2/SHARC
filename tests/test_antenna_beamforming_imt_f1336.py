@@ -11,6 +11,7 @@ import numpy.testing as npt
 
 from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 from sharc.parameters.parameters_antenna_imt import ParametersAntennaImt
+from sharc.support.named_tuples import AntennaPar
 from sharc.support.enumerations import StationType
 
 class AntennaBeamformingImtF1336Test(unittest.TestCase):
