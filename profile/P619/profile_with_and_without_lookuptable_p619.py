@@ -81,11 +81,6 @@ plot_file = os.path.join(output_dir, 'atmospheric_loss_comparison.png')
 plt.savefig(plot_file)
 print(f"Atmospheric loss plot saved to {plot_file}")
 
-
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-
 # Load profiling results from CSV
 input_file = os.path.join(os.path.dirname(__file__), 'profile_results', 'profiling_results_table.csv')
 methods = []

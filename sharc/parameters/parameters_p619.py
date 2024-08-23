@@ -2,7 +2,6 @@
 # Object that loads the parameters for the P.619 propagation model.
 """Parameters definitions for IMT systems
 """
-import configparser
 from dataclasses import dataclass
 
 from sharc.parameters.parameters_base import ParametersBase
@@ -10,8 +9,8 @@ from sharc.parameters.parameters_base import ParametersBase
 
 @dataclass
 class ParametersP619(ParametersBase):
-    """Dataclass containing the P.619 propagation model parameters
-    """
+    """Dataclass containing the P.619 propagation model parameters"""
+
     # Parameters for the P.619 propagation model
     # For IMT NTN the model is used for calculating the coupling loss between
     # the BS space station and the UEs on Earth's surface.
@@ -46,6 +45,8 @@ class ParametersP619(ParametersBase):
         self.season = param.season
 
         if self.season.upper() not in ["SUMMER", "WINTER"]:
-            raise ValueError(f"{self.__class__.__name__}: \
+            raise ValueError(
+                f'{self.__class__.__name__}: \
                              Invalid value for parameter season - {self.season}. \
-                             Possible values are \"SUMMER\", \"WINTER\".")
+                             Possible values are "SUMMER", "WINTER".'
+            )

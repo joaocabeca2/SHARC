@@ -6,10 +6,7 @@ Created on Thu Jun 29 13:49:09 2017
 """
 
 import unittest
-import numpy as np
-import numpy.testing as npt
 
-from sharc.station_factory import StationFactory
 
 class StationFactoryTest(unittest.TestCase):
     

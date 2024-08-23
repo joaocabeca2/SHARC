@@ -1,32 +1,36 @@
 import os
+
 from sharc.plots.plot_cdf import all_plots
 
 # Define the base directory
 name = "imt_hibs_ras_2600_MHz"
 
 # this should behave similarly to `sharc/plots/plot_cdf:13`
-# ideally the readable legend would be in the .ini metadata and all this code would be deleted
+# ideally the readable legend would be in the .ini metadata and all this
+# code would be deleted
 workfolder = os.path.dirname(os.path.abspath(__file__))
 csv_folder = os.path.abspath(os.path.join(workfolder, "..", "output"))
 
 subdirs = [
     d
     for d in os.listdir(csv_folder)
-    if os.path.isdir(os.path.join(csv_folder, d))
-    and d.startswith(f"output_{name}_")
+    if os.path.isdir(os.path.join(csv_folder, d)) and d.startswith(f"output_{name}_")
 ]
 
 
 def get_date_from_dirname(dirname: str, prefix_length: int):
     return dirname[prefix_length : prefix_length + len("yyyy-mm-dd")]
 
+
 def get_id_from_dirname(dirname: str):
     return dirname.split("_")[-1]
+
 
 legends_mapper = [
     {
         # same as from .ini
-        # the legend should probably also be in the metadata there instead of making... this
+        # the legend should probably also be in the metadata there instead of
+        # making... this
         "output_dir_prefix": "output_imt_hibs_ras_2600_MHz_0km",
         "legend": "0 Km",
     },
@@ -44,26 +48,24 @@ legends_mapper = [
     },
 ]
 
-def get_id_from_dirname(dirname: str):
-    return dirname.split("_")[-1]
-
 
 subfolders_filters = {}
 
 for subdir in subdirs:
     for mapper in legends_mapper:
         if mapper["output_dir_prefix"] in subdir:
-            subfolders_filters\
-                .setdefault(mapper["output_dir_prefix"], { "id": "0", "date": "2024-01-01" })
+            subfolders_filters.setdefault(
+                mapper["output_dir_prefix"], {"id": "0", "date": "2024-01-01"}
+            )
 
             subfolders_filters[mapper["output_dir_prefix"]]["id"] = max(
-                        subfolders_filters[mapper["output_dir_prefix"]]["id"],
-                        get_id_from_dirname(subdir)
-                    )
+                subfolders_filters[mapper["output_dir_prefix"]]["id"],
+                get_id_from_dirname(subdir),
+            )
             subfolders_filters[mapper["output_dir_prefix"]]["date"] = max(
-                        subfolders_filters[mapper["output_dir_prefix"]]["date"],
-                        get_date_from_dirname(subdir, 1 + len(mapper['output_dir_prefix']))
-                    )
+                subfolders_filters[mapper["output_dir_prefix"]]["date"],
+                get_date_from_dirname(subdir, 1 + len(mapper["output_dir_prefix"])),
+            )
 
 
 legend_and_subfolders = [
@@ -75,9 +77,10 @@ legend_and_subfolders = [
     for d in subdirs
     for mapper in legends_mapper
     if mapper["output_dir_prefix"] in d
-        # comment filters out if needed
-        and subfolders_filters[mapper["output_dir_prefix"]]["id"] == get_id_from_dirname(d)
-        and subfolders_filters[mapper["output_dir_prefix"]]["date"] == get_date_from_dirname(d, len(mapper["output_dir_prefix"]) + 1)
+    # comment filters out if needed
+    and subfolders_filters[mapper["output_dir_prefix"]]["id"] == get_id_from_dirname(d)
+    and subfolders_filters[mapper["output_dir_prefix"]]["date"]
+    == get_date_from_dirname(d, len(mapper["output_dir_prefix"]) + 1)
 ]
 
 # Example with specific subfolders and legends

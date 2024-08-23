@@ -5,11 +5,13 @@ Created on Thu Apr 13 17:18:59 2017
 @author: edgar
 """
 
+import sys
+
+import numpy as np
+
 from sharc.antenna.antenna import Antenna
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
 
-import numpy as np
-import sys
 
 class AntennaS672(Antenna):
     """
@@ -34,9 +36,8 @@ class AntennaS672(Antenna):
 
         self.b = 6.32
 
-        self.psi_0 = param.antenna_3_dB/2
-        self.psi_1 = self.psi_0 * np.power(10, (self.peak_gain + self.l_s + 20)/25)
-
+        self.psi_0 = param.antenna_3_dB / 2
+        self.psi_1 = self.psi_0 * np.power(10, (self.peak_gain + self.l_s + 20) / 25)
 
     def calculate_gain(self, *args, **kwargs) -> np.array:
         psi = np.absolute(kwargs["off_axis_angle_vec"])
@@ -47,18 +48,20 @@ class AntennaS672(Antenna):
         gain[idx_0] = self.peak_gain
 
         idx_1 = np.where((self.psi_0 <= psi) & (psi <= self.a * self.psi_0))[0]
-        gain[idx_1] = self.peak_gain - 3 * np.power(psi[idx_1]/self.psi_0, 2)
+        gain[idx_1] = self.peak_gain - 3 * np.power(psi[idx_1] / self.psi_0, 2)
 
         idx_2 = np.where((self.a * self.psi_0 < psi) & (psi <= self.b * self.psi_0))[0]
         gain[idx_2] = self.peak_gain + self.l_s
 
         idx_3 = np.where((self.b * self.psi_0 < psi) & (psi <= self.psi_1))[0]
-        gain[idx_3] = self.peak_gain + self.l_s + 20 - 25 * np.log10(psi[idx_3]/self.psi_0)
+        gain[idx_3] = (
+            self.peak_gain + self.l_s + 20 - 25 * np.log10(psi[idx_3] / self.psi_0)
+        )
 
         return gain
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # initialize antenna parameters
@@ -66,21 +69,23 @@ if __name__ == '__main__':
     param.antenna_gain = 50
     param.antenna_pattern = "ITU-R S.672-4"
     param.antenna_3_dB = 2
-    psi = np.linspace(1, 30, num = 1000)
+    psi = np.linspace(1, 30, num=1000)
 
     param.antenna_l_s = -20
     antenna = AntennaS672(param)
-    gain20 = antenna.calculate_gain(off_axis_angle_vec = psi)
+    gain20 = antenna.calculate_gain(off_axis_angle_vec=psi)
 
     param.antenna_l_s = -25
     antenna = AntennaS672(param)
-    gain25 = antenna.calculate_gain(off_axis_angle_vec = psi)
+    gain25 = antenna.calculate_gain(off_axis_angle_vec=psi)
 
     param.antenna_l_s = -30
     antenna = AntennaS672(param)
-    gain30 = antenna.calculate_gain(off_axis_angle_vec = psi)
+    gain30 = antenna.calculate_gain(off_axis_angle_vec=psi)
 
-    fig = plt.figure(figsize=(12,7), facecolor='w', edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(12, 7), facecolor="w", edgecolor="k"
+    )  # create a figure object
 
     plt.semilogx(psi, gain20 - param.antenna_gain, "-b", label="$L_S = -20$ dB")
     plt.semilogx(psi, gain25 - param.antenna_gain, "-r", label="$L_S = -25$ dB")
@@ -89,7 +94,7 @@ if __name__ == '__main__':
     plt.ylim((-33.8, 0))
     plt.xlim((1, 100))
     plt.title("ITU-R S.672-4 antenna radiation pattern")
-    plt.xlabel("Relative off-axis angle, $\psi/\psi_0$")
+    plt.xlabel("Relative off-axis angle, $\\psi/\\psi_0$")
     plt.ylabel("Gain relative to $G_m$ [dB]")
     plt.legend(loc="upper right")
 

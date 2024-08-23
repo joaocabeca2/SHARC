@@ -15,7 +15,6 @@ from sharc.parameters.parameters import Parameters
 from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.station_factory import StationFactory
 from sharc.propagation.propagation_factory import PropagationFactory
-from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
 
 
 class SimulationDownlinkTest(unittest.TestCase):
@@ -77,7 +76,6 @@ class SimulationDownlinkTest(unittest.TestCase):
         self.param.imt.line_of_sight_prob = 0.75
         self.param.imt.shadowing = False
         self.param.imt.noise_temperature = 290
-        BOLTZMANN_CONSTANT = 1.38064852e-23
 
         self.param.antenna_imt.adjacent_antenna_model = "SINGLE_ELEMENT"
         self.param.antenna_imt.bs_normalization = False
