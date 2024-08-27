@@ -235,70 +235,53 @@ class SimulationDownlink(Simulation):
 
     def collect_results(self, write_to_file: bool, snapshot_number: int):
         if not self.parameters.imt.interfered_with and np.any(self.bs.active):
-            self.results.system_inr.extend(self.system.inr.tolist())
-            self.results.system_dl_interf_power.extend(
-                [self.system.rx_interference])
+            self.results.add_result('system_inr', self.system.inr.tolist())
+            self.results.add_result('system_dl_interf_power', [self.system.rx_interference])
             if self.system.station_type is StationType.RAS:
-                self.results.system_pfd.extend([self.system.pfd])
+                self.results.add_result('system_pfd', [self.system.pfd])
 
         bs_active = np.where(self.bs.active)[0]
         for bs in bs_active:
             ue = self.link[bs]
-            self.results.imt_path_loss.extend(self.path_loss_imt[bs, ue])
-            self.results.imt_coupling_loss.extend(
-                self.coupling_loss_imt[bs, ue])
+            self.results.add_result('imt_path_loss', self.path_loss_imt[bs, ue])
+            self.results.add_result('imt_coupling_loss', self.coupling_loss_imt[bs, ue])
 
-            self.results.imt_bs_antenna_gain.extend(
-                self.imt_bs_antenna_gain[bs, ue])
-            self.results.imt_ue_antenna_gain.extend(
-                self.imt_ue_antenna_gain[bs, ue])
+            self.results.add_result('imt_bs_antenna_gain', self.imt_bs_antenna_gain[bs, ue])
+            self.results.add_result('imt_ue_antenna_gain', self.imt_ue_antenna_gain[bs, ue])
 
             tput = self.calculate_imt_tput(self.ue.sinr[ue],
-                                           self.parameters.imt.dl_sinr_min,
-                                           self.parameters.imt.dl_sinr_max,
-                                           self.parameters.imt.dl_attenuation_factor)
-            self.results.imt_dl_tput.extend(tput.tolist())
+                                        self.parameters.imt.dl_sinr_min,
+                                        self.parameters.imt.dl_sinr_max,
+                                        self.parameters.imt.dl_attenuation_factor)
+            self.results.add_result('imt_dl_tput', tput.tolist())
 
             if self.parameters.imt.interfered_with:
                 tput_ext = self.calculate_imt_tput(self.ue.sinr_ext[ue],
-                                                   self.parameters.imt.dl_sinr_min,
-                                                   self.parameters.imt.dl_sinr_max,
-                                                   self.parameters.imt.dl_attenuation_factor)
-                self.results.imt_dl_tput_ext.extend(tput_ext.tolist())
-                self.results.imt_dl_sinr_ext.extend(
-                    self.ue.sinr_ext[ue].tolist())
-                self.results.imt_dl_inr.extend(self.ue.inr[ue].tolist())
+                                                self.parameters.imt.dl_sinr_min,
+                                                self.parameters.imt.dl_sinr_max,
+                                                self.parameters.imt.dl_attenuation_factor)
+                self.results.add_result('imt_dl_tput_ext', tput_ext.tolist())
+                self.results.add_result('imt_dl_sinr_ext', self.ue.sinr_ext[ue].tolist())
+                self.results.add_result('imt_dl_inr', self.ue.inr[ue].tolist())
 
-                self.results.system_imt_antenna_gain.extend(
-                    self.system_imt_antenna_gain[0, ue])
-                self.results.imt_system_antenna_gain.extend(
-                    self.imt_system_antenna_gain[0, ue])
-                self.results.imt_system_path_loss.extend(
-                    self.imt_system_path_loss[0, ue])
+                self.results.add_result('system_imt_antenna_gain', self.system_imt_antenna_gain[0, ue])
+                self.results.add_result('imt_system_antenna_gain', self.imt_system_antenna_gain[0, ue])
+                self.results.add_result('imt_system_path_loss', self.imt_system_path_loss[0, ue])
                 if self.param_system.channel_model == "HDFSS":
-                    self.results.imt_system_build_entry_loss.extend(
-                        self.imt_system_build_entry_loss[0, ue])
-                    self.results.imt_system_diffraction_loss.extend(
-                        self.imt_system_diffraction_loss[0, ue])
+                    self.results.add_result('imt_system_build_entry_loss', self.imt_system_build_entry_loss[0, ue])
+                    self.results.add_result('imt_system_diffraction_loss', self.imt_system_diffraction_loss[0, ue])
             else:
-                active_beams = [i for i in range(
-                    bs*self.parameters.imt.ue_k, (bs+1)*self.parameters.imt.ue_k)]
-                self.results.system_imt_antenna_gain.extend(
-                    self.system_imt_antenna_gain[0, active_beams])
-                self.results.imt_system_antenna_gain.extend(
-                    self.imt_system_antenna_gain[0, active_beams])
-                self.results.imt_system_path_loss.extend(
-                    self.imt_system_path_loss[0, active_beams])
+                active_beams = [i for i in range(bs * self.parameters.imt.ue_k, (bs+1) * self.parameters.imt.ue_k)]
+                self.results.add_result('system_imt_antenna_gain', self.system_imt_antenna_gain[0, active_beams])
+                self.results.add_result('imt_system_antenna_gain', self.imt_system_antenna_gain[0, active_beams])
+                self.results.add_result('imt_system_path_loss', self.imt_system_path_loss[0, active_beams])
                 if self.param_system.channel_model == "HDFSS":
-                    self.results.imt_system_build_entry_loss.extend(
-                        self.imt_system_build_entry_loss[:, bs])
-                    self.results.imt_system_diffraction_loss.extend(
-                        self.imt_system_diffraction_loss[:, bs])
+                    self.results.add_result('imt_system_build_entry_loss', self.imt_system_build_entry_loss[:, bs])
+                    self.results.add_result('imt_system_diffraction_loss', self.imt_system_diffraction_loss[:, bs])
 
-            self.results.imt_dl_tx_power.extend(self.bs.tx_power[bs].tolist())
-
-            self.results.imt_dl_sinr.extend(self.ue.sinr[ue].tolist())
-            self.results.imt_dl_snr.extend(self.ue.snr[ue].tolist())
+            self.results.add_result('imt_dl_tx_power', self.bs.tx_power[bs].tolist())
+            self.results.add_result('imt_dl_sinr', self.ue.sinr[ue].tolist())
+            self.results.add_result('imt_dl_snr', self.ue.snr[ue].tolist())
 
         if write_to_file:
             self.results.write_files(snapshot_number)
