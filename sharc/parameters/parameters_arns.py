@@ -96,7 +96,7 @@ class ParametersArns(ParametersBase):
         if self.antenna_pattern.upper() not in ["OMNI", "UNIFORM", "COSINE", "COSSECANT SQUARED", "PHASED ARRAY"]:
             raise ValueError(f"ParametersArns: Invalid Radar antenna pattern {self.antenna_pattern}")
         
-        if self.channel_model.upper() not in ["FSPL", "SatelliteSimple", "P619"]:
+        if self.channel_model.upper() not in ["FSPL", "SATELLITESIMPLE", "P619"]:
             raise ValueError(f"ParametersArns: \
                              Invalid value for paramter channel_model = {self.channel_model}. \
                              Possible values are \"FSPL\", \"SatelliteSimple\", \"P619\".")
