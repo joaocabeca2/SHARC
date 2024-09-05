@@ -5,12 +5,9 @@ Created on Thu Mar 23 08:47:46 2017
 @author: edgar
 """
 
-from sharc.plot import Plot
-
 import numpy as np
 import os
 import datetime
-import re
 import pathlib
 import pandas as pd
 from scipy import stats
@@ -65,16 +62,35 @@ class Results(object):
         if not overwrite_output:
             today = datetime.date.today()
             results_number = 1
-            results_dir_head = f"{output_dir_prefix}_{today.isoformat()}_01"
-            self.output_directory = self.__setup_directory(results_number, results_dir_head)
+            results_dir_head = output_dir_prefix + '_' + today.isoformat() + '_{:02n}'
+            self.create_dir(results_number, results_dir_head)
             copy(parameters_filename, self.output_directory)
         else:
             self.output_directory = self.__sharc_dir / self.output_dir_parent
             
-    def __setup_directory(self, results_number, dir_head):
-        output_dir = self.__sharc_dir / self.output_dir_parent / dir_head
-        os.makedirs(output_dir, exist_ok=True)
-        return output_dir
+    def create_dir(self, results_number: int, dir_head: str):
+        """Creates the output directory if it doesn't exist.
+        Uses the results_number to format the directory name.
+        
+        Parameters:
+        - results_number : int
+            Increment used in directory name.
+        - dir_head : str
+            Directory name prefix, which includes a placeholder for formatting.
+        
+        Returns:
+        - str
+            The path of the created output directory.
+        """
+        # Apply the results_number to format the directory name
+        dir_head_complete = self.__sharc_dir / self.output_dir_parent / dir_head.format(results_number)
+
+        try:
+            os.makedirs(dir_head_complete)
+            self.output_directory = dir_head_complete
+        except FileExistsError:
+            # Increment the number and retry directory creation if it already exists
+            self.create_dir(results_number + 1, dir_head)
 
     def add_result(self, key, values):
         if key in self.data:
@@ -106,7 +122,18 @@ class Results(object):
 
     def write_files(self):
         """Write raw data to files."""
+        # Create raw data directory if it does not exist
+        raw_data_dir = os.path.join(self.output_directory, "raw_data_dir/")
+        os.makedirs(raw_data_dir, exist_ok=True)  # This creates the directory if it doesn't exist
+
+        # Write data files only if there are values
         for key, values in self.data.items():
-            with open(os.path.join(self.output_directory, f"{key}.csv"), 'w') as file:
-                for value in values:
-                    file.write(f"{value}\n")
+            if values:  # Check if values is not empty
+                file_path = os.path.join(raw_data_dir, f"{key}.csv")
+                with open(file_path, 'w') as file:
+                    for value in values:
+                        file.write(f"{value}\n")
+
+        # Calculate and write statistics
+        self.calculate_statistics()
+        self.write_statistics()

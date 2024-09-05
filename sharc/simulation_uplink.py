@@ -292,5 +292,5 @@ class SimulationUplink(Simulation):
             self.results.add_result('imt_ul_snr', self.bs.snr[bs].tolist())
 
         if write_to_file:
-            self.results.write_files(snapshot_number)
+            #self.results.write_files(snapshot_number)
             self.notify_observers(source=__name__, results=self.results)
