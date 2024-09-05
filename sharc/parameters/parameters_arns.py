@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 
 from sharc.parameters.parameters_base import ParametersBase
+from sharc.parameters.parameters_p619 import ParametersP619
 
 
 @dataclass
@@ -76,6 +77,20 @@ class ParametersArns(ParametersBase):
     # channel model, possible values are "FSPL" (free-space path loss),
     #                                    "TerrestrialSimple" (FSPL + clutter loss)
     channel_model: str = "FSPL"
+    # Parameters for the P.619 propagation model
+    # Used between IMT space station and another terrestrial system.
+    #    space_station_alt_m - altitude of IMT space station (BS) (in meters)
+    #    earth_station_alt_m - altitude of the system's earth station (in meters)
+    #    earth_station_lat_deg - latitude of the system's earth station (in degrees)
+    #    earth_station_long_diff_deg - difference between longitudes of IMT space station and system's earth station
+    #      (positive if space-station is to the East of earth-station)
+    #    season - season of the year.
+    param_p619 = ParametersP619()
+    space_station_alt_m: float = 20000.0
+    earth_station_alt_m: float = 0.0
+    earth_station_lat_deg: float = 0.0
+    earth_station_long_diff_deg: float = 0.0
+    season: str = "SUMMER"
 
     def load_parameters_from_file(self, config_file: str):
         """Load the parameters from file an run a sanity check
