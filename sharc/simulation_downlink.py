@@ -78,7 +78,10 @@ class SimulationDownlink(Simulation):
         self.collect_results(write_to_file, snapshot_number)
 
     def finalize(self, *args, **kwargs):
-        self.results.write_files()
+        """
+        Finalizes the simulation (collect final results, etc...)
+        """
+        super().finalize()
         self.notify_observers(source=__name__, results=self.results)
 
     def power_control(self):
@@ -285,5 +288,7 @@ class SimulationDownlink(Simulation):
             self.results.add_result('imt_dl_snr', self.ue.snr[ue].tolist())
 
         if write_to_file:
-            #self.results.write_files()
+            if not snapshot_number % 100:
+                self.results.write_files()
+                self.results.empty_buffer()
             self.notify_observers(source=__name__, results=self.results)

@@ -21,7 +21,7 @@ class Results(object):
                  output_dir='output',
                  output_dir_prefix='output',):
         
-        self.data = {
+        self.data_buffer = {
             "imt_ul_tx_power_density": [],
             "imt_ul_tx_power": [],
             "imt_ul_sinr_ext": [],
@@ -92,22 +92,41 @@ class Results(object):
             # Increment the number and retry directory creation if it already exists
             self.create_dir(results_number + 1, dir_head)
 
-    def add_result(self, key, values):
-        if key in self.data:
-            self.data[key].extend(values)
+    def add_result(self, key: str, values: list):
+        """Stores simulation samples in the data buffer.
+        
+        Parameters:
+        - key : str
+            Name of the type of sample being stored.
+        - values : list
+            List of sample data values.
+        """
+        if key in self.data_buffer:
+            self.data_buffer[key].extend(values)
         else:
             raise KeyError(f"Key '{key}' not found in the results dictionary.")
 
     def calculate_statistics(self):
         """Calculate mean, variance, standard deviation, and 95% confidence interval for each dataset."""
-        for key, values in self.data.items():
-            if values:  # Ensure there are data points
-                data_array = np.array(values)
+                
+        # Assuming each file contains a column 'data' to analyze
+        for file in os.listdir(self.raw_data_dir):
+            if file.endswith('.csv'):
+                file_path = os.path.join(self.raw_data_dir, file)
+                data = pd.read_csv(file_path, header=None)
+                
+                # Access the first column assuming data values are there
+                data_array = data[0].to_numpy()
                 mean = np.mean(data_array)
                 variance = np.var(data_array, ddof=1)  # Sample variance
                 std_dev = np.std(data_array, ddof=1)
-                ci = stats.t.interval(0.95, len(data_array)-1, loc=mean, scale=std_dev/np.sqrt(len(data_array)))
-                self.statistics[key] = {
+                
+                # Calculate the 2.5th and 97.5th percentiles for the 95% confidence interval
+                ci_lower = np.percentile(data_array, 2.5)
+                ci_upper = np.percentile(data_array, 97.5)
+                ci = (ci_lower, ci_upper) 
+
+                self.statistics[file] = {
                     'mean': mean,
                     'variance': variance,
                     'std_dev': std_dev,
@@ -123,17 +142,18 @@ class Results(object):
     def write_files(self):
         """Write raw data to files."""
         # Create raw data directory if it does not exist
-        raw_data_dir = os.path.join(self.output_directory, "raw_data_dir/")
-        os.makedirs(raw_data_dir, exist_ok=True)  # This creates the directory if it doesn't exist
+        self.raw_data_dir = os.path.join(self.output_directory, "raw_data_dir/")
+        os.makedirs(self.raw_data_dir, exist_ok=True)  # This creates the directory if it doesn't exist
 
         # Write data files only if there are values
-        for key, values in self.data.items():
+        for key, values in self.data_buffer.items():
             if values:  # Check if values is not empty
-                file_path = os.path.join(raw_data_dir, f"{key}.csv")
+                file_path = os.path.join(self.raw_data_dir, f"{key}.csv")
                 with open(file_path, 'w') as file:
                     for value in values:
                         file.write(f"{value}\n")
-
-        # Calculate and write statistics
-        self.calculate_statistics()
-        self.write_statistics()
+    
+    def empty_buffer(self):
+        """Empties the data_buffer."""
+        for key in self.data_buffer:
+            self.data_buffer[key] = []
