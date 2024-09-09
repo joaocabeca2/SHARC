@@ -56,6 +56,8 @@ class Results(object):
             "system_rx_interf": []
         }
 
+        self.simulated_data = []
+
         self.statistics = {} # To store the computed statistics
         self.__sharc_dir = pathlib.Path(__file__).parent.resolve()
         self.output_dir_parent = output_dir
@@ -93,7 +95,7 @@ class Results(object):
             self.create_dir(results_number + 1, dir_head)
 
     def add_result(self, key: str, values: list):
-        """Stores simulation samples in the data buffer.
+        """Stores simulation samples in the data buffer and collects a list of what data is being simulated.
         
         Parameters:
         - key : str
@@ -103,6 +105,8 @@ class Results(object):
         """
         if key in self.data_buffer:
             self.data_buffer[key].extend(values)
+            if key not in self.simulated_data:
+                self.simulated_data.append(key)
         else:
             raise KeyError(f"Key '{key}' not found in the results dictionary.")
 
