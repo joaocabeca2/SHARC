@@ -13,7 +13,8 @@ from sharc.support.enumerations import StationType
 from sharc.parameters.parameters import Parameters
 from sharc.parameters.parameters_imt import ParametersImt
 from sharc.parameters.parameters_antenna_imt import ParametersAntennaImt
-from sharc.parameters.parameters_eess_passive import ParametersEessPassive
+from sharc.parameters.parameters_space_station import ParametersSpaceStation
+from sharc.parameters.parameters_eess_ss import ParametersEessSS
 from sharc.parameters.parameters_fs import ParametersFs
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
 from sharc.parameters.parameters_fss_es import ParametersFssEs
@@ -398,7 +399,9 @@ class StationFactory(object):
 
     @staticmethod
     def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState ):
-        if parameters.general.system == "EESS_PASSIVE":
+        if parameters.general.system == "METSAT_SS":
+            return StationFactory.generate_metsat_ss(parameters.metsat_ss)
+        if parameters.general.system == "EESS_SS":
             return StationFactory.generate_eess_passive_sensor(parameters.eess_passive)
         if parameters.general.system == "FSS_ES":
             return StationFactory.generate_fss_earth_station(parameters.fss_es, random_number_gen, topology)
@@ -694,9 +697,9 @@ class StationFactory(object):
 
 
     @staticmethod
-    def generate_eess_passive_sensor(param: ParametersEessPassive):
+    def generate_eess_passive_sensor(param: ParametersEessSS):
         eess_passive_sensor = StationManager(1)
-        eess_passive_sensor.station_type = StationType.EESS_PASSIVE
+        eess_passive_sensor.station_type = StationType.EESS_SS
         eess_passive_sensor.is_space_station = True
 
         # incidence angle according to Rec. ITU-R RS.1861-0
@@ -759,6 +762,56 @@ class StationFactory(object):
         eess_passive_sensor.total_interference = -500
 
         return eess_passive_sensor
+
+    @staticmethod
+    def generate_metsat_ss(param: ParametersSpaceStation):
+        metsat_ss = StationManager(1)
+        metsat_ss.station_type = StationType.METSAT_SS
+        metsat_ss.is_space_station = True
+
+        # distance to field of view centre according to Rec. ITU-R RS.1861-0
+        # and to law of sines (basic trig)
+        distance = EARTH_RADIUS * \
+                    math.sin(math.radians(param.elevation + 90 - param.nadir_angle)) / \
+                    math.sin(math.radians(param.nadir_angle))
+
+        metsat_ss.x = np.array([0])
+        metsat_ss.y = np.array([distance * math.cos(math.radians(-param.elevation))])
+        metsat_ss.height = np.array([param.altitude])
+
+        # Elevation and azimuth at sensor wrt centre of the footprint
+        # It is assumed the sensor is at y-axis, hence azimuth is 270 deg
+        metsat_ss.azimuth = 270
+        metsat_ss.elevation = param.elevation
+
+        metsat_ss.active = np.array([True])
+        metsat_ss.rx_interference = -500
+
+        # TODO: add Isoflux antenna pattern
+        if param.antenna_pattern == "OMNI":
+            metsat_ss.antenna = np.array([AntennaOmni(param.antenna_gain)])
+        elif param.antenna_pattern == "ITU-R RS.1813":
+            metsat_ss.antenna = np.array([AntennaRS1813(param)])
+        elif param.antenna_pattern == "ITU-R RS.1861 9a":
+            metsat_ss.antenna = np.array([AntennaRS1861_9A(param)])
+        elif param.antenna_pattern == "ITU-R RS.1861 9b":
+            metsat_ss.antenna = np.array([AntennaRS1861_9B(param)])
+        elif param.antenna_pattern == "ITU-R RS.1861 9c":
+            metsat_ss.antenna = np.array([AntennaRS1861_9C()])
+        elif param.antenna_pattern == "ITU-R RS.2043":
+            metsat_ss.antenna = np.array([AntennaRS2043()])
+        else:
+            sys.stderr.write("ERROR\nInvalid MetSat antenna pattern: " + param.antenna_pattern)
+            sys.exit(1)
+
+        metsat_ss.bandwidth = param.bandwidth
+
+        # TODO: check if this is input for MetSat:
+        metsat_ss.noise_temperature = 500
+        metsat_ss.thermal_noise = -500
+        metsat_ss.total_interference = -500
+
+        return metsat_ss
 
 
 

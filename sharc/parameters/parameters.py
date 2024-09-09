@@ -14,8 +14,9 @@ from sharc.parameters.parameters_imt import ParametersImt
 from sharc.parameters.parameters_hotspot import ParametersHotspot
 from sharc.parameters.parameters_indoor import ParametersIndoor
 from sharc.parameters.parameters_antenna_imt import ParametersAntennaImt
-from sharc.parameters.parameters_eess_passive import ParametersEessPassive
+from sharc.parameters.parameters_eess_ss import ParametersEessSS
 from sharc.parameters.parameters_fs import ParametersFs
+from sharc.parameters.parameters_metsat_ss import ParametersMetSatSS
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
 from sharc.parameters.parameters_fss_es import ParametersFssEs
 from sharc.parameters.parameters_haps import ParametersHaps
@@ -38,13 +39,14 @@ class Parameters(object):
         self.hotspot = ParametersHotspot()
         self.indoor = ParametersIndoor()
         self.ntn = ParametersNTN()
-        self.eess_passive = ParametersEessPassive()
+        self.eess_passive = ParametersEessSS()
         self.fs = ParametersFs()
         self.fss_ss = ParametersFssSs()
         self.fss_es = ParametersFssEs()
         self.haps = ParametersHaps()
         self.rns = ParametersRns()
         self.ras = ParametersRas()
+        self.metsat_ss = ParametersMetSatSS()
 
 
     def set_file_name(self, file_name: str):

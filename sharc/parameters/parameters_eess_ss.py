@@ -1,18 +1,17 @@
 from dataclasses import dataclass
-from sharc.parameters.parameters_base import ParametersBase
-from sharc.parameters.parameters_p619 import ParametersP619
 
+from sharc.parameters.parameters_space_station import ParametersSpaceStation
 
 @dataclass
-class ParametersEessPassive(ParametersBase):
+class ParametersEessSS(ParametersSpaceStation):
     """
-    Defines parameters for passive Earth Exploration Satellite Service (EESS) sensors
+    Defines parameters for Earth Exploration Satellite Service (EESS) sensors/space stations (SS)
     and their interaction with other services based on ITU recommendations.
     """
-    section_name: str = "EESS_PASSIVE"
+    section_name: str = "EESS_SS"
 
     is_space_to_earth: bool = True
-
+    
     # Sensor center frequency [MHz]
     frequency: float = 23900.0  # Center frequency of the sensor in MHz
 
@@ -43,19 +42,6 @@ class ParametersEessPassive(ParametersBase):
 
     # Channel model, possible values are "FSPL" (free-space path loss), "P619"
     channel_model: str = "FSPL"  # Channel model to be used
-
-    # Parameters for the P.619 propagation model
-    #    earth_station_alt_m - altitude of IMT system (in meters)
-    #    earth_station_lat_deg - latitude of IMT system (in degrees)
-    #    earth_station_long_diff_deg - difference between longitudes of IMT and satellite system
-    #      (positive if space-station is to the East of earth-station)
-    #    season - season of the year.
-    param_p619 = ParametersP619()
-    space_station_alt_m: float = 35780000.0
-    earth_station_alt_m: float = 0.0
-    earth_station_lat_deg: float = 0.0
-    earth_station_long_diff_deg: float = 0.0
-    season:str = "SUMMER"
 
     ########### Creates a statistical distribution of nadir angle###############
     ############## following variables nadir_angle_distribution#################
@@ -102,7 +88,6 @@ class ParametersEessPassive(ParametersBase):
         if self.channel_model not in ["FSPL", "P619"]:
             raise ValueError(
                 "Invalid channel_model, must be either 'FSPL' or 'P619'")
-        self.param_p619.load_from_paramters(self)
 
         # Check season
         if self.season not in ["SUMMER", "WINTER"]:
