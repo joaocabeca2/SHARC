@@ -38,6 +38,12 @@ class FootprintTest(unittest.TestCase):
         self.fa3 = Footprint(0.325, elevation_deg=20)
         self.fa4 = Footprint(0.325, elevation_deg=30, sat_height=1200000)
         self.fa5 = Footprint(0.325, elevation_deg=30, sat_height=600000)
+        self.fa6 = Footprint(
+            0.325,
+            sat_height=1200000,
+            bore_lat_deg=0,
+            bore_subsat_long_deg=17.744178387,
+        )
 
         """
         Requested tests for Low Earth Orbit (LEO) Satellite at 1200Km and 600Km added bellow (Issue 33).
@@ -77,6 +83,9 @@ class FootprintTest(unittest.TestCase):
         # Verify properties of fa5
         self.assertEqual(self.fa5.bore_lat_deg, 0)
         self.assertAlmostEqual(self.fa5.bore_subsat_long_deg, 7.68, delta=0.01)
+
+        self.assertEqual(self.fa6.sat_height, 1200000)
+        self.assertAlmostEqual(self.fa6.elevation_deg, 20, delta=0.01)
 
     def test_set_elevation(self):
         """
