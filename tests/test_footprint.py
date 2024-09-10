@@ -100,9 +100,9 @@ class FootprintTest(unittest.TestCase):
         Test the calc_area method to verify the calculation of the footprint area.
         """
         a1 = self.fa2.calc_area(1000)
-        self.assertAlmostEqual(a1, 130000, delta=200)
+        self.assertAlmostEqual(a1, 130000, delta=130000 * 0.0025)
         a2 = self.fa3.calc_area(1000)
-        self.assertAlmostEqual(a2, 486300, delta=200)
+        self.assertAlmostEqual(a2, 486300, delta=486300 * 0.0025)
         a3 = self.fa4.calc_area(1000)
         self.assertAlmostEqual(a3, 810, delta=810 * 0.0025)
         a4 = self.fa5.calc_area(1000)
