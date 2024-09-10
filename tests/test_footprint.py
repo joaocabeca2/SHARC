@@ -44,7 +44,6 @@ class FootprintTest(unittest.TestCase):
         """
 
         # New tests obtained for the LEO satellite type heights (1200km and 600km)
-        self.elevations = np.linspace(5, 90, num=32)  # Expanded elevation angles from 5 to 90 degrees
         self.sat_heights = [1200000, 600000]  # Different satellite heights (1200 km and 600 km)
 
     def test_construction(self):
@@ -108,6 +107,17 @@ class FootprintTest(unittest.TestCase):
         a4 = self.fa5.calc_area(1000)
         self.assertAlmostEqual(a4, 234, delta=234 * 0.0025)
 
+        for height in self.sat_heights:
+            beam_deg = 0.325
+            footprint = Footprint(beam_deg, elevation_deg=90, sat_height=height)
+            cone_radius_in_km = height * np.tan(np.deg2rad(beam_deg)) / 1000
+            cone_base_area_in_km2 = np.pi * (cone_radius_in_km**2)
+            footprint_area_in_km2 = footprint.calc_area(1000)
+            self.assertAlmostEqual(
+                footprint_area_in_km2,
+                cone_base_area_in_km2,
+                delta=cone_base_area_in_km2 * 0.01,
+            )
 
 if __name__ == '__main__':
     unittest.main()
