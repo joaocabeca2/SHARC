@@ -2,6 +2,9 @@ from dataclasses import dataclass
 
 from sharc.parameters.parameters_space_station import ParametersSpaceStation
 
+# The default values come from Report ITU-R SA.2488-0, table 19 (the only earth-to-space MetSat entry)
+# TODO: let MetSat as interferrer
+# TODO: ver com professor se considerar as tabelas do report está correto
 @dataclass
 class ParametersMetSatSS(ParametersSpaceStation):
     """
@@ -10,49 +13,34 @@ class ParametersMetSatSS(ParametersSpaceStation):
     """
     section_name: str = "METSAT_SS"
 
-    is_space_to_earth: bool = True
-    
-    # Sensor center frequency [MHz]
-    frequency: float = 23900.0  # Center frequency of the sensor in MHz
+    # raw data transmission in 8175-8215 range
+    frequency: float = 8195.0 # Satellite center frequency [MHz]
+    bandwidth: float = 20.0
 
-    # Sensor bandwidth [MHz]
-    bandwidth: float = 200.0  # Bandwidth of the sensor in MHz
+    # Elevation angle [deg]
+    elevation: float = 3 # Minimum == 3
 
-    # Off-nadir pointing angle [deg]
-    nadir_angle: float = 46.6  # Angle in degrees away from the nadir point
+    # Satellite altitude [m]
+    # Altitude of the satellite above the Earth's surface in meters
+    altitude: float = 35786000.0 # 35786000 for GSO
 
-    # Sensor altitude [m]
-    # Altitude of the sensor above the Earth's surface in meters
-    altitude: float = 828000.0
+    # Antenna pattern of the satellite
+    # Possible values: "ITU-R S.672"
+    antenna_pattern: str = "ITU-R S.672"  # Antenna radiation pattern
 
-    # Antenna pattern of the sensor
-    # Possible values: "ITU-R RS.1813", "ITU-R RS.1861 9a", "ITU-R RS.1861 9b", 
-    # "ITU-R RS.1861 9c", "ITU-R RS.2043", "OMNI"
-    antenna_pattern: str = "ITU-R RS.1813"  # Antenna radiation pattern
+    # antenna peak gain [dBi]
+    antenna_gain: float = 52.0
 
-    # Antenna efficiency for pattern described in ITU-R RS.1813 [0-1]
-    # Efficiency factor for the antenna, range from 0 to 1
-    antenna_efficiency: float = 0.6
-
-    # Antenna diameter for ITU-R RS.1813 [m]
-    antenna_diameter: float = 2.2  # Diameter of the antenna in meters
-
-    # Receive antenna gain - applicable for 9a, 9b and OMNI [dBi]
-    antenna_gain: float = 52.0  # Gain of the antenna in dBi
+    # The required near-in-side-lobe level (dB) relative to peak gain
+    # according to ITU-R S.672-4
+    # TODO: check if this changes from fss_ss
+    antenna_l_s: float = -20.0
+    # 3 dB beamwidth angle (3 dB below maximum gain) [degrees]
+    antenna_3_dB: float = 0.65
 
     # Channel model, possible values are "FSPL" (free-space path loss), "P619"
+    # See params space station to check P619 needed params
     channel_model: str = "FSPL"  # Channel model to be used
-
-    ########### Creates a statistical distribution of nadir angle###############
-    ############## following variables nadir_angle_distribution#################
-    # if distribution_enable = ON, nadir_angle will vary statistically#########
-    # if distribution_enable = OFF, nadir_angle follow nadir_angle variable ###
-    # distribution_type = UNIFORM
-    # UNIFORM = UNIFORM distribution in nadir_angle
-    # 			- nadir_angle_distribution = initial nadir angle, final nadir angle
-    distribution_enable: bool = False
-    distribution_type: str = "UNIFORM"
-    nadir_angle_distribution: tuple = (18.5, 49.3)
 
     def load_parameters_from_file(self, config_file: str):
         """
@@ -69,20 +57,10 @@ class ParametersMetSatSS(ParametersSpaceStation):
             If a parameter is not valid.
         """
         super().load_parameters_from_file(config_file)
-
-        # Implement additional sanity checks for EESS specific parameters
-        if not (0 <= self.antenna_efficiency or self.antenna_efficiency <= 1):
-            raise ValueError("antenna_efficiency must be between 0 and 1")
-
-        if self.antenna_pattern not in ["ITU-R RS.1813", "ITU-R RS.1861 9a",
-                                        "ITU-R RS.1861 9b", "ITU-R RS.1861 9c",
-                                        "ITU-R RS.2043", "OMNI"]:
+        print(self.antenna_pattern)
+        if self.antenna_pattern not in ["ITU-R S.672"]:
             raise ValueError(f"Invalid antenna_pattern: {
                              self.antenna_pattern}")
-
-        if self.antenna_pattern == "ITU-R RS.2043" and \
-                (self.frequency <= 9000.0 or self.frequency >= 10999.0):
-            raise ValueError(f"Frequency {self.frequency} MHz is not in the range for antenna pattern \"ITU-R RS.2043\"")
 
         # Check channel model
         if self.channel_model not in ["FSPL", "P619"]:
