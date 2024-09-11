@@ -402,7 +402,7 @@ class StationFactory(object):
         if parameters.general.system == "METSAT_SS":
             return StationFactory.generate_metsat_ss(parameters.metsat_ss)
         if parameters.general.system == "EESS_SS":
-            return StationFactory.generate_eess_passive_sensor(parameters.eess_passive)
+            return StationFactory.generate_eess_space_station(parameters.eess_passive)
         if parameters.general.system == "FSS_ES":
             return StationFactory.generate_fss_earth_station(parameters.fss_es, random_number_gen, topology)
         elif parameters.general.system == "FSS_SS":
@@ -697,10 +697,10 @@ class StationFactory(object):
 
 
     @staticmethod
-    def generate_eess_passive_sensor(param: ParametersEessSS):
-        eess_passive_sensor = StationManager(1)
-        eess_passive_sensor.station_type = StationType.EESS_SS
-        eess_passive_sensor.is_space_station = True
+    def generate_eess_space_station(param: ParametersEessSS):
+        eess_space_station = StationManager(1)
+        eess_space_station.station_type = StationType.EESS_SS
+        eess_space_station.is_space_station = True
 
         # incidence angle according to Rec. ITU-R RS.1861-0
         if param.distribution_enable:
@@ -726,42 +726,42 @@ class StationFactory(object):
         # Elevation at ground (centre of the footprint)
         theta_grd_elev = 90 - incidence_angle
 
-        eess_passive_sensor.x = np.array([0])
-        eess_passive_sensor.y = np.array([distance * math.cos(math.radians(theta_grd_elev))])
-        eess_passive_sensor.height = np.array([distance * math.sin(math.radians(theta_grd_elev))])
+        eess_space_station.x = np.array([0])
+        eess_space_station.y = np.array([distance * math.cos(math.radians(theta_grd_elev))])
+        eess_space_station.height = np.array([distance * math.sin(math.radians(theta_grd_elev))])
 
         # Elevation and azimuth at sensor wrt centre of the footprint
         # It is assumed the sensor is at y-axis, hence azimuth is 270 deg
-        eess_passive_sensor.azimuth = 270
-        eess_passive_sensor.elevation = -theta_grd_elev
+        eess_space_station.azimuth = 270
+        eess_space_station.elevation = -theta_grd_elev
 
-        eess_passive_sensor.active = np.array([True])
-        eess_passive_sensor.rx_interference = -500
+        eess_space_station.active = np.array([True])
+        eess_space_station.rx_interference = -500
 
         if param.antenna_pattern == "OMNI":
-            eess_passive_sensor.antenna = np.array([AntennaOmni(param.antenna_gain)])
+            eess_space_station.antenna = np.array([AntennaOmni(param.antenna_gain)])
         elif param.antenna_pattern == "ITU-R RS.1813":
-            eess_passive_sensor.antenna = np.array([AntennaRS1813(param)])
+            eess_space_station.antenna = np.array([AntennaRS1813(param)])
         elif param.antenna_pattern == "ITU-R RS.1861 9a":
-            eess_passive_sensor.antenna = np.array([AntennaRS1861_9A(param)])
+            eess_space_station.antenna = np.array([AntennaRS1861_9A(param)])
         elif param.antenna_pattern == "ITU-R RS.1861 9b":
-            eess_passive_sensor.antenna = np.array([AntennaRS1861_9B(param)])
+            eess_space_station.antenna = np.array([AntennaRS1861_9B(param)])
         elif param.antenna_pattern == "ITU-R RS.1861 9c":
-            eess_passive_sensor.antenna = np.array([AntennaRS1861_9C()])
+            eess_space_station.antenna = np.array([AntennaRS1861_9C()])
         elif param.antenna_pattern == "ITU-R RS.2043":
-            eess_passive_sensor.antenna = np.array([AntennaRS2043()])
+            eess_space_station.antenna = np.array([AntennaRS2043()])
         else:
             sys.stderr.write("ERROR\nInvalid EESS PASSIVE antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
-        eess_passive_sensor.bandwidth = param.bandwidth
+        eess_space_station.bandwidth = param.bandwidth
         # Noise temperature is not an input parameter for EESS passive.
         # It is included here to calculate the useless I/N values
-        eess_passive_sensor.noise_temperature = 500
-        eess_passive_sensor.thermal_noise = -500
-        eess_passive_sensor.total_interference = -500
+        eess_space_station.noise_temperature = 500
+        eess_space_station.thermal_noise = -500
+        eess_space_station.total_interference = -500
 
-        return eess_passive_sensor
+        return eess_space_station
 
     @staticmethod
     def generate_metsat_ss(param: ParametersSpaceStation):
@@ -787,19 +787,11 @@ class StationFactory(object):
         metsat_ss.active = np.array([True])
         metsat_ss.rx_interference = -500
 
-        # TODO: add Isoflux antenna pattern
-        if param.antenna_pattern == "OMNI":
+        # TODO: add Isoflux antenna pattern for when metsat ss is interferrer
+        if param.antenna_pattern == "ITU-R S.672":
+            metsat_ss.antenna = np.array([AntennaS672(param)])
+        elif param.antenna_pattern == "OMNI":
             metsat_ss.antenna = np.array([AntennaOmni(param.antenna_gain)])
-        elif param.antenna_pattern == "ITU-R RS.1813":
-            metsat_ss.antenna = np.array([AntennaRS1813(param)])
-        elif param.antenna_pattern == "ITU-R RS.1861 9a":
-            metsat_ss.antenna = np.array([AntennaRS1861_9A(param)])
-        elif param.antenna_pattern == "ITU-R RS.1861 9b":
-            metsat_ss.antenna = np.array([AntennaRS1861_9B(param)])
-        elif param.antenna_pattern == "ITU-R RS.1861 9c":
-            metsat_ss.antenna = np.array([AntennaRS1861_9C()])
-        elif param.antenna_pattern == "ITU-R RS.2043":
-            metsat_ss.antenna = np.array([AntennaRS2043()])
         else:
             sys.stderr.write("ERROR\nInvalid MetSat antenna pattern: " + param.antenna_pattern)
             sys.exit(1)

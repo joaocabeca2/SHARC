@@ -28,6 +28,8 @@ class ParametersEessSS(ParametersSpaceStation):
     # Antenna pattern of the sensor
     # Possible values: "ITU-R RS.1813", "ITU-R RS.1861 9a", "ITU-R RS.1861 9b", 
     # "ITU-R RS.1861 9c", "ITU-R RS.2043", "OMNI"
+    # TODO: check `x` and `y`:
+    # @important: for EESS Active, choose antenna `x` according to Recommendation `y`
     antenna_pattern: str = "ITU-R RS.1813"  # Antenna radiation pattern
 
     # Antenna efficiency for pattern described in ITU-R RS.1813 [0-1]

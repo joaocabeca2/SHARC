@@ -6,7 +6,7 @@ Created on Thu May  9 18:44:18 2019
 """
 
 from sharc.antenna.antenna import Antenna
-from sharc.parameters.parameters_eess_passive import ParametersEessPassive
+from sharc.parameters.parameters_eess_ss import ParametersEessSS
 
 import numpy as np
 
@@ -16,7 +16,7 @@ class AntennaRS1861_9B(Antenna):
     Recommendation ITU-R RS.1861.     
     """
 
-    def __init__(self, param: ParametersEessPassive):
+    def __init__(self, param: ParametersEessSS):
         super().__init__()
         self.peak_gain = param.antenna_gain
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     phi = np.linspace(0, 12, num = 10000)
 
     # initialize antenna parameters
-    param = ParametersEessPassive()
+    param = ParametersEessSS()
     param.antenna_pattern = "ITU-R RS.1861 Fig 9b"
     param.antenna_gain = 46.7
     antenna = AntennaRS1861_9B(param)

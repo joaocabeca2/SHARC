@@ -273,24 +273,24 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.ras.polarization, "horizontal")
         self.assertEqual(self.parameters.ras.clutter_loss, True)
 
-    def test_paramters_eess_passive(self):
+    def test_paramters_eess_space_station(self):
         """Test ParametersEessPassive
         """
-        self.assertEqual(self.parameters.eess_passive.frequency, 23900.1)
-        self.assertEqual(self.parameters.eess_passive.bandwidth, 200.1)
-        self.assertEqual(self.parameters.eess_passive.nadir_angle, 46.6)
-        self.assertEqual(self.parameters.eess_passive.altitude, 828000.1)
-        self.assertEqual(self.parameters.eess_passive.antenna_pattern, "ITU-R RS.1813")
-        self.assertEqual(self.parameters.eess_passive.antenna_efficiency, 0.6)
-        self.assertEqual(self.parameters.eess_passive.antenna_diameter, 2.2)
-        self.assertEqual(self.parameters.eess_passive.antenna_gain, 52.1)
-        self.assertEqual(self.parameters.eess_passive.channel_model, "FSPL")
-        self.assertEqual(self.parameters.eess_passive.imt_altitude, 20.1)
-        self.assertEqual(self.parameters.eess_passive.imt_lat_deg, -22.9)
-        self.assertEqual(self.parameters.eess_passive.season, "WINTER")
-        self.assertEqual(self.parameters.eess_passive.distribution_enable, True)
-        self.assertEqual(self.parameters.eess_passive.distribution_type, "UNIFORM")
-        self.assertEqual(self.parameters.eess_passive.nadir_angle_distribution, (18.6, 49.4))
+        self.assertEqual(self.parameters.eess_ss.frequency, 23900.1)
+        self.assertEqual(self.parameters.eess_ss.bandwidth, 200.1)
+        self.assertEqual(self.parameters.eess_ss.nadir_angle, 46.6)
+        self.assertEqual(self.parameters.eess_ss.altitude, 828000.1)
+        self.assertEqual(self.parameters.eess_ss.antenna_pattern, "ITU-R RS.1813")
+        self.assertEqual(self.parameters.eess_ss.antenna_efficiency, 0.6)
+        self.assertEqual(self.parameters.eess_ss.antenna_diameter, 2.2)
+        self.assertEqual(self.parameters.eess_ss.antenna_gain, 52.1)
+        self.assertEqual(self.parameters.eess_ss.channel_model, "FSPL")
+        self.assertEqual(self.parameters.eess_ss.imt_altitude, 20.1)
+        self.assertEqual(self.parameters.eess_ss.imt_lat_deg, -22.9)
+        self.assertEqual(self.parameters.eess_ss.season, "WINTER")
+        self.assertEqual(self.parameters.eess_ss.distribution_enable, True)
+        self.assertEqual(self.parameters.eess_ss.distribution_type, "UNIFORM")
+        self.assertEqual(self.parameters.eess_ss.nadir_angle_distribution, (18.6, 49.4))
 
 if __name__ == '__main__':
     unittest.main()

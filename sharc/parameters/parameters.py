@@ -39,7 +39,7 @@ class Parameters(object):
         self.hotspot = ParametersHotspot()
         self.indoor = ParametersIndoor()
         self.ntn = ParametersNTN()
-        self.eess_passive = ParametersEessSS()
+        self.eess_ss = ParametersEessSS()
         self.fs = ParametersFs()
         self.fss_ss = ParametersFssSs()
         self.fss_es = ParametersFssEs()
@@ -128,9 +128,14 @@ class Parameters(object):
         self.ras.load_parameters_from_file(self.file_name)
 
         #######################################################################
-        # EESS passive
+        # EESS Space Station
         #######################################################################
-        self.eess_passive.load_parameters_from_file(self.file_name)
+        self.eess_ss.load_parameters_from_file(self.file_name)
+
+        #######################################################################
+        # EESS Space Station
+        #######################################################################
+        self.metsat_ss.load_parameters_from_file(self.file_name)
 
         #######################################################################
         # NTN
