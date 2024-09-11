@@ -3,7 +3,7 @@ import typing
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_p619 import ParametersP619
 import math
-from constants import EARTH_RADIUS
+from sharc.parameters.constants import EARTH_RADIUS
 
 
 @dataclass
@@ -86,24 +86,20 @@ class ParametersSpaceStation(ParametersBase):
             raise ValueError("'elevation' and 'nadir_angle' should not both be set at the same time. Choose either\
                              parameter to set")
 
-        # Implement additional sanity checks for EESS specific parameters
-        if not (0 <= self.antenna_efficiency or self.antenna_efficiency <= 1):
-            raise ValueError("antenna_efficiency must be between 0 and 1")
-
         # Check channel model
         if self.channel_model not in ["FSPL", "P619"]:
             raise ValueError("Invalid channel_model, must be either 'FSPL' or 'P619'")
 
-        if self.channel_model == "P619" and None in [
-            self.earth_station_alt_m, self.earth_station_lat_deg, self.earth_station_long_diff_deg
-        ]:
-            raise ValueError("When using P619 should set 'self.earth_station_alt_m', 'self.earth_station_lat_deg',\
-                             'self.earth_station_long_diff_deg' explicitly")
-
-
-        # Check season
-        if self.season not in ["SUMMER", "WINTER"]:
-            raise ValueError("Invalid season, must be either 'SUMMER' or 'WINTER'")
+        if self.channel_model == "P619":
+            # check necessary parameters for P619
+            if None in [
+                self.earth_station_alt_m, self.earth_station_lat_deg, self.earth_station_long_diff_deg
+            ]:
+                raise ValueError("When using P619 should set 'self.earth_station_alt_m', 'self.earth_station_lat_deg',\
+                                 'self.earth_station_long_diff_deg' explicitly")
+            # Check season
+            if self.season not in ["SUMMER", "WINTER"]:
+                raise ValueError("Invalid season, must be either 'SUMMER' or 'WINTER'")
         
         self.set_derived_parameters()
 
