@@ -2,7 +2,7 @@ import os
 from sharc.plots.plot_cdf import all_plots
 
 # Define the base directory
-name = "imt_mss_arns_792_MHz"
+name = "imt_mss_arns_4300_MHz"
 
 # this should behave similarly to `sharc/plots/plot_cdf:13`
 # ideally the readable legend would be in the .ini metadata and all this code would be deleted
@@ -27,38 +27,26 @@ legends_mapper = [
     {
         # same as from .ini
         # the legend should probably also be in the metadata there instead of making... this
-        "output_dir_prefix": "output_imt_mss_ras_792_MHz_0km",
+        "output_dir_prefix": "output_imt_mss_ras_4300_MHz_0km",
         "legend": "0 Km",
     },
     {
         # same as from .ini
         # the legend should probably also be in the metadata there instead of making... this
-        "output_dir_prefix": "output_imt_mss_ras_792_MHz_50km",
+        "output_dir_prefix": "output_imt_mss_ras_4300_MHz_0km",
         "legend": "50 Km",
     },
     {
         # same as from .ini
         # the legend should probably also be in the metadata there instead of making... this
-        "output_dir_prefix": "output_imt_mss_ras_792_MHz_100km",
+        "output_dir_prefix": "output_imt_mss_ras_4300_MHz_0km",
         "legend": "100 Km",
     },
     {
         # same as from .ini
         # the legend should probably also be in the metadata there instead of making... this
-        "output_dir_prefix": "output_imt_mss_ras_792_MHz_150km",
-        "legend": "150 Km",
-    },
-    {
-        # same as from .ini
-        # the legend should probably also be in the metadata there instead of making... this
-        "output_dir_prefix": "output_imt_mss_ras_792_MHz_200km",
+        "output_dir_prefix": "output_imt_mss_ras_4300_MHz_0km",
         "legend": "200 Km",
-    },
-    {
-        # same as from .ini
-        # the legend should probably also be in the metadata there instead of making... this
-        "output_dir_prefix": "output_imt_mss_ras_792_MHz_300km",
-        "legend": "300 Km",
     },
 ]
 
@@ -112,8 +100,8 @@ all_plots(
     name,
     legends=legends,
     subfolders=subfolders,
-    save_file=True,
-    show_plot=False,
+    save_file=False,
+    show_plot=True,
 )
 
 
