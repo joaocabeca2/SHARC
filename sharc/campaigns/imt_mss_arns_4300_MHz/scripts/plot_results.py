@@ -2,7 +2,7 @@ import os
 from sharc.plots.plot_cdf import all_plots
 
 # Define the base directory
-name = "imt_hibs_ras_2600_MHz"
+name = "imt_mss_arns_792_MHz"
 
 # this should behave similarly to `sharc/plots/plot_cdf:13`
 # ideally the readable legend would be in the .ini metadata and all this code would be deleted
@@ -27,20 +27,38 @@ legends_mapper = [
     {
         # same as from .ini
         # the legend should probably also be in the metadata there instead of making... this
-        "output_dir_prefix": "output_imt_hibs_ras_2600_MHz_0km",
+        "output_dir_prefix": "output_imt_mss_ras_792_MHz_0km",
         "legend": "0 Km",
     },
     {
-        "output_dir_prefix": "output_imt_hibs_ras_2600_MHz_45km",
-        "legend": "45 Km",
+        # same as from .ini
+        # the legend should probably also be in the metadata there instead of making... this
+        "output_dir_prefix": "output_imt_mss_ras_792_MHz_50km",
+        "legend": "50 Km",
     },
     {
-        "output_dir_prefix": "output_imt_hibs_ras_2600_MHz_90km",
-        "legend": "90 Km",
+        # same as from .ini
+        # the legend should probably also be in the metadata there instead of making... this
+        "output_dir_prefix": "output_imt_mss_ras_792_MHz_100km",
+        "legend": "100 Km",
     },
     {
-        "output_dir_prefix": "output_imt_hibs_ras_2600_MHz_500km",
-        "legend": "500 Km",
+        # same as from .ini
+        # the legend should probably also be in the metadata there instead of making... this
+        "output_dir_prefix": "output_imt_mss_ras_792_MHz_150km",
+        "legend": "150 Km",
+    },
+    {
+        # same as from .ini
+        # the legend should probably also be in the metadata there instead of making... this
+        "output_dir_prefix": "output_imt_mss_ras_792_MHz_200km",
+        "legend": "200 Km",
+    },
+    {
+        # same as from .ini
+        # the legend should probably also be in the metadata there instead of making... this
+        "output_dir_prefix": "output_imt_mss_ras_792_MHz_300km",
+        "legend": "300 Km",
     },
 ]
 
@@ -94,8 +112,8 @@ all_plots(
     name,
     legends=legends,
     subfolders=subfolders,
-    save_file=False,
-    show_plot=True,
+    save_file=True,
+    show_plot=False,
 )
 
 
