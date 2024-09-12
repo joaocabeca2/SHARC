@@ -85,6 +85,9 @@ myenv/Scripts/pip3.12.exe
 myenv/Scripts/pip3.exe
 myenv/Scripts/python.exe
 myenv/Scripts/pythonw.exe
+myenv/Scripts/
+myenv/etc/
+myenv/share/
 
 # Ignore output files
 [IMT]*.txt
@@ -98,3 +101,4 @@ SYS_*.txt
 /sharc/campaigns/imt_*/output/output_imt*/*.csv
 /sharc/campaigns/imt_*/output/output_imt*/*.ini
 /sharc/campaigns/imt_*/output/Figs/*.png
+/.venv/

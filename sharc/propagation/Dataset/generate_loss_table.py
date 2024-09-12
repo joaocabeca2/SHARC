@@ -12,7 +12,7 @@ from sharc.propagation.atmosphere import ReferenceAtmosphere
 from sharc.parameters.constants import EARTH_RADIUS
 
 # Constants
-frequency_MHz = 2680.0
+frequency_MHz = 792.5
 space_station_alt_m = 35786.0 * 1000  # Geostationary orbit altitude in meters
 earth_station_alt_m = 1000.0
 earth_station_lat_deg = -15.7801

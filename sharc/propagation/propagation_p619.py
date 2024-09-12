@@ -81,9 +81,11 @@ class PropagationP619(Propagation):
         self.earth_station_long_diff_deg = earth_station_long_diff_deg
 
         if season.upper() not in ["SUMMER", "WINTER"]:
-            raise ValueError(f"PropagationP619: Invalid value for parameter season - {
-                             season}. Possible values are \"SUMMER\", \"WINTER\".")
+            raise ValueError(f"PropagationP619: Invalid value for parameter season - {season}. Possible values are \"SUMMER\", \"WINTER\".")
         self.season = season
+
+# Load city name based on latitude
+
         # Load city name based on latitude
         self.lookup_table = False
         self.city_name = self._get_city_name_by_latitude()
@@ -121,8 +123,8 @@ class PropagationP619(Propagation):
         if lookupTable and self.city_name != 'Unknown':
             # Define the path to the CSV file
             output_dir = os.path.join(os.path.dirname(__file__), 'Dataset')
-            csv_file = os.path.join(output_dir, f'{self.city_name}_{int(frequency_MHz)}_{
-                                    int(self.earth_station_alt_m)}m.csv')
+            csv_file = os.path.join(output_dir, f'{self.city_name}_{int(frequency_MHz)}_{int(self.earth_station_alt_m)}m.csv')
+
             if os.path.exists(csv_file):
                 elevations = []
                 losses = []
@@ -460,7 +462,7 @@ if __name__ == '__main__':
     ##########################
     # Plot atmospheric loss
     # compare with benchmark from ITU-R P-619 Fig. 3
-    frequency_MHz = 2680.
+    frequency_MHz = 792.0
     earth_station_alt_m = 1000
 
     apparent_elevation = np.linspace(0, 90, 91)

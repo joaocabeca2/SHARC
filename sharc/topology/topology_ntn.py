@@ -45,7 +45,7 @@ class TopologyNTN(Topology):
         self.space_station_z = None
         self.bs_azimuth      = np.radians(bs_azimuth)
         self.bs_elevation    = np.radians(bs_elevation)
-        self.bs_radius       = bs_height/np.sin(self.bs_elevation)
+        self.bs_radius       = bs_height / (np.clip(np.sin(self.bs_elevation), 1e-5, None))
         self.num_sectors     = num_sectors
 
         # Calculate the base station coordinates
