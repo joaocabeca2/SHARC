@@ -16,36 +16,36 @@ class ParametersSpaceStation(ParametersBase):
     is_space_to_earth: bool = True
     
     # Satellite center frequency [MHz]
-    frequency: float | None = None  # Center frequency of the satellite in MHz
+    frequency: float = 0.0  # Center frequency of the satellite in MHz
 
     # Satellite bandwidth [MHz]
-    bandwidth: float | None = None  # Bandwidth of the satellite in MHz
+    bandwidth: float = 0.0  # Bandwidth of the satellite in MHz
 
     # Off-nadir pointing angle [deg]. Should only be set if elevation is not set
-    nadir_angle: float | None = None  # Angle in degrees away from the nadir point
+    nadir_angle: float = 0.0  # Angle in degrees away from the nadir point
     # Elevation angle [deg]. Should only be set if nadir_angle is not set
-    elevation: float | None = None
+    elevation: float = 0.0
 
     # Satellite altitude [m]
-    altitude: float | None = None  # Altitude of the satellite above the Earth's surface in meters
+    altitude: float = 0.0  # Altitude of the satellite above the Earth's surface in meters
 
     # satellite latitude [deg]
-    lat_deg: float | None = None
+    lat_deg: float = 0.0
 
     # Antenna pattern of the satellite
     antenna_pattern: str | None = None  # Antenna radiation pattern
 
     # Antenna efficiency for pattern
-    antenna_efficiency: float | None = None  # Efficiency factor for the antenna, range from 0 to 1
+    antenna_efficiency: float = 0.0  # Efficiency factor for the antenna, range from 0 to 1
 
     # Antenna diameter
-    antenna_diameter: float | None = None  # Diameter of the antenna in meters
+    antenna_diameter: float = 0.0  # Diameter of the antenna in meters
 
     # Receive antenna gain - applicable for 9a, 9b and OMNI [dBi]
-    antenna_gain: float | None = None  # Gain of the antenna in dBi
+    antenna_gain: float = 0.0  # Gain of the antenna in dBi
 
     # Channel model, possible values are "FSPL" (free-space path loss), "P619"
-    channel_model: str = None  # Channel model to be used
+    channel_model: str = "FSPL"  # Channel model to be used
 
     # Parameters for the P.619 propagation model
     #    earth_station_alt_m - altitude of IMT system (in meters)
@@ -54,9 +54,9 @@ class ParametersSpaceStation(ParametersBase):
     #      (positive if space-station is to the East of earth-station)
     #    season - season of the year.
     param_p619 = ParametersP619()
-    earth_station_alt_m: None | float = None
-    earth_station_lat_deg: None | float = None
-    earth_station_long_diff_deg: None | float = None
+    earth_station_alt_m: float = 0.0
+    earth_station_lat_deg: float = 0.0
+    earth_station_long_diff_deg: float = 0.0
     season:str = "SUMMER"
 
     # This parameter is also used by P619, but should not be set manually.
@@ -82,7 +82,7 @@ class ParametersSpaceStation(ParametersBase):
         if self.space_station_alt_m is not None:
             raise ValueError("'space_station_alt_m' should not be set manually. It is always equal to 'altitude'")
 
-        if self.nadir_angle is not None and self.elevation is not None:
+        if self.nadir_angle != 0 and self.elevation != 0:
             raise ValueError("'elevation' and 'nadir_angle' should not both be set at the same time. Choose either\
                              parameter to set")
 
@@ -93,10 +93,10 @@ class ParametersSpaceStation(ParametersBase):
         if self.channel_model == "P619":
             # check necessary parameters for P619
             if None in [
-                self.earth_station_alt_m, self.earth_station_lat_deg, self.earth_station_long_diff_deg
+                self.param_p619, self.earth_station_alt_m, self.earth_station_lat_deg, self.earth_station_long_diff_deg
             ]:
                 raise ValueError("When using P619 should set 'self.earth_station_alt_m', 'self.earth_station_lat_deg',\
-                                 'self.earth_station_long_diff_deg' explicitly")
+                                 'self.earth_station_long_diff_deg' deafult or on parameter file and 'param_p619' on child class default")
             # Check season
             if self.season not in ["SUMMER", "WINTER"]:
                 raise ValueError("Invalid season, must be either 'SUMMER' or 'WINTER'")
@@ -104,11 +104,12 @@ class ParametersSpaceStation(ParametersBase):
         self.set_derived_parameters()
 
     def set_derived_parameters(self):
-        self.param_p619.load_from_paramters(self)
-
         self.space_station_alt_m = self.altitude
 
-        if self.elevation is not None:
+        if self.param_p619:
+            self.param_p619.load_from_paramters(self)
+
+        if self.elevation != 0.0:
             # this relationship comes directly from law of sines
             self.nadir_angle = math.degrees(
                 math.asin(
@@ -116,7 +117,7 @@ class ParametersSpaceStation(ParametersBase):
                     / (EARTH_RADIUS + self.altitude)
                 )
             )
-        elif self.nadir_angle is not None:
+        elif self.nadir_angle != 0.0:
             # this relationship comes directly from law of sines
             # can also be derived from incidence angle according to Rec. ITU-R RS.1861-0
             self.elevation = math.degrees(

@@ -1,5 +1,9 @@
 from dataclasses import dataclass
+import math
 
+from sharc.parameters.constants import EARTH_RADIUS
+from sharc.parameters.parameters_base import ParametersBase
+from sharc.parameters.parameters_p619 import ParametersP619
 from sharc.parameters.parameters_space_station import ParametersSpaceStation
 
 @dataclass
@@ -29,7 +33,7 @@ class ParametersEessSS(ParametersSpaceStation):
     # Possible values: "ITU-R RS.1813", "ITU-R RS.1861 9a", "ITU-R RS.1861 9b", 
     # "ITU-R RS.1861 9c", "ITU-R RS.2043", "OMNI"
     # TODO: check `x` and `y`:
-    # @important: for EESS Active, choose antenna `x` according to Recommendation `y`
+    # @important: for EESS Passive, antenna pattern is from Recommendatio ITU-R RS.1813
     antenna_pattern: str = "ITU-R RS.1813"  # Antenna radiation pattern
 
     # Antenna efficiency for pattern described in ITU-R RS.1813 [0-1]
@@ -44,6 +48,18 @@ class ParametersEessSS(ParametersSpaceStation):
 
     # Channel model, possible values are "FSPL" (free-space path loss), "P619"
     channel_model: str = "FSPL"  # Channel model to be used
+
+    # Parameters for the P.619 propagation model
+    #    earth_station_alt_m - altitude of IMT system (in meters)
+    #    earth_station_lat_deg - latitude of IMT system (in degrees)
+    #    earth_station_long_diff_deg - difference between longitudes of IMT and satellite system
+    #      (positive if space-station is to the East of earth-station)
+    #    season - season of the year.
+    param_p619 = ParametersP619()
+    earth_station_alt_m: float = 0.0
+    earth_station_lat_deg: float = 0.0
+    earth_station_long_diff_deg: float = 0.0
+    season:str = "SUMMER"
 
     ########### Creates a statistical distribution of nadir angle###############
     ############## following variables nadir_angle_distribution#################
@@ -71,7 +87,11 @@ class ParametersEessSS(ParametersSpaceStation):
             If a parameter is not valid.
         """
         super().load_parameters_from_file(config_file)
-
+        # self.param_p619.load_from_paramters(self)
+        # # print("altitude, earth_station_alt_m", self.altitude, self.earth_station_alt_m)
+        # print([
+        #     self.earth_station_alt_m, self.earth_station_lat_deg, self.earth_station_long_diff_deg
+        # ])
         # Implement additional sanity checks for EESS specific parameters
         if not (0 <= self.antenna_efficiency or self.antenna_efficiency <= 1):
             raise ValueError("antenna_efficiency must be between 0 and 1")
