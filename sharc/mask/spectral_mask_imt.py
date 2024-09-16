@@ -7,6 +7,7 @@ Created on Tue Dec  5 11:06:56 2017
 
 from sharc.support.enumerations import StationType
 from sharc.mask.spectral_mask import SpectralMask
+from sharc.mask.spectral_mask_imt_alternative import SpectralMaskImtAlternative
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -54,7 +55,19 @@ class SpectralMaskImt(SpectralMask):
         # Spurious domain limits [dBm/MHz]
         self.spurious_emissions = spurious_emissions
         # Mask delta f breaking limits [MHz]
-        self.delta_f_lim = np.array([0, 20, 400])
+        if freq_mhz < 26000:
+            self.alternative_mask_used = True
+            self.alternative_mask = SpectralMaskImtAlternative(
+                 sta_type, 
+                 freq_mhz, 
+                 band_mhz, 
+                 spurious_emissions, 
+                 scenario
+            )
+            self.delta_f_lim = self.alternative_mask.delta_f_lim
+        else:
+            # use value from 5-1/36-E
+            self.delta_f_lim = np.array([0, 20, 400])
         
         # Attributes
         self.sta_type = sta_type
@@ -74,6 +87,11 @@ class SpectralMaskImt(SpectralMask):
         Parameters:
             power (float): station transmit power. Default = 0
         """
+        if self.alternative_mask_used:
+            self.alternative_mask.set_mask(power)
+            self.mask_dbm = self.alternative_mask.mask_dbm
+            return
+        
         self.p_tx = power - 10*np.log10(self.band_mhz)
         
         # Set new transmit power value       
@@ -121,11 +139,11 @@ class SpectralMaskImt(SpectralMask):
 if __name__ == '__main__':
     # Initialize variables
     sta_type = StationType.IMT_BS
-    p_tx = 25.1
-    freq = 43000
-    band = 200
-    spurious_emissions_dbm_mhz = -33
-    
+    p_tx = 34.061799739838875
+    freq = 9000
+    band = 100
+    spurious_emissions_dbm_mhz = -30
+
     # Create mask
     msk = SpectralMaskImt(sta_type,freq,band, spurious_emissions_dbm_mhz)
     msk.set_mask(p_tx)
