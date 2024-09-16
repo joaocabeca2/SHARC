@@ -55,7 +55,8 @@ class SpectralMaskImt(SpectralMask):
         # Spurious domain limits [dBm/MHz]
         self.spurious_emissions = spurious_emissions
         # Mask delta f breaking limits [MHz]
-        if freq_mhz < 26000:
+        self.alternative_mask_used = False
+        if freq_mhz < 26000 and scenario == "OUTDOOR" and sta_type == StationType.IMT_BS:
             self.alternative_mask_used = True
             self.alternative_mask = SpectralMaskImtAlternative(
                  sta_type, 
