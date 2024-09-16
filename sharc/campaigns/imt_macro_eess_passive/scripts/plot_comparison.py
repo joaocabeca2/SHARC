@@ -27,7 +27,7 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
     
     comparison_folder = os.path.abspath(os.path.join(workfolder, '..', "input"))
     subdirs = [comparison_folder]
-    legends = ["luciano-contrib21-figure8-eess-passive", "sharc-eess-passive"]
+    legends = ["luciano-contrib21-figure8-eess-passive", "sharc-eess-passive", "sharc-eess-passive-with-correct-spurious-emission"]
     # List all subfolders in the base directory or only those specified by the user
     if subfolders:
         subdirs += [os.path.join(csv_folder, d) for d in subfolders if os.path.isdir(os.path.join(csv_folder, d))]
@@ -85,7 +85,6 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
         if subdir == comparison_folder:
             all_files = ["luciano-contrib21-figure8-eess.csv"]
         legenda = legends[idx] if legends and len(legends) > idx else os.path.basename(subdir).split(f"output_{base_dir}_")[1]
-        print(legenda)
 
         for file_name in all_files:
             file_path = os.path.join(subdir, file_name)
@@ -143,4 +142,4 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
         print(f"Figure saved: {fig_file_path}")
 
 
-plot_comparison('imt_macro_eess_passive', 'SYS_CDF_of_system_interference_power_from_IMT_DL', 5, xaxis_title='Interference Power (dBm/MHz)', legends=None, subfolders=None, save_file=True, show_plot=True)
+plot_comparison('imt_macro_eess_passive', 'SYS_CDF_of_system_interference_power_from_IMT_DL', 5, xaxis_title='Interference Power (dBm/MHz)', legends=None, subfolders=None, save_file=False, show_plot=True)
