@@ -65,16 +65,16 @@ if __name__ == '__main__':
     # initialize antenna parameters
     param = ParametersEessSS()
     param.antenna_pattern = "ITU-R RS.1813-1"
-    param.frequency = 23900
-    param.antenna_gain = 52
-    param.antenna_diameter = 2.2
-    param.antenna_efficiency = 0.6
+    param.frequency = 10650
+    param.antenna_gain = 39.6
+    param.antenna_diameter = 1.1
+    param.antenna_efficiency = 0.606
     antenna = AntennaRS1813(param)
 
     gain = antenna.calculate_gain(off_axis_angle_vec = phi)
 
     fig = plt.figure(figsize=(8,7), facecolor='w', edgecolor='k')  # create a figure object
-    plt.semilogx(phi, gain - param.antenna_gain, "-b", label = "$f = 23.9$ GHz")
+    plt.semilogx(phi, gain, "-b", label = "$f = 10.650$ GHz")
 
     plt.title("ITU-R RS.1813-1 antenna radiation pattern")
     plt.xlabel("Off-axis angle $\phi$ [deg]")

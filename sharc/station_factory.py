@@ -184,7 +184,7 @@ class StationFactory(object):
                 # sigma = distance/3.0345. So we always distibute UE's in order to meet
                 # the requirement Prob(d<d_edge) = 99% for a given cell radius.
                 radius_scale = topology.cell_radius / 3.0345
-                radius = random_number_gen.rayleigh(radius_scale, num_ue)
+                radius = random_number_gen.rayleigh(32, num_ue)
             elif param.ue_distribution_distance.upper() == "UNIFORM":
                 radius = topology.cell_radius * random_number_gen.random_sample(num_ue)
             else:
@@ -401,9 +401,9 @@ class StationFactory(object):
     def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState ):
         if parameters.general.system == "METSAT_SS":
             return StationFactory.generate_metsat_ss(parameters.metsat_ss)
-        if parameters.general.system == "EESS_SS":
-            return StationFactory.generate_eess_space_station(parameters.eess_passive)
-        if parameters.general.system == "FSS_ES":
+        elif parameters.general.system == "EESS_SS":
+            return StationFactory.generate_eess_space_station(parameters.eess_ss)
+        elif parameters.general.system == "FSS_ES":
             return StationFactory.generate_fss_earth_station(parameters.fss_es, random_number_gen, topology)
         elif parameters.general.system == "FSS_SS":
             return StationFactory.generate_fss_space_station(parameters.fss_ss)

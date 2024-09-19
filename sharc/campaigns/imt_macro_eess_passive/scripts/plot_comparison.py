@@ -15,8 +15,7 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
     # Ensure at least one of save_file or show_plot is true
     if not save_file and not show_plot:
         raise ValueError("Either save_file or show_plot must be True.")
-    
-    # Define the base directory dynamically based on user input
+
     workfolder = os.path.dirname(os.path.abspath(__file__))
     csv_folder = os.path.abspath(os.path.join(workfolder, '..', "output"))
     figs_folder = os.path.abspath(os.path.join(workfolder, '..', "output", "figs"))
@@ -25,9 +24,18 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
     if not os.path.exists(figs_folder):
         os.makedirs(figs_folder)
     
-    comparison_folder = os.path.abspath(os.path.join(workfolder, '..', "input"))
+    comparison_folder = os.path.abspath(os.path.join(workfolder, '..', "comparison"))
     subdirs = [comparison_folder]
-    legends = ["luciano-contrib21-figure8-eess-passive", "sharc-eess-passive", "sharc-eess-passive-with-correct-spurious-emission"]
+    legends = ["Fig. 8 EESS (Passive) Sensor",
+        "Aggregate Interference",
+        "1 cluster",
+        "1 cluster",
+        "7 clusters",
+        "1 cluster",
+        "1 cluster",
+        "1 cluster",
+    ]
+    # legends = []
     # List all subfolders in the base directory or only those specified by the user
     if subfolders:
         subdirs += [os.path.join(csv_folder, d) for d in subfolders if os.path.isdir(os.path.join(csv_folder, d))]
@@ -48,7 +56,7 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
     for subdir in subdirs:
         all_files = [f for f in os.listdir(subdir) if f.endswith('.csv') and label in f and file_prefix in f]
         if subdir == comparison_folder:
-            all_files = ["luciano-contrib21-figure8-eess.csv"]
+            all_files = ["Fig. 8 EESS (Passive) Sensor.csv","Fig. 15 (IMT Uplink) EESS (Passive) Sensor", "aggregate-interference-1-cluster-0.25-TDD.csv"]
 
         for file_name in all_files:
             file_path = os.path.join(subdir, file_name)
@@ -77,16 +85,25 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
     # If no valid data was found, set reasonable defaults for global_min and global_max
     if global_min == float('inf') or global_max == float('-inf'):
         global_min, global_max = 0, 1
-
+    # print(subdirs)
     # Plot the graphs adjusting the axes
     fig = go.Figure()
     for idx, subdir in enumerate(subdirs):
         all_files = [f for f in os.listdir(subdir) if f.endswith('.csv') and label in f and file_prefix in f]
         if subdir == comparison_folder:
-            all_files = ["luciano-contrib21-figure8-eess.csv"]
-        legenda = legends[idx] if legends and len(legends) > idx else os.path.basename(subdir).split(f"output_{base_dir}_")[1]
-
+            all_files = ["Fig. 8 EESS (Passive) Sensor.csv", "Fig. 15 (IMT Uplink) EESS (Passive) Sensor.csv", "aggregate-interference-1-cluster-0.25-TDD.csv"]
+        legenda = legends[idx] if legends and len(legends) > idx else os.path.basename(subdir)
         for file_name in all_files:
+            if file_name == "Fig. 8 EESS (Passive) Sensor.csv":
+                legenda = "Fig. 8 EESS (Passive) Sensor.csv"
+            elif "aggregate-interference-1-cluster-0.25-TDD" in file_name:
+                legenda = "Aggregate Interference"
+            elif "Fig. 15 (IMT Uplink) EESS (Passive) Sensor" in file_name:
+                legenda = "Fig. 15 (IMT Uplink) EESS (Passive) Sensor"
+            else:
+                print(file_name)
+                legenda = legends[idx] if legends and len(legends) > idx else os.path.basename(subdir)
+
             file_path = os.path.join(subdir, file_name)
             if os.path.exists(file_path):
                 try:
@@ -108,10 +125,12 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
                     if data.empty or data.shape[0] < 2:
                         print(f"The file {file_name} does not have enough data to plot.")
                         continue
-                    if legenda.startswith("luciano-contrib21-figure8-eess"):
-                        print("opa")
-                    else:
+                    if legenda.startswith("Fig. 8 EESS (Passive) Sensor") or legenda.startswith("Fig. 15 (IMT Uplink) EESS (Passive) Sensor"):
                         data.iloc[:, 1] = (1 - data.iloc[:, 1])
+                    elif legenda.startswith("Aggregate Interference"):
+                        pass
+                    else:
+                        print(file_path)
                         data.iloc[:, 0] = data.iloc[:, 0] - 30
                         
                     # Plot the CDF
@@ -125,8 +144,8 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
     fig.update_layout(
         title=f'CDF Plot for {file_prefix}',
         xaxis_title='dBW/MHz',
-        yaxis_title='1-CDF',
-        yaxis=dict(tickmode='array', tickvals=[0.001, 0.01, 0.1, 1], type="log"),
+        yaxis_title='CDF',
+        yaxis=dict(tickmode='array', tickvals=[0.25, 0.5, 0.75, 1]),
         xaxis=dict(tickmode='linear', tick0=global_min, dtick=passo_xticks),
         legend_title="Labels"
     )
@@ -142,4 +161,6 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
         print(f"Figure saved: {fig_file_path}")
 
 
-plot_comparison('imt_macro_eess_passive', 'SYS_CDF_of_system_interference_power_from_IMT_DL', 5, xaxis_title='Interference Power (dBm/MHz)', legends=None, subfolders=None, save_file=False, show_plot=True)
+# plot_comparison('imt_macro_eess_passive', 'SYS_CDF_of_system_interference_power_from_IMT_DL', 5, xaxis_title='Interference Power (dBm/MHz)', legends=None, subfolders=None, save_file=False, show_plot=True)
+
+plot_comparison('imt_macro_eess_passive', 'SYS_CDF_of_system_interference_power_from_IMT_UL', 5, xaxis_title='Interference Power (dBm/MHz)', legends=None, subfolders=None, save_file=False, show_plot=True)
