@@ -17,7 +17,7 @@ class SpectralMaskImt(SpectralMask):
         The masks are in the document's tables 1 to 8.
     Implements alternative spectral masks for IMT-2020 for cases Document 5-1/36-E does not implement
         according to Documents ITU-R SM.1541-6, ITU-R SM.1539-1 and ETSI TS 138 104 V16.6.0.
-        Uses alternative when: outdoor BS's with freq < 26GHz
+        Uses alternative when: outdoor BS's with freq < 24.25GHz
     
     Attributes:
         spurious_emissions (float): level of power emissions at spurious
@@ -62,7 +62,7 @@ class SpectralMaskImt(SpectralMask):
         self.spurious_emissions = spurious_emissions
         # Mask delta f breaking limits [MHz]
         self.alternative_mask_used = False
-        if freq_mhz < 26000 and scenario == "OUTDOOR" and sta_type == StationType.IMT_BS and spurious_emissions in [-13, -30]:
+        if freq_mhz < 24250 and scenario == "OUTDOOR" and sta_type == StationType.IMT_BS and spurious_emissions in [-13, -30]:
             self.alternative_mask_used = True
             self.delta_f_lim = self.get_alternative_mask_delta_f_m(freq_mhz, band_mhz)
         else:
@@ -129,8 +129,8 @@ class SpectralMaskImt(SpectralMask):
                     mask_dbm = np.array([-5, np.max((power-43.5,-20)), 
                                           self.spurious_emissions])
             else:
-                # Dummy spectral mask, for testing purposes only
-                mask_dbm = np.array([-10, -20, -50])
+                # this will only be reached when spurious emission has been manually set to something invalid and alternative mask should be used
+                raise ValueError("SpectralMaskIMT cannot be used with current parameters. You may have set spurious emission to a value not in [-13,-30]")
                  
         self.mask_dbm = np.concatenate((mask_dbm[::-1],np.array([self.p_tx]),
                                         mask_dbm))
