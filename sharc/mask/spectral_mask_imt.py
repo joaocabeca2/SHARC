@@ -39,7 +39,7 @@ class SpectralMaskImt(SpectralMask):
             line may be taken. Is needed because oob_power is calculated expecting rectangles, so we approximate
             the diagonal with 'SAMPLESIZE' rectangles
     """
-    ALTERNATIVE_MASK_DIAGONAL_SAMPLESIZE: int = 10
+    ALTERNATIVE_MASK_DIAGONAL_SAMPLESIZE: int = 40
     def __init__(self, 
                  sta_type: StationType, 
                  freq_mhz: float, 
