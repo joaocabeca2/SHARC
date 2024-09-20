@@ -60,11 +60,16 @@ class SpectralMaskImt(SpectralMask):
         """
         # Spurious domain limits [dBm/MHz]
         self.spurious_emissions = spurious_emissions
+
+        # conditions to use alternative mask
+        self.alternative_mask_used =    freq_mhz < 24250                 \
+                                    and scenario == "OUTDOOR"            \
+                                    and sta_type == StationType.IMT_BS   \
+                                    and spurious_emissions in [-13, -30]
+
         # Mask delta f breaking limits [MHz]
-        self.alternative_mask_used = False
-        if freq_mhz < 24250 and scenario == "OUTDOOR" and sta_type == StationType.IMT_BS and spurious_emissions in [-13, -30]:
-            self.alternative_mask_used = True
-            self.delta_f_lim = self.get_alternative_mask_delta_f_m(freq_mhz, band_mhz)
+        if self.alternative_mask_used:
+            self.delta_f_lim = self.get_alternative_mask_delta_f_lim(freq_mhz, band_mhz)
         else:
             # use value from 5-1/36-E
             self.delta_f_lim = np.array([0, 20, 400])
@@ -135,7 +140,7 @@ class SpectralMaskImt(SpectralMask):
         self.mask_dbm = np.concatenate((mask_dbm[::-1],np.array([self.p_tx]),
                                         mask_dbm))
 
-    def get_alternative_mask_delta_f_m(self, freq_mhz: float, band_mhz: float) -> np.array:
+    def get_alternative_mask_delta_f_lim(self, freq_mhz: float, band_mhz: float) -> np.array:
         """
             Implements spectral masks for IMT-2020 outdoor BS's when freq < 26GHz,
                 according to Documents ITU-R SM.1541-6, ITU-R SM.1539-1 and ETSI TS 138 104 V16.6.0. 
@@ -150,46 +155,37 @@ class SpectralMaskImt(SpectralMask):
         # ITU-R SM.1539-1 Table 2
         if (freq_mhz > 0.009 and freq_mhz < 0.15):
             B_L = 0.00025
-            B_L_separation = 0.000625
             B_U = 0.01
-            B_U_separation = 1.5 * band_mhz + 0.01
         elif (freq_mhz > 0.15 and freq_mhz < 30):
             B_L = 0.004
-            B_L_separation = 0.01
             B_U = 0.1
-            B_U_separation = 1.5 * band_mhz + 0.1
         elif (freq_mhz > 30 and freq_mhz < 1000):
             B_L = 0.025
-            B_L_separation = 0.0625
             B_U = 10
-            B_U_separation = 1.5 * band_mhz + 10
         elif (freq_mhz > 1000 and freq_mhz < 3000):
             B_L = 0.1
-            B_L_separation = 0.25
             B_U = 50
-            B_U_separation = 1.5 * band_mhz + 50
         elif (freq_mhz > 3000 and freq_mhz < 10000):
             B_L = 0.1
-            B_L_separation = 0.25
             B_U = 100
-            B_U_separation = 1.5 * band_mhz + 100
         elif (freq_mhz > 10000 and freq_mhz < 15000):
             B_L = 0.3
-            B_L_separation = 0.75
             B_U = 250
-            B_U_separation = 1.5 * band_mhz + 250
         elif (freq_mhz > 15000 and freq_mhz < 26000):
             B_L = 0.5
-            B_L_separation = 1.25
             B_U = 500
-            B_U_separation = 1.5 * band_mhz + 500
+
+        # ITU-R SM.1541-6 Table 1 (same as using only ITU-R SM.1539-1 Table 2, but with less hardcoded values)
+        B_L_separation = 2.5 * B_L
+        B_U_separation = 1.5 * band_mhz + B_U
+        B_N_separation = 2.5 * band_mhz
 
         if band_mhz < B_L:
             delta_f_spurious = B_L_separation
         elif band_mhz > B_U:
             delta_f_spurious = B_U_separation
         else:
-            delta_f_spurious = 2.5 * band_mhz
+            delta_f_spurious = B_N_separation
 
         diagonal = np.array([i * 5 / self.ALTERNATIVE_MASK_DIAGONAL_SAMPLESIZE for i in range(self.ALTERNATIVE_MASK_DIAGONAL_SAMPLESIZE)])
 
