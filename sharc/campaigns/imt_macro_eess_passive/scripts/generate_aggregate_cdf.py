@@ -73,10 +73,10 @@ for i in range(len(aggregate_samples)):
             choose_from_ul = True
 
         if choose_from_ul:
-            sample += np.power(10, UL_interference[int(j)])
+            sample += np.power(10, (UL_interference[int(j)] - 30)/10)
         else:
-            sample += np.power(10, DL_interference[int(j)])
-    aggregate_samples[i] = np.log10(sample)
+            sample += np.power(10, (DL_interference[int(j)] - 30)/10)
+    aggregate_samples[i] = 10 * np.log10(sample)
 
 values, base = np.histogram(aggregate_samples, bins=200)
 cumulative = np.cumsum(values)

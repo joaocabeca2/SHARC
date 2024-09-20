@@ -26,15 +26,15 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
     
     comparison_folder = os.path.abspath(os.path.join(workfolder, '..', "comparison"))
     subdirs = [comparison_folder]
-    legends = ["Fig. 8 EESS (Passive) Sensor",
-        "Aggregate Interference",
-        "1 cluster",
-        "1 cluster",
-        "7 clusters",
-        "1 cluster",
-        "1 cluster",
-        "1 cluster",
-    ]
+    # legends = ["Fig. 8 EESS (Passive) Sensor",
+    #     "Aggregate Interference",
+    #     "1 cluster",
+    #     "1 cluster",
+    #     "7 clusters",
+    #     "1 cluster",
+    #     "1 cluster",
+    #     "1 cluster",
+    # ]
     # legends = []
     # List all subfolders in the base directory or only those specified by the user
     if subfolders:
@@ -101,7 +101,7 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
             elif "Fig. 15 (IMT Uplink) EESS (Passive) Sensor" in file_name:
                 legenda = "Fig. 15 (IMT Uplink) EESS (Passive) Sensor"
             else:
-                print(file_name)
+                # print(file_name)
                 legenda = legends[idx] if legends and len(legends) > idx else os.path.basename(subdir)
 
             file_path = os.path.join(subdir, file_name)
@@ -130,7 +130,7 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
                     elif legenda.startswith("Aggregate Interference"):
                         pass
                     else:
-                        print(file_path)
+                        # print(file_path)
                         data.iloc[:, 0] = data.iloc[:, 0] - 30
                         
                     # Plot the CDF
