@@ -18,8 +18,8 @@ csv_folder = os.path.abspath(os.path.join(workfolder, '..', "output"))
 comparison_folder = os.path.abspath(os.path.join(workfolder, '..', "comparison"))
 comparison_file = "luciano-contrib21-figure8-eess.csv"
 
-DL_folder = "output_imt_macro_eess_passive_1_cluster_DL_2024-09-18_01"
-UL_folder = "output_imt_macro_eess_passive_1_cluster_UL_2024-09-18_01"
+DL_folder = "output_imt_macro_eess_passive_1_cluster_DL_2024-09-21_03"
+UL_folder = "output_imt_macro_eess_passive_1_cluster_UL_2024-09-21_10"
 
 DL_csv_name = "SYS_INR_samples.csv"
 UL_csv_name = "SYS_INR_samples.csv"
@@ -73,10 +73,10 @@ for i in range(len(aggregate_samples)):
             choose_from_ul = True
 
         if choose_from_ul:
-            sample += np.power(10, (UL_interference[int(j)] - 30)/10)
+            sample += np.power(10, (UL_interference[int(j)])/10)
         else:
-            sample += np.power(10, (DL_interference[int(j)] - 30)/10)
-    aggregate_samples[i] = 10 * np.log10(sample)
+            sample += np.power(10, (DL_interference[int(j)])/10)
+    aggregate_samples[i] = 10 * np.log10(sample) - 30
 
 values, base = np.histogram(aggregate_samples, bins=200)
 cumulative = np.cumsum(values)

@@ -132,6 +132,7 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
                     else:
                         # print(file_path)
                         data.iloc[:, 0] = data.iloc[:, 0] - 30
+                    # data.iloc[:, 1] = (1 - data.iloc[:, 1])
                         
                     # Plot the CDF
                     fig.add_trace(go.Scatter(x=data.iloc[:, 0], y=data.iloc[:, 1], mode='lines', name=f'{legenda}'))
@@ -145,7 +146,7 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
         title=f'CDF Plot for {file_prefix}',
         xaxis_title='dBW/MHz',
         yaxis_title='CDF',
-        yaxis=dict(tickmode='array', tickvals=[0.25, 0.5, 0.75, 1]),
+        yaxis=dict(tickmode='array', tick0=0, dtick=0.25),
         xaxis=dict(tickmode='linear', tick0=global_min, dtick=passo_xticks),
         legend_title="Labels"
     )
@@ -161,6 +162,6 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
         print(f"Figure saved: {fig_file_path}")
 
 
-# plot_comparison('imt_macro_eess_passive', 'SYS_CDF_of_system_interference_power_from_IMT_DL', 5, xaxis_title='Interference Power (dBm/MHz)', legends=None, subfolders=None, save_file=False, show_plot=True)
+plot_comparison('imt_macro_eess_passive', 'SYS_CDF_of_system_interference_power_from_IMT_DL', 5, xaxis_title='Interference Power (dBm/MHz)', legends=None, subfolders=None, save_file=False, show_plot=True)
 
 plot_comparison('imt_macro_eess_passive', 'SYS_CDF_of_system_interference_power_from_IMT_UL', 5, xaxis_title='Interference Power (dBm/MHz)', legends=None, subfolders=None, save_file=False, show_plot=True)
