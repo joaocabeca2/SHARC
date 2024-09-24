@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon May 15 12:51:48 2017
-
-@author: LeticiaValle_Mac
-"""
 
 from sharc.propagation.propagation import Propagation
 from sharc.support.enumerations import StationType
@@ -11,7 +6,6 @@ from sharc.support.enumerations import StationType
 import numpy as np
 import scipy
 import math
-from scipy import special
 import matplotlib.pyplot as plt
 
 
