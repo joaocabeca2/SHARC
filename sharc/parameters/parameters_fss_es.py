@@ -13,7 +13,7 @@ class ParametersFssEs(ParametersBase):
     parameters for the simulator
     """
     section_name: str = "FSS_ES"
-    
+
     # type of FSS-ES location:
     # FIXED - position must be given
     # CELL - random within central cell
@@ -63,6 +63,7 @@ class ParametersFssEs(ParametersBase):
     #                                    "TVRO-URBAN"
     #                                    "TVRO-SUBURBAN"
     #                                    "HDFSS"
+    #                                    "UMA"
     channel_model: str = "P452"
 
     # P452 parameters
@@ -124,13 +125,13 @@ class ParametersFssEs(ParametersBase):
     # P2109_RANDOM: random probability at P.2109 model, considering elevation
     # P2109_FIXED: fixed probability at P.2109 model, considering elevation.
     #              Probability must be specified in bs_building_entry_loss_prob.
-    # FIXED_VALUE: fixed value per BS. Value must be specified in 
+    # FIXED_VALUE: fixed value per BS. Value must be specified in
     #              bs_building_entry_loss_value.
     bs_building_entry_loss_type: str = "P2109_FIXED"
-    # Probability of building entry loss not exceeded if 
+    # Probability of building entry loss not exceeded if
     # bs_building_entry_loss_type = P2109_FIXED
     bs_building_entry_loss_prob: float = 0.75
-    # Value in dB of building entry loss if 
+    # Value in dB of building entry loss if
     # bs_building_entry_loss_type = FIXED_VALUE
     bs_building_entry_loss_value: float = 35
 
@@ -195,7 +196,7 @@ class ParametersFssEs(ParametersBase):
                              {self.bs_building_entry_loss_type} \
                              Allowd values are \"P2109_RANDOM\", \"P2109_FIXED\", \"FIXED_VALUE\".")
         if self.channel_model.upper() not in ["FSPL", "TERRESTRIALSIMPLE", "P452", "P619",
-                                              "TVRO-URBAN", "TVRO-SUBURBAN", "HDFSS"]:
+                                              "TVRO-URBAN", "TVRO-SUBURBAN", "HDFSS", 'UMA', 'UMI']:
             raise ValueError(f"ParametersFssEs: Invalid value for parameter channel_model - {self.channel_model}")
 
         if self.channel_model == "P452":

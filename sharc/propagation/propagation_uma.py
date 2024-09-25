@@ -43,14 +43,14 @@ class PropagationUMa(Propagation):
         Returns
         -------
         np.array
-            Return an array station_a.num_stations x station_b.num_stations with the path loss 
+            Return an array station_a.num_stations x station_b.num_stations with the path loss
             between each station
         """
         wrap_around_enabled = \
             params.imt.wrap_around and \
             (params.imt.topology == 'MACROCELL' or params.imt.topology == 'HOTSPOT') and \
                 params.imt.num_clusters == 1
-        
+
         if wrap_around_enabled:
             bs_to_ue_dist_2d, bs_to_ue_dist_3d, _, _ = \
                 station_b.get_dist_angles_wrap_around(station_a)
@@ -64,7 +64,7 @@ class PropagationUMa(Propagation):
                              station_b.height,
                              station_a.height,
                              params.imt.shadowing)
-        
+
         # the interface expects station_a.num_stations x station_b.num_stations array
         return loss
 
@@ -192,7 +192,6 @@ class PropagationUMa(Propagation):
         return loss_nlos + shadowing
 
 
-
     def get_breakpoint_distance(self, frequency: float, h_bs: np.array, h_ue: np.array, h_e: np.array) -> float:
         """
         Calculates the breakpoint distance for the LOS (line-of-sight) case.
@@ -310,7 +309,7 @@ if __name__ == '__main__':
     loss_nlos = uma.get_loss_nlos(distance_2D, distance_3D, freq, h_bs, h_ue, h_e, shadowing_std)
     loss_fs = PropagationFreeSpace(np.random.RandomState(101)).get_free_space_loss(distance=distance_2D,
                                                                                    frequency=freq)
-    
+
     fig = plt.figure(figsize=(8,6), facecolor='w', edgecolor='k')
     ax = fig.gca()
     ax.set_prop_cycle( cycler('color', ['r', 'g', 'b', 'y']) )

@@ -20,6 +20,7 @@ from sharc.parameters.parameters_fss_es import ParametersFssEs
 from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
+from sharc.parameters.parameters_rlan import ParametersRlan
 from sharc.parameters.parameters_ntn import ParametersNTN
 from sharc.parameters.constants import EARTH_RADIUS , BOLTZMANN_CONSTANT
 from sharc.station_manager import StationManager
@@ -74,7 +75,7 @@ class StationFactory(object):
                 imt_base_stations.height = topology.height
             else:
                 imt_base_stations.height = param.bs_height*np.ones(num_bs)
-        
+
         imt_base_stations.azimuth = topology.azimuth
         imt_base_stations.active = random_number_gen.rand(num_bs) < param.bs_load_probability
         imt_base_stations.tx_power = param.bs_conducted_power*np.ones(num_bs)
@@ -154,7 +155,12 @@ class StationFactory(object):
         elevation = (elevation_range[1] - elevation_range[0])*random_number_gen.random_sample(num_ue) + \
                     elevation_range[0]
 
-        if param.ue_distribution_type.upper() == "UNIFORM":
+        if param.ue_distribution_type.upper() == "UNIFORM" or \
+           param.ue_distribution_type.upper() == "UNIFORM_IN_CELL":
+
+            deterministic_cell = False
+            if param.ue_distribution_type.upper() == "UNIFORM_IN_CELL":
+                deterministic_cell = True
 
             if not (type(topology) is TopologyMacrocell):
                 sys.stderr.write("ERROR\nUniform UE distribution is currently supported only with Macrocell topology")
@@ -162,11 +168,11 @@ class StationFactory(object):
 
             [ue_x, ue_y, theta, distance] = StationFactory.get_random_position(num_ue, topology, random_number_gen,
                                                                                param.minimum_separation_distance_bs_ue,
-                                                                               deterministic_cell=True)
+                                                                               deterministic_cell=deterministic_cell)
             psi = np.degrees(np.arctan((param.bs_height - param.ue_height) / distance))
 
 
-            imt_ue.azimuth = (azimuth + theta + np.pi/2)  
+            imt_ue.azimuth = (azimuth + theta + np.pi/2)
             imt_ue.elevation = elevation + psi
 
 
@@ -411,6 +417,10 @@ class StationFactory(object):
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         elif parameters.general.system == "RAS":
             return StationFactory.generate_ras_station(parameters.ras)
+        elif parameters.general.system == "RAS":
+            return StationFactory.generate_ras_station(parameters.ras)
+        elif parameters.general.system == "RLAN":
+            return StationFactory.generate_rlan_station(parameters.ras)
         else:
             sys.stderr.write("ERROR\nInvalid system: " + parameters.general.system)
             sys.exit(1)
@@ -746,7 +756,6 @@ class StationFactory(object):
         return eess_passive_sensor
 
 
-
     @staticmethod
     def get_random_position( num_stas: int, topology: Topology,
                              random_number_gen: np.random.RandomState,
@@ -754,23 +763,30 @@ class StationFactory(object):
                              deterministic_cell = False):
         hexagon_radius = topology.intersite_distance / 3
 
-        min_dist_ok = False
+        x = np.array([])
+        y = np.array([])
 
-        while not min_dist_ok:
+        while len(x) < num_stas:
+
+            num_stas_temp = num_stas - len(x)
             # generate UE uniformly in a triangle
-            x = random_number_gen.uniform(0, hexagon_radius * np.cos(np.pi / 6), num_stas)
-            y = random_number_gen.uniform(0, hexagon_radius / 2, num_stas)
+            x_temp = random_number_gen.uniform(0, hexagon_radius * np.cos(np.pi / 6), num_stas_temp)
+            y_temp = random_number_gen.uniform(0, hexagon_radius / 2, num_stas_temp)
 
-            invert_index = np.arctan(y / x) > np.pi / 6
-            y[invert_index] = -(hexagon_radius / 2 - y[invert_index])
-            x[invert_index] = (hexagon_radius * np.cos(np.pi / 6) - x[invert_index])
+            invert_index = np.arctan(y_temp / x_temp) > np.pi / 6
+            y_temp[invert_index] = -(hexagon_radius / 2 - y_temp[invert_index])
+            x_temp[invert_index] = (hexagon_radius * np.cos(np.pi / 6) - x_temp[invert_index])
 
-            if any (np.sqrt(x**2 + y**2) <  min_dist_to_bs):
-                min_dist_ok = False
-            else:
-                min_dist_ok = True
+            dist = np.sqrt(x_temp ** 2 + y_temp ** 2)
+            indices = dist > min_dist_to_bs
 
-        # randomly choose an hextant
+            x_temp = x_temp[indices]
+            y_temp = y_temp[indices]
+
+            x = np.append(x, x_temp)
+            y = np.append(y, y_temp)
+
+        # randomly choose a hextant
         hextant = random_number_gen.random_integers(0, 5, num_stas)
         hextant_angle = np.pi / 6 + np.pi / 3 * hextant
 
@@ -778,16 +794,21 @@ class StationFactory(object):
         x = x * np.cos(hextant_angle) - y * np.sin(hextant_angle)
         y = old_x * np.sin(hextant_angle) + y * np.cos(hextant_angle)
 
-        # randomly choose a cell
+        # choose cells
         if central_cell:
             central_cell_indices = np.where((topology.x == 0) & (topology.y == 0))
+
+            if not len(central_cell_indices[0]):
+                sys.stderr.write("ERROR\nTopology does not have a central cell")
+                sys.exit(1)
+
             cell = central_cell_indices[0][random_number_gen.random_integers(0, len(central_cell_indices[0]) - 1,
                                                                              num_stas)]
         elif deterministic_cell:
             num_bs = topology.num_base_stations
             stas_per_cell = num_stas / num_bs
             cell = np.repeat(np.arange(num_bs, dtype=int), stas_per_cell)
-        else:
+        else: # random cells
             num_bs = topology.num_base_stations
             cell = random_number_gen.random_integers(0, num_bs - 1, num_stas)
 
@@ -810,7 +831,7 @@ class StationFactory(object):
         else:
             theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
             distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs_height)**2)
-        
+
 
         return x, y, theta, distance
 

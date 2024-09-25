@@ -288,7 +288,7 @@ class SimulationDownlink(Simulation):
                 self.results.imt_system_antenna_gain.extend(
                     self.imt_system_antenna_gain[0, active_beams])
                 self.results.imt_system_path_loss.extend(
-                    self.imt_system_path_loss[0, active_beams])
+                    np.transpose(self.imt_system_path_loss)[0, active_beams])
                 if self.param_system.channel_model == "HDFSS":
                     self.results.imt_system_build_entry_loss.extend(
                         self.imt_system_build_entry_loss[:, bs])
