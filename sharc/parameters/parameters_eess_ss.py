@@ -12,7 +12,7 @@ class ParametersEessSS(ParametersSpaceStation):
     Defines parameters for Earth Exploration Satellite Service (EESS) sensors/space stations (SS)
     and their interaction with other services based on ITU recommendations.
     """
-    section_name: str = "EESS_SS"
+    section_name: str = "eess_ss"
 
     is_space_to_earth: bool = True
     
