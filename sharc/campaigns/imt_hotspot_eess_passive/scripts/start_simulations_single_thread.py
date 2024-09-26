@@ -1,10 +1,10 @@
-from sharc.run_multiple_campaigns_mut_thread import run_campaign
+from sharc.run_multiple_campaigns import run_campaign
 
 # Set the campaign name
 # The name of the campaign to run. This should match the name of the campaign directory.
-name_campaign = "imt_macro_eess_passive"
+name_campaign = "imt_hotspot_eess_passive"
 
-# Run the campaigns
-# This function will execute the campaign with the given name.
+# Run the campaign in single-thread mode
+# This function will execute the campaign with the given name in a single-threaded manner.
 # It will look for the campaign directory under the specified name and start the necessary processes.
 run_campaign(name_campaign)

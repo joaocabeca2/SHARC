@@ -6,7 +6,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 # Define the base directory
-name = "imt_macro_eess_passive"
+name = "imt_hotspot_eess_passive"
 
 # code adapted from import: from sharc.plots.plot_cdf import plot_cdf
 def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', legends=None, subfolders=None, save_file=True, show_plot=False):
@@ -26,15 +26,6 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
     
     comparison_folder = os.path.abspath(os.path.join(workfolder, '..', "comparison"))
     subdirs = [comparison_folder]
-    # legends = ["Fig. 8 EESS (Passive) Sensor",
-    #     "Aggregate Interference",
-    #     "1 cluster",
-    #     "1 cluster",
-    #     "7 clusters",
-    #     "1 cluster",
-    #     "1 cluster",
-    #     "1 cluster",
-    # ]
     # legends = []
     # List all subfolders in the base directory or only those specified by the user
     if subfolders:
@@ -95,7 +86,7 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
         legenda = legends[idx] if legends and len(legends) > idx else os.path.basename(subdir)
         for file_name in all_files:
             if file_name == "Fig. 8 EESS (Passive) Sensor.csv":
-                legenda = "Fig. 8 EESS (Passive) Sensor.csv"
+                legenda = "Fig. 8 EESS (Passive) Sensor"
             elif "aggregate-interference-1-cluster-0.25-TDD" in file_name:
                 legenda = "Aggregate Interference"
             elif "Fig. 15 (IMT Uplink) EESS (Passive) Sensor" in file_name:
@@ -126,11 +117,12 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
                         print(f"The file {file_name} does not have enough data to plot.")
                         continue
                     if legenda.startswith("Fig. 8 EESS (Passive) Sensor") or legenda.startswith("Fig. 15 (IMT Uplink) EESS (Passive) Sensor"):
+                        # invert (1 - CDF) y axis used on fig 8 and 15:
                         data.iloc[:, 1] = (1 - data.iloc[:, 1])
                     elif legenda.startswith("Aggregate Interference"):
                         pass
                     else:
-                        # print(file_path)
+                        # transform dBm to dB:
                         data.iloc[:, 0] = data.iloc[:, 0] - 30
                     # data.iloc[:, 1] = (1 - data.iloc[:, 1])
                         
@@ -162,6 +154,6 @@ def plot_comparison(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', 
         print(f"Figure saved: {fig_file_path}")
 
 
-plot_comparison('imt_macro_eess_passive', 'SYS_CDF_of_system_interference_power_from_IMT_DL', 5, xaxis_title='Interference Power (dBm/MHz)', legends=None, subfolders=None, save_file=False, show_plot=True)
+plot_comparison(name, 'SYS_CDF_of_system_interference_power_from_IMT_DL', 5, xaxis_title='Interference Power (dB/MHz)', legends=None, subfolders=None, save_file=False, show_plot=True)
 
-plot_comparison('imt_macro_eess_passive', 'SYS_CDF_of_system_interference_power_from_IMT_UL', 5, xaxis_title='Interference Power (dBm/MHz)', legends=None, subfolders=None, save_file=False, show_plot=True)
+plot_comparison(name, 'SYS_CDF_of_system_interference_power_from_IMT_UL', 5, xaxis_title='Interference Power (dB/MHz)', legends=None, subfolders=None, save_file=False, show_plot=True)

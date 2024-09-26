@@ -18,8 +18,9 @@ csv_folder = os.path.abspath(os.path.join(workfolder, '..', "output"))
 comparison_folder = os.path.abspath(os.path.join(workfolder, '..', "comparison"))
 comparison_file = "luciano-contrib21-figure8-eess.csv"
 
-DL_folder = "output_imt_macro_eess_passive_1_cluster_DL_2024-09-21_03"
-UL_folder = "output_imt_macro_eess_passive_1_cluster_UL_2024-09-21_10"
+# TODO: get latest
+DL_folder = "output_imt_hotspot_eess_passive_1_cluster_DL_2024-09-26_01"
+UL_folder = "output_imt_hotspot_eess_passive_1_cluster_UL_2024-09-26_01"
 
 DL_csv_name = "SYS_INR_samples.csv"
 UL_csv_name = "SYS_INR_samples.csv"
