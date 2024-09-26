@@ -15,6 +15,7 @@ from sharc.parameters.parameters_imt import ParametersImt
 from sharc.parameters.parameters_antenna_imt import ParametersAntennaImt
 from sharc.parameters.parameters_space_station import ParametersSpaceStation
 from sharc.parameters.parameters_eess_ss import ParametersEessSS
+from sharc.parameters.parameters_metsat_ss import ParametersMetSatSS
 from sharc.parameters.parameters_fs import ParametersFs
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
 from sharc.parameters.parameters_fss_es import ParametersFssEs
@@ -698,114 +699,74 @@ class StationFactory(object):
 
     @staticmethod
     def generate_eess_space_station(param: ParametersEessSS):
-        eess_space_station = StationManager(1)
-        eess_space_station.station_type = StationType.EESS_SS
-        eess_space_station.is_space_station = True
-
-        # incidence angle according to Rec. ITU-R RS.1861-0
         if param.distribution_enable:
             if param.distribution_type == "UNIFORM":
                 param.nadir_angle = np.random.uniform(param.nadir_angle_distribution[0],
                                                   param.nadir_angle_distribution[1])
-                incidence_angle = math.degrees(math.asin(math.sin(math.radians(param.nadir_angle)) *
-                                                         (1 + (param.altitude / EARTH_RADIUS))))
-                # distance to field of view centre according to Rec. ITU-R RS.1861-0
-                distance = EARTH_RADIUS * \
-                           math.sin(math.radians(incidence_angle - param.nadir_angle)) / \
-                           math.sin(math.radians(param.nadir_angle))
-        else:
-            #print(param.nadir_angle)
-            incidence_angle = math.degrees(math.asin(math.sin(math.radians(param.nadir_angle)) * \
-                                                     (1 + (param.altitude/EARTH_RADIUS))))
-            #print(incidence_angle)
-            # distance to field of view centre according to Rec. ITU-R RS.1861-0
-            distance = EARTH_RADIUS * \
-                        math.sin(math.radians(incidence_angle - param.nadir_angle)) / \
-                        math.sin(math.radians(param.nadir_angle))
+
+        return StationFactory.generate_space_station(param, StationType.EESS_SS)
+
+
+    @staticmethod
+    def generate_metsat_ss(param: ParametersMetSatSS):
+        return StationFactory.generate_space_station(param, StationType.METSAT_SS)
+
+    @staticmethod
+    def generate_space_station(param: ParametersSpaceStation, station_type: StationType):
+        # this method uses off-nadir angle and altitude to infer the entire geometry
+        # TODO: make this usable on more space station cases (initially only works for metsat and eess)
+        space_station = StationManager(1)
+        space_station.is_space_station = True
+        space_station.station_type = station_type
+        # assert param.station_type is not None
+
+        incidence_angle = math.degrees(math.asin(math.sin(math.radians(param.nadir_angle)) * \
+                                                    (1 + (param.altitude/EARTH_RADIUS))))
+
+        # distance to field of view centre according to Rec. ITU-R RS.1861-0
+        distance = EARTH_RADIUS * \
+                    math.sin(math.radians(incidence_angle - param.nadir_angle)) / \
+                    math.sin(math.radians(param.nadir_angle))
 
         # Elevation at ground (centre of the footprint)
         theta_grd_elev = 90 - incidence_angle
 
-        eess_space_station.x = np.array([0])
-        eess_space_station.y = np.array([distance * math.cos(math.radians(theta_grd_elev))])
-        eess_space_station.height = np.array([distance * math.sin(math.radians(theta_grd_elev))])
+        space_station.x = np.array([0])
+        space_station.y = np.array([distance * math.cos(math.radians(theta_grd_elev))])
+        space_station.height = np.array([distance * math.sin(math.radians(theta_grd_elev))])
 
         # Elevation and azimuth at sensor wrt centre of the footprint
         # It is assumed the sensor is at y-axis, hence azimuth is 270 deg
-        eess_space_station.azimuth = 270
-        eess_space_station.elevation = -theta_grd_elev
+        space_station.azimuth = 270
+        space_station.elevation = -theta_grd_elev
 
-        eess_space_station.active = np.array([True])
-        eess_space_station.rx_interference = -500
+        space_station.active = np.array([True])
+        space_station.rx_interference = -500
 
         if param.antenna_pattern == "OMNI":
-            eess_space_station.antenna = np.array([AntennaOmni(param.antenna_gain)])
+            space_station.antenna = np.array([AntennaOmni(param.antenna_gain)])
         elif param.antenna_pattern == "ITU-R RS.1813":
-            eess_space_station.antenna = np.array([AntennaRS1813(param)])
+            space_station.antenna = np.array([AntennaRS1813(param)])
         elif param.antenna_pattern == "ITU-R RS.1861 9a":
-            eess_space_station.antenna = np.array([AntennaRS1861_9A(param)])
+            space_station.antenna = np.array([AntennaRS1861_9A(param)])
         elif param.antenna_pattern == "ITU-R RS.1861 9b":
-            eess_space_station.antenna = np.array([AntennaRS1861_9B(param)])
+            space_station.antenna = np.array([AntennaRS1861_9B(param)])
         elif param.antenna_pattern == "ITU-R RS.1861 9c":
-            eess_space_station.antenna = np.array([AntennaRS1861_9C()])
+            space_station.antenna = np.array([AntennaRS1861_9C()])
         elif param.antenna_pattern == "ITU-R RS.2043":
-            eess_space_station.antenna = np.array([AntennaRS2043()])
+            space_station.antenna = np.array([AntennaRS2043()])
+        elif param.antenna_pattern == "ITU-R S.672":
+            space_station.antenna = np.array([AntennaS672(param)])
         else:
             sys.stderr.write("ERROR\nInvalid EESS PASSIVE antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
-        eess_space_station.bandwidth = param.bandwidth
-        # Noise temperature is not an input parameter for EESS passive.
+        space_station.bandwidth = param.bandwidth
+        # Noise temperature is not an input parameter for yet used systems.
         # It is included here to calculate the useless I/N values
-        eess_space_station.noise_temperature = 500
-        eess_space_station.thermal_noise = -500
-        eess_space_station.total_interference = -500
+        space_station.noise_temperature = 500
 
-        return eess_space_station
-
-    @staticmethod
-    def generate_metsat_ss(param: ParametersSpaceStation):
-        metsat_ss = StationManager(1)
-        metsat_ss.station_type = StationType.METSAT_SS
-        metsat_ss.is_space_station = True
-
-        # distance to field of view centre according to Rec. ITU-R RS.1861-0
-        # and to law of sines (basic trig)
-        distance = EARTH_RADIUS * \
-                    math.sin(math.radians(param.elevation + 90 - param.nadir_angle)) / \
-                    math.sin(math.radians(param.nadir_angle))
-
-        metsat_ss.x = np.array([0])
-        metsat_ss.y = np.array([distance * math.cos(math.radians(-param.elevation))])
-        metsat_ss.height = np.array([param.altitude])
-
-        # Elevation and azimuth at sensor wrt centre of the footprint
-        # It is assumed the sensor is at y-axis, hence azimuth is 270 deg
-        metsat_ss.azimuth = 270
-        metsat_ss.elevation = param.elevation
-
-        metsat_ss.active = np.array([True])
-        metsat_ss.rx_interference = -500
-
-        # TODO: add Isoflux antenna pattern for when metsat ss is interferrer
-        if param.antenna_pattern == "ITU-R S.672":
-            metsat_ss.antenna = np.array([AntennaS672(param)])
-        elif param.antenna_pattern == "OMNI":
-            metsat_ss.antenna = np.array([AntennaOmni(param.antenna_gain)])
-        else:
-            sys.stderr.write("ERROR\nInvalid MetSat antenna pattern: " + param.antenna_pattern)
-            sys.exit(1)
-
-        metsat_ss.bandwidth = param.bandwidth
-
-        # TODO: check if this is input for MetSat:
-        metsat_ss.noise_temperature = 500
-        metsat_ss.thermal_noise = -500
-        metsat_ss.total_interference = -500
-
-        return metsat_ss
-
-
+        return space_station
 
     @staticmethod
     def get_random_position( num_stas: int, topology: Topology,
