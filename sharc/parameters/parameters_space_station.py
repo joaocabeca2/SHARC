@@ -12,7 +12,7 @@ class ParametersSpaceStation(ParametersBase):
     Defines parameters that should be used for orbiting Space Stations.
     TODO: use for FSS_SS in the future as well.
     """
-    section_name: str = "SPACE_STATION"
+    section_name: str = "space_station"
     is_space_to_earth: bool = True
     
     # Satellite center frequency [MHz]

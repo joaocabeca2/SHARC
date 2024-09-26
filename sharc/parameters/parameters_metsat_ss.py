@@ -11,7 +11,7 @@ class ParametersMetSatSS(ParametersSpaceStation):
     Defines parameters for MetSat space stations (SS)
     and their interaction with other services based on ITU recommendations.
     """
-    section_name: str = "METSAT_SS"
+    section_name: str = "mestat_ss"
 
     # raw data transmission in 8175-8215 range
     frequency: float = 8195.0 # Satellite center frequency [MHz]
