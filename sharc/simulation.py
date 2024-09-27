@@ -46,6 +46,8 @@ class Simulation(ABC, Observable):
             self.param_system = self.parameters.rns
         elif self.parameters.general.system == "RAS":
             self.param_system = self.parameters.ras
+        elif self.parameters.general.system == "MSS_SS":
+            self.param_system = self.parameters.mss_ss
         else:
             sys.stderr.write("ERROR\nInvalid system: " +
                              self.parameters.general.system)
@@ -263,6 +265,10 @@ class Simulation(ABC, Observable):
         coupling_loss = np.squeeze(
             self.imt_system_path_loss - self.system_imt_antenna_gain - self.imt_system_antenna_gain) + additional_loss
 
+        # Always return a 2D array
+        if coupling_loss.ndim == 1:
+            coupling_loss = np.reshape(coupling_loss, (1, -1))
+
         return coupling_loss
 
     def calculate_intra_imt_coupling_loss(self,
@@ -439,11 +445,10 @@ class Simulation(ABC, Observable):
         elif not station_1.is_imt_station():
 
             off_axis_angle = station_1.get_off_axis_angle(station_2)
-            distance = station_1.get_distance_to(station_2)
-            theta = np.degrees(np.arctan2(
-                (station_1.height - station_2.height), distance)) + station_1.elevation
-            gains[0, station_2_active] = station_1.antenna[0].calculate_gain(off_axis_angle_vec=off_axis_angle[0, station_2_active],
-                                                                             theta_vec=theta[0, station_2_active])
+            for k in station_1_active:
+                gains[k, station_2_active] = \
+                    station_1.antenna[k].calculate_gain(off_axis_angle_vec=off_axis_angle[0, station_2_active],
+                                                        theta_vec=theta[0, station_2_active])
         else:  # for IMT <-> IMT
             for k in station_1_active:
                 gains[k, station_2_active] = station_1.antenna[k].calculate_gain(phi_vec=phi[k, station_2_active],
