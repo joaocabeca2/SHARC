@@ -68,7 +68,7 @@ def plot_cdf(base_dir, file_prefix, passo_xticks=5, xaxis_title='Value', legends
     # Plot the graphs adjusting the axes
     fig = go.Figure()
     for idx, subdir in enumerate(subdirs):
-        all_files = [f for f in os.listdir(subdir) if f.endswith('.csv') and label in f and file_prefix in f]
+        all_files = [f for f in os.listdir(subdir) if f.endswith('.csv') and label in f and f.removesuffix('.csv') == file_prefix]
         legenda = legends[idx] if legends else os.path.basename(subdir).split(f"output_{base_dir}_")[1]
 
         for file_name in all_files:
@@ -129,6 +129,12 @@ def plot_coupling_loss(base_dir, passo_xticks=5, legends=None, subfolders=None, 
 def plot_dl_sinr(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
     plot_cdf(base_dir, 'IMT_CDF_of_DL_SINR', passo_xticks, xaxis_title='DL SINR (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
+def plot_dl_sinr_ext(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_DL_SINR_with_external_interference', passo_xticks, xaxis_title='DL SINR (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+
+def plot_dl_inr(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_DL_interference-to-noise_ratio', passo_xticks, xaxis_title='INR (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+
 def plot_dl_snr(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
     plot_cdf(base_dir, 'IMT_CDF_of_DL_SNR', passo_xticks, xaxis_title='DL SNR (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
@@ -165,11 +171,26 @@ def plot_system_pfd(base_dir, passo_xticks=5, legends=None, subfolders=None, sav
 def plot_inr_samples(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
     plot_cdf(base_dir, 'INR_samples', passo_xticks, xaxis_title='INR Samples (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
+def plot_ul_sinr(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_UL_SINR', passo_xticks, xaxis_title='UL SINR (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+
+def plot_ul_sinr_ext(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_UL_SINR_with_external_interference', passo_xticks, xaxis_title='UL SINR (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+
+def plot_ul_inr(base_dir, passo_xticks=1, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_UL_interference-to-noise_ratio', passo_xticks, xaxis_title='INR (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+
+def plot_ul_snr(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'IMT_CDF_of_UL_SNR', passo_xticks, xaxis_title='UL SNR (dB)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+
+
 # Main function to identify labels and call the appropriate functions
 def all_plots(base_dir, legends=None, subfolders=None, save_file=True, show_plot=False):
     plot_bs_antenna_gain_towards_the_ue(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
     plot_coupling_loss(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
     plot_dl_sinr(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_dl_sinr_ext(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_dl_inr(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
     plot_dl_snr(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
     plot_dl_throughput(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
     plot_dl_transmit_power(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
@@ -181,6 +202,10 @@ def all_plots(base_dir, legends=None, subfolders=None, save_file=True, show_plot
     plot_system_inr(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
     plot_system_interference_power_from_imt_dl(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
     plot_system_pfd(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_ul_inr(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_ul_sinr(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_ul_sinr_ext(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_ul_snr(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
 if __name__ == "__main__":
     # Example usage

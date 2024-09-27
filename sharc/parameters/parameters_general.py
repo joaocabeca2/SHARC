@@ -15,6 +15,7 @@ class ParametersGeneral(ParametersBase):
     system: str = "RAS"
     enable_cochannel: bool = False
     enable_adjacent_channel: bool = True
+    adjacent_intef_model: str = "ACIR"
     seed: int = 101
     overwrite_output: bool = True
     output_dir: str = "output"

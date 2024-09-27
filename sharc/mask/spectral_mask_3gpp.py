@@ -23,7 +23,7 @@ class SpectralMask3Gpp(SpectralMask):
         Implements spectral emission mask from 3GPP 36.104 Table 6.6.3.1-6 for 
         Wide Area BS operating with 5, 10, 15 or 20 MHz channel bandwidth.
         
-        Also implements spectral emission mask from 3GPP 36.101 Table 6.6.2.1.1-1 
+         Also implements spectral emission mask from 3GPP 36.101 Table 6.6.2.1.1-1
         for UE operating with 5, 10, 15 or 20 MHz channel bandwidth.
         
         In order to characterize Cat-A or Cat-B base stations, it is necessary 
@@ -113,3 +113,39 @@ class SpectralMask3Gpp(SpectralMask):
             emission_limits = np.append(limit_r1 + 10*np.log10(1/0.03),
                                         np.array([-10, -13, -25, spurious_emissions]))
         return emission_limits
+    
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    # Initialize variables
+    sta_type = StationType.IMT_BS
+    p_tx = 30
+    freq = 2170
+    band = 20
+    spurious_emissions_dbm_mhz = -30
+
+    # Create mask
+    msk = SpectralMask3Gpp(sta_type, freq, band, spurious_emissions_dbm_mhz)
+    msk.set_mask(p_tx)
+
+    print(msk.power_calc(2160, 30))
+
+    band = 10
+    msk = SpectralMask3Gpp(sta_type, freq, band, spurious_emissions_dbm_mhz)
+    msk.set_mask(p_tx)
+    print(msk.power_calc(2160, 30))
+    
+    # Frequencies
+    freqs = np.linspace(-600,600,num=1000)+freq
+    
+    # Mask values
+    mask_val = np.ones_like(freqs)*msk.mask_dbm[0]
+    for k in range(len(msk.freq_lim)-1,-1,-1):
+        mask_val[np.where(freqs < msk.freq_lim[k])] = msk.mask_dbm[k]
+        
+    # Plot
+    plt.plot(freqs,mask_val)
+    plt.xlim([freqs[0],freqs[-1]])
+    plt.xlabel("$\Delta$f [MHz]")
+    plt.ylabel("Spectral Mask [dBc]")
+    plt.grid()
+    plt.show()
