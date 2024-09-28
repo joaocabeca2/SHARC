@@ -227,7 +227,7 @@ class Simulation(ABC, Observable):
         elif imt_station.station_type is StationType.IMT_BS:
             # define antenna gains
             # repeat for each BS beam
-            gain_sys_to_imt = np.repeat(self.calculate_gains(system_station, imt_station), 
+            gain_sys_to_imt = np.repeat(self.calculate_gains(system_station, imt_station),
                                         self.parameters.imt.ue_k, 1)
             gain_imt_to_sys = np.transpose(self.calculate_gains(
                 imt_station, system_station, is_co_channel))
@@ -260,8 +260,9 @@ class Simulation(ABC, Observable):
         self.imt_system_antenna_gain = gain_imt_to_sys
 
         # calculate coupling loss
+        imt_system_path_loss = np.reshape(self.imt_system_path_loss, (1, 171))
         coupling_loss = np.squeeze(
-            self.imt_system_path_loss - self.system_imt_antenna_gain - self.imt_system_antenna_gain) + additional_loss
+            imt_system_path_loss - self.system_imt_antenna_gain - self.imt_system_antenna_gain) + additional_loss
 
         return coupling_loss
 
@@ -296,7 +297,7 @@ class Simulation(ABC, Observable):
         ant_gain_ue_to_bs = self.calculate_gains(imt_ue_station, imt_bs_station)
 
         # Calculate the path loss between IMT stations. Primarly used for UL power control.
-        
+
         # Note on the array dimentions for coupling loss calculations:
         # The function get_loss returns an array station_a x station_b
         path_loss = self.propagation_imt.get_loss(self.parameters,
