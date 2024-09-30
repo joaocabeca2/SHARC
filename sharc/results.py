@@ -7,6 +7,7 @@ Created on Thu Mar 23 08:47:46 2017
 
 import numpy as np
 import os
+import csv
 import datetime
 import pathlib
 import pandas as pd
@@ -138,10 +139,17 @@ class Results(object):
                 }
 
     def write_statistics(self):
-        """Write computed statistics to a separate file."""
-        with open(os.path.join(self.output_directory, "statistics.csv"), 'w') as file:
+        """Write computed statistics to a separate file with columns for each value."""
+        output_file = os.path.join(self.output_directory, "statistics.csv")
+        
+        with open(output_file, 'w', newline='') as file:
+            writer = csv.writer(file)
+            # Write the header row
+            writer.writerow(['Key', 'Mean', 'Variance', 'Std Dev', '95% CI'])
+            
+            # Write the statistics rows
             for key, stats in self.statistics.items():
-                file.write(f"{key}, Mean: {stats['mean']}, Variance: {stats['variance']}, Std Dev: {stats['std_dev']}, 95% CI: {stats['95%_ci']}\n")
+                writer.writerow([key, stats['mean'], stats['variance'], stats['std_dev'], stats['95%_ci']])
 
     def write_files(self):
         """Write raw data to files."""

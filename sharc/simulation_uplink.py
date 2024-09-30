@@ -239,6 +239,9 @@ class SimulationUplink(Simulation):
                          self.system.antenna[0].effective_area)
 
     def collect_results(self, write_to_file: bool, snapshot_number: int):
+        """
+        Collects the results of the simulation and stores them in the results class
+        """
         if not self.parameters.imt.interfered_with and np.any(self.bs.active):
             self.results.add_result('system_inr', self.system.inr.tolist())
             self.results.add_result('system_ul_interf_power', [self.system.rx_interference])
