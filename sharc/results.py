@@ -57,8 +57,6 @@ class Results(object):
             "system_rx_interf": []
         }
 
-        self.simulated_data = []
-
         self.statistics = {} # To store the computed statistics
         self.__sharc_dir = pathlib.Path(__file__).parent.resolve()
         self.output_dir_parent = output_dir
