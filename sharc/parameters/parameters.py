@@ -171,7 +171,7 @@ class Parameters(object):
         self.ras.load_parameters_from_file(self.file_name)
 
         #######################################################################
-        # EESS SS
+        # EESS passive
         #######################################################################
         self.eess_ss.load_parameters_from_file(self.file_name)
 
