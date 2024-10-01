@@ -10,7 +10,7 @@ class ParametersTest(unittest.TestCase):
     def setUp(self):
         self.parameters = Parameters()
         param_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),\
-                                 "parameters_for_testing.ini")
+                                 "parameters_for_testing.yaml")
         self.parameters.set_file_name(param_file)
         self.parameters.read_params()
 
