@@ -57,6 +57,7 @@ class Results(object):
             "system_rx_interf": []
         }
 
+
         self.statistics = {} # To store the computed statistics
         self.__sharc_dir = pathlib.Path(__file__).parent.resolve()
         self.output_dir_parent = output_dir
@@ -104,8 +105,6 @@ class Results(object):
         """
         if key in self.data_buffer:
             self.data_buffer[key].extend(values)
-            if key not in self.simulated_data:
-                self.simulated_data.append(key)
         else:
             raise KeyError(f"Key '{key}' not found in the results dictionary.")
 
