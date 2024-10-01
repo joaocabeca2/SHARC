@@ -185,7 +185,7 @@ class StationFactory(object):
                 # sigma = distance/3.0345. So we always distibute UE's in order to meet
                 # the requirement Prob(d<d_edge) = 99% for a given cell radius.
                 radius_scale = topology.cell_radius / 3.0345
-                radius = random_number_gen.rayleigh(32, num_ue)
+                radius = random_number_gen.rayleigh(radius_scale, num_ue)
             elif param.ue_distribution_distance.upper() == "UNIFORM":
                 radius = topology.cell_radius * random_number_gen.random_sample(num_ue)
             else:
