@@ -34,6 +34,14 @@ legends_mapper = [
         "directory_pattern": "beam_small_ul",
         "legend": "Small Beam UL",
     },
+    {
+        "directory_pattern": "contribution_20",
+        "legend": "Contribution 20 INR",
+    },
+    {
+        "directory_pattern": "aggregate",
+        "legend": "Aggregate INR",
+    },
 ]
 
 def get_id_from_dirname(dirname: str):

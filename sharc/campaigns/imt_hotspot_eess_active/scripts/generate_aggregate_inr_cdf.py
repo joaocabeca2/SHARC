@@ -5,7 +5,7 @@ import numpy as np
 workfolder = os.path.dirname(os.path.abspath(__file__))
 csv_folder = os.path.abspath(os.path.join(workfolder, '..', "output"))
 
-comparison_folder = os.path.abspath(os.path.join(workfolder, '..', "output"))
+comparison_folder = os.path.abspath(os.path.join(workfolder, '..', "comparison"))
 
 # TODO: get latest
 
@@ -67,7 +67,8 @@ y = cumulative / cumulative[-1]
 title = "aggregate-inr-0.25-TDD"
 y_limits = (0, 1)
 filename = "SYS_CDF_of_system_INR.csv"
-aggregate_dir = os.path.join(comparison_folder, "output_imt_hotspot_eess_active_" + title)
+output_prefix = "output_imt_hotspot_eess_active_"
+aggregate_dir = os.path.join(csv_folder, output_prefix + title)
 aggregate_inr_file = os.path.join(aggregate_dir, filename)
 
 df = pd.DataFrame({'x': x, 'y': y})
@@ -81,3 +82,21 @@ except:
 with open(aggregate_inr_file, 'w') as f:
     f.write(f"# {title}\n")
 df.to_csv(aggregate_inr_file, mode='a', index=False)
+
+# also create comparison files:
+import shutil
+
+comparison_inr_cdf_files = [f[0:-len(".csv")] for f in os.listdir(comparison_folder) if f.endswith(".csv")]
+
+for comparison_inr_cdf_file in comparison_inr_cdf_files:
+    folder_to_create = os.path.join(csv_folder, output_prefix + comparison_inr_cdf_file)
+    reference_file = os.path.join(comparison_folder, comparison_inr_cdf_file + ".csv")
+    file_to_create = os.path.join(folder_to_create, "SYS_CDF_of_system_INR.csv")
+    try:
+        print(folder_to_create)
+        os.makedirs(folder_to_create)
+    except:
+        pass
+
+    shutil.copyfile(reference_file, file_to_create)
+    
