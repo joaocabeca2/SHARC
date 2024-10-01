@@ -174,7 +174,7 @@ class Parameters(object):
             #######################################################################
             # EESS passive
             #######################################################################
-            self.eess_passive.load_parameters_from_file(self.file_name)
+            self.eess_ss.load_parameters_from_file(self.file_name)
 
         #######################################################################
         # NTN

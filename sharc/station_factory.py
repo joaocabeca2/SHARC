@@ -402,9 +402,9 @@ class StationFactory(object):
     def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState ):
         if parameters.general.system == "METSAT_SS":
             return StationFactory.generate_metsat_ss(parameters.metsat_ss)
-        if parameters.general.system == "EESS_SS":
-            return StationFactory.generate_eess_space_station(parameters.eess_passive)
-        if parameters.general.system == "FSS_ES":
+        elif parameters.general.system == "EESS_SS":
+            return StationFactory.generate_eess_space_station(parameters.eess_ss)
+        elif parameters.general.system == "FSS_ES":
             return StationFactory.generate_fss_earth_station(parameters.fss_es, random_number_gen, topology)
         elif parameters.general.system == "FSS_SS":
             return StationFactory.generate_fss_space_station(parameters.fss_ss)
