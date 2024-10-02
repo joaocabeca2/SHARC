@@ -32,8 +32,8 @@ comparison_file = "luciano-contrib21-figure8-eess.csv"
 
 
 # TODO: get latest
-DL_folder = "output_imt_hotspot_eess_passive_1_cluster_DL_alternative_2024-09-27_01"
-UL_folder = "output_imt_hotspot_eess_passive_1_cluster_UL_2024-09-26_01"
+DL_folder = "output_imt_hotspot_eess_passive_1_cluster_DL_2024-09-27_03"
+UL_folder = "output_imt_hotspot_eess_passive_1_cluster_UL_2024-09-27_02"
 
 DL_csv_name = "SYS_INR_samples.csv"
 UL_csv_name = "SYS_INR_samples.csv"
@@ -64,7 +64,7 @@ DL_inr = DL_inr_csv.iloc[:, 1]
 DL_interference = DL_inr + thermal_noise
 
 
-segment_factor = 2
+segment_factor = 2.8
 
 TDD_UL_factor = 0.25
 
@@ -74,23 +74,41 @@ choose_from_ul_perc = 0
 
 aggregate_samples = np.empty(10000, dtype=float)
 
+# # method of summing N samples. It provides a smaller variance than the next method. segment_factor needs to be an integer
+# segment_factor = math.ceil(segment_factor)
+
+# for i in range(len(aggregate_samples)):
+#     indexes = np.floor(random_number_gen.random(size=2) * len(UL_interference))
+#     sample = 0.0
+
+#     for j in indexes: # 3 random samples
+#         choose_from_ul = False
+#         # 1/4 of the time it will choose sample from UL
+#         choose_from_ul_perc += TDD_UL_factor # 0.25, 0.5, 0.75, [1.0]
+#         if choose_from_ul_perc >= 1: # [1.0]
+#             choose_from_ul_perc -= 1
+#             choose_from_ul = True
+
+#         if choose_from_ul:
+#             sample += np.power(10, (UL_interference[int(j)])/10)
+#         else:
+#             sample += np.power(10, (DL_interference[int(j)])/10)
+#         aggregate_samples[i] = 10 * np.log10(sample) - 30
+
+
+# judson's method
 for i in range(len(aggregate_samples)):
-    indexes = np.floor(random_number_gen.random(size=segment_factor) * len(UL_interference))
+    indexes = np.floor(random_number_gen.random(size=2) * len(UL_interference))
     sample = 0.0
 
-    for j in indexes: # 3 random samples
-        choose_from_ul = False
-        # 1/4 of the time it will choose sample from UL
-        choose_from_ul_perc += TDD_UL_factor # 0.25, 0.5, 0.75, [1.0]
-        if choose_from_ul_perc >= 1: # [1.0]
-            choose_from_ul_perc -= 1
-            choose_from_ul = True
+    aggregate_samples[i] = 10 * np.log10(
+        (
+            np.power(10, (UL_interference[int(indexes[0])])/10) +
+            3*np.power(10, (DL_interference[int(indexes[1])])/10)
+        ) * segment_factor / 4
+    ) - 30
 
-        if choose_from_ul:
-            sample += np.power(10, (UL_interference[int(j)])/10)
-        else:
-            sample += np.power(10, (DL_interference[int(j)])/10)
-    aggregate_samples[i] = 10 * np.log10(sample) - 30
+# the -30 is needed to transform dBm into dB
 
 values, base = np.histogram(aggregate_samples, bins=200)
 cumulative = np.cumsum(values)
