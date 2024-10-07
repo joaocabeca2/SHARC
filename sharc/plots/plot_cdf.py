@@ -7,10 +7,10 @@ import numpy as np
 
 class PlotCDF:
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, n_bins: int = 1000):
         
         self.name = name
-        self.n_bins = 1000
+        self.n_bins = n_bins
 
         # Define the base directory dynamically based on user input
         self.workfolder = os.path.dirname(os.path.abspath(__file__))
@@ -181,7 +181,17 @@ class PlotCDF:
         f_name = self.plot_title_to_filename(title)
         return Plot(x, y, x_label, y_label, title, f_name)
     
-    def plot_cdf(self, variable, save_file=False, show_plot=True, subfolders=None):
+    def decide_figs(self, subfolders: list = None):
+        """
+        List all subfolders in the base directory or only those specified by the user.
+        """
+        if subfolders:
+            self.subdirs = [os.path.join(self.csv_folder, d) for d in subfolders if os.path.isdir(os.path.join(self.csv_folder, d))]
+        else:
+            self.subdirs = [os.path.join(self.csv_folder, d) for d in os.listdir(self.csv_folder) 
+                    if os.path.isdir(os.path.join(self.csv_folder, d)) and d.startswith(f"output_{self.name}_")]
+    
+    def plot_cdf(self, save_file=False, show_plot=True, subfolders=None):
         """
         Compute the CDF of a given simulation variable.
         """
@@ -197,18 +207,14 @@ class PlotCDF:
             os.makedirs(self.figs_folder)
 
         # List all subfolders in the base directory or only those specified by the user
-        if subfolders:
-            subdirs = [os.path.join(self.csv_folder, d) for d in subfolders if os.path.isdir(os.path.join(self.csv_folder, d))]
-        else:
-            subdirs = [os.path.join(self.csv_folder, d) for d in os.listdir(self.csv_folder) 
-                    if os.path.isdir(os.path.join(self.csv_folder, d)) and d.startswith(f"output_{self.name}_")]
+        self.decide_figs(subfolders)
 
         # Initialize global min and max values  
         global_min = float('inf')
         global_max = float('-inf')
 
         # First, calculate the global min and max values
-        for subdir in subdirs:
+        for subdir in self.subdirs:
             subdir = os.path.join(subdir, 'raw_data_dir')
             all_files = [f for f in os.listdir(subdir) if f.endswith('.csv')]
 
@@ -223,7 +229,7 @@ class PlotCDF:
                             data = pd.read_csv(file_path, delimiter=';')
                         
                         # Plot the CDF
-                        plot_data = self.cdf(data, file_name)
+                        plot_data = self.cdf(data, file_name.split('.')[0])
                         data = pd.DataFrame({'x': plot_data.x, 'y': plot_data.y})
 
                         # Remove rows that do not contain valid numeric values
@@ -240,7 +246,7 @@ class PlotCDF:
             global_min, global_max = 0, 1
         
         fig = go.Figure()
-        for subdir in subdirs:
+        for subdir in self.subdirs:
             subdir = os.path.join(subdir, 'raw_data_dir')
             all_files = [f for f in os.listdir(subdir) if f.endswith('.csv')]
 
@@ -458,6 +464,6 @@ if __name__ == "__main__":
     # Example usage
     name = "imt_hibs_ras_2600_MHz"
     plot = PlotCDF(name)
-    plot.plot_cdf('system_imt_antenna_gain')
+    plot.plot_cdf()
 
 
