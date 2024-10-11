@@ -5,6 +5,7 @@ Created on Thu Mar 23 16:37:32 2017
 @author: edgar
 """
 
+from warnings import warn
 import numpy as np
 import sys
 import math
@@ -472,11 +473,14 @@ class StationFactory(object):
 
         return fss_space_station
 
-
     @staticmethod
-
     def generate_fss_earth_station(param: ParametersFssEs, random_number_gen: np.random.RandomState, *args):
         """
+        @deprecated
+
+        Since this creates a Single Earth Station, you should use StationFactory.generate_single_earth_station instead.
+        This will be deleted in the future.
+        ----------------------------------
         Generates FSS Earth Station.
 
         Arguments:
@@ -484,6 +488,8 @@ class StationFactory(object):
             random_number_gen: np.random.RandomState
             topology (optional): Topology
         """
+        warn("This is deprecated, use StationFactory.generate_single_earth_station() instead; date=2024-10-11", DeprecationWarning, stacklevel=2)
+
         if len(args): topology = args[0]
 
         fss_earth_station = StationManager(1)
@@ -651,6 +657,13 @@ class StationFactory(object):
 
     @staticmethod
     def generate_fs_station(param: ParametersFs):
+        """
+        @deprecated
+        Since this creates a Single Earth Station, you should use StationFactory.generate_single_earth_station instead.
+        This will be deleted in the future
+        """
+        warn("This is deprecated, use StationFactory.generate_single_earth_station() instead; date=2024-10-11", DeprecationWarning, stacklevel=2)
+
         fs_station = StationManager(1)
         fs_station.station_type = StationType.FS
 
@@ -758,6 +771,13 @@ class StationFactory(object):
 
     @staticmethod
     def generate_ras_station(param: ParametersRas):
+        """
+        @deprecated
+        Since this creates a Single Earth Station, you should use StationFactory.generate_single_earth_station instead.
+        This will be deleted in the future
+        """
+        warn("This is deprecated, use StationFactory.generate_single_earth_station() instead; date=2024-10-11", DeprecationWarning, stacklevel=2)
+
         ras_station = StationManager(1)
         ras_station.station_type = StationType.RAS
 

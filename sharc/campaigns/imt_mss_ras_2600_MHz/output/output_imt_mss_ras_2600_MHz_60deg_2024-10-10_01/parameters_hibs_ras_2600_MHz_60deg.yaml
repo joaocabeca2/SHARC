@@ -24,7 +24,7 @@ general:
     output_dir  : campaigns/imt_mss_ras_2600_MHz/output/
     ###########################################################################
     # output folder prefix
-    output_dir_prefix  : output_imt_mss_ras_2600_MHz_45deg
+    output_dir_prefix  : output_imt_mss_ras_2600_MHz_60deg
 imt:
     ###########################################################################
     # Network topology. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
@@ -297,7 +297,7 @@ ntn:
     # Backoff Power [Layer 2] [dB]. Allowed: 7 sector topology - Layer 2
     bs_backoff_power  : 3
     ###########################################################################
-    bs_elevation  : 45
+    bs_elevation  : 60
     ###########################################################################
     # NTN Antenna configuration
     bs_n_rows_layer1   : 2

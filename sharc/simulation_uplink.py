@@ -233,7 +233,8 @@ class SimulationUplink(Simulation):
             [self.system.rx_interference - self.system.thermal_noise])
 
         # Calculate PFD at the system
-        if self.system.station_type is StationType.RAS:
+        # TODO: generalize this a bit more if needed
+        if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
             self.system.pfd = 10 * \
                 np.log10(10**(self.system.rx_interference/10) /
                          self.system.antenna[0].effective_area)
@@ -243,7 +244,8 @@ class SimulationUplink(Simulation):
             self.results.system_inr.extend(self.system.inr.tolist())
             self.results.system_ul_interf_power.extend(
                 [self.system.rx_interference])
-            if self.system.station_type is StationType.RAS:
+            # TODO: generalize this a bit more if needed
+            if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
                 self.results.system_pfd.extend([self.system.pfd])
 
         bs_active = np.where(self.bs.active)[0]
