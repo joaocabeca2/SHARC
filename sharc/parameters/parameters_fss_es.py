@@ -35,7 +35,7 @@ class ParametersFssEs(ParametersBase):
     elevation_max: float = 80.0
     # Azimuth angle [deg]
     # either a specific angle or string 'RANDOM'
-    azimuth: str = "0.2"
+    azimuth: str = 0.2
     # center frequency [MHz]
     frequency: float = 43000.0
     # bandwidth [MHz]
