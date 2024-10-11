@@ -38,7 +38,11 @@ class ParametersMssSs(ParametersBase):
     adjacent_ch_leak_ratio: float = 45.0
 
     # MSS_SS altitude w.r.t. sea level
+<<<<<<< HEAD
     altitude: float = 120000.0
+=======
+    altitude: float = 1200000.0
+>>>>>>> e8f86943b65e2bc594f5ae27ee3166aaaea6ada5
 
     # NTN cell radius in network topology [m]
     cell_radius: float = 45000.0
@@ -116,6 +120,11 @@ class ParametersMssSs(ParametersBase):
         if self.cell_radius <= 0:
             raise ValueError(f"ParametersMssSs: cell_radius must be greater than 0, but is {
                              self.cell_radius}")
+<<<<<<< HEAD
+=======
+        else:
+            self.intersite_distance = np.sqrt(3)*self.cell_radius
+>>>>>>> e8f86943b65e2bc594f5ae27ee3166aaaea6ada5
 
         if not np.all((0 <= self.azimuth) & (self.azimuth <= 360)):
             raise ValueError(

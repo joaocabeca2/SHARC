@@ -3,6 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sharc.topology.topology_ntn import TopologyNTN
+<<<<<<< HEAD
+=======
+from sharc.topology.topology_macrocell import TopologyMacrocell
+>>>>>>> e8f86943b65e2bc594f5ae27ee3166aaaea6ada5
 from sharc.antenna.antenna_s1528 import AntennaS1528, AntennaS1528Leo
 from sharc.station_manager import StationManager
 from sharc.support.enumerations import StationType
@@ -13,6 +17,7 @@ from sharc.parameters.parameters_antenna_imt import ParametersAntennaImt
 from sharc.parameters.parameters_antenna_s1528 import ParametersAntennaS1528
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
 
+<<<<<<< HEAD
 
 def generate_mss_ss(param_mss: ParametersMssSs):
     # We borrow the TopologyNTN geometry as it's the same for MSS_SS
@@ -67,12 +72,37 @@ if __name__ == "__main__":
     rng = np.random.RandomState(seed)
     beam_radius = param_mss.altitude * math.tan(np.radians(param_mss.antenna_3_dB_bw/2)) / math.cos(np.radians(param_mss.elevation))
     print(f"Theoretical beam radius at nadir point (km) = {beam_radius/1000}")
+=======
+if __name__ == "__main__":
+
+    # Input parameters for MSS_SS
+    param_mss = ParametersMssSs()
+    param_mss.altitude = 120e3  # meters
+    param_mss.azimuth = 0
+    param_mss.elevation = 90  # degrees
+    param_mss.cell_radius = 19e3  # meters
+    param_mss.intersite_distance = param_mss.cell_radius * np.sqrt(3)
+    param_mss.num_sectors = 19
+    # Parameters used for the S.1528 antenna
+    param_mss.antenna_pattern = "ITU-R-S.1528-LEO"
+    param_mss.antenna_3_dB_bw = 4.4127
+    param_mss.antenna_gain = 30  # dBi
+    param_mss.antenna_param.load_from_parameters(param_mss)
+    beam_idx = 3  # beam index used for gain analysis
+
+    seed = 100
+    rng = np.random.RandomState(seed)
+>>>>>>> e8f86943b65e2bc594f5ae27ee3166aaaea6ada5
 
     # Parameters used for IMT-NTN and UE distribution
     param_imt = ParametersImt()
     param_imt.topology = "NTN"
     param_imt.azimuth_range = (-180, 180)
+<<<<<<< HEAD
     param_imt.bandwidth = 10  # MHz 
+=======
+    param_imt.bandwidth = 10  # MHz
+>>>>>>> e8f86943b65e2bc594f5ae27ee3166aaaea6ada5
     param_imt.frequency = 2100  # MHz
     param_imt.spurious_emissions = -13  # dB
     param_imt.ue_distribution_azimuth = "UNIFORM"
@@ -89,9 +119,15 @@ if __name__ == "__main__":
     param_ue_ant = ParametersAntennaImt()
     ntn_ue = StationFactory.generate_imt_ue_outdoor(
         param_imt, param_ue_ant, rng, ntn_topology)
+<<<<<<< HEAD
     
     ntn_ue.active = np.ones(ntn_ue.num_stations, dtype=bool)
     ntn_bs = generate_mss_ss(param_mss)
+=======
+
+    ntn_ue.active = np.ones(ntn_ue.num_stations, dtype=bool)
+    ntn_bs = StationFactory.generate_mss_ss(param_mss)
+>>>>>>> e8f86943b65e2bc594f5ae27ee3166aaaea6ada5
     phi, theta = ntn_bs.get_pointing_vector_to(ntn_ue)
     station_1_active = np.where(ntn_bs.active)[0]
     station_2_active = np.where(ntn_ue.active)[0]
@@ -104,6 +140,7 @@ if __name__ == "__main__":
                 off_axis_angle_vec=off_axis_angle[k, station_2_active], theta_vec=theta[k, station_2_active])
 
     fig = plt.figure()
+<<<<<<< HEAD
     ax = fig.add_subplot(111, projection='3d')
     ax.set_xlim([-500, 500])
     ax.set_ylim([-500, 500])
@@ -119,5 +156,17 @@ if __name__ == "__main__":
     #                          (gains[beam_idx] < param_mss.antenna_gain - 2.95))[0]
     # ax.scatter(x=ntn_ue.x[gain_3db_cont]/1000, y=ntn_ue.y[gain_3db_cont]/1000)
     
+=======
+    # ax = fig.add_subplot(111, projection='3d')
+    ax = fig.add_subplot(111)
+    ax.set_xlim([-200, 200])
+    ax.set_ylim([-200, 200])
+    # ntn_topology.plot_3d(ax, False)  # Plot the 3D topology
+    ntn_topology.plot(ax)
+    # im = ax.scatter(xs=ntn_ue.x/1000, ys=ntn_ue.y /
+    #                 1000, c=gains[beam_idx], cmap='jet')
+    # fig.colorbar(im)
+
+>>>>>>> e8f86943b65e2bc594f5ae27ee3166aaaea6ada5
     plt.show()
     exit()
