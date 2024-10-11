@@ -49,9 +49,6 @@ class TopologyNTN(Topology):
         self.num_sectors     = num_sectors
 
         # Calculate the base station coordinates
-        
-        
-
         self.space_station_x = self.bs_radius * np.cos(self.bs_elevation) * np.cos(self.bs_azimuth)
         self.space_station_y = self.bs_radius * np.cos(self.bs_elevation) * np.sin(self.bs_azimuth)
         self.space_station_z = bs_height
@@ -226,7 +223,7 @@ if __name__ == '__main__':
     bs_azimuth = 45  # degrees
     bs_elevation = 45  # degrees
     beamwidth = 10
-    cell_radius = bs_height * math.tan(np.radians(beamwidth)) /math.cos(bs_elevation)
+    cell_radius = bs_height * math.tan(np.radians(beamwidth)) /math.cos(np.radians(bs_elevation))
     intersite_distance = cell_radius * np.sqrt(3)  # meters
     map = False 
 

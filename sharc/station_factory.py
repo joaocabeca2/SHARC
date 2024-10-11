@@ -21,6 +21,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_ntn import ParametersNTN
+from sharc.parameters.parameters_mss_ss import ParametersMssSs
 from sharc.parameters.constants import EARTH_RADIUS , BOLTZMANN_CONSTANT
 from sharc.station_manager import StationManager
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
@@ -41,8 +42,10 @@ from sharc.antenna.antenna_s672 import AntennaS672
 from sharc.antenna.antenna_s1528 import AntennaS1528
 from sharc.antenna.antenna_s1855 import AntennaS1855
 from sharc.antenna.antenna_sa509 import AntennaSA509
+from sharc.antenna.antenna_s1528 import AntennaS1528, AntennaS1528Leo
 from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 from sharc.topology.topology import Topology
+from sharc.topology.topology_ntn import TopologyNTN
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 
@@ -145,9 +148,12 @@ class StationFactory(object):
 
         ue_x = list()
         ue_y = list()
-
+        # TODO: Sanitaze the azimuth_range parameter
+        azimuth_range = param.azimuth_range
+        if (not isinstance(azimuth_range, tuple)) or len(azimuth_range) != 2:
+            raise ValueError("Invalid type or length for parameter azimuth_range")
+        
         # Calculate UE pointing
-        azimuth_range = (-60, 60)
         azimuth = (azimuth_range[1] - azimuth_range[0])*random_number_gen.random_sample(num_ue) + azimuth_range[0]
         # Remove the randomness from azimuth and you will have a perfect pointing
         elevation_range = (-90, 90)
@@ -183,8 +189,11 @@ class StationFactory(object):
                 # the requirement Prob(d<d_edge) = 99% for a given cell radius.
                 radius_scale = topology.cell_radius / 3.0345
                 radius = random_number_gen.rayleigh(radius_scale, num_ue)
+                # clip the lower values to minimum_separation_distance_bs_ue
+                radius = np.clip(radius, param.minimum_separation_distance_bs_ue, None)
             elif param.ue_distribution_distance.upper() == "UNIFORM":
-                radius = topology.cell_radius * random_number_gen.random_sample(num_ue)
+                radius = (topology.cell_radius - param.minimum_separation_distance_bs_ue) * \
+                    random_number_gen.random_sample(num_ue) - param.minimum_separation_distance_bs_ue
             else:
                 sys.stderr.write("ERROR\nInvalid UE distance distribution: " + param.ue_distribution_distance)
                 sys.exit(1)
@@ -199,11 +208,11 @@ class StationFactory(object):
                 angle_mean = 0
                 angle_n = random_number_gen.normal(angle_mean, angle_scale, int(N * num_ue))
 
-                angle_cutoff = 60
+                # FIXME: The angle cutoff ignores the lower range of azimuth_range
+                angle_cutoff = np.max(azimuth_range)
                 idx = np.where((angle_n < angle_cutoff) & (angle_n > -angle_cutoff))[0][:num_ue]
                 angle = angle_n[idx]
             elif param.ue_distribution_azimuth.upper() == "UNIFORM":
-                azimuth_range = (-60, 60)
                 angle = (azimuth_range[1] - azimuth_range[0]) * random_number_gen.random_sample(num_ue) \
                         + azimuth_range[0]
             else:
@@ -411,6 +420,8 @@ class StationFactory(object):
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         elif parameters.general.system == "RAS":
             return StationFactory.generate_ras_station(parameters.ras)
+        elif parameters.general.system == "MSS_SS":
+            return StationFactory.generate_mss_ss(parameters.mss_ss)
         else:
             sys.stderr.write("ERROR\nInvalid system: " + parameters.general.system)
             sys.exit(1)
@@ -520,9 +531,9 @@ class StationFactory(object):
         fss_earth_station.height = np.array([param.height])
 
         if param.azimuth.upper() == "RANDOM":
-            fss_earth_station.azimuth = random_number_gen.uniform(-180., 180.)
+            fss_earth_station.azimuth = np.array([random_number_gen.uniform(-180., 180.)])
         else:
-            fss_earth_station.azimuth = float(param.azimuth)
+            fss_earth_station.azimuth = np.array(float(param.azimuth))
 
         elevation = random_number_gen.uniform(param.elevation_min, param.elevation_max)
         fss_earth_station.elevation = np.array([elevation])
@@ -744,15 +755,63 @@ class StationFactory(object):
         eess_passive_sensor.total_interference = -500
 
         return eess_passive_sensor
+    
+    @staticmethod
+    def generate_mss_ss(param_mss: ParametersMssSs):
+        # We borrow the TopologyNTN geometry as it's the same for MSS_SS
+        ntn_topology = TopologyNTN(param_mss.intersite_distance,
+                                   param_mss.cell_radius,
+                                   param_mss.altitude,
+                                   param_mss.azimuth,
+                                   param_mss.elevation,
+                                   param_mss.num_sectors)
+        ntn_topology.calculate_coordinates()
+        
+        num_bs = ntn_topology.num_base_stations
+        mss_ss = StationManager(n=num_bs)
+        mss_ss.station_type = StationType.MSS_SS
+        mss_ss.x = ntn_topology.space_station_x * np.ones(num_bs) + param_mss.x
+        mss_ss.y = ntn_topology.space_station_y * np.ones(num_bs) + param_mss.y
+        mss_ss.height = ntn_topology.space_station_z*np.ones(num_bs)
+        mss_ss.elevation = ntn_topology.elevation
+        mss_ss.is_space_station = True
+        mss_ss.azimuth = ntn_topology.azimuth
+        mss_ss.active = np.ones(num_bs, dtype=int)
+        mss_ss.tx_power = param_mss.tx_power_density + 10*np.log10(param_mss.bandwidth * 10**6)
+        mss_ss.antenna = np.empty(num_bs, dtype=AntennaS1528Leo)
 
+        for i in range(num_bs):
+            if param_mss.antenna_pattern == "ITU-R-S.1528-LEO":
+                mss_ss.antenna[i] = AntennaS1528Leo(param_mss.antenna_param)
+            elif param_mss.antenna_pattern == "ITU-R-S.1528-Section1.2":
+                mss_ss.antenna[i] = AntennaS1528(param_mss.antenna_param)
+            else:
+                raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
 
+        if param_mss.spectral_mask == "IMT-2020":
+            mss_ss.spectral_mask = SpectralMaskImt(StationType.IMT_BS,
+                                                   param_mss.frequency,
+                                                   param_mss.bandwidth,
+                                                   param_mss.spurious_emissions,
+                                                   scenario="OUTDOOR")
+        elif param_mss.spectral_mask == "3GPP E-UTRA":
+            mss_ss.spectral_mask = SpectralMask3Gpp(StationType.IMT_BS,
+                                                    param_mss.frequency,
+                                                    param_mss.bandwidth,
+                                                    param_mss.spurious_emissions,
+                                                    scenario="OUTDOOR")
+        else:
+            raise ValueError(f"Invalid or not implemented spectral mask - {param_mss.spectral_mask}")
+        mss_ss.spectral_mask.set_mask(param_mss.tx_power_density + 10*np.log10(param_mss.bandwidth*1e6))
+
+        return mss_ss
 
     @staticmethod
-    def get_random_position( num_stas: int, topology: Topology,
-                             random_number_gen: np.random.RandomState,
-                             min_dist_to_bs = 0, central_cell = False,
-                             deterministic_cell = False):
-        hexagon_radius = topology.intersite_distance / 3
+    def get_random_position(num_stas: int, topology: Topology,
+                            random_number_gen: np.random.RandomState,
+                            min_dist_to_bs = 0, central_cell = False,
+                            deterministic_cell = False):
+        hexagon_radius = topology.intersite_distance * 2 / 3
 
         min_dist_ok = False
 
@@ -794,8 +853,13 @@ class StationFactory(object):
         cell_x = topology.x[cell]
         cell_y = topology.y[cell]
 
-        x = x + cell_x + hexagon_radius * np.cos(topology.azimuth[cell] * np.pi / 180)
-        y = y + cell_y + hexagon_radius * np.sin(topology.azimuth[cell] * np.pi / 180)
+        # x = x + cell_x + hexagon_radius * np.cos(topology.azimuth[cell] * np.pi / 180)
+        # y = y + cell_y + hexagon_radius * np.sin(topology.azimuth[cell] * np.pi / 180)
+        old_x = x
+        x = x * np.cos(np.radians(topology.azimuth[cell])) - y * np.sin(np.radians(topology.azimuth[cell]))
+        y = old_x * np.sin(np.radians(topology.azimuth[cell])) + y * np.cos(np.radians(topology.azimuth[cell]))
+        x = x + cell_x
+        y = y + cell_y
 
         x = list(x)
         y = list(y)

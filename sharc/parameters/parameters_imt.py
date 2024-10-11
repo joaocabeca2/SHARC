@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Parameters definitions for IMT systems
 """
-import configparser
+import math
 from dataclasses import dataclass
+
 
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_p619 import ParametersP619
@@ -15,8 +16,9 @@ class ParametersImt(ParametersBase):
     section_name: str = "IMT"
     topology: str = "MACROCELL"
     wrap_around: bool = False
+    azimuth_range: tuple = (-60, 60)
     num_clusters: int = 1
-    intersite_distance: float = 500.0
+    intersite_distance: float = 500.0 * math.sqrt(3)
     minimum_separation_distance_bs_ue: float = 0.0
     interfered_with: bool = False
     frequency: float = 24350.0
@@ -32,6 +34,8 @@ class ParametersImt(ParametersBase):
     bs_noise_temperature: float = 290.0
     bs_ohmic_loss: float = 3.0
     ul_attenuation_factor: float = 0.4
+    bs_adjacent_ch_selectivity: float = 46.0 # adjacent channel selectivity ratio in dB
+    bs_adjacent_ch_leak_ratio: float = 45.0 # adjacent channel leakage ratio in dB
     ul_sinr_min: float = -10.0
     ul_sinr_max: float = 22.0
     ue_k: int = 3
@@ -49,6 +53,8 @@ class ParametersImt(ParametersBase):
     ue_noise_figure: float = 10.0
     ue_ohmic_loss: float = 3.0
     ue_body_loss: float = 4.0
+    ue_adjacent_ch_selectivity: float = 33.0 # adjacent channel selectivity ratio in dB
+    ue_adjacent_ch_leak_ratio: float = 30.0 # adjacent channel leakage ratio in dB
     dl_attenuation_factor: float = 0.6
     dl_sinr_min: float = -10.0
     dl_sinr_max: float = 30.0
