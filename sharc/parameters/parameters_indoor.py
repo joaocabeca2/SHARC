@@ -65,11 +65,8 @@ class ParametersIndoor(ParametersBase):
         if self.basic_path_loss.upper() not in ["FSPL", "INH_OFFICE"]:
             raise ValueError(f"ParamtersIndoor: Invalid topology name {self.basic_path_loss}")
         
-        if self.num_imt_buildings.upper() != "ALL":
-            if self.num_imt_buildings.isnumeric():
-                self.num_imt_buildings = int(self.num_imt_buildings)
-            else:
-                raise ValueError(f"ParamtersIndoor: Invalid topology name {self.num_imt_buildings}")
+        if self.num_imt_buildings != "ALL" and (not isinstance(self.num_imt_buildings, int) or self.num_imt_buildings <= 0):
+            raise ValueError(f"ParamtersIndoor: Invalid num of buildings {self.num_imt_buildings}")
      
         if self.building_class.upper() not in ["TRADITIONAL" , "THERMALLY_EFFICIENT"]:
             raise ValueError(f"ParametersIndoor: Inavlid Spectral Mask Name {self.building_class}")
