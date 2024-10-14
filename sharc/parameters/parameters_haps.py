@@ -8,7 +8,7 @@ from sharc.parameters.parameters_base import ParametersBase
 class ParametersHaps(ParametersBase):
     """Dataclass containing the IMT system parameters
     """
-    section_name: str = "haps"
+    section_name: str = "HAPS"
     # HAPS center frequency [MHz]
     frequency: float = 27250.0
     # HAPS bandwidth [MHz]

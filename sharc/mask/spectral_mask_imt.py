@@ -63,7 +63,7 @@ class SpectralMaskImt(SpectralMask):
 
         # conditions to use alternative mask
         self.alternative_mask_used =    freq_mhz < 24250                 \
-                                    and scenario != "INDOOR"             \
+                                    and scenario == "OUTDOOR"            \
                                     and sta_type == StationType.IMT_BS   \
                                     and spurious_emissions in [-13, -30]
 

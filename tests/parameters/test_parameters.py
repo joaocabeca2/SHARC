@@ -8,7 +8,7 @@ class ParametersTest(unittest.TestCase):
 
     def setUp(self):
         self.parameters = Parameters()
-        self.parameters.set_file_name("./parameters/parameters_for_testing.yaml")
+        self.parameters.set_file_name("./parameters/parameters_for_testing.ini")
         self.parameters.read_params()
 
     def test_parameters_imt(self):
@@ -128,9 +128,9 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.fss_ss.adjacent_ch_selectivity, 0.0)
         self.assertEqual(self.parameters.fss_ss.antenna_gain, 46.6)
         self.assertEqual(self.parameters.fss_ss.antenna_pattern, "FSS_SS")
-        self.assertEqual(self.parameters.fss_ss.earth_station_alt_m, 0.0)
-        self.assertEqual(self.parameters.fss_ss.earth_station_lat_deg, 0.0)
-        self.assertEqual(self.parameters.fss_ss.earth_station_long_diff_deg, 0.0)
+        self.assertEqual(self.parameters.fss_ss.imt_altitude, 0.0)
+        self.assertEqual(self.parameters.fss_ss.imt_lat_deg, 0.0)
+        self.assertEqual(self.parameters.fss_ss.imt_long_diff_deg, 0.0)
         self.assertEqual(self.parameters.fss_ss.season, "SUMMER")
         self.assertEqual(self.parameters.fss_ss.channel_model, "P619")
         self.assertEqual(self.parameters.fss_ss.antenna_l_s, -20.0)
@@ -212,9 +212,9 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.haps.elevation, 270.0)
         self.assertEqual(self.parameters.haps.azimuth, 0)
         self.assertEqual(self.parameters.haps.antenna_pattern, "OMNI")
-        self.assertEqual(self.parameters.haps.earth_station_alt_m, 0.0)
-        self.assertEqual(self.parameters.haps.earth_station_lat_deg, 0.0)
-        self.assertEqual(self.parameters.haps.earth_station_long_diff_deg, 0.0)
+        self.assertEqual(self.parameters.haps.imt_altitude, 0.0)
+        self.assertEqual(self.parameters.haps.imt_lat_deg, 0.0)
+        self.assertEqual(self.parameters.haps.imt_long_diff_deg, 0.0)
         self.assertEqual(self.parameters.haps.season, "SUMMER")
         self.assertEqual(self.parameters.haps.acs, 30.0)
         self.assertEqual(self.parameters.haps.channel_model, "P619")
@@ -234,8 +234,8 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.rns.antenna_pattern, "ITU-R M.1466")
         self.assertEqual(self.parameters.rns.channel_model, "P619")
         self.assertEqual(self.parameters.rns.season, "SUMMER")
-        self.assertEqual(self.parameters.rns.earth_station_alt_m, 0.0)
-        self.assertEqual(self.parameters.rns.earth_station_lat_deg, 0.0)
+        self.assertEqual(self.parameters.rns.imt_altitude, 0.0)
+        self.assertEqual(self.parameters.rns.imt_lat_deg, 0.0)
         self.assertEqual(self.parameters.rns.acs, 30.1)
 
     def test_parametes_ras(self):
@@ -282,8 +282,8 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.eess_passive.antenna_diameter, 2.2)
         self.assertEqual(self.parameters.eess_passive.antenna_gain, 52.1)
         self.assertEqual(self.parameters.eess_passive.channel_model, "FSPL")
-        self.assertEqual(self.parameters.eess_passive.earth_station_alt_m, 20.1)
-        self.assertEqual(self.parameters.eess_passive.earth_station_lat_deg, -22.9)
+        self.assertEqual(self.parameters.eess_passive.imt_altitude, 20.1)
+        self.assertEqual(self.parameters.eess_passive.imt_lat_deg, -22.9)
         self.assertEqual(self.parameters.eess_passive.season, "WINTER")
 
 if __name__ == '__main__':

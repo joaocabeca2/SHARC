@@ -150,16 +150,47 @@ class SimulationUplink(Simulation):
         """
         self.coupling_loss_imt_system = \
             self.calculate_coupling_loss_system_imt(self.system,
-                                                    self.bs)
+                                                    self.bs,
+                                                    self.co_channel)
 
         bs_active = np.where(self.bs.active)[0]
-        tx_power = self.param_system.tx_power_density + \
-            10*np.log10(self.bs.bandwidth*1e6) + 30
+        sys_active = np.where(self.system.active)[0]
+
+        in_band_interf = -500
+        if self.co_channel:
+            if self.overlapping_bandwidth > 0:
+                # Inteferer transmit power in dBm over the overlapping band (MHz)
+                in_band_interf = self.param_system.tx_power_density + \
+                    10*np.log10(self.overlapping_bandwidth*1e6) + 30
+
+        oob_power = -500
+        oob_interf_lin = 0
+        if self.adjacent_channel:
+            if self.parameters.general.adjacent_intef_model == "SPECTRAL_MASK":
+                # Out-of-band power in the adjacent channel.
+                oob_power = self.system.spectral_mask.power_calc(self.parameters.imt.frequency,
+                                                                 self.parameters.imt.bandwidth)
+                oob_interf_lin = np.power(10, 0.1*oob_power) / \
+                    np.power(10, 0.1*self.parameters.imt.bs_adjacent_ch_selectivity)
+            elif self.parameters.general.adjacent_intef_model == "ACIR":
+                acir = -10*np.log10(10**(-self.param_system.adjacent_ch_leak_ratio/10) + \
+                                    10**(-self.parameters.imt.bs_adjacent_ch_selectivity/10))
+                oob_power = self.param_system.tx_power_density + \
+                    10*np.log10(self.param_system.bandwidth*1e6) -  \
+                    acir + 30
+                oob_interf_lin  = 10**(oob_power/10)
+        
+        ext_interference = 10*np.log10(np.power(10, 0.1*in_band_interf) + oob_interf_lin)
+
         for bs in bs_active:
             active_beams = [i for i in range(
                 bs*self.parameters.imt.ue_k, (bs+1)*self.parameters.imt.ue_k)]
-            self.bs.ext_interference[bs] = tx_power[bs] - \
-                self.coupling_loss_imt_system[active_beams]
+            
+            # Interference for each active system transmitter
+            bs_ext_interference = ext_interference - \
+                self.coupling_loss_imt_system[sys_active, :][:, active_beams]
+            # Sum all the interferers for each bs
+            self.bs.ext_interference[bs] = 10*np.log10(np.sum(np.power(10, 0.1*bs_ext_interference), axis=0))
 
             self.bs.sinr_ext[bs] = self.bs.rx_power[bs] \
                 - (10*np.log10(np.power(10, 0.1*self.bs.total_interference[bs]) + np.power(
@@ -169,8 +200,7 @@ class SimulationUplink(Simulation):
 
     def calculate_external_interference(self):
         """
-        Calculat
-        es interference that IMT system generates on other system
+        Calculates interference that IMT system generates on other system
         """
 
         if self.co_channel:

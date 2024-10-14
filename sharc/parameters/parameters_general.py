@@ -9,12 +9,13 @@ from sharc.parameters.parameters_base import ParametersBase
 class ParametersGeneral(ParametersBase):
     """Dataclass containing the general parameters for the simulator
     """
-    section_name: str = "general"
+    section_name: str = "GENERAL"
     num_snapshots: int = 10000
     imt_link: str = "DOWNLINK"
     system: str = "RAS"
     enable_cochannel: bool = False
     enable_adjacent_channel: bool = True
+    adjacent_intef_model: str = "ACIR"
     seed: int = 101
     overwrite_output: bool = True
     output_dir: str = "output"
