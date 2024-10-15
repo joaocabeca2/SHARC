@@ -114,3 +114,5 @@ class ParametersImt(ParametersBase):
         if self.topology == "NTN":
             self.is_space_to_earth = True
             self.param_p619.load_from_paramters(self)
+        
+        self.frequency = float(self.frequency)

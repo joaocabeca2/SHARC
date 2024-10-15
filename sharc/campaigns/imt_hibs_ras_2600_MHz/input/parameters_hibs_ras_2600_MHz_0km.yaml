@@ -8,7 +8,7 @@ general:
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS,
-    system  : RAS
+    system: SINGLE_EARTH_STATION
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel  : FALSE
@@ -303,111 +303,57 @@ ntn:
     bs_n_rows_layer2   : 4
     bs_n_columns_layer2  : 2
 #### System Parameters
-ras:
+single_earth_station:
     ###########################################################################
-    # x-y coordinates [m]
-    x  : 0
-    y  : 0
-    ###########################################################################
-    # antenna height [m]
-    height  : 15
-    ###########################################################################
-    # Elevation angle [deg]
-    elevation  : 45
-    ###########################################################################
-    # Azimuth angle [deg]
-    azimuth  : -90
-    ###########################################################################
-    # center frequency [MHz]
-    frequency  : 2695
+    # frequency [MHz]
+    frequency: 2695
     ###########################################################################
     # bandwidth [MHz]
-    bandwidth  : 10
+    bandwidth: 10
     ###########################################################################
-    # Antenna noise temperature [K]
-    antenna_noise_temperature  : 25
+    # Station noise temperature [K]
+    noise_temperature: 90
     ###########################################################################
-    # Receiver noise temperature [K]
-    receiver_noise_temperature  : 65
-    ###########################################################################
-    # adjacent channel selectivity (dB)
-    adjacent_ch_selectivity  : 20
-    ###########################################################################
-    # Antenna efficiency
-    antenna_efficiency  : 1
-    ###########################################################################
-    # Antenna pattern of the FSS Earth station
-    # Possible values: "ITU-R SA.509", "OMNI"
-    antenna_pattern  : OMNI
-    ###########################################################################
-    # Antenna gain for "OMNI" pattern
-    antenna_gain  : 0
-    ###########################################################################
-    # Diameter of antenna [m]
-    diameter  : 15
-    ###########################################################################
-    # Channel parameters
-    # channel model, possible values are "FSPL" (free-space path loss),
-    #                                    "TerrestrialSimple" (FSPL + clutter loss)
-    #                                    "P452"
-    #                                    "P619"
-    channel_model  : P619
-    ###########################################################################
-    # P452 parameters
-    ###########################################################################
-    # Total air pressure in hPa
-    atmospheric_pressure  : 935
-    ###########################################################################
-    # Temperature in Kelvin
-    air_temperature  : 300
-    ###########################################################################
-    #Sea-level surface refractivity (use the map)
-    N0  : 352.58
-    ###########################################################################
-    #Average radio-refractive (use the map)
-    delta_N  : 43.127
-    ###########################################################################
-    #percentage p. Float (0 to 100) or RANDOM
-    percentage_p  : 0.2
-    ###########################################################################
-    #Distance over land from the transmit and receive antennas to the coast (km)
-    Dct  : 70
-    ###########################################################################
-    #Distance over land from the transmit and receive antennas to the coast (km)
-    Dcr  : 70
-    ###########################################################################
-    ##Effective height of interfering antenna (m)
-    Hte  : 20
-    ###########################################################################
-    #Effective height of interfered-with antenna (m)
-    Hre  : 3
-    ###########################################################################
-    ##Latitude of transmitter
-    tx_lat  : -23.55028
-    ###########################################################################
-    #Latitude of receiver
-    rx_lat  : -23.17889
-    ###########################################################################
-    #Antenna polarization
-    polarization  : horizontal
-    ###########################################################################
-    #determine whether clutter loss following ITU-R P.2108 is added (TRUE/FALSE)
-    clutter_loss  : TRUE
-    ###########################################################################
-    # Parameters for the P.619 propagation model
-    # Used between IMT space station and another terrestrial system.
-    #    space_station_alt_m - altitude of IMT space station (BS) (in meters)
-    #    earth_station_alt_m - altitude of the system's earth station (in meters)
-    #    earth_station_lat_deg - latitude of the system's earth station (in degrees)
-    #    earth_station_long_diff_deg - difference between longitudes of IMT space station and system's earth station
-    #      (positive if space-station is to the East of earth-station)
-    #    season - season of the year.
-    # Enter the IMT space station height
-    space_station_alt_m  : 20000.0
-    # Enter the RAS antenna heigth above sea level
-    earth_station_alt_m  : 1000
-    # The RAS station lat
-    earth_station_lat_deg  : -15.7801
-    # This parameter is ignored as it will be calculated from x,y positions in run time
-    earth_station_long_diff_deg  : 0.0
-    season  : SUMMER
+    # Peak transmit power spectral density (clear sky) [dBW/Hz]
+    tx_power_density: 0
+    # Adjacent channel selectivity [dB]
+    adjacent_ch_selectivity: 20.0
+    geometry:
+        ###########################################################################
+        # Antenna height [meters]
+        height: 15
+        ###########################################################################
+        # Azimuth angle [degrees]
+        azimuth:
+            type: FIXED
+            fixed: -90
+        ###########################################################################
+        # Elevation angle [degrees]
+        elevation:
+            type: FIXED
+            fixed: 45
+        ###########################################################################
+        # Station 2d location [meters]:
+        location:
+            ###########################################################################
+            type: FIXED
+            fixed:
+                ###########################################################################
+                x: 0
+                ###########################################################################
+                y: 0
+    antenna:
+        pattern: OMNI
+        gain: 0
+    channel_model: P619
+
+    param_p619:
+        space_station_alt_m: 20000.0
+        # Enter the RAS antenna heigth above sea level
+        earth_station_alt_m: 15
+        # The RAS station lat
+        earth_station_lat_deg: -23.17889
+        # This parameter is ignored as it will be calculated from x,y positions in run time
+        earth_station_long_diff_deg: 0.0
+
+    season: SUMMER

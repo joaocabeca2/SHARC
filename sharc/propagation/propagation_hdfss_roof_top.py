@@ -10,6 +10,7 @@ import sys
 from shapely.geometry import LineString, Polygon, Point
 from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
 
+from sharc.parameters.parameters_hdfss import ParametersHDFSS
 from sharc.parameters.parameters_fss_es import ParametersFssEs
 from sharc.propagation.propagation import Propagation
 from sharc.propagation.propagation_p1411 import PropagationP1411
@@ -26,7 +27,7 @@ class PropagationHDFSSRoofTop(Propagation):
         P.1411 LOS for distances 55m < distance < 260m
         P.1411 NLOS for distances distance > 260m
     """
-    def __init__(self, param: ParametersFssEs, random_number_gen: np.random.RandomState):
+    def __init__(self, param: ParametersHDFSS, random_number_gen: np.random.RandomState):
         super().__init__(random_number_gen)
         
         self.param = param
