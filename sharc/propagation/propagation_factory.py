@@ -6,35 +6,31 @@ Created on Thu Jul  6 16:03:24 2017
 """
 
 import sys
-
 import numpy.random as rnd
-
-from sharc.parameters.parameters import Parameters
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_imt import ParametersImt
+from sharc.parameters.parameters import Parameters
 from sharc.propagation.propagation import Propagation
-from sharc.propagation.propagation_abg import PropagationABG
-from sharc.propagation.propagation_clear_air_452 import PropagationClearAir
 from sharc.propagation.propagation_free_space import PropagationFreeSpace
-from sharc.propagation.propagation_hdfss import PropagationHDFSS
-from sharc.propagation.propagation_indoor import PropagationIndoor
 from sharc.propagation.propagation_p619 import PropagationP619
 from sharc.propagation.propagation_sat_simple import PropagationSatSimple
 from sharc.propagation.propagation_ter_simple import PropagationTerSimple
-from sharc.propagation.propagation_tvro import PropagationTvro
 from sharc.propagation.propagation_uma import PropagationUMa
 from sharc.propagation.propagation_umi import PropagationUMi
+from sharc.propagation.propagation_abg import PropagationABG
+from sharc.propagation.propagation_clear_air_452 import PropagationClearAir
+from sharc.propagation.propagation_tvro import PropagationTvro
+from sharc.propagation.propagation_indoor import PropagationIndoor
+from sharc.propagation.propagation_hdfss import PropagationHDFSS
 
 
 class PropagationFactory(object):
 
     @staticmethod
-    def create_propagation(
-        channel_model: str,
-        param: Parameters,
-        param_system: ParametersBase,
-        random_number_gen: rnd.RandomState,
-    ) -> Propagation:
+    def create_propagation(channel_model: str,
+                           param: Parameters,
+                           param_system: ParametersBase,
+                           random_number_gen: rnd.RandomState) -> Propagation:
         """Creates a propagation model object
 
         Parameters
@@ -73,30 +69,19 @@ class PropagationFactory(object):
         elif channel_model == "P619":
             if isinstance(param_system, ParametersImt):
                 if param_system.topology != "NTN":
-                    raise ValueError(
-                        f"PropagationFactory: Channel model P.619 is invalid for topolgy {
-                            param.imt.topology}"
-                    )
+                    raise ValueError(f"PropagationFactory: Channel model P.619 is invalid for topolgy {param.imt.topology}")
             else:
                 # P.619 model is used only for space-to-earth links
                 if param.imt.topology != "NTN" and not param_system.is_space_to_earth:
-                    raise ValueError(
-                        (
-                            "PropagationFactory: Channel model P.619 "
-                            f"is invalid for system {
-                                param.general.system} and IMT "
-                            f"topology {
-                                param.imt.topology}"
-                        )
-                    )
-            return PropagationP619(
-                random_number_gen=random_number_gen,
-                space_station_alt_m=param_system.param_p619.space_station_alt_m,
-                earth_station_alt_m=param_system.param_p619.earth_station_alt_m,
-                earth_station_lat_deg=param_system.param_p619.earth_station_lat_deg,
-                earth_station_long_diff_deg=param_system.param_p619.earth_station_lat_deg,
-                season=param_system.season,
-            )
+                    raise ValueError(("PropagationFactory: Channel model P.619 "
+                                     f"is invalid for system {param.general.system} and IMT "
+                                     f"topology {param.imt.topology}"))
+            return PropagationP619(random_number_gen=random_number_gen,
+                                   space_station_alt_m=param_system.param_p619.space_station_alt_m,
+                                   earth_station_alt_m=param_system.param_p619.earth_station_alt_m,
+                                   earth_station_lat_deg=param_system.param_p619.earth_station_lat_deg,
+                                   earth_station_long_diff_deg=param_system.param_p619.earth_station_lat_deg,
+                                   season=param_system.season)
         elif channel_model == "P452":
             return PropagationClearAir(random_number_gen, param_system.param_p452)
         elif channel_model == "TVRO-URBAN":
@@ -104,11 +89,15 @@ class PropagationFactory(object):
         elif channel_model == "TVRO-SUBURBAN":
             return PropagationTvro(random_number_gen, "SUBURBAN")
         elif channel_model == "HDFSS":
-            return PropagationHDFSS(param.fss_es, random_number_gen)
+            if param.general.system == "FSS_ES":
+                # TODO: use param_hdfss in fss_es as well
+                return PropagationHDFSS(param.fss_es, random_number_gen)
+            else:
+                return PropagationHDFSS(param_system.param_hdfss, random_number_gen)
         elif channel_model == "INDOOR":
-            return PropagationIndoor(
-                random_number_gen, param.indoor, param.imt.ue_k * param.imt.ue_k_m
-            )
+            return PropagationIndoor(random_number_gen,
+                                     param.indoor,
+                                     param.imt.ue_k*param.imt.ue_k_m)
         else:
             sys.stderr.write("ERROR\nInvalid channel_model: " + channel_model)
             sys.exit(1)

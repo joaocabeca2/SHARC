@@ -5,10 +5,8 @@ Created on Mon Feb  6 10:38:20 2017
 @author: edgar
 """
 
-import numpy as np
-
 from sharc.antenna.antenna import Antenna
-
+import numpy as np
 
 class AntennaOmni(Antenna):
     """
@@ -37,4 +35,5 @@ class AntennaOmni(Antenna):
         else:
             phi_vec = np.asarray(kwargs["off_axis_angle_vec"])
 
-        return self.gain * np.ones(len(phi_vec))
+        return self.gain*np.ones(len(phi_vec))
+

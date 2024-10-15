@@ -9,7 +9,7 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 
-from sharc.parameters.parameters_fss_es import ParametersFssEs
+from sharc.parameters.parameters_hdfss import ParametersHDFSS
 from sharc.support.enumerations import StationType
 from sharc.propagation.propagation_hdfss_building_side import PropagationHDFSSBuildingSide
 
@@ -18,7 +18,7 @@ class PropagationHDFSSBuildingSideTest(unittest.TestCase):
     def setUp(self):
         # Basic propagation
         rnd = np.random.RandomState(101)
-        par = ParametersFssEs()
+        par = ParametersHDFSS()
         par.building_loss_enabled = False
         par.shadow_enabled = False
         par.same_building_enabled = True
@@ -30,7 +30,7 @@ class PropagationHDFSSBuildingSideTest(unittest.TestCase):
         
         # Propagation with fixed BEL
         rnd = np.random.RandomState(101)
-        par = ParametersFssEs()
+        par = ParametersHDFSS()
         par.building_loss_enabled = True
         par.shadow_enabled = False
         par.same_building_enabled = True
@@ -42,7 +42,7 @@ class PropagationHDFSSBuildingSideTest(unittest.TestCase):
         
         # Propagation with fixed probability
         rnd = np.random.RandomState(101)
-        par = ParametersFssEs()
+        par = ParametersHDFSS()
         par.building_loss_enabled = True
         par.shadow_enabled = False
         par.same_building_enabled = True
@@ -54,7 +54,7 @@ class PropagationHDFSSBuildingSideTest(unittest.TestCase):
         
         # Propagation with random probability
         rnd = np.random.RandomState(101)
-        par = ParametersFssEs()
+        par = ParametersHDFSS()
         par.building_loss_enabled = True
         par.shadow_enabled = False
         par.same_building_enabled = True

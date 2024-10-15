@@ -4,11 +4,11 @@ Created on Fri Aug 11 13:18:43 2017
 
 @author: edgar
 """
-import logging
-
 from sharc.controller import Controller
-from sharc.support.enumerations import Action
 from sharc.support.observer import Observer
+from sharc.support.enumerations import Action
+
+import logging
 
 
 class ViewCli(Observer):
@@ -21,11 +21,12 @@ class ViewCli(Observer):
         super().__init__()
         self.parent = parent
 
+        
     def initialize(self, param_file):
-        self.controller.action(
-            action=Action.START_SIMULATION_SINGLE_THREAD, param_file=param_file
-        )
-
+        self.controller.action(action = Action.START_SIMULATION_SINGLE_THREAD, 
+                                     param_file = param_file)
+        
+        
     def set_controller(self, controller: Controller):
         """
         Keeps the reference to the controller
@@ -36,6 +37,7 @@ class ViewCli(Observer):
         """
         self.controller = controller
 
+        
     def notify_observer(self, *args, **kwargs):
         """
         Implements the method from Observer class. See documentation on the
@@ -49,6 +51,7 @@ class ViewCli(Observer):
         if "message" in kwargs:
             self.insert_text(kwargs["source"], kwargs["message"])
 
+            
     def insert_text(self, source: str, text: str):
         """
         This method can be called to display a message on the console. The same
@@ -63,3 +66,4 @@ class ViewCli(Observer):
         """
         logger = logging.getLogger(source)
         logger.info(text)
+        

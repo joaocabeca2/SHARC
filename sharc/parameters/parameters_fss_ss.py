@@ -4,13 +4,11 @@ from dataclasses import dataclass
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_p619 import ParametersP619
 
-
 @dataclass
 class ParametersFssSs(ParametersBase):
     """Dataclass containing the Fixed Satellite Services - Space Station
     parameters for the simulator
     """
-
     section_name: str = "FSS_SS"
     is_space_to_earth: bool = True
     # satellite center frequency [MHz]
@@ -47,7 +45,7 @@ class ParametersFssSs(ParametersBase):
     earth_station_alt_m: float = 0.0
     earth_station_lat_deg: float = 0.0
     earth_station_long_diff_deg: float = 0.0
-    season: str = "SUMMER"
+    season:str = "SUMMER"
     # Channel parameters
     # channel model, possible values are "FSPL" (free-space path loss),
     #                                    "SatelliteSimple" (FSPL + 4 + clutter loss)
@@ -75,30 +73,19 @@ class ParametersFssSs(ParametersBase):
         super().load_parameters_from_file(config_file)
 
         # Now do the sanity check for some parameters
-        if self.antenna_pattern not in [
-            "ITU-R S.672",
-            "ITU-R S.1528",
-            "FSS_SS",
-            "OMNI",
-        ]:
-            raise ValueError(
-                f'ParametersFssSs: \
+        if self.antenna_pattern not in ["ITU-R S.672", "ITU-R S.1528", "FSS_SS", "OMNI"]:
+            raise ValueError(f"ParametersFssSs: \
                              invalid value for parameter antenna_pattern - {self.antenna_pattern}. \
                              Possible values \
-                             are "ITU-R S.672", "ITU-R S.1528", "FSS_SS", "OMNI"'
-            )
+                             are \"ITU-R S.672\", \"ITU-R S.1528\", \"FSS_SS\", \"OMNI\"")
 
         if self.season.upper() not in ["SUMMER", "WINTER"]:
-            raise ValueError(
-                f'ParametersFssSs: \
+            raise ValueError(f"ParametersFssSs: \
                              Invalid value for parameter season - {self.season}. \
-                             Possible values are "SUMMER", "WINTER".'
-            )
+                             Possible values are \"SUMMER\", \"WINTER\".")
 
         if self.channel_model.upper() not in ["FSPL", "SATELLITESIMPLE", "P619"]:
-            raise ValueError(
-                f'ParametersFssSs: \
+            raise ValueError(f"ParametersFssSs: \
                              Invalid value for paramter channel_model = {self.channel_model}. \
-                             Possible values are "FSPL", "SatelliteSimple", "P619".'
-            )
+                             Possible values are \"FSPL\", \"SatelliteSimple\", \"P619\".")
         self.param_p619.load_from_paramters(self)

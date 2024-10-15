@@ -6,9 +6,9 @@ from sharc.parameters.parameters_base import ParametersBase
 
 @dataclass
 class ParametersHaps(ParametersBase):
-    """Dataclass containing the IMT system parameters"""
-
-    section_name: str = "HAPS"
+    """Dataclass containing the IMT system parameters
+    """
+    section_name: str = "haps"
     # HAPS center frequency [MHz]
     frequency: float = 27250.0
     # HAPS bandwidth [MHz]
@@ -38,7 +38,7 @@ class ParametersHaps(ParametersBase):
     earth_station_alt_m: float = 0.0
     earth_station_lat_deg: float = 0.0
     earth_station_long_diff_deg: float = 0.0
-    season: str = "SUMMER"
+    season:str = "SUMMER"
     # Adjacent channel selectivity [dB]
     acs: float = 30.0
     # Channel parameters
@@ -65,24 +65,19 @@ class ParametersHaps(ParametersBase):
         """
         super().load_parameters_from_file(config_file)
         if self.antenna_pattern not in ["ITU-R F.1891", "OMNI"]:
-            raise ValueError(
-                f'ParametersHaps: \
+            raise ValueError(f"ParametersHaps: \
                              Invalid value for parameter {self.antenna_pattern}. \
-                             Allowed values are "ITU-R F.1891", "OMNI".'
-            )
+                             Allowed values are \"ITU-R F.1891\", \"OMNI\".")
         if self.channel_model.upper() not in ["FSPL", "SatelliteSimple", "P619"]:
-            raise ValueError(
-                f'ParametersHaps: \
+            raise ValueError(f"ParametersHaps: \
                              Invalid value for paramter channel_model = {self.channel_model}. \
-                             Possible values are "FSPL", "SatelliteSimple", "P619".'
-            )
+                             Possible values are \"FSPL\", \"SatelliteSimple\", \"P619\".")
         if self.season.upper() not in ["SUMMER", "WINTER"]:
-            raise ValueError(
-                f'ParametersHaps: \
+            raise ValueError(f"ParametersHaps: \
                              Invalid value for parameter season - {self.season}. \
-                             Possible values are "SUMMER", "WINTER".'
-            )
-
+                             Possible values are \"SUMMER\", \"WINTER\".")
+        
         # Post initialization
         # tx antenna power density [dBW/MHz]
         self.tx_power_density = self.eirp_density - self.antenna_gain - 60
+

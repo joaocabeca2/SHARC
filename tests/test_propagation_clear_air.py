@@ -3,8 +3,10 @@
 
 import unittest
 import numpy as np
+import matplotlib.pyplot as plt
 from sharc.parameters.parameters_fss_es import ParametersFssEs
 
+import numpy.testing as npt
 
 from sharc.propagation.propagation_clear_air_452 import PropagationClearAir
 
@@ -17,6 +19,8 @@ class PropagationClearAirTest(unittest.TestCase):
 
         params = ParametersFssEs()
 
+        d = 10000
+        f = 27000
         params.atmospheric_pressure = 1013
         params.air_temperature = 288
         params.water_vapour = 7.5
@@ -56,7 +60,11 @@ class PropagationClearAirTest(unittest.TestCase):
 
         params.clutter_loss = False
 
+        Gt = 10
+        Gr = 10
 
+        di = [1,1,1]
+        hi = [2,4,6]
 
 
 #        Ld50, Ldbeta, Ldb = self.__Diffraction.get_loss(beta = Beta, distance=d, frequency=f, atmospheric_pressure=Ph, air_temperature=T, water_vapour=ro, delta_N=deltaN, Hrs=hrs, Hts=hts, Hte=hte, Hre=hre, Hsr=hsr, Hst=hst, H0=h0, Hn=hn, dist_di=di, hight_hi=hi, omega=omega, Dlt=dlt ,Dlr=dlr, percentage_p=p)

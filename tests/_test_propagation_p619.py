@@ -7,6 +7,7 @@ Created on Mon Aug 21 12:17:34 2017
 
 import unittest
 import numpy as np
+import numpy.testing as npt
 from sharc.propagation.propagation_p619 import PropagationP619
 
 
