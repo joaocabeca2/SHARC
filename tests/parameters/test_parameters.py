@@ -40,6 +40,7 @@ class ParametersTest(unittest.TestCase):
     def setUp(self):
         self.parameters = Parameters()
         self.parameters.set_file_name("./parameters/parameters_for_testing.yaml")
+        self.parameters.set_file_name("./parameters/parameters_for_testing.yaml")
         self.parameters.read_params()
 
     def test_parameters_imt(self):
