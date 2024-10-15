@@ -10,18 +10,18 @@ import numpy as np
 import sys
 from shapely.geometry import LineString, Polygon, Point
 
-from sharc.parameters.parameters_fss_es import ParametersFssEs
 from sharc.propagation.propagation import Propagation
 from sharc.propagation.propagation_p1411 import PropagationP1411
 from sharc.propagation.propagation_free_space import PropagationFreeSpace
 from sharc.propagation.propagation_building_entry_loss import PropagationBuildingEntryLoss
 from sharc.support.enumerations import StationType
+from sharc.parameters.parameters_hdfss import ParametersHDFSS
 
 class PropagationHDFSSBuildingSide(Propagation):
     """
     
     """
-    def __init__(self, param: ParametersFssEs, random_number_gen: np.random.RandomState):
+    def __init__(self, param: ParametersHDFSS, random_number_gen: np.random.RandomState):
         super().__init__(random_number_gen)
         
         self.param = param

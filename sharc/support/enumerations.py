@@ -40,3 +40,4 @@ class StationType(Enum):
     RAS    = 8  # Radio Astronomy Service
     EESS_SS = 9 # EESS Space Station
     METSAT_SS = 10 # MetSat Space Station
+    SINGLE_EARTH_STATION = 11
