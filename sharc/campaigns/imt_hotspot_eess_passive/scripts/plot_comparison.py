@@ -1,5 +1,4 @@
-# ALA MODA GAMBIARRA SÓ PRA COMPARAR RESULTADOS
-# Não me julgue... muito
+# TODO: refactor this with new post processing script
 
 import os
 import pandas as pd
