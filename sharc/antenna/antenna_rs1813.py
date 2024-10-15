@@ -6,7 +6,7 @@ Created on Thu Feb 21 11:22:08 2019
 """
 
 from sharc.antenna.antenna import Antenna
-from sharc.parameters.parameters_eess_passive import ParametersEessPassive
+from sharc.parameters.parameters_eess_ss import ParametersEessSS
 
 import numpy as np
 import math
@@ -25,7 +25,7 @@ class AntennaRS1813(Antenna):
     for antenna diameters greater than 2 times the wavelength.
     """
 
-    def __init__(self, param: ParametersEessPassive):
+    def __init__(self, param: ParametersEessSS):
         super().__init__()
         self.lmbda = 3e8 / ( param.frequency * 1e6 )
         self.d_lmbda = param.antenna_diameter / self.lmbda
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     phi = np.linspace(0.1, 180, num = 10000)
 
     # initialize antenna parameters
-    param = ParametersEessPassive()
+    param = ParametersEessSS()
     param.antenna_pattern = "ITU-R RS.1813-1"
     param.frequency = 23900
     param.antenna_gain = 52

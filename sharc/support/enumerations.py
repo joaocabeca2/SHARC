@@ -38,5 +38,6 @@ class StationType(Enum):
     HAPS   = 6  # HAPS (airbone) station
     RNS    = 7  # Radionavigation service
     RAS    = 8  # Radio Astronomy Service
-    EESS_PASSIVE = 9 # EESS passive sensor
-    SINGLE_EARTH_STATION = 10
+    EESS_SS = 9 # EESS Space Station
+    METSAT_SS = 10 # MetSat Space Station
+    SINGLE_EARTH_STATION = 11
