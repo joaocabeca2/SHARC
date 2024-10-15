@@ -159,6 +159,9 @@ def plot_system_inr(base_dir, passo_xticks=5, legends=None, subfolders=None, sav
 def plot_system_interference_power_from_imt_dl(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
     plot_cdf(base_dir, 'SYS_CDF_of_system_interference_power_from_IMT_DL', passo_xticks, xaxis_title='Interference Power (dBm/MHz)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
+def plot_system_interference_power_from_imt_ul(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
+    plot_cdf(base_dir, 'SYS_CDF_of_system_interference_power_from_IMT_UL', passo_xticks, xaxis_title='Interference Power (dBm/MHz)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+
 def plot_system_pfd(base_dir, passo_xticks=5, legends=None, subfolders=None, save_file=True, show_plot=True):
     plot_cdf(base_dir, 'SYS_CDF_of_system_PFD', passo_xticks, xaxis_title='PFD (dBW/m²)', legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
@@ -180,6 +183,7 @@ def all_plots(base_dir, legends=None, subfolders=None, save_file=True, show_plot
     plot_system_antenna_towards_imt_stations(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
     plot_system_inr(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
     plot_system_interference_power_from_imt_dl(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
+    plot_system_interference_power_from_imt_ul(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
     plot_system_pfd(base_dir, legends=legends, subfolders=subfolders, save_file=save_file, show_plot=show_plot)
 
 if __name__ == "__main__":

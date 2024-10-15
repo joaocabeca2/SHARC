@@ -32,8 +32,10 @@ class Simulation(ABC, Observable):
         self.parameters = parameters
         self.parameters_filename = parameter_file
 
-        if self.parameters.general.system == "EESS_PASSIVE":
-            self.param_system = self.parameters.eess_passive
+        if self.parameters.general.system == "METSAT_SS":
+            self.param_system = self.parameters.metsat_ss
+        elif self.parameters.general.system == "EESS_SS":
+            self.param_system = self.parameters.eess_ss
         elif self.parameters.general.system == "FSS_SS":
             self.param_system = self.parameters.fss_ss
         elif self.parameters.general.system == "FSS_ES":
