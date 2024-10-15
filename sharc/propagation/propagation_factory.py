@@ -89,7 +89,11 @@ class PropagationFactory(object):
         elif channel_model == "TVRO-SUBURBAN":
             return PropagationTvro(random_number_gen, "SUBURBAN")
         elif channel_model == "HDFSS":
-            return PropagationHDFSS(param.fss_es, random_number_gen)
+            if param.general.system == "FSS_ES":
+                # TODO: use param_hdfss in fss_es as well
+                return PropagationHDFSS(param.fss_es, random_number_gen)
+            else:
+                return PropagationHDFSS(param_system.param_hdfss, random_number_gen)
         elif channel_model == "INDOOR":
             return PropagationIndoor(random_number_gen,
                                      param.indoor,

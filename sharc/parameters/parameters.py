@@ -23,6 +23,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_ntn import ParametersNTN
+from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
 
 
 class Parameters(object):
@@ -46,6 +47,7 @@ class Parameters(object):
         self.haps = ParametersHaps()
         self.rns = ParametersRns()
         self.ras = ParametersRas()
+        self.single_earth_station = ParametersSingleEarthStation()
         self.metsat_ss = ParametersMetSatSS()
 
 
@@ -135,6 +137,9 @@ class Parameters(object):
         # NTN
         #######################################################################
         self.ntn.load_parameters_from_file(self.file_name)
+
+
+        self.single_earth_station.load_parameters_from_file(self.file_name)
 
 if __name__ == "__main__":
     from pprint import pprint
