@@ -158,27 +158,29 @@ class SpectralMaskImt(SpectralMask):
                 - Table 6.6.5.2.1-2 in ETSI TS 138 104 V16.6.0 (to choose spurious emission, not an impementation table)
         """
         # ITU-R SM.1539-1 Table 2
-        if (freq_mhz > 0.009 and freq_mhz < 0.15):
+        if (freq_mhz > 0.009 and freq_mhz <= 0.15):
             B_L = 0.00025
             B_U = 0.01
-        elif (freq_mhz > 0.15 and freq_mhz < 30):
+        elif (freq_mhz > 0.15 and freq_mhz <= 30):
             B_L = 0.004
             B_U = 0.1
-        elif (freq_mhz > 30 and freq_mhz < 1000):
+        elif (freq_mhz > 30 and freq_mhz <= 1000):
             B_L = 0.025
             B_U = 10
-        elif (freq_mhz > 1000 and freq_mhz < 3000):
+        elif (freq_mhz > 1000 and freq_mhz <= 3000):
             B_L = 0.1
             B_U = 50
-        elif (freq_mhz > 3000 and freq_mhz < 10000):
+        elif (freq_mhz > 3000 and freq_mhz <= 10000):
             B_L = 0.1
             B_U = 100
-        elif (freq_mhz > 10000 and freq_mhz < 15000):
+        elif (freq_mhz > 10000 and freq_mhz <= 15000):
             B_L = 0.3
             B_U = 250
-        elif (freq_mhz > 15000 and freq_mhz < 26000):
+        elif (freq_mhz > 15000 and freq_mhz <= 26000):
             B_L = 0.5
             B_U = 500
+        else:
+            raise ValueError(f"Invalid frequency value {freq_mhz} for mask ITU-R SM.1539-1")
 
         # ITU-R SM.1541-6 Table 1 (same as using only ITU-R SM.1539-1 Table 2, but with less hardcoded values)
         B_L_separation = 2.5 * B_L
@@ -269,7 +271,7 @@ if __name__ == '__main__':
     # Plot
     plt.plot(freqs, mask_val)
     plt.xlim([freqs[0], freqs[-1]])
-    plt.xlabel("$\Delta$f [MHz]")
+    plt.xlabel(r"$\Delta$f [MHz]")
     plt.ylabel("Spectral Mask [dBc]")
     plt.grid()
     plt.show()

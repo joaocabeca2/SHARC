@@ -83,38 +83,13 @@ class PropagationSatSimple(Propagation):
 
         return self.get_loss(distance_3d, frequency, indoor_stations, elevation_angles)
 
-    @dispatch(np.ndarray, np.ndarray, np.ndarray, dict)
-    def get_loss(self,
-                 distance: np.array,
-                 frequency: np.array,
-                 indoor_stations: np.array,
-                 elevation: np.array) -> np.array:
-        """Wrapper for get_loss(np.ndarray, np.ndarray, np.ndarray, dict, int) with num_of_sectors=1
-
-        Parameters
-        ----------
-        distance : np.array
-            Distance between the stations
-        frequency : np.array
-            Array of frequenciews
-        indoor_stations : np.array
-            Bool array indicating if the terrestrial station is indoor or not.
-        elevation : np.array
-            Array with elevation angles w.r.t terrestrial station
-
-        Returns
-        -------
-        np.array
-            Array of clutter losses with the same shape as distance
-        """
-        return self.get_loss(distance, frequency, indoor_stations, elevation)
 
     @dispatch(np.ndarray, np.ndarray, np.ndarray, dict)
     def get_loss(self,
                  distance: np.array,
                  frequency: np.array,
                  indoor_stations: np.array,
-                 elevation: np.array) -> np.array:
+                 elevation: dict) -> np.array:
         """Calculates the clutter loss.
 
         Parameters

@@ -84,8 +84,8 @@ class PropagationHDFSSBuildingSide(Propagation):
 #                                                       es_z)
         if not self.param.same_building_enabled:
             loss[:, same_build] += self.HIGH_LOSS
-        loss[:, same_build] += self.propagation_fspl.get_loss(distance_3D=d[:, same_build],
-                                                              frequency=f[:, same_build])
+        loss[:, same_build] += self.propagation_fspl.get_loss(d[:, same_build],
+                                                              f[:, same_build])
 
         loss[:, next_build] += self.propagation_p1411.get_loss(distance_3D=d[:, next_build],
                                                                frequency=f[:,
@@ -101,9 +101,7 @@ class PropagationHDFSSBuildingSide(Propagation):
 
         # Building entry loss
         if self.param.building_loss_enabled:
-            build_loss = self.get_building_loss(imt_sta_type,
-                                                f,
-                                                elevation)
+            build_loss = self.get_building_loss(imt_sta_type, f, elevation)
         else:
             build_loss = 0.0
 

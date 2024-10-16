@@ -44,7 +44,10 @@ class PropagationFreeSpace(Propagation):
             between each station
         """
         distance_3d = station_a.get_3d_distance_to(station_b)
-        return self.get_free_space_loss(frequency=frequency, distance=distance_3d)
+        loss = self.get_free_space_loss(frequency=frequency, distance=distance_3d)
+        if station_a.is_imt_station() and station_b.is_imt_station():
+            loss = np.transpose(loss)
+        return loss
 
     @dispatch(np.ndarray, np.ndarray)
     def get_loss(self, distance_3D: np.array, frequency: float) -> np.array:

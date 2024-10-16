@@ -767,7 +767,7 @@ class StationFactory(object):
         return fs_station
 
     @staticmethod
-    def generate_haps(param: ParametersHaps, intersite_distance: int, random_number_gen: np.random.RandomState()):
+    def generate_haps(param: ParametersHaps, intersite_distance: int, random_number_gen: np.random.RandomState):
         num_haps = 1
         haps = StationManager(num_haps)
         haps.station_type = StationType.HAPS
@@ -807,7 +807,7 @@ class StationFactory(object):
         return haps
 
     @staticmethod
-    def generate_rns(param: ParametersRns, random_number_gen: np.random.RandomState()):
+    def generate_rns(param: ParametersRns, random_number_gen: np.random.RandomState):
         num_rns = 1
         rns = StationManager(num_rns)
         rns.station_type = StationType.RNS
