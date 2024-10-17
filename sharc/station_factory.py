@@ -5,6 +5,7 @@ Created on Thu Mar 23 16:37:32 2017
 @author: edgar
 """
 
+from warnings import warn
 import numpy as np
 import sys
 import math
@@ -13,7 +14,9 @@ from sharc.support.enumerations import StationType
 from sharc.parameters.parameters import Parameters
 from sharc.parameters.parameters_imt import ParametersImt
 from sharc.parameters.parameters_antenna_imt import ParametersAntennaImt
-from sharc.parameters.parameters_eess_passive import ParametersEessPassive
+from sharc.parameters.parameters_space_station import ParametersSpaceStation
+from sharc.parameters.parameters_eess_ss import ParametersEessSS
+from sharc.parameters.parameters_metsat_ss import ParametersMetSatSS
 from sharc.parameters.parameters_fs import ParametersFs
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
 from sharc.parameters.parameters_fss_es import ParametersFssEs
@@ -21,6 +24,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_ntn import ParametersNTN
+from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
 from sharc.parameters.constants import EARTH_RADIUS , BOLTZMANN_CONSTANT
 from sharc.station_manager import StationManager
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
@@ -34,6 +38,7 @@ from sharc.antenna.antenna_rs1813 import AntennaRS1813
 from sharc.antenna.antenna_rs1861_9a import AntennaRS1861_9A
 from sharc.antenna.antenna_rs1861_9b import AntennaRS1861_9B
 from sharc.antenna.antenna_rs1861_9c import AntennaRS1861_9C
+from sharc.antenna.antenna_rs2043 import AntennaRS2043
 from sharc.antenna.antenna_s465 import AntennaS465
 from sharc.antenna.antenna_modified_s465 import AntennaModifiedS465
 from sharc.antenna.antenna_s580 import AntennaS580
@@ -46,7 +51,7 @@ from sharc.topology.topology import Topology
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 
-from sharc.parameters.constants import SPEED_OF_LIGHT, EARTH_RADIUS
+from sharc.parameters.constants import SPEED_OF_LIGHT
 
 
 class StationFactory(object):
@@ -397,10 +402,14 @@ class StationFactory(object):
 
     @staticmethod
     def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState ):
-        if parameters.general.system == "EESS_PASSIVE":
-            return StationFactory.generate_eess_passive_sensor(parameters.eess_passive)
-        if parameters.general.system == "FSS_ES":
+        if parameters.general.system == "METSAT_SS":
+            return StationFactory.generate_metsat_ss(parameters.metsat_ss)
+        elif parameters.general.system == "EESS_SS":
+            return StationFactory.generate_eess_space_station(parameters.eess_ss)
+        elif parameters.general.system == "FSS_ES":
             return StationFactory.generate_fss_earth_station(parameters.fss_es, random_number_gen, topology)
+        elif parameters.general.system == "SINGLE_EARTH_STATION":
+            return StationFactory.generate_single_earth_station(parameters.single_earth_station, random_number_gen, topology)
         elif parameters.general.system == "FSS_SS":
             return StationFactory.generate_fss_space_station(parameters.fss_ss)
         elif parameters.general.system == "FS":
@@ -469,11 +478,14 @@ class StationFactory(object):
 
         return fss_space_station
 
-
     @staticmethod
-
     def generate_fss_earth_station(param: ParametersFssEs, random_number_gen: np.random.RandomState, *args):
         """
+        @deprecated
+
+        Since this creates a Single Earth Station, you should use StationFactory.generate_single_earth_station instead.
+        This will be deleted in the future.
+        ----------------------------------
         Generates FSS Earth Station.
 
         Arguments:
@@ -481,6 +493,8 @@ class StationFactory(object):
             random_number_gen: np.random.RandomState
             topology (optional): Topology
         """
+        warn("This is deprecated, use StationFactory.generate_single_earth_station() instead; date=2024-10-11", DeprecationWarning, stacklevel=2)
+
         if len(args): topology = args[0]
 
         fss_earth_station = StationManager(1)
@@ -552,10 +566,109 @@ class StationFactory(object):
         fss_earth_station.total_interference = -500
 
         return fss_earth_station
+            
+    @staticmethod
+    def generate_single_earth_station(param: ParametersSingleEarthStation, random_number_gen: np.random.RandomState, topology = None):
+        """
+        Generates a Single Earth Station.
+
+        Arguments:
+            param: ParametersSingleEarthStation
+            random_number_gen: np.random.RandomState
+            topology (optional): Topology
+        """
+        single_earth_station = StationManager(1)
+        single_earth_station.station_type = StationType.SINGLE_EARTH_STATION
+
+        match param.geometry.location.type:
+            case "FIXED":
+                single_earth_station.x = np.array([param.geometry.location.fixed.x])
+                single_earth_station.y = np.array([param.geometry.location.fixed.y])
+            case "CELL":
+                x, y, _, _ = StationFactory.get_random_position(1, topology, random_number_gen,
+                                                                  param.geometry.location.cell.min_dist_to_bs, True)
+                single_earth_station.x = np.array(x)
+                single_earth_station.y = np.array(y)
+            case "NETWORK":
+                x, y, _, _ = StationFactory.get_random_position(1, topology, random_number_gen,
+                                                                          param.geometry.location.network.min_dist_to_bs, False)
+                single_earth_station.x = np.array(x)
+                single_earth_station.y = np.array(y)
+            case "UNIFORM_DIST":
+                # ES is randomly (uniform) created inside a circle of radius
+                # equal to param.max_dist_to_bs
+                if param.geometry.location.uniform_dist.min_dist_to_bs < 0:
+                    sys.stderr.write("ERROR\nInvalid minimum distance from Single ES to BS: {}".format(param.geometry.location.uniform_dist.min_dist_to_bs))
+                    sys.exit(1)
+                while(True):
+                    dist_x = random_number_gen.uniform(-param.geometry.location.uniform_dist.max_dist_to_bs, param.geometry.location.uniform_dist.max_dist_to_bs)
+                    dist_y = random_number_gen.uniform(-param.geometry.location.uniform_dist.max_dist_to_bs, param.geometry.location.uniform_dist.max_dist_to_bs)
+                    radius = np.sqrt(dist_x**2 + dist_y**2)
+                    if (radius > param.geometry.location.uniform_dist.min_dist_to_bs) & (radius < param.geometry.location.uniform_dist.max_dist_to_bs):
+                        break
+                single_earth_station.x[0] = dist_x
+                single_earth_station.y[0] = dist_y
+            case _:
+                sys.stderr.write("ERROR\nSingle-ES location type {} not supported".format(param.geometry.location.type))
+                sys.exit(1)
+
+        single_earth_station.height = np.array([param.geometry.height])
+
+        if param.geometry.azimuth.type == "UNIFORM_DIST":
+            if param.geometry.azimuth.uniform_dist.min < -180:
+                sys.stderr.write("ERROR\nInvalid minimum azimuth: {} < -180".format(param.geometry.azimuth.uniform_dist.min))
+                sys.exit(1)
+            if param.geometry.azimuth.uniform_dist.max > 180:
+                sys.stderr.write("ERROR\nInvalid maximum azimuth: {} > 180".format(param.geometry.azimuth.uniform_dist.max))
+                sys.exit(1)
+            single_earth_station.azimuth = np.array([random_number_gen.uniform(param.geometry.azimuth.uniform_dist.min, param.geometry.azimuth.uniform_dist.max)])
+        else:
+            single_earth_station.azimuth = np.array([param.geometry.azimuth.fixed])
+
+        if param.geometry.elevation.type == "UNIFORM_DIST":
+            single_earth_station.elevation = np.array([random_number_gen.uniform(param.geometry.elevation.uniform_dist.min, param.geometry.elevation.uniform_dist.max)])
+        else:
+            single_earth_station.elevation = np.array([param.geometry.elevation.fixed])
+
+        match param.antenna.pattern:
+            case "OMNI":
+                single_earth_station.antenna = np.array([AntennaOmni(param.antenna.gain)])
+            case "ITU-R S.465":
+                single_earth_station.antenna = np.array([AntennaS465(param.antenna.itu_r_s_465)])
+            case "ITU-R S.1855":
+                single_earth_station.antenna = np.array([AntennaS1855(param.antenna.itu_r_s_1855)])
+            case "MODIFIED ITU-R S.465":
+                single_earth_station.antenna = np.array([AntennaModifiedS465(param.antenna.itu_r_s_465_modified)])
+            case "ITU-R S.580":
+                single_earth_station.antenna = np.array([AntennaS580(param.antenna.itu_r_s_580)])
+            case _:
+                sys.stderr.write("ERROR\nInvalid FSS ES antenna pattern: " + param.antenna_pattern)
+                sys.exit(1)
+
+        single_earth_station.active = np.array([True])
+        single_earth_station.bandwidth = np.array([param.bandwidth])
+
+        single_earth_station.tx_power = np.array([param.tx_power_density + 10*math.log10(param.bandwidth*1e6) + 30])
+
+        single_earth_station.noise_temperature = param.noise_temperature
+
+        # TODO: check why this would not be set on the StationManager() constructor itself?
+        single_earth_station.rx_interference = -500
+        single_earth_station.thermal_noise = -500
+        single_earth_station.total_interference = -500
+
+        return single_earth_station
 
 
     @staticmethod
     def generate_fs_station(param: ParametersFs):
+        """
+        @deprecated
+        Since this creates a Single Earth Station, you should use StationFactory.generate_single_earth_station instead.
+        This will be deleted in the future
+        """
+        warn("This is deprecated, use StationFactory.generate_single_earth_station() instead; date=2024-10-11", DeprecationWarning, stacklevel=2)
+
         fs_station = StationManager(1)
         fs_station.station_type = StationType.FS
 
@@ -663,6 +776,13 @@ class StationFactory(object):
 
     @staticmethod
     def generate_ras_station(param: ParametersRas):
+        """
+        @deprecated
+        Since this creates a Single Earth Station, you should use StationFactory.generate_single_earth_station instead.
+        This will be deleted in the future
+        """
+        warn("This is deprecated, use StationFactory.generate_single_earth_station() instead; date=2024-10-11", DeprecationWarning, stacklevel=2)
+
         ras_station = StationManager(1)
         ras_station.station_type = StationType.RAS
 
@@ -693,14 +813,30 @@ class StationFactory(object):
 
 
     @staticmethod
-    def generate_eess_passive_sensor(param: ParametersEessPassive):
-        eess_passive_sensor = StationManager(1)
-        eess_passive_sensor.station_type = StationType.EESS_PASSIVE
-        eess_passive_sensor.is_space_station = True
+    def generate_eess_space_station(param: ParametersEessSS):
+        if param.distribution_enable:
+            if param.distribution_type == "UNIFORM":
+                param.nadir_angle = np.random.uniform(param.nadir_angle_distribution[0],
+                                                  param.nadir_angle_distribution[1])
 
-        # incidence angle according to Rec. ITU-R RS.1861-0
-        incidence_angle = math.degrees(math.asin(
-                math.sin(math.radians(param.nadir_angle))*(1 + (param.altitude/EARTH_RADIUS))))
+        return StationFactory.generate_space_station(param, StationType.EESS_SS)
+
+
+    @staticmethod
+    def generate_metsat_ss(param: ParametersMetSatSS):
+        return StationFactory.generate_space_station(param, StationType.METSAT_SS)
+
+    @staticmethod
+    def generate_space_station(param: ParametersSpaceStation, station_type: StationType):
+        # this method uses off-nadir angle and altitude to infer the entire geometry
+        # TODO: make this usable on more space station cases (initially only works for metsat and eess)
+        space_station = StationManager(1)
+        space_station.is_space_station = True
+        space_station.station_type = station_type
+        # assert param.station_type is not None
+
+        incidence_angle = math.degrees(math.asin(math.sin(math.radians(param.nadir_angle)) * \
+                                                    (1 + (param.altitude/EARTH_RADIUS))))
 
         # distance to field of view centre according to Rec. ITU-R RS.1861-0
         distance = EARTH_RADIUS * \
@@ -710,42 +846,42 @@ class StationFactory(object):
         # Elevation at ground (centre of the footprint)
         theta_grd_elev = 90 - incidence_angle
 
-        eess_passive_sensor.x = np.array([0])
-        eess_passive_sensor.y = np.array([distance * math.cos(math.radians(theta_grd_elev))])
-        eess_passive_sensor.height = np.array([distance * math.sin(math.radians(theta_grd_elev))])
+        space_station.x = np.array([0])
+        space_station.y = np.array([distance * math.cos(math.radians(theta_grd_elev))])
+        space_station.height = np.array([distance * math.sin(math.radians(theta_grd_elev))])
 
         # Elevation and azimuth at sensor wrt centre of the footprint
         # It is assumed the sensor is at y-axis, hence azimuth is 270 deg
-        eess_passive_sensor.azimuth = 270
-        eess_passive_sensor.elevation = -theta_grd_elev
+        space_station.azimuth = 270
+        space_station.elevation = -theta_grd_elev
 
-        eess_passive_sensor.active = np.array([True])
-        eess_passive_sensor.rx_interference = -500
+        space_station.active = np.array([True])
+        space_station.rx_interference = -500
 
         if param.antenna_pattern == "OMNI":
-            eess_passive_sensor.antenna = np.array([AntennaOmni(param.antenna_gain)])
+            space_station.antenna = np.array([AntennaOmni(param.antenna_gain)])
         elif param.antenna_pattern == "ITU-R RS.1813":
-            eess_passive_sensor.antenna = np.array([AntennaRS1813(param)])
+            space_station.antenna = np.array([AntennaRS1813(param)])
         elif param.antenna_pattern == "ITU-R RS.1861 9a":
-            eess_passive_sensor.antenna = np.array([AntennaRS1861_9A(param)])
+            space_station.antenna = np.array([AntennaRS1861_9A(param)])
         elif param.antenna_pattern == "ITU-R RS.1861 9b":
-            eess_passive_sensor.antenna = np.array([AntennaRS1861_9B(param)])
+            space_station.antenna = np.array([AntennaRS1861_9B(param)])
         elif param.antenna_pattern == "ITU-R RS.1861 9c":
-            eess_passive_sensor.antenna = np.array([AntennaRS1861_9C()])
+            space_station.antenna = np.array([AntennaRS1861_9C()])
+        elif param.antenna_pattern == "ITU-R RS.2043":
+            space_station.antenna = np.array([AntennaRS2043()])
+        elif param.antenna_pattern == "ITU-R S.672":
+            space_station.antenna = np.array([AntennaS672(param)])
         else:
             sys.stderr.write("ERROR\nInvalid EESS PASSIVE antenna pattern: " + param.antenna_pattern)
             sys.exit(1)
 
-        eess_passive_sensor.bandwidth = param.bandwidth
-        # Noise temperature is not an input parameter for EESS passive.
+        space_station.bandwidth = param.bandwidth
+        # Noise temperature is not an input parameter for yet used systems.
         # It is included here to calculate the useless I/N values
-        eess_passive_sensor.noise_temperature = 250
-        eess_passive_sensor.thermal_noise = -500
-        eess_passive_sensor.total_interference = -500
+        space_station.noise_temperature = 500
 
-        return eess_passive_sensor
-
-
+        return space_station
 
     @staticmethod
     def get_random_position( num_stas: int, topology: Topology,
