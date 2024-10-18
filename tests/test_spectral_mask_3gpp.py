@@ -23,7 +23,7 @@ class SpectalMask3GppTest(unittest.TestCase):
         spurious = -13
         self.mask_bs_a = SpectralMask3Gpp(
             sta_type, frequency, bandwidth, spurious)
-        self.mask_bs_a.set_mask(power=p_tx)
+        self.mask_bs_a.set_mask(p_tx)
 
         # Initialize variables for BS Cat-B mask (3.5 GHz)
         sta_type = StationType.IMT_BS
@@ -33,7 +33,7 @@ class SpectalMask3GppTest(unittest.TestCase):
         spurious = -30
         self.mask_bs_b = SpectralMask3Gpp(
             sta_type, frequency, bandwidth, spurious)
-        self.mask_bs_b.set_mask(power=p_tx)
+        self.mask_bs_b.set_mask(p_tx)
 
         # Initialize variables for UE mask (3.5 GHz)
         sta_type = StationType.IMT_UE
@@ -43,7 +43,7 @@ class SpectalMask3GppTest(unittest.TestCase):
         spurious = -30
         self.mask_ue = SpectralMask3Gpp(
             sta_type, frequency, bandwidth, spurious)
-        self.mask_ue.set_mask(power=p_tx)
+        self.mask_ue.set_mask(p_tx)
 
     def test_power_calc_bs_a(self):
         #######################################################################
