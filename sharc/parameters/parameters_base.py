@@ -14,11 +14,12 @@ class ParametersBase:
     nested_parameters_enabled: bool = False
 
     # TODO: make this be directly called as the default load method, after reading .yml file
-    def load_subparameters(self, ctx: str, params: dict):
+    def load_subparameters(self, ctx: str, params: dict, quiet=True):
         """
             ctx: provides information on what subattribute is being parsed.
                  This is mainly for debugging/logging/error handling
             params: dict that contains the attributes needed by the
+            quiet: if True the parser will not warn about unset paramters
         """
         # Load all the parameters from the configuration file
         attr_list = [
@@ -29,9 +30,10 @@ class ParametersBase:
             default_attr_value = getattr(self, attr_name)
 
             if attr_name not in params:
-                print(
-                    f"[INFO]: WARNING. Using default parameters for {ctx}.{attr_name}: {default_attr_value}",
-                )
+                if not quiet:
+                    print(
+                        f"[INFO]: WARNING. Using default parameters for {ctx}.{attr_name}: {default_attr_value}",
+                    )
             elif isinstance(default_attr_value, ParametersBase):
                 if not isinstance(params[attr_name], dict):
                     raise ValueError(
@@ -62,7 +64,7 @@ class ParametersBase:
         for attr in attr_list:
             getattr(self, attr).validate(f"{ctx}.{attr}")
 
-    def load_parameters_from_file(self, config_file: str):
+    def load_parameters_from_file(self, config_file: str, quiet=True):
         """Load the parameters from file.
         The sanity check is child class reponsibility
 
@@ -70,6 +72,7 @@ class ParametersBase:
         ----------
         file_name : str
             the path to the configuration file
+        quiet: if True the parser will not warn about unset paramters
 
         Raises
         ------
@@ -81,8 +84,9 @@ class ParametersBase:
             config = yaml.safe_load(file)
 
         if self.section_name not in config.keys():
-            print(f"ParameterBase: section {self.section_name} not in parameter file.\
-                  Only default parameters where loaded.")
+            if not quiet:
+                print(f"ParameterBase: section {self.section_name} not in parameter file.\
+                    Only default parameters where loaded.")
             return
 
         # Load all the parameters from the configuration file
@@ -136,7 +140,8 @@ class ParametersBase:
                     )
 
             except KeyError:
-                print(
-                    f"ParametersBase: NOTICE! Configuration parameter \"{self.section_name}.{attr_name}\" \
-                        is not set in configuration file. Using default value {attr_val}",
-                )
+                if not quiet:
+                    print(
+                        f"ParametersBase: NOTICE! Configuration parameter \"{self.section_name}.{attr_name}\" \
+                            is not set in configuration file. Using default value {attr_val}",
+                    )
