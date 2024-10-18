@@ -74,7 +74,7 @@ class StationFactory(object):
                 imt_base_stations.height = topology.height
             else:
                 imt_base_stations.height = param.bs_height*np.ones(num_bs)
-        
+
         imt_base_stations.azimuth = topology.azimuth
         imt_base_stations.active = random_number_gen.rand(num_bs) < param.bs_load_probability
         imt_base_stations.tx_power = param.bs_conducted_power*np.ones(num_bs)
@@ -154,7 +154,8 @@ class StationFactory(object):
         elevation = (elevation_range[1] - elevation_range[0])*random_number_gen.random_sample(num_ue) + \
                     elevation_range[0]
 
-        if param.ue_distribution_type.upper() == "UNIFORM":
+        if param.ue_distribution_type.upper() == "UNIFORM" or \
+           param.ue_distribution_type.upper() == "UNIFORM_IN_CELL":
 
             if not (type(topology) is TopologyMacrocell):
                 sys.stderr.write("ERROR\nUniform UE distribution is currently supported only with Macrocell topology")
@@ -166,7 +167,7 @@ class StationFactory(object):
             psi = np.degrees(np.arctan((param.bs_height - param.ue_height) / distance))
 
 
-            imt_ue.azimuth = (azimuth + theta + np.pi/2)  
+            imt_ue.azimuth = (azimuth + theta + np.pi/2)
             imt_ue.elevation = elevation + psi
 
 
@@ -810,7 +811,7 @@ class StationFactory(object):
         else:
             theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
             distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs_height)**2)
-        
+
 
         return x, y, theta, distance
 
