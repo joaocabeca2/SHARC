@@ -1,7 +1,20 @@
 name: Python application
 
 on:
-    pull_request:
+  push:
+    branches:
+      - master
+      - development
+      - 'v1.*'
+  pull_request:
+    branches:
+      - master
+      - development
+      - 'v1.*'
+    types:
+      - opened
+      - reopened
+      - synchronize
 
 permissions:
     contents: read
