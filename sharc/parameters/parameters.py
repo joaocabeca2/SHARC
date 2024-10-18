@@ -19,6 +19,7 @@ from sharc.parameters.parameters_fs import ParametersFs
 from sharc.parameters.parameters_metsat_ss import ParametersMetSatSS
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
 from sharc.parameters.parameters_fss_es import ParametersFssEs
+from sharc.parameters.parameters_wifi_es import ParametersWifiEs
 from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
@@ -44,6 +45,7 @@ class Parameters(object):
         self.fs = ParametersFs()
         self.fss_ss = ParametersFssSs()
         self.fss_es = ParametersFssEs()
+        self.wifi_es = ParametersWifiEs()
         self.haps = ParametersHaps()
         self.rns = ParametersRns()
         self.ras = ParametersRas()
@@ -152,6 +154,11 @@ class Parameters(object):
             # FSS earth station
             #######################################################################
             self.fss_es.load_parameters_from_file(self.file_name)
+
+            #######################################################################
+            # wifi earth station
+            #######################################################################
+            self.wifi_es.load_parameters_from_file(self.file_name)
 
             #######################################################################
             # Fixed wireless service

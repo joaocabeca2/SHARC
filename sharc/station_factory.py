@@ -20,6 +20,7 @@ from sharc.parameters.parameters_metsat_ss import ParametersMetSatSS
 from sharc.parameters.parameters_fs import ParametersFs
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
 from sharc.parameters.parameters_fss_es import ParametersFssEs
+from sharc.parameters.parameters_wifi_es import ParametersWifiEs
 from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
@@ -420,6 +421,8 @@ class StationFactory(object):
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         elif parameters.general.system == "RAS":
             return StationFactory.generate_ras_station(parameters.ras)
+        elif parameters.general.system == 'WI_FI':
+            return StationFactory.gene
         else:
             sys.stderr.write("ERROR\nInvalid system: " + parameters.general.system)
             sys.exit(1)
@@ -478,6 +481,92 @@ class StationFactory(object):
 
         return fss_space_station
 
+    def generate_wifi_earth_station(param: ParametersWifiEs, random_number_gen: np.random.RandomState, *args):
+        """
+        @deprecated
+
+        Since this creates a Single Earth Station, you should use StationFactory.generate_single_earth_station instead.
+        This will be deleted in the future.
+        ----------------------------------
+        Generates wifi Earth Station.
+
+        Arguments:
+            param: ParameterswifiEs
+            random_number_gen: np.random.RandomState
+            topology (optional): Topology
+        """
+        warn("This is deprecated, use StationFactory.generate_single_earth_station() instead; date=2024-10-11", DeprecationWarning, stacklevel=2)
+
+        if len(args): topology = args[0]
+
+        wifi_earth_station = StationManager(1)
+        wifi_earth_station.station_type = StationType.wifi_ES
+
+        if param.location.upper() == "FIXED":
+            wifi_earth_station.x = np.array([param.x])
+            wifi_earth_station.y = np.array([param.y])
+        elif param.location.upper() == "CELL":
+            x, y, _, _ = StationFactory.get_random_position(1, topology, random_number_gen,
+                                                                      param.min_dist_to_bs, True)
+            wifi_earth_station.x = np.array(x)
+            wifi_earth_station.y = np.array(y)
+        elif param.location.upper() == "NETWORK":
+            x, y, _, _ = StationFactory.get_random_position(1, topology, random_number_gen,
+                                                                      param.min_dist_to_bs, False)
+            wifi_earth_station.x = np.array(x)
+            wifi_earth_station.y = np.array(y)
+        elif param.location.upper() == "UNIFORM_DIST":
+             
+            if param.min_dist_to_bs < 0:
+                sys.stderr.write("ERROR\nInvalid minimum distance from wifi ES to BS: {}".format(param.min_dist_to_bs))
+                sys.exit(1)
+            while(True):
+                dist_x = random_number_gen.uniform(-param.max_dist_to_bs, param.max_dist_to_bs)
+                dist_y = random_number_gen.uniform(-param.max_dist_to_bs, param.max_dist_to_bs)
+                radius = np.sqrt(dist_x**2 + dist_y**2)
+                if (radius > param.min_dist_to_bs) & (radius < param.max_dist_to_bs):
+                    break
+            wifi_earth_station.x[0] = dist_x
+            wifi_earth_station.y[0] = dist_y
+        else:
+            sys.stderr.write("ERROR\nwifi-ES location type {} not supported".format(param.location))
+            sys.exit(1)
+
+        wifi_earth_station.height = np.array([param.height])
+
+        if param.azimuth.upper() == "RANDOM":
+            wifi_earth_station.azimuth = random_number_gen.uniform(-180., 180.)
+        else:
+            wifi_earth_station.azimuth = float(param.azimuth)
+
+        elevation = random_number_gen.uniform(param.elevation_min, param.elevation_max)
+        wifi_earth_station.elevation = np.array([elevation])
+
+        wifi_earth_station.active = np.array([True])
+        wifi_earth_station.tx_power = np.array([param.tx_power_density + 10*math.log10(param.bandwidth*1e6) + 30])
+        wifi_earth_station.rx_interference = -500
+
+        if param.antenna_pattern.upper() == "OMNI":
+            wifi_earth_station.antenna = np.array([AntennaOmni(param.antenna_gain)])
+        elif param.antenna_pattern.upper() == "ITU-R S.1855":
+            wifi_earth_station.antenna = np.array([AntennaS1855(param)])
+        elif param.antenna_pattern.upper() == "ITU-R S.465":
+            wifi_earth_station.antenna = np.array([AntennaS465(param)])
+        elif param.antenna_pattern.upper() == "MODIFIED ITU-R S.465":
+            wifi_earth_station.antenna = np.array([AntennaModifiedS465(param)])
+        elif param.antenna_pattern.upper() == "ITU-R S.580":
+            wifi_earth_station.antenna = np.array([AntennaS580(param)])
+        else:
+            sys.stderr.write("ERROR\nInvalid wifi ES antenna pattern: " + param.antenna_pattern)
+            sys.exit(1)
+
+        wifi_earth_station.noise_temperature = param.noise_temperature
+        wifi_earth_station.bandwidth = np.array([param.bandwidth])
+        wifi_earth_station.noise_temperature = param.noise_temperature
+        wifi_earth_station.thermal_noise = -500
+        wifi_earth_station.total_interference = -500
+
+        return wifi_earth_station
     @staticmethod
     def generate_fss_earth_station(param: ParametersFssEs, random_number_gen: np.random.RandomState, *args):
         """
