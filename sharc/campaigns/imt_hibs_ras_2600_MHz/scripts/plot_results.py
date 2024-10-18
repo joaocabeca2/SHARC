@@ -46,11 +46,6 @@ legends_mapper = [
     },
 ]
 
-
-def get_id_from_dirname(dirname: str):
-    return dirname.split("_")[-1]
-
-
 subfolders_filters = {}
 
 for subdir in subdirs:
@@ -61,12 +56,13 @@ for subdir in subdirs:
 
             subfolders_filters[mapper["output_dir_prefix"]]["id"] = max(
                 subfolders_filters[mapper["output_dir_prefix"]]["id"],
-                get_id_from_dirname(subdir)
+                get_id_from_dirname(subdir),
             )
             subfolders_filters[mapper["output_dir_prefix"]]["date"] = max(
                 subfolders_filters[mapper["output_dir_prefix"]]["date"],
                 get_date_from_dirname(
-                    subdir, 1 + len(mapper['output_dir_prefix']))
+                    subdir, 1 + len(mapper['output_dir_prefix']),
+                ),
             )
 
 
@@ -81,7 +77,7 @@ legend_and_subfolders = [
     # comment filters out if needed
     subfolders_filters[mapper["output_dir_prefix"]]["id"] == get_id_from_dirname(d) and
     subfolders_filters[mapper["output_dir_prefix"]]["date"] ==
-                       get_date_from_dirname(d, len(mapper["output_dir_prefix"]) + 1)
+    get_date_from_dirname(d, len(mapper["output_dir_prefix"]) + 1)
 ]
 
 # Example with specific subfolders and legends

@@ -15,8 +15,10 @@ class TopologyNTN(Topology):
 
     ALLOWED_NUM_SECTORS = [1, 7, 19]
 
-    def __init__(self, intersite_distance: float, cell_radius: int, bs_height: float, bs_azimuth: float,
-                 bs_elevation: float, num_sectors=7):
+    def __init__(
+        self, intersite_distance: float, cell_radius: int, bs_height: float, bs_azimuth: float,
+        bs_elevation: float, num_sectors=7,
+    ):
         """
         Initializes the NTN topology with specific network settings.
 
@@ -31,7 +33,8 @@ class TopologyNTN(Topology):
 
         if num_sectors not in self.ALLOWED_NUM_SECTORS:
             raise ValueError(
-                f"Invalid number of sectors: {num_sectors}. Allowed values are {self.ALLOWED_NUM_SECTORS}.")
+                f"Invalid number of sectors: {num_sectors}. Allowed values are {self.ALLOWED_NUM_SECTORS}.",
+            )
 
         # Call to the superclass constructor to set common properties
         super().__init__(intersite_distance, cell_radius)
@@ -79,10 +82,14 @@ class TopologyNTN(Topology):
                 angle = k * 60
                 self.x.append(2 * d * np.cos(np.radians(angle)))
                 self.y.append(2 * d * np.sin(np.radians(angle)))
-                self.x.append(d * np.cos(np.radians(angle)) +
-                              d * np.cos(np.radians(angle + 60)))
-                self.y.append(d * np.sin(np.radians(angle)) +
-                              d * np.sin(np.radians(angle + 60)))
+                self.x.append(
+                    d * np.cos(np.radians(angle)) +
+                    d * np.cos(np.radians(angle + 60)),
+                )
+                self.y.append(
+                    d * np.sin(np.radians(angle)) +
+                    d * np.sin(np.radians(angle + 60)),
+                )
 
         self.x = np.array(self.x)
         self.y = np.array(self.y)
@@ -98,12 +105,17 @@ class TopologyNTN(Topology):
         self.y_rotated = self.x * sin_theta + self.y * cos_theta
 
         # Calculate azimuth and elevation for each point
-        self.azimuth = np.arctan2(self.y_rotated - self.space_station_y,
-                                  self.x_rotated - self.space_station_x) * 180 / np.pi
-        distance_xy = np.sqrt((self.x_rotated - self.space_station_x) **
-                              2 + (self.y_rotated - self.space_station_y)**2)
+        self.azimuth = np.arctan2(
+            self.y_rotated - self.space_station_y,
+            self.x_rotated - self.space_station_x,
+        ) * 180 / np.pi
+        distance_xy = np.sqrt(
+            (self.x_rotated - self.space_station_x) **
+            2 + (self.y_rotated - self.space_station_y)**2,
+        )
         self.elevation = np.arctan2(
-            self.z - self.space_station_z, distance_xy) * 180 / np.pi
+            self.z - self.space_station_z, distance_xy,
+        ) * 180 / np.pi
 
         # Update the number of base stations after setup
         self.num_base_stations = len(self.x)
@@ -120,8 +132,10 @@ class TopologyNTN(Topology):
             hexagon = []
             for a in range(6):
                 angle_rad = math.radians(a * 60)
-                hexagon.append([x + r * math.cos(angle_rad),
-                               y + r * math.sin(angle_rad)])
+                hexagon.append([
+                    x + r * math.cos(angle_rad),
+                    y + r * math.sin(angle_rad),
+                ])
             hexagon.append(hexagon[0])  # Close the hexagon
             hexagon = np.array(hexagon)
 
@@ -129,8 +143,10 @@ class TopologyNTN(Topology):
             axis.add_patch(sector)
 
         # Plot base stations
-        axis.scatter(self.x / 1000, self.y / 1000, s=200, marker='v', c='k', edgecolor='k', linewidth=1, alpha=1,
-                     label="Anchor Points")
+        axis.scatter(
+            self.x / 1000, self.y / 1000, s=200, marker='v', c='k', edgecolor='k', linewidth=1, alpha=1,
+            label="Anchor Points",
+        )
 
         # Add labels and title
         axis.set_xlabel("x-coordinate [km]")
@@ -145,7 +161,8 @@ class TopologyNTN(Topology):
         if map:
             # Load the map of Brazil using GeoPandas
             brazil = gpd.read_file(
-                "${workspaceFolder}\\sharc\\topology\\countries\\ne_110m_admin_0_countries.shp")
+                "${workspaceFolder}\\sharc\\topology\\countries\\ne_110m_admin_0_countries.shp",
+            )
             brazil = brazil[brazil['NAME'] == "Brazil"]
 
             # Coordinates of the Federal District (Brasília)
@@ -157,7 +174,8 @@ class TopologyNTN(Topology):
 
             # Convert Federal District coordinates to kilometers
             federal_district_coords_km = (
-                federal_district_coords[0] * lon_to_km, federal_district_coords[1] * lat_to_km)
+                federal_district_coords[0] * lon_to_km, federal_district_coords[1] * lat_to_km,
+            )
 
             # Calculate the shift required to move the Federal District to (0, 0)
             x_shift = federal_district_coords_km[0]
@@ -186,34 +204,46 @@ class TopologyNTN(Topology):
             hexagon = []
             for a in range(6):
                 angle_rad = math.radians(a * 60)
-                hexagon.append([x + r * math.cos(angle_rad),
-                               y + r * math.sin(angle_rad)])
+                hexagon.append([
+                    x + r * math.cos(angle_rad),
+                    y + r * math.sin(angle_rad),
+                ])
             hexagon.append(hexagon[0])  # Close the hexagon
             hexagon = np.array(hexagon)
 
             # 3D hexagon
-            axis.plot(hexagon[:, 0], hexagon[:, 1],
-                      np.zeros_like(hexagon[:, 0]), 'k-')
+            axis.plot(
+                hexagon[:, 0], hexagon[:, 1],
+                np.zeros_like(hexagon[:, 0]), 'k-',
+            )
 
         # Plot base stations
-        axis.scatter(self.x / 1000, self.y / 1000, np.zeros_like(self.x), s=75, marker='v', c='k', edgecolor='k',
-                     linewidth=1, alpha=1,
-                     label="Anchor Points")
+        axis.scatter(
+            self.x / 1000, self.y / 1000, np.zeros_like(self.x), s=75, marker='v', c='k', edgecolor='k',
+            linewidth=1, alpha=1,
+            label="Anchor Points",
+        )
 
         # Plot the satellite
-        axis.scatter(self.space_station_x / 1000, self.space_station_y / 1000, self.space_station_z / 1000, s=75, c='r',
-                     marker='^', edgecolor='k', linewidth=1, alpha=1,
-                     label=f"Satellite (φ={np.degrees(self.bs_azimuth):.1f}°, θ={np.degrees(self.bs_elevation):.1f}°)")
+        axis.scatter(
+            self.space_station_x / 1000, self.space_station_y / 1000, self.space_station_z / 1000, s=75, c='r',
+            marker='^', edgecolor='k', linewidth=1, alpha=1,
+            label=f"Satellite (φ={np.degrees(self.bs_azimuth):.1f}°, θ={np.degrees(self.bs_elevation):.1f}°)",
+        )
 
         # Plot the height line
-        axis.plot([self.space_station_x / 1000, self.space_station_x / 1000],
-                  [self.space_station_y / 1000, self.space_station_y / 1000],
-                  [0, self.space_station_z / 1000], 'b-', label=f'Height = {self.space_station_z / 1000:.1f} km')
+        axis.plot(
+            [self.space_station_x / 1000, self.space_station_x / 1000],
+            [self.space_station_y / 1000, self.space_station_y / 1000],
+            [0, self.space_station_z / 1000], 'b-', label=f'Height = {self.space_station_z / 1000:.1f} km',
+        )
 
         # Plot the slant range line
-        axis.plot([0, self.space_station_x / 1000],
-                  [0, self.space_station_y / 1000],
-                  [0, self.space_station_z / 1000], 'g--', label=f'Slant range = {self.bs_radius / 1000:.1f} km')
+        axis.plot(
+            [0, self.space_station_x / 1000],
+            [0, self.space_station_y / 1000],
+            [0, self.space_station_z / 1000], 'g--', label=f'Slant range = {self.bs_radius / 1000:.1f} km',
+        )
 
         # Add labels and title
         axis.set_xlabel("x-coordinate [km]")
@@ -238,7 +268,8 @@ if __name__ == '__main__':
 
     # Test for 1 sector
     ntn_topology_1 = TopologyNTN(
-        intersite_distance, cell_radius, bs_height, bs_azimuth, bs_elevation, num_sectors=1)
+        intersite_distance, cell_radius, bs_height, bs_azimuth, bs_elevation, num_sectors=1,
+    )
     ntn_topology_1.calculate_coordinates()  # Calculate the site coordinates
 
     fig = plt.figure()
@@ -248,7 +279,8 @@ if __name__ == '__main__':
 
     # Test for 7 sectors
     ntn_topology_7 = TopologyNTN(
-        intersite_distance, cell_radius, bs_height, bs_azimuth, bs_elevation, num_sectors=7)
+        intersite_distance, cell_radius, bs_height, bs_azimuth, bs_elevation, num_sectors=7,
+    )
     ntn_topology_7.calculate_coordinates()  # Calculate the site coordinates
 
     fig = plt.figure()
@@ -258,7 +290,8 @@ if __name__ == '__main__':
 
     # Test for 19 sectors
     ntn_topology_19 = TopologyNTN(
-        intersite_distance, cell_radius, bs_height, bs_azimuth, bs_elevation, num_sectors=19)
+        intersite_distance, cell_radius, bs_height, bs_azimuth, bs_elevation, num_sectors=19,
+    )
     ntn_topology_19.calculate_coordinates()  # Calculate the site coordinates
 
     fig = plt.figure()

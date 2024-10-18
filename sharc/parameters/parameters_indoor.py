@@ -64,26 +64,32 @@ class ParametersIndoor(ParametersBase):
         # Now do the sanity check for some parameters
         if self.basic_path_loss.upper() not in ["FSPL", "INH_OFFICE"]:
             raise ValueError(
-                f"ParamtersIndoor: Invalid topology name {self.basic_path_loss}")
+                f"ParamtersIndoor: Invalid topology name {self.basic_path_loss}",
+            )
 
         if self.num_imt_buildings != "ALL" and (not isinstance(self.num_imt_buildings, int) or self.num_imt_buildings <= 0):
             raise ValueError(
-                f"ParamtersIndoor: Invalid num of buildings {self.num_imt_buildings}")
+                f"ParamtersIndoor: Invalid num of buildings {self.num_imt_buildings}",
+            )
 
         if self.building_class.upper() not in ["TRADITIONAL", "THERMALLY_EFFICIENT"]:
             raise ValueError(
-                f"ParametersIndoor: Inavlid Spectral Mask Name {self.building_class}")
+                f"ParametersIndoor: Inavlid Spectral Mask Name {self.building_class}",
+            )
 
         if not (0 <= self.ue_indoor_percent or self.ue_indoor_percent <= 1):
             raise ValueError(
-                f"ParametersIndoor: ue_indoor_percent must be between 0 and 1, but is {self.ue_indoor_percent}")
+                f"ParametersIndoor: ue_indoor_percent must be between 0 and 1, but is {self.ue_indoor_percent}",
+            )
 
         # Ensure the number of rows is greater than zero
         if self.n_rows <= 0:
             raise ValueError(
-                f"ParametersIndoor: n_rows must be greater than 0, but is {self.n_rows}")
+                f"ParametersIndoor: n_rows must be greater than 0, but is {self.n_rows}",
+            )
 
         # Ensure the number of columns is greater than zero
         if self.n_colums <= 0:
             raise ValueError(
-                f"ParametersIndoor: n_colums must be greater than 0, but is {self.n_colums}")
+                f"ParametersIndoor: n_colums must be greater than 0, but is {self.n_colums}",
+            )

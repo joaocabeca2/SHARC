@@ -96,22 +96,26 @@ if __name__ == "__main__":
     downtilt = 0
 
     file_names = ["bs_norm_8x8_050.npz"]
-    param_list = [AntennaPar(adjacent_antenna_model,
-                             normalization,
-                             normalization_data,
-                             element_pattern,
-                             element_max_g,
-                             element_phi_3db,
-                             element_theta_3db,
-                             element_am,
-                             element_sla_v,
-                             n_rows,
-                             n_columns,
-                             element_horiz_spacing,
-                             element_vert_spacing,
-                             multiplication_factor,
-                             minimum_array_gain,
-                             downtilt)]
+    param_list = [
+        AntennaPar(
+            adjacent_antenna_model,
+            normalization,
+            normalization_data,
+            element_pattern,
+            element_max_g,
+            element_phi_3db,
+            element_theta_3db,
+            element_am,
+            element_sla_v,
+            n_rows,
+            n_columns,
+            element_horiz_spacing,
+            element_vert_spacing,
+            multiplication_factor,
+            minimum_array_gain,
+            downtilt,
+        ),
+    ]
     ###########################################################################
     # Setup
     # General parameters

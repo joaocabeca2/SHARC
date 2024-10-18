@@ -13,10 +13,14 @@ if __name__ == "__main__":
     num_spaces_ident = 4
 
     parser = ArgumentParser()
-    parser.add_argument("-i", "--input", dest="input_file",
-                        help="Input file. Should be .ini. Absolute Path", required=True)
-    parser.add_argument("-o", "--output", dest="output_file",
-                        help="Output file. Should be .yaml. Absolute Path", required=True)
+    parser.add_argument(
+        "-i", "--input", dest="input_file",
+        help="Input file. Should be .ini. Absolute Path", required=True,
+    )
+    parser.add_argument(
+        "-o", "--output", dest="output_file",
+        help="Output file. Should be .yaml. Absolute Path", required=True,
+    )
 
     args = parser.parse_args()
 
@@ -52,8 +56,10 @@ if __name__ == "__main__":
                 for comment in current_attr_comments:
                     output_file.write(' ' * current_ident + comment)
                 current_attr_comments = []
-                output_file.write(' ' * current_ident +
-                                  f"{current_section}:\n")
+                output_file.write(
+                    ' ' * current_ident +
+                    f"{current_section}:\n",
+                )
                 current_ident += num_spaces_ident
             else:
                 # line is attribute
@@ -66,5 +72,7 @@ if __name__ == "__main__":
                 for comment in current_attr_comments:
                     output_file.write(' ' * current_ident + comment)
                 current_attr_comments = []
-                output_file.write(' ' * current_ident +
-                                  f"{current_attr_name} :{current_attr_value}\n")
+                output_file.write(
+                    ' ' * current_ident +
+                    f"{current_attr_name} :{current_attr_value}\n",
+                )

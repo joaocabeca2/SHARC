@@ -52,12 +52,14 @@ if __name__ == '__main__':
 
     gain = antenna.calculate_gain(off_axis_angle_vec=phi)
 
-    fig = plt.figure(figsize=(8, 5), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(8, 5), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
     plt.plot(phi, gain - param.antenna_gain, "-b")
 
     plt.title("ITU-R RS.1861 Fig 9b antenna radiation pattern")
-    plt.xlabel("Off-axis angle $\phi$ [deg]")
+    plt.xlabel(r"Off-axis angle $\phi$ [deg]")
     plt.ylabel("Normalized antenna gain [dBi]")
     plt.xlim((phi[0], phi[-1]))
     plt.ylim((-70, 0))

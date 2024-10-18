@@ -123,10 +123,14 @@ if __name__ == '__main__':
     # ax1.semilogx(theta, antenna.get_gain_el(theta=theta), '-',color='blue', label='ITU-R RS.2043-0 (Table 9)')
     # ax2.semilogx(phi, antenna.get_gain_az(phi=phi), '-', color='darkorange', label='ITU-R RS.2043-0 (Table 9)')
 
-    ax1.plot(theta, antenna.get_gain_el(theta=theta), '-',
-             color='blue', label='ITU-R RS.2043-0 (Table 9)')
-    ax2.plot(phi, antenna.get_gain_az(phi=phi) + 47, '-',
-             color='darkorange', label='ITU-R RS.2043-0 (Table 9)')
+    ax1.plot(
+        theta, antenna.get_gain_el(theta=theta), '-',
+        color='blue', label='ITU-R RS.2043-0 (Table 9)',
+    )
+    ax2.plot(
+        phi, antenna.get_gain_az(phi=phi) + 47, '-',
+        color='darkorange', label='ITU-R RS.2043-0 (Table 9)',
+    )
     ax1.grid()
     ax2.grid()
     ax1.legend()

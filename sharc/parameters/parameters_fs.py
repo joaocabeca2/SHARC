@@ -71,17 +71,21 @@ class ParametersFs(ParametersBase):
         # Implementing sanity checks for critical parameters
         if not (-90 <= self.elevation <= 90):
             raise ValueError(
-                "Elevation angle must be between -90 and 90 degrees.")
+                "Elevation angle must be between -90 and 90 degrees.",
+            )
 
         if not (0 <= self.azimuth <= 360):
             raise ValueError(
-                "Azimuth angle must be between 0 and 360 degrees.")
+                "Azimuth angle must be between 0 and 360 degrees.",
+            )
 
         if self.antenna_pattern not in ["ITU-R F.699", "OMNI"]:
             raise ValueError(
-                f"Invalid antenna_pattern: {self.antenna_pattern}")
+                f"Invalid antenna_pattern: {self.antenna_pattern}",
+            )
 
         # Sanity check for channel model
         if self.channel_model not in ["FSPL", "TerrestrialSimple"]:
             raise ValueError(
-                "Invalid channel_model, must be either 'FSPL' or 'TerrestrialSimple'")
+                "Invalid channel_model, must be either 'FSPL' or 'TerrestrialSimple'",
+            )

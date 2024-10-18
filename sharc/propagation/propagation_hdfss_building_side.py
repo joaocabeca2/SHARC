@@ -38,10 +38,13 @@ class PropagationHDFSSBuildingSide(Propagation):
         self.LOSS_PER_FLOOR = 50
 
         self.propagation_fspl = PropagationFreeSpace(random_number_gen)
-        self.propagation_p1411 = PropagationP1411(random_number_gen,
-                                                  above_clutter=False)
+        self.propagation_p1411 = PropagationP1411(
+            random_number_gen,
+            above_clutter=False,
+        )
         self.building_entry = PropagationBuildingEntryLoss(
-            self.random_number_gen)
+            self.random_number_gen,
+        )
 
     def get_loss(self, *args, **kwargs) -> np.array:
         """
@@ -64,13 +67,17 @@ class PropagationHDFSSBuildingSide(Propagation):
         es_y = kwargs["es_y"]
 
         # Define which stations are on the same building
-        same_build = self.is_same_building(imt_x, imt_y,
-                                           es_x, es_y)
+        same_build = self.is_same_building(
+            imt_x, imt_y,
+            es_x, es_y,
+        )
         not_same_build = np.logical_not(same_build)
 
         # Define which stations are on the building in front
-        next_build = self.is_next_building(imt_x, imt_y,
-                                           es_x, es_y)
+        next_build = self.is_next_building(
+            imt_x, imt_y,
+            es_x, es_y,
+        )
         not_next_build = np.logical_not(next_build)
 
         # Define which stations are in other buildings
@@ -84,20 +91,30 @@ class PropagationHDFSSBuildingSide(Propagation):
 #                                                       es_z)
         if not self.param.same_building_enabled:
             loss[:, same_build] += self.HIGH_LOSS
-        loss[:, same_build] += self.propagation_fspl.get_loss(d[:, same_build],
-                                                              f[:, same_build])
+        loss[:, same_build] += self.propagation_fspl.get_loss(
+            d[:, same_build],
+            f[:, same_build],
+        )
 
-        loss[:, next_build] += self.propagation_p1411.get_loss(distance_3D=d[:, next_build],
-                                                               frequency=f[:,
-                                                                           next_build],
-                                                               los=True,
-                                                               shadow=self.param.shadow_enabled)
+        loss[:, next_build] += self.propagation_p1411.get_loss(
+            distance_3D=d[:, next_build],
+            frequency=f[
+                :,
+                next_build,
+            ],
+            los=True,
+            shadow=self.param.shadow_enabled,
+        )
 
-        loss[:, other_build] += self.propagation_p1411.get_loss(distance_3D=d[:, other_build],
-                                                                frequency=f[:,
-                                                                            other_build],
-                                                                los=False,
-                                                                shadow=self.param.shadow_enabled)
+        loss[:, other_build] += self.propagation_p1411.get_loss(
+            distance_3D=d[:, other_build],
+            frequency=f[
+                :,
+                other_build,
+            ],
+            los=False,
+            shadow=self.param.shadow_enabled,
+        )
 
         # Building entry loss
         if self.param.building_loss_enabled:
@@ -124,12 +141,15 @@ class PropagationHDFSSBuildingSide(Propagation):
                 build_loss = self.building_entry.get_loss(f, elevation)
             elif self.param.bs_building_entry_loss_type == 'P2109_FIXED':
                 build_loss = self.building_entry.get_loss(
-                    f, elevation, prob=self.param.bs_building_entry_loss_prob)
+                    f, elevation, prob=self.param.bs_building_entry_loss_prob,
+                )
             elif self.param.bs_building_entry_loss_type == 'FIXED_VALUE':
                 build_loss = self.param.bs_building_entry_loss_value
             else:
-                sys.stderr.write("ERROR\nBuilding entry loss type: " +
-                                 self.param.bs_building_entry_loss_type)
+                sys.stderr.write(
+                    "ERROR\nBuilding entry loss type: " +
+                    self.param.bs_building_entry_loss_type,
+                )
                 sys.exit(1)
 
         return build_loss
@@ -142,9 +162,11 @@ class PropagationHDFSSBuildingSide(Propagation):
             (1 + self.b_tol) * np.array([-self.b_d / 2, +self.b_d / 2])
 
         is_in_x = np.logical_and(
-            imt_x >= building_x_range[0], imt_x <= building_x_range[1])
+            imt_x >= building_x_range[0], imt_x <= building_x_range[1],
+        )
         is_in_y = np.logical_and(
-            imt_y >= building_y_range[0], imt_y <= building_y_range[1])
+            imt_y >= building_y_range[0], imt_y <= building_y_range[1],
+        )
 
         is_in_building = np.logical_and(is_in_x, is_in_y)
 
@@ -153,9 +175,11 @@ class PropagationHDFSSBuildingSide(Propagation):
     def get_same_build_loss(self, imt_z, es_z):
         floor_number = imt_z - es_z
         floor_number[floor_number >= 0] = np.floor(
-            floor_number[floor_number >= 0] / self.b_h)
+            floor_number[floor_number >= 0] / self.b_h,
+        )
         floor_number[floor_number < 0] = np.ceil(
-            floor_number[floor_number < 0] / self.b_h)
+            floor_number[floor_number < 0] / self.b_h,
+        )
 
         loss = self.LOSS_PER_FLOOR * floor_number
 
@@ -165,15 +189,18 @@ class PropagationHDFSSBuildingSide(Propagation):
         same_building_x_range = es_x + \
             (1 + self.b_tol) * np.array([-self.b_w / 2, +self.b_w / 2])
         same_building_y_range = (
-            es_y - self.b_d / 2) + (1 + self.b_tol) * np.array([-self.b_d / 2, +self.b_d / 2])
+            es_y - self.b_d / 2
+        ) + (1 + self.b_tol) * np.array([-self.b_d / 2, +self.b_d / 2])
 
         next_building_x_range = same_building_x_range
         next_building_y_range = same_building_y_range + self.b_d + self.s_w
 
         is_in_x = np.logical_and(
-            imt_x >= next_building_x_range[0], imt_x <= next_building_x_range[1])
+            imt_x >= next_building_x_range[0], imt_x <= next_building_x_range[1],
+        )
         is_in_y = np.logical_and(
-            imt_y >= next_building_y_range[0], imt_y <= next_building_y_range[1])
+            imt_y >= next_building_y_range[0], imt_y <= next_building_y_range[1],
+        )
 
         is_in_next_building = np.logical_and(is_in_x, is_in_y)
 

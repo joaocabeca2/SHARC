@@ -21,27 +21,29 @@ class ParametersBase:
             params: dict that contains the attributes needed by the
         """
         # Load all the parameters from the configuration file
-        attr_list = [a for a in dir(self) if not a.startswith('_') and not
-                     callable(getattr(self, a)) and a not in [
-            "section_name", "nested_parameters_enabled"]
-        ]
+        attr_list = [
+            a for a in dir(self) if not a.startswith('_') and not callable(getattr(self, a)) and a not in
+                    ["section_name", "nested_parameters_enabled",]]
 
         for attr_name in attr_list:
             default_attr_value = getattr(self, attr_name)
 
             if attr_name not in params:
                 print(
-                    f"[INFO]: WARNING. Using default parameters for {ctx}.{attr_name}: {default_attr_value}")
+                    f"[INFO]: WARNING. Using default parameters for {ctx}.{attr_name}: {default_attr_value}",
+                )
             elif isinstance(default_attr_value, ParametersBase):
                 if not isinstance(params[attr_name], dict):
                     raise ValueError(
-                        f"ERROR: Cannot parse section {ctx}.{attr_name}, is {params[attr_name]} instead of a dictionary")
+                        f"ERROR: Cannot parse section {ctx}.{attr_name}, is {params[attr_name]} instead of a dictionary",
+                    )
 
                 # try to recursively set config
                 # is a bit hacky and limits some stuff, since it doesn't know the context it is in
                 # for example, it cannot get system frequency to set some value
                 default_attr_value.load_subparameters(
-                    f"{ctx}.{attr_name}", params[attr_name])
+                    f"{ctx}.{attr_name}", params[attr_name],
+                )
             else:
                 setattr(self, attr_name, params[attr_name])
 
@@ -84,8 +86,10 @@ class ParametersBase:
             return
 
         # Load all the parameters from the configuration file
-        attr_list = [a for a in dir(self) if not a.startswith('_') and not
-                     callable(getattr(self, a)) and a != "section_name"]
+        attr_list = [
+            a for a in dir(self) if not a.startswith('_') and not
+            callable(getattr(self, a)) and a != "section_name"
+        ]
 
         for attr_name in attr_list:
             try:
@@ -102,7 +106,8 @@ class ParametersBase:
                         # its a regular string. Let the specific class implementation
                         # do the sanity check
                         print(
-                            f"ParametersBase: could not convert string to tuple \"{self.section_name}.{attr_name}\"")
+                            f"ParametersBase: could not convert string to tuple \"{self.section_name}.{attr_name}\"",
+                        )
                         exit()
 
                 # TODO: make every parameters use this way of setting its own attributes, and remove
@@ -115,18 +120,23 @@ class ParametersBase:
                     if not isinstance(config[self.section_name][attr_name], dict):
                         raise ValueError(
                             f"ERROR: Cannot parse section {self.section_name}.{attr_name}, is \
-                                {config[self.section_name][attr_name]} instead of a dictionary")
+                                {config[self.section_name][attr_name]} instead of a dictionary",
+                        )
 
                     # try to recursively set config
                     # is a bit hacky and limits some stuff, since it doesn't know the context it is in
                     # for example, it cannot get system frequency to set some value
                     attr_val.load_subparameters(
-                        f"{self.section_name}.{attr_name}", config[self.section_name][attr_name])
+                        f"{self.section_name}.{attr_name}", config[self.section_name][attr_name],
+                    )
                 else:
-                    setattr(self, attr_name,
-                            config[self.section_name][attr_name])
+                    setattr(
+                        self, attr_name,
+                        config[self.section_name][attr_name],
+                    )
 
             except KeyError:
                 print(
                     f"ParametersBase: NOTICE! Configuration parameter \"{self.section_name}.{attr_name}\" \
-                        is not set in configuration file. Using default value {attr_val}")
+                        is not set in configuration file. Using default value {attr_val}",
+                )

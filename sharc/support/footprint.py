@@ -52,8 +52,10 @@ class Footprint(object):
             if 'bore_subsat_long_deg' in kwargs.keys():
                 self.bore_subsat_long_deg = kwargs['bore_subsat_long_deg']
             self.elevation_deg = \
-                self.calc_elevation(self.bore_lat_deg,
-                                    self.bore_subsat_long_deg)
+                self.calc_elevation(
+                    self.bore_lat_deg,
+                    self.bore_subsat_long_deg,
+                )
 
         self.beam_width_deg = beam_deg
 
@@ -67,10 +69,13 @@ class Footprint(object):
         self.beam_width_rad = deg2rad(self.beam_width_deg)
 
         # Calculate tilt
-        self.beta = arccos(cos(self.bore_lat_rad) *
-                           cos(self.bore_subsat_long_rad))
+        self.beta = arccos(
+            cos(self.bore_lat_rad) *
+            cos(self.bore_subsat_long_rad),
+        )
         self.bore_tilt = arctan2(
-            sin(self.beta), ((1 / self.sigma) - cos(self.beta)))
+            sin(self.beta), ((1 / self.sigma) - cos(self.beta)),
+        )
 
         # Maximum tilt and latitute coverage
         self.max_beta_rad = arccos(self.sigma)
@@ -126,10 +131,13 @@ class Footprint(object):
         self.bore_subsat_long_rad = deg2rad(self.bore_subsat_long_deg)
 
         # Calculate tilt
-        self.beta = arccos(cos(self.bore_lat_rad) *
-                           cos(self.bore_subsat_long_rad))
+        self.beta = arccos(
+            cos(self.bore_lat_rad) *
+            cos(self.bore_subsat_long_rad),
+        )
         self.bore_tilt = arctan2(
-            sin(self.beta), (1 / self.sigma - cos(self.beta)))
+            sin(self.beta), (1 / self.sigma - cos(self.beta)),
+        )
 
     def calc_footprint(self, n: int):
         """
@@ -150,8 +158,12 @@ class Footprint(object):
             cos(phi)
 
         gamma_n = arccos(cos_gamma_n)
-        phi_n = arctan2(sin(phi), (sin(self.bore_tilt) * self.cot(self.beam_width_rad) -
-                                   cos(self.bore_tilt) * cos(phi)))
+        phi_n = arctan2(
+            sin(phi), (
+                sin(self.bore_tilt) * self.cot(self.beam_width_rad) -
+                cos(self.bore_tilt) * cos(phi)
+            ),
+        )
 
         eps_n = arctan2(sin(self.bore_subsat_long_rad), tan(self.bore_lat_rad)) + \
             phi_n
@@ -178,8 +190,10 @@ class Footprint(object):
 
         long_lat = vstack((long, lat)).T
 
-        obj = {'type': 'Polygon',
-               'coordinates': [long_lat.tolist()]}
+        obj = {
+            'type': 'Polygon',
+            'coordinates': [long_lat.tolist()],
+        }
 
         return earthArea(obj) * 1e-6
 
@@ -226,8 +240,10 @@ if __name__ == '__main__':
     footprint_500km_30deg = Footprint(5, elevation_deg=30, sat_height=500000)
     footprint_500km_45deg = Footprint(5, elevation_deg=45, sat_height=500000)
     footprint_500km_90deg = Footprint(5, elevation_deg=90, sat_height=500000)
-    print("Sat at 500km elevation 90 deg: area = {}".format(
-        footprint_500km_90deg.calc_area(n)))
+    print(
+        "Sat at 500km elevation 90 deg: area = {}".format(
+            footprint_500km_90deg.calc_area(n),),
+    )
 
     plt.figure(figsize=(15, 2))
     n = 100
@@ -283,28 +299,58 @@ if __name__ == '__main__':
     n = 1000
 
     # area 20km
-    print("Sat at 20km elevation 90 deg: area = {}".format(
-        footprint_20km_90deg.calc_area(n)))
-    print("Sat at 20km elevation 45 deg: area = {}".format(
-        footprint_20km_45deg.calc_area(n)))
-    print("Sat at 20km elevation 30 deg: area = {}".format(
-        footprint_20km_30deg.calc_area(n)))
-    print("Sat at 20km elevation 20 deg: area = {}".format(
-        footprint_20km_20deg.calc_area(n)))
-    print("Sat at 20km elevation 10 deg: area = {}".format(
-        footprint_20km_10deg.calc_area(n)))
+    print(
+        "Sat at 20km elevation 90 deg: area = {}".format(
+            footprint_20km_90deg.calc_area(n),
+        ),
+    )
+    print(
+        "Sat at 20km elevation 45 deg: area = {}".format(
+            footprint_20km_45deg.calc_area(n),
+        ),
+    )
+    print(
+        "Sat at 20km elevation 30 deg: area = {}".format(
+            footprint_20km_30deg.calc_area(n),
+        ),
+    )
+    print(
+        "Sat at 20km elevation 20 deg: area = {}".format(
+            footprint_20km_20deg.calc_area(n),
+        ),
+    )
+    print(
+        "Sat at 20km elevation 10 deg: area = {}".format(
+            footprint_20km_10deg.calc_area(n),
+        ),
+    )
 
     # area 500km
-    print("Sat at 500km elevation 90 deg: area = {}".format(
-        footprint_500km_90deg.calc_area(n)))
-    print("Sat at 500km elevation 45 deg: area = {}".format(
-        footprint_500km_45deg.calc_area(n)))
-    print("Sat at 500km elevation 30 deg: area = {}".format(
-        footprint_500km_30deg.calc_area(n)))
-    print("Sat at 500km elevation 20 deg: area = {}".format(
-        footprint_500km_20deg.calc_area(n)))
-    print("Sat at 500km elevation 10 deg: area = {}".format(
-        footprint_500km_10deg.calc_area(n)))
+    print(
+        "Sat at 500km elevation 90 deg: area = {}".format(
+            footprint_500km_90deg.calc_area(n),
+        ),
+    )
+    print(
+        "Sat at 500km elevation 45 deg: area = {}".format(
+            footprint_500km_45deg.calc_area(n),
+        ),
+    )
+    print(
+        "Sat at 500km elevation 30 deg: area = {}".format(
+            footprint_500km_30deg.calc_area(n),
+        ),
+    )
+    print(
+        "Sat at 500km elevation 20 deg: area = {}".format(
+            footprint_500km_20deg.calc_area(n),
+        ),
+    )
+    print(
+        "Sat at 500km elevation 10 deg: area = {}".format(
+            footprint_500km_10deg.calc_area(n),
+        ),
+    )
 
     # Plot area vs elevation
     n_el = 100

@@ -20,10 +20,12 @@ class Results(object):
     """Handle the output of the simulator
     """
 
-    def __init__(self, parameters_filename: str,
-                 overwrite_output: bool,
-                 output_dir='output',
-                 output_dir_prefix='output',):
+    def __init__(
+        self, parameters_filename: str,
+        overwrite_output: bool,
+        output_dir='output',
+        output_dir_prefix='output',
+    ):
 
         self.imt_ul_tx_power_density = list()
         self.imt_ul_tx_power = list()
@@ -123,7 +125,8 @@ class Results(object):
 
         if len(self.system_imt_antenna_gain) > 0:
             values, base = np.histogram(
-                self.system_imt_antenna_gain, bins=n_bins)
+                self.system_imt_antenna_gain, bins=n_bins,
+            )
             cumulative = np.cumsum(values)
             x = base[:-1]
             y = cumulative / cumulative[-1]
@@ -133,10 +136,12 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_system_antenna_gain) > 0:
             values, base = np.histogram(
-                self.imt_system_antenna_gain, bins=n_bins)
+                self.imt_system_antenna_gain, bins=n_bins,
+            )
             cumulative = np.cumsum(values)
             x = base[:-1]
             y = cumulative / cumulative[-1]
@@ -146,7 +151,8 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_system_path_loss) > 0:
             values, base = np.histogram(self.imt_system_path_loss, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -158,10 +164,12 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_system_build_entry_loss) > 0:
             values, base = np.histogram(
-                self.imt_system_build_entry_loss, bins=n_bins)
+                self.imt_system_build_entry_loss, bins=n_bins,
+            )
             cumulative = np.cumsum(values)
             x = base[:-1]
             y = cumulative / cumulative[-1]
@@ -171,10 +179,12 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_system_diffraction_loss) > 0:
             values, base = np.histogram(
-                self.imt_system_diffraction_loss, bins=n_bins)
+                self.imt_system_diffraction_loss, bins=n_bins,
+            )
             cumulative = np.cumsum(values)
             x = base[:-1]
             y = cumulative / cumulative[-1]
@@ -184,7 +194,8 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_bs_antenna_gain) > 0:
             values, base = np.histogram(self.imt_bs_antenna_gain, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -197,7 +208,8 @@ class Results(object):
             x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
         if len(self.imt_ue_antenna_gain) > 0:
             values, base = np.histogram(self.imt_ue_antenna_gain, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -210,10 +222,12 @@ class Results(object):
             x_limits = (0, 25)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
         if len(self.imt_ul_tx_power_density) > 0:
             values, base = np.histogram(
-                self.imt_ul_tx_power_density, bins=n_bins)
+                self.imt_ul_tx_power_density, bins=n_bins,
+            )
             cumulative = np.cumsum(values)
             x = base[:-1]
             y = cumulative / cumulative[-1]
@@ -223,7 +237,8 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_ul_tx_power) > 0:
             values, base = np.histogram(self.imt_ul_tx_power, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -236,7 +251,8 @@ class Results(object):
             x_limits = (-40, 30)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
         if len(self.imt_ul_sinr_ext) > 0:
             values, base = np.histogram(self.imt_ul_sinr_ext, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -249,7 +265,8 @@ class Results(object):
             x_limits = (-15, 20)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
         if len(self.imt_ul_sinr) > 0:
             values, base = np.histogram(self.imt_ul_sinr, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -262,7 +279,8 @@ class Results(object):
             x_limits = (-15, 20)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
         if len(self.imt_ul_snr) > 0:
             values, base = np.histogram(self.imt_ul_snr, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -275,7 +293,8 @@ class Results(object):
             x_limits = (-15, 20)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
         if len(self.imt_ul_inr) > 0:
             values, base = np.histogram(self.imt_ul_inr, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -287,7 +306,8 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_ul_tput_ext) > 0:
             values, base = np.histogram(self.imt_ul_tput_ext, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -299,7 +319,8 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_ul_tput) > 0:
             values, base = np.histogram(self.imt_ul_tput, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -311,7 +332,8 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_path_loss) > 0:
             values, base = np.histogram(self.imt_path_loss, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -324,7 +346,8 @@ class Results(object):
             x_limits = (40, 150)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
         if len(self.imt_coupling_loss) > 0:
             values, base = np.histogram(self.imt_coupling_loss, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -337,7 +360,8 @@ class Results(object):
             x_limits = (30, 120)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
         if len(self.imt_dl_tx_power) > 0:
             values, base = np.histogram(self.imt_dl_tx_power, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -349,7 +373,8 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_dl_sinr_ext) > 0:
             values, base = np.histogram(self.imt_dl_sinr_ext, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -362,7 +387,8 @@ class Results(object):
             x_limits = (-20, 80)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
         if len(self.imt_dl_sinr) > 0:
             values, base = np.histogram(self.imt_dl_sinr, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -375,7 +401,8 @@ class Results(object):
             x_limits = (-20, 80)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
         if len(self.imt_dl_snr) > 0:
             values, base = np.histogram(self.imt_dl_snr, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -388,7 +415,8 @@ class Results(object):
             x_limits = (-20, 80)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
         if len(self.imt_dl_inr) > 0:
             values, base = np.histogram(self.imt_dl_inr, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -400,7 +428,8 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_dl_tput_ext) > 0:
             values, base = np.histogram(self.imt_dl_tput_ext, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -412,7 +441,8 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.imt_dl_tput) > 0:
             values, base = np.histogram(self.imt_dl_tput, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -424,7 +454,8 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.system_inr) > 0:
             values, base = np.histogram(self.system_inr, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -437,7 +468,8 @@ class Results(object):
             x_limits = (-80, 30)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, x_lim=x_limits, y_lim=y_limits),
+            )
             ###################################################################
             # now we plot INR samples
             x = np.arange(len(self.system_inr))
@@ -449,7 +481,8 @@ class Results(object):
             x_limits = (0, 800)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name))
+                Plot(x, y, x_label, y_label, title, file_name),
+            )
         if len(self.system_pfd) > 0:
             values, base = np.histogram(self.system_pfd, bins=n_bins)
             cumulative = np.cumsum(values)
@@ -461,10 +494,12 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.system_ul_interf_power) > 0:
             values, base = np.histogram(
-                self.system_ul_interf_power, bins=n_bins)
+                self.system_ul_interf_power, bins=n_bins,
+            )
             cumulative = np.cumsum(values)
             x = base[:-1]
             y = cumulative / cumulative[-1]
@@ -474,10 +509,12 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
         if len(self.system_dl_interf_power) > 0:
             values, base = np.histogram(
-                self.system_dl_interf_power, bins=n_bins)
+                self.system_dl_interf_power, bins=n_bins,
+            )
             cumulative = np.cumsum(values)
             x = base[:-1]
             y = cumulative / cumulative[-1]
@@ -487,7 +524,8 @@ class Results(object):
             file_name = plot_title_to_filename(title)
             y_limits = (0, 1)
             self.plot_list.append(
-                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits))
+                Plot(x, y, x_label, y_label, title, file_name, y_lim=y_limits),
+            )
 
     def write_files(self, snapshot_number: int):
         """Writes the sample data to the output file
@@ -503,7 +541,8 @@ class Results(object):
         self.generate_plot_list(n_bins)
         for plot in self.plot_list:
             file_path = os.path.join(
-                self.output_directory, plot.file_name + ".csv")
+                self.output_directory, plot.file_name + ".csv",
+            )
             df = pd.DataFrame({'x': plot.x, 'y': plot.y})
             # Writing header text as comment
             with open(file_path, 'w') as f:

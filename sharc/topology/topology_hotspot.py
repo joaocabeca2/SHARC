@@ -66,8 +66,10 @@ class TopologyHotspot(Topology):
             # Hotspots are generated inside an inscribed circle of a regular hexagon (sector).
             # The backoff factor (1.0) controls the overlapping rate between hotspots
             # coverage areas (overlapping of hotspots in different macro cells)
-            r = np.maximum(0, (self.macrocell.intersite_distance / 3) *
-                           np.sqrt(3) / 2 - self.param.max_dist_hotspot_ue / 1.0)
+            r = np.maximum(
+                0, (self.macrocell.intersite_distance / 3) *
+                np.sqrt(3) / 2 - self.param.max_dist_hotspot_ue / 1.0,
+            )
             hotspot_x = np.array(0)
             hotspot_y = np.array(0)
             hotspot_azimuth = np.array(0)
@@ -90,27 +92,35 @@ class TopologyHotspot(Topology):
                         hotspot_azimuth = candidate_azimuth
                         break
                     else:
-                        overlapping_hotspots = self.overlapping_hotspots(candidate_x,
-                                                                         candidate_y,
-                                                                         candidate_azimuth,
-                                                                         hotspot_x,
-                                                                         hotspot_y,
-                                                                         hotspot_azimuth,
-                                                                         self.cell_radius)
-                        min_dist_validated = self.validade_min_dist_bs_hotspot(candidate_x,
-                                                                               candidate_y,
-                                                                               self.macrocell.x,
-                                                                               self.macrocell.y,
-                                                                               self.param.min_dist_bs_hotspot)
+                        overlapping_hotspots = self.overlapping_hotspots(
+                            candidate_x,
+                            candidate_y,
+                            candidate_azimuth,
+                            hotspot_x,
+                            hotspot_y,
+                            hotspot_azimuth,
+                            self.cell_radius,
+                        )
+                        min_dist_validated = self.validade_min_dist_bs_hotspot(
+                            candidate_x,
+                            candidate_y,
+                            self.macrocell.x,
+                            self.macrocell.y,
+                            self.param.min_dist_bs_hotspot,
+                        )
                         candidate_valid = (
-                            not overlapping_hotspots) and min_dist_validated
+                            not overlapping_hotspots
+                        ) and min_dist_validated
                         if candidate_valid:
                             hotspot_x = np.concatenate(
-                                (hotspot_x, candidate_x))
+                                (hotspot_x, candidate_x),
+                            )
                             hotspot_y = np.concatenate(
-                                (hotspot_y, candidate_y))
+                                (hotspot_y, candidate_y),
+                            )
                             hotspot_azimuth = np.concatenate(
-                                (hotspot_azimuth, candidate_azimuth))
+                                (hotspot_azimuth, candidate_azimuth),
+                            )
                             break
                         else:
                             num_attempts = num_attempts + 1
@@ -118,7 +128,8 @@ class TopologyHotspot(Topology):
                         if num_attempts > TopologyHotspot.MAX_NUM_LOOPS:
                             sys.stderr.write(
                                 "ERROR\nInfinite loop while creating hotspots.\n \
-                                Try less hotspots per cell or greater macro cell intersite distance.\n")
+                                Try less hotspots per cell or greater macro cell intersite distance.\n",
+                            )
                             sys.exit(1)
                 # if num_attempts > 1: print("number of attempts: {}".format(num_attempts))
             x = np.concatenate([x, hotspot_x])
@@ -132,14 +143,16 @@ class TopologyHotspot(Topology):
         self.num_base_stations = len(self.x)
         self.indoor = np.zeros(self.num_base_stations, dtype=bool)
 
-    def overlapping_hotspots(self,
-                             candidate_x: np.array,
-                             candidate_y: np.array,
-                             candidate_azimuth: np.array,
-                             set_x: np.array,
-                             set_y: np.array,
-                             set_azimuth: np.array,
-                             radius: float) -> bool:
+    def overlapping_hotspots(
+        self,
+        candidate_x: np.array,
+        candidate_y: np.array,
+        candidate_azimuth: np.array,
+        set_x: np.array,
+        set_y: np.array,
+        set_azimuth: np.array,
+        radius: float,
+    ) -> bool:
         """
         Evaluates the spatial relationships among hotspots and checks whether
         the hotspot defined by (x, y, azimuth) intersects with any hotspot of
@@ -167,16 +180,20 @@ class TopologyHotspot(Topology):
             set_points = list()
             set_points.append((x, y))
             for a in range(len(azimuth_values)):
-                set_points.append((x + radius * math.cos(np.radians(azimuth + azimuth_values[a])),
-                                   y + radius * math.sin(np.radians(azimuth + azimuth_values[a]))))
+                set_points.append((
+                    x + radius * math.cos(np.radians(azimuth + azimuth_values[a])),
+                    y + radius * math.sin(np.radians(azimuth + azimuth_values[a])),
+                ))
             set_polygons.append(Polygon(set_points))
 
         # Creating the candidate polygon
         points = list()
         points.append((candidate_x, candidate_y))
         for a in range(len(azimuth_values)):
-            points.append((candidate_x + radius * math.cos(np.radians(candidate_azimuth + azimuth_values[a])),
-                           candidate_y + radius * math.sin(np.radians(candidate_azimuth + azimuth_values[a]))))
+            points.append((
+                candidate_x + radius * math.cos(np.radians(candidate_azimuth + azimuth_values[a])),
+                candidate_y + radius * math.sin(np.radians(candidate_azimuth + azimuth_values[a])),
+            ))
         polygon = Polygon(points)
 
         # Check if there is overlapping between the candidate hotspot and
@@ -192,12 +209,14 @@ class TopologyHotspot(Topology):
         # If this point is reached, then there is no intersection between polygons
         return False
 
-    def validade_min_dist_bs_hotspot(self,
-                                     hotspot_x: np.array,
-                                     hotspot_y: np.array,
-                                     macrocell_x: np.array,
-                                     macrocell_y: np.array,
-                                     min_dist_bs_hotspot: float) -> bool:
+    def validade_min_dist_bs_hotspot(
+        self,
+        hotspot_x: np.array,
+        hotspot_y: np.array,
+        macrocell_x: np.array,
+        macrocell_y: np.array,
+        min_dist_bs_hotspot: float,
+    ) -> bool:
         """
         Checks minimum 2D distance between macro cell base stations and
         hotspots.
@@ -211,8 +230,10 @@ class TopologyHotspot(Topology):
         # Here we have a 2D matrix whose values indicates the distance between
         # base station and hotspots. In this matrix, each line corresponds to
         # a macro cell base station and each column corresponds to a hotspot
-        distance = np.sqrt((hotspot_x - macrocell_x.reshape((-1, 1)))**2 +
-                           (hotspot_y - macrocell_y.reshape((-1, 1)))**2)
+        distance = np.sqrt(
+            (hotspot_x - macrocell_x.reshape((-1, 1)))**2 +
+            (hotspot_y - macrocell_y.reshape((-1, 1)))**2,
+        )
         # count the number of values that are less than the minimum distance and
         # return true if any value is equal os less than minimum 2D distance
         # between macro cell base stations and hotspot centers
@@ -224,13 +245,17 @@ class TopologyHotspot(Topology):
         self.macrocell.plot(ax)
 
         # plot hotspots
-        plt.scatter(self.x, self.y, color='g', edgecolor="w",
-                    linewidth=0.5, label="Hotspot")
+        plt.scatter(
+            self.x, self.y, color='g', edgecolor="w",
+            linewidth=0.5, label="Hotspot",
+        )
 
         # plot hotspots coverage area
         for x, y, a in zip(self.x, self.y, self.azimuth):
-            pa = patches.Wedge((x, y), self.cell_radius, a - 60, a + 60, fill=False,
-                               edgecolor="green", linestyle='solid')
+            pa = patches.Wedge(
+                (x, y), self.cell_radius, a - 60, a + 60, fill=False,
+                edgecolor="green", linestyle='solid',
+            )
             ax.add_patch(pa)
 
 
@@ -247,8 +272,10 @@ if __name__ == '__main__':
     topology = TopologyHotspot(param, intersite_distance, num_clusters)
     topology.calculate_coordinates()
 
-    fig = plt.figure(figsize=(8, 8), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(8, 8), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
     ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
 
     topology.plot(ax)

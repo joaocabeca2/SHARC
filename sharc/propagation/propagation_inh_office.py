@@ -59,18 +59,22 @@ class PropagationInhOffice(Propagation):
 
         if len(i_los[0]):
             loss[i_los] = self.get_loss_los(
-                d_3D[i_los], f[i_los], shadowing_los)
+                d_3D[i_los], f[i_los], shadowing_los,
+            )
 
         if len(i_nlos[0]):
             loss[i_nlos] = self.get_loss_nlos(
-                d_3D[i_nlos], f[i_nlos], shadowing_nlos)
+                d_3D[i_nlos], f[i_nlos], shadowing_nlos,
+            )
 
         return loss
 
-    def get_loss_los(self,
-                     distance_3D: np.array,
-                     frequency: np.array,
-                     shadowing_std: float):
+    def get_loss_los(
+        self,
+        distance_3D: np.array,
+        frequency: np.array,
+        shadowing_std: float,
+    ):
         """
         Calculates path loss for the LOS (line-of-sight) case.
 
@@ -90,16 +94,19 @@ class PropagationInhOffice(Propagation):
 
         if shadowing_std:
             shadowing = self.random_number_gen.normal(
-                0, shadowing_std, distance_3D.shape)
+                0, shadowing_std, distance_3D.shape,
+            )
         else:
             shadowing = 0
 
         return loss + shadowing
 
-    def get_loss_nlos(self,
-                      distance_3D: np.array,
-                      frequency: np.array,
-                      shadowing_std: float):
+    def get_loss_nlos(
+        self,
+        distance_3D: np.array,
+        frequency: np.array,
+        shadowing_std: float,
+    ):
         """
         Calculates path loss for the NLOS (non line-of-sight) case.
 
@@ -122,7 +129,8 @@ class PropagationInhOffice(Propagation):
 
         if shadowing_std:
             shadowing = self.random_number_gen.normal(
-                0, shadowing_std, distance_3D.shape)
+                0, shadowing_std, distance_3D.shape,
+            )
         else:
             shadowing = 0
 
@@ -144,7 +152,8 @@ class PropagationInhOffice(Propagation):
             condition, respectively.
         """
         los_condition = self.random_number_gen.random_sample(
-            p_los.shape) < p_los
+            p_los.shape,
+        ) < p_los
         los_condition = los_condition & indoor
         return los_condition
 
@@ -204,13 +213,16 @@ if __name__ == '__main__':
     indoor = np.ones(len(distance_2D[0, :]), dtype=bool)
 
     loss_fs = PropagationFreeSpace(np.random.RandomState()).get_loss(
-        distance_3D=distance_3D, frequency=frequency)
+        distance_3D=distance_3D, frequency=frequency,
+    )
 
-    loss_inh = inh.get_loss(distance_3D=distance_3D,
-                            distance_2D=distance_2D,
-                            frequency=frequency,
-                            indoor=indoor,
-                            shadowing=shadowing)
+    loss_inh = inh.get_loss(
+        distance_3D=distance_3D,
+        distance_2D=distance_2D,
+        frequency=frequency,
+        indoor=indoor,
+        shadowing=shadowing,
+    )
 
     fig = plt.figure(figsize=(8, 6), facecolor='w', edgecolor='k')
     ax = fig.gca()

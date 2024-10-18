@@ -22,8 +22,10 @@ class ViewCli(Observer):
         self.parent = parent
 
     def initialize(self, param_file):
-        self.controller.action(action=Action.START_SIMULATION_SINGLE_THREAD,
-                               param_file=param_file)
+        self.controller.action(
+            action=Action.START_SIMULATION_SINGLE_THREAD,
+            param_file=param_file,
+        )
 
     def set_controller(self, controller: Controller):
         """

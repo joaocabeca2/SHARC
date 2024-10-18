@@ -42,12 +42,14 @@ class SpectralMaskImt(SpectralMask):
     """
     ALTERNATIVE_MASK_DIAGONAL_SAMPLESIZE: int = 40
 
-    def __init__(self,
-                 sta_type: StationType,
-                 freq_mhz: float,
-                 band_mhz: float,
-                 spurious_emissions: float,
-                 scenario="OUTDOOR"):
+    def __init__(
+        self,
+        sta_type: StationType,
+        freq_mhz: float,
+        band_mhz: float,
+        spurious_emissions: float,
+        scenario="OUTDOOR",
+    ):
         """
         Class constructor.
 
@@ -72,7 +74,8 @@ class SpectralMaskImt(SpectralMask):
         # Mask delta f breaking limits [MHz]
         if self.alternative_mask_used:
             self.delta_f_lim = self.get_alternative_mask_delta_f_lim(
-                freq_mhz, band_mhz)
+                freq_mhz, band_mhz,
+            )
         else:
             # use value from 5-1/36-E
             self.delta_f_lim = np.array([0, 20, 400])
@@ -83,22 +86,24 @@ class SpectralMaskImt(SpectralMask):
         self.band_mhz = band_mhz
         self.freq_mhz = freq_mhz
 
-        self.freq_lim = np.concatenate(((freq_mhz - band_mhz / 2) - self.delta_f_lim[::-1],
-                                        (freq_mhz + band_mhz / 2) + self.delta_f_lim))
+        self.freq_lim = np.concatenate((
+            (freq_mhz - band_mhz / 2) - self.delta_f_lim[::-1],
+            (freq_mhz + band_mhz / 2) + self.delta_f_lim,
+        ))
 
-    def set_mask(self, power=0):
+    def set_mask(self, p_tx=0):
         """
         Sets the spectral mask (mask_dbm attribute) based on station type,
         operating frequency and transmit power.
 
         Parameters:
-            power (float): station transmit power. Default = 0
+            p_tx (float): station transmit power. Default = 0
         """
         if self.alternative_mask_used:
-            self.mask_dbm = self.get_alternative_mask_mask_dbm(power)
+            self.mask_dbm = self.get_alternative_mask_mask_dbm(p_tx)
             return
 
-        self.p_tx = power - 10 * np.log10(self.band_mhz)
+        self.p_tx = p_tx - 10 * np.log10(self.band_mhz)
 
         # Set new transmit power value
         if self.sta_type is StationType.IMT_UE:
@@ -112,38 +117,47 @@ class SpectralMaskImt(SpectralMask):
         else:
 
             if (self.freq_mhz > 24250 and self.freq_mhz < 33400):
-                if power >= 34.5:
+                if p_tx >= 34.5:
                     # Table 2
                     mask_dbm = np.array([-5, -13, self.spurious_emissions])
                 else:
                     # Table 3
-                    mask_dbm = np.array([-5, np.max((power - 47.5, -20)),
-                                         self.spurious_emissions])
+                    mask_dbm = np.array([
+                        -5, np.max((p_tx - 47.5, -20)),
+                        self.spurious_emissions,
+                    ])
             elif (self.freq_mhz > 37000 and self.freq_mhz < 52600):
-                if power >= 32.5:
+                if p_tx >= 32.5:
                     # Table 4
                     mask_dbm = np.array([-5, -13, self.spurious_emissions])
                 else:
                     # Table 5
-                    mask_dbm = np.array([-5, np.max((power - 45.5, -20)),
-                                         self.spurious_emissions])
+                    mask_dbm = np.array([
+                        -5, np.max((p_tx - 45.5, -20)),
+                        self.spurious_emissions,
+                    ])
             elif (self.freq_mhz > 66000 and self.freq_mhz < 86000):
-                if power >= 30.5:
+                if p_tx >= 30.5:
                     # Table 6
                     mask_dbm = np.array([-5, -13, self.spurious_emissions])
                 else:
                     # Table 7
-                    mask_dbm = np.array([-5, np.max((power - 43.5, -20)),
-                                         self.spurious_emissions])
+                    mask_dbm = np.array([
+                        -5, np.max((p_tx - 43.5, -20)),
+                        self.spurious_emissions,
+                    ])
             else:
                 # this will only be reached when spurious emission has been manually set to something invalid and
                 # alternative mask should be used
                 raise ValueError(
                     "SpectralMaskIMT cannot be used with current parameters. \
-                    You may have set spurious emission to a value not in [-13,-30]")
+                    You may have set spurious emission to a value not in [-13,-30]",
+                )
 
-        self.mask_dbm = np.concatenate((mask_dbm[::-1], np.array([self.p_tx]),
-                                        mask_dbm))
+        self.mask_dbm = np.concatenate((
+            mask_dbm[::-1], np.array([self.p_tx]),
+            mask_dbm,
+        ))
 
     def get_alternative_mask_delta_f_lim(self, freq_mhz: float, band_mhz: float) -> np.array:
         """
@@ -194,12 +208,16 @@ class SpectralMaskImt(SpectralMask):
         else:
             delta_f_spurious = B_N_separation
 
-        diagonal = np.array([i * 5 / self.ALTERNATIVE_MASK_DIAGONAL_SAMPLESIZE for i in range(
-            self.ALTERNATIVE_MASK_DIAGONAL_SAMPLESIZE)])
+        diagonal = np.array([
+            i * 5 / self.ALTERNATIVE_MASK_DIAGONAL_SAMPLESIZE for i in range(
+                self.ALTERNATIVE_MASK_DIAGONAL_SAMPLESIZE,
+            )
+        ])
 
         # band/2 is subtracted from delta_f_spurious beacuse that specific interval is from frequency center
         rest_of_oob_and_spurious = np.array(
-            [5, 10.0, delta_f_spurious - band_mhz / 2])
+            [5, 10.0, delta_f_spurious - band_mhz / 2],
+        )
 
         return np.concatenate((diagonal, rest_of_oob_and_spurious))
 
@@ -225,10 +243,11 @@ class SpectralMaskImt(SpectralMask):
                 for i in range(self.ALTERNATIVE_MASK_DIAGONAL_SAMPLESIZE)
             ])
             rest_of_oob_and_spurious = np.array([
-                -14, -13, self.spurious_emissions
+                -14, -13, self.spurious_emissions,
             ])
             mask_dbm = np.concatenate(
-                (diagonal_samples, rest_of_oob_and_spurious))
+                (diagonal_samples, rest_of_oob_and_spurious),
+            )
         elif self.spurious_emissions == -30:
             # use document ETSI TS 138 104 V16.6.0 Table 6.6.4.2.2.1-2
             diagonal_samples = np.array([
@@ -237,15 +256,20 @@ class SpectralMaskImt(SpectralMask):
                 for i in range(self.ALTERNATIVE_MASK_DIAGONAL_SAMPLESIZE)
             ])
             rest_of_oob_and_spurious = np.array(
-                [-14, -15, self.spurious_emissions])
+                [-14, -15, self.spurious_emissions],
+            )
             mask_dbm = np.concatenate(
-                (diagonal_samples, rest_of_oob_and_spurious))
+                (diagonal_samples, rest_of_oob_and_spurious),
+            )
         else:
             raise ValueError(
-                "Alternative mask should only be used for spurious emissions -13 and -30")
+                "Alternative mask should only be used for spurious emissions -13 and -30",
+            )
 
-        return np.concatenate((mask_dbm[::-1], np.array([self.p_tx]),
-                               mask_dbm))
+        return np.concatenate((
+            mask_dbm[::-1], np.array([self.p_tx]),
+            mask_dbm,
+        ))
 
 
 if __name__ == '__main__':

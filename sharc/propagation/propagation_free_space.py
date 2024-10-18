@@ -19,13 +19,15 @@ class PropagationFreeSpace(Propagation):
     """
 
     @dispatch(Parameters, float, StationManager, StationManager, np.ndarray, np.ndarray)
-    def get_loss(self,
-                 params: Parameters,
-                 frequency: float,
-                 station_a: StationManager,
-                 station_b: StationManager,
-                 station_a_gains=None,
-                 station_b_gains=None) -> np.array:
+    def get_loss(
+        self,
+        params: Parameters,
+        frequency: float,
+        station_a: StationManager,
+        station_b: StationManager,
+        station_a_gains=None,
+        station_b_gains=None,
+    ) -> np.array:
         """Wrapper for the calculation loss between station_a and station_b
 
         Parameters

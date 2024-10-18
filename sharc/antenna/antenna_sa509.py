@@ -4,12 +4,11 @@ Created on Thu Nov 16 17:34:11 2017
 
 @author: Calil
 """
+import numpy as np
 
 from sharc.antenna.antenna import Antenna
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.constants import SPEED_OF_LIGHT
-
-import numpy as np
 
 
 class AntennaSA509(Antenna):
@@ -29,8 +28,10 @@ class AntennaSA509(Antenna):
         self.effective_area = self.efficiency * (np.pi * self.diameter**2) / 4
 
         # Diagram parameters
-        self.g_0 = 10 * np.log10(self.efficiency *
-                                 (np.pi * self.diameter / self.wavelength)**2)
+        self.g_0 = 10 * np.log10(
+            self.efficiency *
+            (np.pi * self.diameter / self.wavelength)**2,
+        )
         self.phi_0 = 20 * np.sqrt(3) / (self.diameter / self.wavelength)
 
         # Limit parameters
@@ -46,8 +47,11 @@ class AntennaSA509(Antenna):
         interval_idx = np.where(np.logical_and(phi >= 0, phi < self.phi_1))
         gain[interval_idx] = self.g_0 - 3 * (phi[interval_idx] / self.phi_0)**2
         # Second part
-        interval_idx = np.where(np.logical_and(
-            phi >= self.phi_1, phi < self.phi_2))
+        interval_idx = np.where(
+            np.logical_and(
+                phi >= self.phi_1, phi < self.phi_2,
+            ),
+        )
         gain[interval_idx] = self.g_0 - 20
         # Third part
         interval_idx = np.where(np.logical_and(phi >= self.phi_2, phi < 48))
@@ -84,15 +88,17 @@ if __name__ == '__main__':
     gain7 = antenna7.calculate_gain(off_axis_angle_vec=phi)
     gain10 = antenna10.calculate_gain(off_axis_angle_vec=phi)
 
-    fig = plt.figure(figsize=(8, 7), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(8, 7), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
 
     plt.semilogx(phi, gain1, "-b", label="$f = 43$ $GHz,$ $D = 1$ $m$")
     plt.semilogx(phi, gain7, "-r", label="$f = 43$ $GHz,$ $D = 7$ $m$")
     plt.semilogx(phi, gain10, "-k", label="$f = 43$ $GHz,$ $D = 10$ $m$")
 
     plt.title("ITU-R SA.509-3 antenna radiation pattern")
-    plt.xlabel("Off-axis angle $\phi$ [deg]")
+    plt.xlabel(r"Off-axis angle $\phi$ [deg]")
     plt.ylabel("Gain [dBi]")
     plt.legend(loc="lower left")
     plt.xlim((phi[0], phi[-1]))

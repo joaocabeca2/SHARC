@@ -14,7 +14,7 @@ class ParametersAntennaWithEnvelopeGain(ParametersBase):
     def validate(self, ctx):
         if None in [
             self.antenna_gain,
-            self.envelope_gain
+            self.envelope_gain,
         ]:
             raise ValueError(f"{ctx} needs to have all its parameters set")
 

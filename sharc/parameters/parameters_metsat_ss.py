@@ -62,14 +62,17 @@ class ParametersMetSatSS(ParametersSpaceStation):
         print(self.antenna_pattern)
         if self.antenna_pattern not in ["ITU-R S.672"]:
             raise ValueError(f"Invalid antenna_pattern: {
-                             self.antenna_pattern}")
+                             self.antenna_pattern
+            }")
 
         # Check channel model
         if self.channel_model not in ["FSPL", "P619"]:
             raise ValueError(
-                "Invalid channel_model, must be either 'FSPL' or 'P619'")
+                "Invalid channel_model, must be either 'FSPL' or 'P619'",
+            )
 
         # Check season
         if self.season not in ["SUMMER", "WINTER"]:
             raise ValueError(
-                "Invalid season, must be either 'SUMMER' or 'WINTER'")
+                "Invalid season, must be either 'SUMMER' or 'WINTER'",
+            )

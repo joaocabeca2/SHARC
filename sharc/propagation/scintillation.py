@@ -62,19 +62,24 @@ class Scintillation():
             for p in ["earth_station_alt_m", "earth_station_lat_deg", "season"]:
                 if p not in kwargs:
                     raise ValueError(
-                        f"Scintillation: parameter {p} is mandatory if wet_refractivity is set.")
+                        f"Scintillation: parameter {p} is mandatory if wet_refractivity is set.",
+                    )
 
             temperature, \
                 pressure, \
-                water_vapour_density = self.atmosphere.get_reference_atmosphere_p835(kwargs["earth_station_lat_deg"],
-                                                                                     kwargs["earth_station_lat_deg"],
-                                                                                     kwargs["season"])
+                water_vapour_density = self.atmosphere.get_reference_atmosphere_p835(
+                    kwargs["earth_station_lat_deg"],
+                    kwargs["earth_station_lat_deg"],
+                    kwargs["season"],
+                )
 
             # calculate saturation water vapour pressure according to ITU-R P.453-12
             # water coefficients (ice disregarded)
             vapour_pressure = water_vapour_density * temperature / 216.7  # eq 10 in P453
-            wet_refractivity = (72 * vapour_pressure / temperature +
-                                3.75e5 * vapour_pressure / temperature ** 2)
+            wet_refractivity = (
+                72 * vapour_pressure / temperature +
+                3.75e5 * vapour_pressure / temperature ** 2
+            )
 
         sigma_ref = 3.6e-3 + 1e-4 * wet_refractivity
         h_l = 1000
@@ -84,14 +89,19 @@ class Scintillation():
             10 ** (.05 * antenna_gain_dB) / (np.pi * f_GHz)
 
         x = 1.22 * eff_antenna_diameter ** 2 * (f_GHz / path_length)
-        antenna_averaging_factor = np.sqrt(3.86 * (x ** 2 + 1) ** (11 / 12) *
-                                           np.sin(11 / 6 * np.arctan(1 / x)) - 7.08 * x ** 5 / 6)
-        scintillation_intensity = (sigma_ref * f_GHz ** (7 / 12) * antenna_averaging_factor /
-                                   np.sin(elevation_rad) ** 1.2)
+        antenna_averaging_factor = np.sqrt(
+            3.86 * (x ** 2 + 1) ** (11 / 12) *
+            np.sin(11 / 6 * np.arctan(1 / x)) - 7.08 * x ** 5 / 6,
+        )
+        scintillation_intensity = (
+            sigma_ref * f_GHz ** (7 / 12) * antenna_averaging_factor /
+            np.sin(elevation_rad) ** 1.2
+        )
 
         if isinstance(time_ratio, str) and time_ratio.lower() == "random":
             time_ratio = self.random_number_gen.rand(
-                elevation_rad.size).reshape(elevation_rad.shape)
+                elevation_rad.size,
+            ).reshape(elevation_rad.shape)
 
         # tropospheric scintillation attenuation not exceeded for time_percentage percent time
         time_percentage = time_ratio * 100.
@@ -101,7 +111,8 @@ class Scintillation():
             if not np.isscalar(time_percentage):
                 num_el = time_percentage.size
                 scintillation_intensity = np.ones(
-                    num_el) * scintillation_intensity
+                    num_el,
+                ) * scintillation_intensity
         else:
             num_el = scintillation_intensity.size
             if np.isscalar(time_percentage):
@@ -109,13 +120,17 @@ class Scintillation():
 
         attenuation = np.empty(elevation_rad.shape)
 
-        a_ste = (2.672 - 1.258 * np.log10(time_percentage) -
-                 .0835 * np.log10(time_percentage) ** 2 -
-                 .0597 * np.log10(time_percentage) ** 3)
+        a_ste = (
+            2.672 - 1.258 * np.log10(time_percentage) -
+            .0835 * np.log10(time_percentage) ** 2 -
+            .0597 * np.log10(time_percentage) ** 3
+        )
 
-        a_stf = (3. - 1.71 * np.log10(100 - time_percentage) +
-                 .072 * np.log10(100 - time_percentage) ** 2 -
-                 .061 * np.log10(100 - time_percentage) ** 3)
+        a_stf = (
+            3. - 1.71 * np.log10(100 - time_percentage) +
+            .072 * np.log10(100 - time_percentage) ** 2 -
+            .061 * np.log10(100 - time_percentage) ** 3
+        )
 
         gain_indices = np.where(time_percentage <= 50.)
         if gain_indices:
@@ -148,24 +163,32 @@ if __name__ == '__main__':
 
     plt.figure()
     for elevation in elevation_vec:
-        attenuation = propagation.get_tropospheric_attenuation(elevation=elevation,
-                                                               frequency_MHz=frequency_MHz,
-                                                               antenna_gain_dB=antenna_gain,
-                                                               time_ratio=1 -
-                                                               (percentage_fading_exceeded / 100),
-                                                               wet_refractivity=wet_refractivity)
-        plt.semilogx(percentage_fading_exceeded, attenuation,
-                     label="{} deg".format(elevation))
+        attenuation = propagation.get_tropospheric_attenuation(
+            elevation=elevation,
+            frequency_MHz=frequency_MHz,
+            antenna_gain_dB=antenna_gain,
+            time_ratio=1 -
+            (percentage_fading_exceeded / 100),
+            wet_refractivity=wet_refractivity,
+        )
+        plt.semilogx(
+            percentage_fading_exceeded, attenuation,
+            label="{} deg".format(elevation),
+        )
 
     percentage_gain_exceeded = 10 ** np.arange(-2, 1.1, .1)
     for elevation in elevation_vec:
-        attenuation = propagation.get_tropospheric_attenuation(elevation=elevation,
-                                                               frequency_MHz=frequency_MHz,
-                                                               antenna_gain_dB=antenna_gain,
-                                                               time_ratio=percentage_gain_exceeded / 100,
-                                                               wet_refractivity=wet_refractivity)
-        plt.loglog(percentage_gain_exceeded, np.abs(attenuation),
-                   ':', label="{} deg".format(elevation))
+        attenuation = propagation.get_tropospheric_attenuation(
+            elevation=elevation,
+            frequency_MHz=frequency_MHz,
+            antenna_gain_dB=antenna_gain,
+            time_ratio=percentage_gain_exceeded / 100,
+            wet_refractivity=wet_refractivity,
+        )
+        plt.loglog(
+            percentage_gain_exceeded, np.abs(attenuation),
+            ':', label="{} deg".format(elevation),
+        )
 
     plt.legend(title='elevation')
     plt.grid(True)

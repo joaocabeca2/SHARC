@@ -41,7 +41,8 @@ class PropagationIndoor(Propagation):
             self.bpl = PropagationInhOffice(random_number_gen)
         else:
             sys.stderr.write(
-                "ERROR\nInvalid indoor basic path loss model: " + param.basic_path_loss)
+                "ERROR\nInvalid indoor basic path loss model: " + param.basic_path_loss,
+            )
             sys.exit(1)
 
         self.bel = PropagationBuildingEntryLoss(random_number_gen)
@@ -50,13 +51,15 @@ class PropagationIndoor(Propagation):
         self.ue_per_building = ue_per_cell * param.num_cells
 
     @dispatch(Parameters, float, StationManager, StationManager, np.ndarray, np.ndarray)
-    def get_loss(self,
-                 params: Parameters,
-                 frequency: float,
-                 station_a: StationManager,
-                 station_b: StationManager,
-                 station_a_gains=None,
-                 station_b_gains=None) -> np.array:
+    def get_loss(
+        self,
+        params: Parameters,
+        frequency: float,
+        station_a: StationManager,
+        station_b: StationManager,
+        station_a_gains=None,
+        station_b_gains=None,
+    ) -> np.array:
         """Wrapper function for the get_loss method to fit the Propagation ABC class interface
         Calculates the loss between station_a and station_b
 
@@ -95,7 +98,8 @@ class PropagationIndoor(Propagation):
 
         frequency_array = frequency * np.ones(bs_to_ue_dist_2d.shape)
         indoor_stations = np.tile(
-            station_a.indoor, (station_b.num_stations, 1))
+            station_a.indoor, (station_b.num_stations, 1),
+        )
         elevation = np.transpose(station_a.get_elevation(station_b))
 
         return self.get_loss(
@@ -104,14 +108,16 @@ class PropagationIndoor(Propagation):
             frequency_array,
             elevation,
             indoor_stations,
-            params.imt.shadowing
+            params.imt.shadowing,
         )
 
     # pylint: disable=function-redefined
     # pylint: disable=arguments-renamed
     @dispatch(np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, bool)
-    def get_loss(self, distance_3D: np.ndarray, distance_2D: np.ndarray, frequency: float,
-                 elevation: np.ndarray, indoor_stations: np.ndarray, shadowing_flag: bool) -> np.array:
+    def get_loss(
+        self, distance_3D: np.ndarray, distance_2D: np.ndarray, frequency: float,
+        elevation: np.ndarray, indoor_stations: np.ndarray, shadowing_flag: bool,
+    ) -> np.array:
         """
         Calculates path loss for LOS and NLOS cases with respective shadowing
         (if shadowing has to be added)
@@ -139,16 +145,19 @@ class PropagationIndoor(Propagation):
             uf = int(self.ue_per_building * (i + 1))
 
             # calculate basic path loss
-            loss[bi:bf, ui:uf] = self.bpl.get_loss(distance_3D=distance_3D[bi:bf, ui:uf],
-                                                   distance_2D=distance_2D[bi:bf, ui:uf],
-                                                   frequency=frequency[bi:bf, ui:uf],
-                                                   indoor=indoor_stations[0, ui:uf],
-                                                   shadowing=shadowing_flag)
+            loss[bi:bf, ui:uf] = self.bpl.get_loss(
+                distance_3D=distance_3D[bi:bf, ui:uf],
+                distance_2D=distance_2D[bi:bf, ui:uf],
+                frequency=frequency[bi:bf, ui:uf],
+                indoor=indoor_stations[0, ui:uf],
+                shadowing=shadowing_flag,
+            )
 
             # calculates the additional building entry loss for outdoor UE's
             # that are served by indoor BS's
             bel = (~ indoor_stations[0, ui:uf]) * self.bel.get_loss(
-                frequency[bi:bf, ui:uf], elevation[bi:bf, ui:uf], "RANDOM", self.building_class)
+                frequency[bi:bf, ui:uf], elevation[bi:bf, ui:uf], "RANDOM", self.building_class,
+            )
 
             loss[bi:bf, ui:uf] = loss[bi:bf, ui:uf] + bel
 
@@ -181,11 +190,14 @@ if __name__ == '__main__':
     elevation = np.degrees(np.arctan(height_diff / distance_2D))
 
     propagation_indoor = PropagationIndoor(
-        np.random.RandomState(), params, ue_per_bs)
-    loss_indoor = propagation_indoor.get_loss(distance_3D,
-                                              distance_2D,
-                                              frequency,
-                                              elevation,
-                                              indoor,
-                                              False)
+        np.random.RandomState(), params, ue_per_bs,
+    )
+    loss_indoor = propagation_indoor.get_loss(
+        distance_3D,
+        distance_2D,
+        frequency,
+        elevation,
+        indoor,
+        False,
+    )
     print(loss_indoor)

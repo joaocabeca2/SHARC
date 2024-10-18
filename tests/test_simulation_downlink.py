@@ -15,7 +15,6 @@ from sharc.parameters.parameters import Parameters
 from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.station_factory import StationFactory
 from sharc.propagation.propagation_factory import PropagationFactory
-from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
 
 
 class SimulationDownlinkTest(unittest.TestCase):
@@ -77,7 +76,6 @@ class SimulationDownlinkTest(unittest.TestCase):
         self.param.imt.line_of_sight_prob = 0.75
         self.param.imt.shadowing = False
         self.param.imt.noise_temperature = 290
-        BOLTZMANN_CONSTANT = 1.38064852e-23
 
         self.param.antenna_imt.adjacent_antenna_model = "SINGLE_ELEMENT"
         self.param.antenna_imt.bs_normalization = False
@@ -124,7 +122,7 @@ class SimulationDownlinkTest(unittest.TestCase):
         self.param.fss_ss.antenna_pattern = "OMNI"
         self.param.fss_ss.imt_altitude = 1000
         self.param.fss_ss.imt_lat_deg = -23.5629739
-        self.param.fss_ss.imt_long_diff_deg = (-46.6555132-75)
+        self.param.fss_ss.imt_long_diff_deg = (-46.6555132 - 75)
         self.param.fss_ss.channel_model = "FSPL"
         self.param.fss_ss.line_of_sight_prob = 0.01
         self.param.fss_ss.surf_water_vapour_density = 7.5
@@ -192,7 +190,7 @@ class SimulationDownlinkTest(unittest.TestCase):
                                                             self.simulation.topology,
                                                             random_number_gen)
         self.simulation.ue.x = np.array([20, 70, 110, 170])
-        self.simulation.ue.y = np.array([0,  0,   0,   0])
+        self.simulation.ue.y = np.array([0, 0, 0, 0])
         self.simulation.ue.antenna = np.array(
             [AntennaOmni(10), AntennaOmni(11), AntennaOmni(22), AntennaOmni(23)])
         self.simulation.ue.active = np.ones(4, dtype=bool)
@@ -218,10 +216,10 @@ class SimulationDownlinkTest(unittest.TestCase):
         # test coupling loss method
         self.simulation.coupling_loss_imt = self.simulation.calculate_intra_imt_coupling_loss(self.simulation.ue,
                                                                                               self.simulation.bs)
-        path_loss_imt = np.array([[78.68,  89.36,  93.28,  97.06],
-                                  [97.55,  94.73,  91.54,  82.08]])
-        bs_antenna_gains = np.array([[1,  1,  1,  1], [2,  2,  2,  2]])
-        ue_antenna_gains = np.array([[10,  11,  22,  23], [10,  11,  22,  23]])
+        path_loss_imt = np.array([[78.68, 89.36, 93.28, 97.06],
+                                  [97.55, 94.73, 91.54, 82.08]])
+        bs_antenna_gains = np.array([[1, 1, 1, 1], [2, 2, 2, 2]])
+        ue_antenna_gains = np.array([[10, 11, 22, 23], [10, 11, 22, 23]])
         coupling_loss_imt = path_loss_imt - bs_antenna_gains - ue_antenna_gains \
             + self.param.imt.bs_ohmic_loss \
             + self.param.imt.ue_ohmic_loss \
@@ -233,14 +231,14 @@ class SimulationDownlinkTest(unittest.TestCase):
 
         # test scheduler and bandwidth allocation
         self.simulation.scheduler()
-        bandwidth_per_ue = math.trunc((1 - 0.1)*100/2)
+        bandwidth_per_ue = math.trunc((1 - 0.1) * 100 / 2)
         npt.assert_allclose(self.simulation.ue.bandwidth,
-                            bandwidth_per_ue*np.ones(4), atol=1e-2)
+                            bandwidth_per_ue * np.ones(4), atol=1e-2)
 
         # there is no power control, so BS's will transmit at maximum power
         self.simulation.power_control()
 
-        tx_power = 10 - 10*math.log10(2)
+        tx_power = 10 - 10 * math.log10(2)
         npt.assert_allclose(self.simulation.bs.tx_power[0], np.array(
             [tx_power, tx_power]), atol=1e-2)
         npt.assert_allclose(self.simulation.bs.tx_power[1], np.array(
@@ -265,14 +263,14 @@ class SimulationDownlinkTest(unittest.TestCase):
 
         # check UE thermal noise
         thermal_noise = 10 * \
-            np.log10(1.38064852e-23*290*bandwidth_per_ue*1e3*1e6) + 9
+            np.log10(1.38064852e-23 * 290 * bandwidth_per_ue * 1e3 * 1e6) + 9
         npt.assert_allclose(self.simulation.ue.thermal_noise,
                             thermal_noise, atol=1e-2)
 
         # check UE thermal noise + interference
         total_interference = 10 * \
-            np.log10(np.power(10, 0.1*rx_interference) +
-                     np.power(10, 0.1*thermal_noise))
+            np.log10(np.power(10, 0.1 * rx_interference) +
+                     np.power(10, 0.1 * thermal_noise))
         npt.assert_allclose(
             self.simulation.ue.total_interference, total_interference, atol=1e-2)
 
@@ -290,7 +288,8 @@ class SimulationDownlinkTest(unittest.TestCase):
         self.simulation.system.y = np.array([0])
         self.simulation.system.height = np.array([self.param.fss_ss.altitude])
 
-        # test the method that calculates interference from IMT UE to FSS space station
+        # test the method that calculates interference from IMT UE to FSS space
+        # station
         self.simulation.calculate_external_interference()
 
         # check coupling loss
@@ -310,13 +309,14 @@ class SimulationDownlinkTest(unittest.TestCase):
 
         # check interference generated by BS to FSS space station
         interference = tx_power - coupling_loss_imt_system
-        rx_interference = 10*math.log10(np.sum(np.power(10, 0.1*interference)))
+        rx_interference = 10 * \
+            math.log10(np.sum(np.power(10, 0.1 * interference)))
         self.assertAlmostEqual(self.simulation.system.rx_interference,
                                rx_interference,
                                delta=.01)
 
         # check FSS space station thermal noise
-        thermal_noise = 10*np.log10(1.38064852e-23*950*1e3*100*1e6)
+        thermal_noise = 10 * np.log10(1.38064852e-23 * 950 * 1e3 * 100 * 1e6)
         self.assertAlmostEqual(self.simulation.system.thermal_noise,
                                thermal_noise,
                                delta=.01)
@@ -352,7 +352,7 @@ class SimulationDownlinkTest(unittest.TestCase):
                                                             self.simulation.topology,
                                                             random_number_gen)
         self.simulation.ue.x = np.array([20, 70, 110, 170])
-        self.simulation.ue.y = np.array([0,  0,   0,   0])
+        self.simulation.ue.y = np.array([0, 0, 0, 0])
         self.simulation.ue.antenna = np.array(
             [AntennaOmni(10), AntennaOmni(11), AntennaOmni(22), AntennaOmni(23)])
         self.simulation.ue.active = np.ones(4, dtype=bool)
@@ -371,36 +371,36 @@ class SimulationDownlinkTest(unittest.TestCase):
         self.simulation.power_control()
         self.simulation.calculate_sinr()
 
-        bandwidth_per_ue = math.trunc((1 - 0.1)*100/2)
+        bandwidth_per_ue = math.trunc((1 - 0.1) * 100 / 2)
 
-        tx_power = 10 - 10*math.log10(2)
+        tx_power = 10 - 10 * math.log10(2)
         npt.assert_allclose(self.simulation.bs.tx_power[0], np.array(
             [tx_power, tx_power]), atol=1e-2)
         npt.assert_allclose(self.simulation.bs.tx_power[1], np.array(
             [tx_power, tx_power]), atol=1e-2)
 
         # check UE received power
-        path_loss_imt = np.array([78.68,  89.37,  91.54,  82.09])
-        rx_power = np.array([tx_power-3+1+10-4-3, tx_power-3+1+11 -
-                            4-3, tx_power-3+2+22-4-3, tx_power-3+2+23-4-3]) - path_loss_imt
+        path_loss_imt = np.array([78.68, 89.37, 91.54, 82.09])
+        rx_power = np.array([tx_power - 3 + 1 + 10 - 4 - 3, tx_power - 3 + 1 + 11 -
+                            4 - 3, tx_power - 3 + 2 + 22 - 4 - 3, tx_power - 3 + 2 + 23 - 4 - 3]) - path_loss_imt
         npt.assert_allclose(self.simulation.ue.rx_power, rx_power, atol=1e-2)
 
         # check UE received interference
-        rx_interference = np.array([tx_power-3-(97.55-2-10)-4-3,  tx_power-3-(
-            94.73-2-11)-4-3, tx_power-3-(93.28-1-22)-4-3, tx_power-3-(97.06-1-23)-4-3])
+        rx_interference = np.array([tx_power - 3 - (97.55 - 2 - 10) - 4 - 3, tx_power - 3 - (
+            94.73 - 2 - 11) - 4 - 3, tx_power - 3 - (93.28 - 1 - 22) - 4 - 3, tx_power - 3 - (97.06 - 1 - 23) - 4 - 3])
         npt.assert_allclose(self.simulation.ue.rx_interference,
                             rx_interference, atol=1e-2)
 
         # check UE thermal noise
         thermal_noise = 10 * \
-            np.log10(1.38064852e-23*290*bandwidth_per_ue*1e3*1e6) + 9
+            np.log10(1.38064852e-23 * 290 * bandwidth_per_ue * 1e3 * 1e6) + 9
         npt.assert_allclose(self.simulation.ue.thermal_noise,
                             thermal_noise, atol=1e-2)
 
         # check UE thermal noise + interference
         total_interference = 10 * \
-            np.log10(np.power(10, 0.1*rx_interference) +
-                     np.power(10, 0.1*thermal_noise))
+            np.log10(np.power(10, 0.1 * rx_interference) +
+                     np.power(10, 0.1 * thermal_noise))
         npt.assert_allclose(
             self.simulation.ue.total_interference, total_interference, atol=1e-2)
 
@@ -424,20 +424,20 @@ class SimulationDownlinkTest(unittest.TestCase):
 
         # check coupling loss between FSS_ES and IMT_UE
         coupling_loss_imt_system = np.array(
-            [128.55-50-10,  128.77-50-11,  128.93-50-22,  129.18-50-23])
+            [128.55 - 50 - 10, 128.77 - 50 - 11, 128.93 - 50 - 22, 129.18 - 50 - 23])
         npt.assert_allclose(self.simulation.coupling_loss_imt_system,
                             coupling_loss_imt_system,
                             atol=1e-2)
 
         # check interference from FSS_ES to IMT_UE
-        system_tx_power = -60 + 10*math.log10(bandwidth_per_ue*1e6) + 30
+        system_tx_power = -60 + 10 * math.log10(bandwidth_per_ue * 1e6) + 30
         ext_interference = system_tx_power - coupling_loss_imt_system
         npt.assert_allclose(self.simulation.ue.ext_interference,
                             ext_interference,
                             atol=1e-2)
 
-        ext_interference_total = 10*np.log10(np.power(10, 0.1*total_interference)
-                                             + np.power(10, 0.1*ext_interference))
+        ext_interference_total = 10 * np.log10(np.power(10, 0.1 * total_interference) +
+                                               np.power(10, 0.1 * ext_interference))
 
         npt.assert_allclose(self.simulation.ue.sinr_ext,
                             rx_power - ext_interference_total,
@@ -452,19 +452,20 @@ class SimulationDownlinkTest(unittest.TestCase):
 
         # check coupling loss from IMT_BS to FSS_ES
         coupling_loss_imt_system = np.array(
-            [124.47-50-1,  124.47-50-1,  125.29-50-2,  125.29-50-2])
+            [124.47 - 50 - 1, 124.47 - 50 - 1, 125.29 - 50 - 2, 125.29 - 50 - 2])
         npt.assert_allclose(self.simulation.coupling_loss_imt_system,
                             coupling_loss_imt_system,
                             atol=1e-2)
 
         interference = tx_power - coupling_loss_imt_system
-        rx_interference = 10*math.log10(np.sum(np.power(10, 0.1*interference)))
+        rx_interference = 10 * \
+            math.log10(np.sum(np.power(10, 0.1 * interference)))
         self.assertAlmostEqual(self.simulation.system.rx_interference,
                                rx_interference,
                                delta=.01)
 
         # check FSS Earth station thermal noise
-        thermal_noise = 10*np.log10(1.38064852e-23*100*1e3*100*1e6)
+        thermal_noise = 10 * np.log10(1.38064852e-23 * 100 * 1e3 * 100 * 1e6)
         self.assertAlmostEqual(self.simulation.system.thermal_noise,
                                thermal_noise,
                                delta=.01)
@@ -497,7 +498,7 @@ class SimulationDownlinkTest(unittest.TestCase):
                                                             self.simulation.topology,
                                                             random_number_gen)
         self.simulation.ue.x = np.array([20, 70, 110, 170])
-        self.simulation.ue.y = np.array([0,  0,   0,   0])
+        self.simulation.ue.y = np.array([0, 0, 0, 0])
         self.simulation.ue.antenna = np.array(
             [AntennaOmni(10), AntennaOmni(11), AntennaOmni(22), AntennaOmni(23)])
         self.simulation.ue.active = np.ones(4, dtype=bool)
@@ -523,9 +524,9 @@ class SimulationDownlinkTest(unittest.TestCase):
         self.simulation.calculate_sinr()
 
         # check UE thermal noise
-        bandwidth_per_ue = math.trunc((1 - 0.1)*100/2)
+        bandwidth_per_ue = math.trunc((1 - 0.1) * 100 / 2)
         thermal_noise = 10 * \
-            np.log10(1.38064852e-23*290*bandwidth_per_ue*1e3*1e6) + 9
+            np.log10(1.38064852e-23 * 290 * bandwidth_per_ue * 1e3 * 1e6) + 9
         npt.assert_allclose(self.simulation.ue.thermal_noise,
                             thermal_noise,
                             atol=1e-2)
@@ -552,27 +553,28 @@ class SimulationDownlinkTest(unittest.TestCase):
 
         polarization_loss = 3
         npt.assert_allclose(self.simulation.coupling_loss_imt_system,
-                            np.array([118.47-50-1,  118.47-50-1,  119.29 -
-                                     50-2,  119.29-50-2]) + polarization_loss,
+                            np.array([118.47 - 50 - 1, 118.47 - 50 - 1, 119.29 -
+                                     50 - 2, 119.29 - 50 - 2]) + polarization_loss,
                             atol=1e-2)
 
         # Test RAS interference
-        interference = self.param.imt.bs_conducted_power - 10*np.log10(self.param.imt.ue_k) \
-            - np.array([118.47-50-1,  118.47-50-1,  119.29 -
-                       50-2,  119.29-50-2]) - polarization_loss
-        rx_interference = 10*math.log10(np.sum(np.power(10, 0.1*interference)))
+        interference = self.param.imt.bs_conducted_power - 10 * np.log10(self.param.imt.ue_k) \
+            - np.array([118.47 - 50 - 1, 118.47 - 50 - 1, 119.29 -
+                       50 - 2, 119.29 - 50 - 2]) - polarization_loss
+        rx_interference = 10 * \
+            math.log10(np.sum(np.power(10, 0.1 * interference)))
         self.assertAlmostEqual(self.simulation.system.rx_interference,
                                rx_interference,
                                delta=.01)
 
         # Test RAS PFD
-        pfd = 10*np.log10(10**(rx_interference/10)/54.9779)
+        pfd = 10 * np.log10(10**(rx_interference / 10) / 54.9779)
         self.assertAlmostEqual(self.simulation.system.pfd,
                                pfd,
                                delta=.01)
 
         # check RAS station thermal noise
-        thermal_noise = 10*np.log10(1.38064852e-23*100*1e3*100*1e6)
+        thermal_noise = 10 * np.log10(1.38064852e-23 * 100 * 1e3 * 100 * 1e6)
         self.assertAlmostEqual(self.simulation.system.thermal_noise,
                                thermal_noise,
                                delta=.01)

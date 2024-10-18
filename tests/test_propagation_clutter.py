@@ -3,6 +3,7 @@ import numpy as np
 from sharc.propagation.propagation_clutter_loss import PropagationClutterLoss
 from sharc.support.enumerations import StationType
 
+
 class TestPropagationClutterLoss(unittest.TestCase):
     def setUp(self):
         self.clutter_loss = PropagationClutterLoss(np.random.RandomState(42))
@@ -23,14 +24,15 @@ class TestPropagationClutterLoss(unittest.TestCase):
 
         # Check the shape of the output
         self.assertEqual(loss.shape, (3,))
-        
+
         # Check if loss decreases with increasing elevation
         self.assertTrue(loss[0] >= loss[1] >= loss[2])
 
     def test_terrestrial_clutter_loss(self):
         frequency = np.array([2000, 6000])  # MHz
         distance = np.array([500, 2000])  # meters
-        loc_percentage = np.array([0.5])  # Using a single value for location percentage
+        # Using a single value for location percentage
+        loc_percentage = np.array([0.5])
 
         loss = self.clutter_loss.get_loss(
             frequency=frequency,

@@ -66,16 +66,22 @@ if __name__ == '__main__':
     antenna = AntennaS580(param)
     gain = antenna.calculate_gain(off_axis_angle_vec=phi)
 
-    fig = plt.figure(figsize=(8, 7), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(8, 7), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
 
-    plt.semilogx(phi, gain27 - param27.antenna_gain, "-b",
-                 label="$f = 27$ $GHz,$ $D = 9.6$ $m$")
-    plt.semilogx(phi, gain - param.antenna_gain, "-r",
-                 label="$f = 27$ $GHz,$ $D = 0.45$ $m$")
+    plt.semilogx(
+        phi, gain27 - param27.antenna_gain, "-b",
+        label="$f = 27$ $GHz,$ $D = 9.6$ $m$",
+    )
+    plt.semilogx(
+        phi, gain - param.antenna_gain, "-r",
+        label="$f = 27$ $GHz,$ $D = 0.45$ $m$",
+    )
 
     plt.title("ITU-R S.580 antenna radiation pattern")
-    plt.xlabel("Off-axis angle $\phi$ [deg]")
+    plt.xlabel(r"Off-axis angle $\phi$ [deg]")
     plt.ylabel("Gain relative to $G_m$ [dB]")
     plt.legend(loc="lower left")
     plt.xlim((phi[0], phi[-1]))

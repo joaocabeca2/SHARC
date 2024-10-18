@@ -14,12 +14,14 @@ import sys
 
 class SpectralMask3Gpp(SpectralMask):
 
-    def __init__(self,
-                 sta_type: StationType,
-                 freq_mhz: float,
-                 band_mhz: float,
-                 spurious_emissions: float,
-                 scenario="OUTDOOR"):
+    def __init__(
+        self,
+        sta_type: StationType,
+        freq_mhz: float,
+        band_mhz: float,
+        spurious_emissions: float,
+        scenario="OUTDOOR",
+    ):
         """
         Implements spectral emission mask from 3GPP 36.104 Table 6.6.3.1-6 for
         Wide Area BS operating with 5, 10, 15 or 20 MHz channel bandwidth.
@@ -53,12 +55,16 @@ class SpectralMask3Gpp(SpectralMask):
         # delta_f_lim_flipped = np.flip(self.delta_f_lim,0)
         delta_f_lim_flipped = delta_f_lim[::-1]
 
-        self.freq_lim = np.concatenate(((self.freq_mhz - self.band_mhz / 2) - delta_f_lim_flipped,
-                                        (self.freq_mhz + self.band_mhz / 2) + delta_f_lim))
+        self.freq_lim = np.concatenate((
+            (self.freq_mhz - self.band_mhz / 2) - delta_f_lim_flipped,
+            (self.freq_mhz + self.band_mhz / 2) + delta_f_lim,
+        ))
 
-    def get_frequency_limits(self,
-                             sta_type: StationType,
-                             bandwidth: float) -> np.array:
+    def get_frequency_limits(
+        self,
+        sta_type: StationType,
+        bandwidth: float,
+    ) -> np.array:
         """
         Calculates the frequency limits of the spectrum emission masks. This
         implementation is valid only for bandwidths equal to 5, 10, 15 or 20 MHz.
@@ -80,26 +86,33 @@ class SpectralMask3Gpp(SpectralMask):
                 delta_f_lim = np.append(delta_f_lim, np.array([20, 25]))
         return delta_f_lim
 
-    def set_mask(self, power=0):
-        emission_limits = self.get_emission_limits(self.sta_type,
-                                                   self.band_mhz,
-                                                   self.spurious_emissions)
-        self.p_tx = power - 10 * np.log10(self.band_mhz)
+    def set_mask(self, p_tx=0):
+        emission_limits = self.get_emission_limits(
+            self.sta_type,
+            self.band_mhz,
+            self.spurious_emissions,
+        )
+        self.p_tx = p_tx - 10 * np.log10(self.band_mhz)
         # emission_limits = np.flip(emission_limits, 0)
         emission_limits_flipped = emission_limits[::-1]
-        self.mask_dbm = np.concatenate((emission_limits_flipped,
-                                        np.array([self.p_tx]),
-                                        emission_limits))
+        self.mask_dbm = np.concatenate((
+            emission_limits_flipped,
+            np.array([self.p_tx]),
+            emission_limits,
+        ))
 
-    def get_emission_limits(self,
-                            sta_type: StationType,
-                            bandwidth: float,
-                            spurious_emissions: float) -> np.array:
+    def get_emission_limits(
+        self,
+        sta_type: StationType,
+        bandwidth: float,
+        spurious_emissions: float,
+    ) -> np.array:
         if sta_type is StationType.IMT_BS:
             # emission limits in dBm/MHz
             emission_limits = 3 - 7 / 5 * (np.arange(.05, 5, .1) - .05)
             emission_limits = np.append(
-                emission_limits, np.array([-4, spurious_emissions]))
+                emission_limits, np.array([-4, spurious_emissions]),
+            )
         else:
             if bandwidth == 5:
                 limit_r1 = np.array([-15])
@@ -109,6 +122,8 @@ class SpectralMask3Gpp(SpectralMask):
                 limit_r1 = np.array([-20])
             else:
                 limit_r1 = np.array([-21])
-            emission_limits = np.append(limit_r1 + 10 * np.log10(1 / 0.03),
-                                        np.array([-10, -13, -25, spurious_emissions]))
+            emission_limits = np.append(
+                limit_r1 + 10 * np.log10(1 / 0.03),
+                np.array([-10, -13, -25, spurious_emissions]),
+            )
         return emission_limits

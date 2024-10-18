@@ -154,8 +154,10 @@ class ParametersFssEs(ParametersBase):
                              Invalid value for paramter location - {self.location}. \
                             Allowed values are \"FIXED\", \"CELL\", \"NETWORK\", \"UNIFORM_DIST\".")
 
-        if self.antenna_pattern not in ["ITU-R S.1855", "ITU-R S.465", "ITU-R S.580", "OMNI",
-                                        "Modified ITU-R S.465"]:
+        if self.antenna_pattern not in [
+            "ITU-R S.1855", "ITU-R S.465", "ITU-R S.580", "OMNI",
+            "Modified ITU-R S.465",
+        ]:
             raise ValueError(f"ParametersFssEs: \
                              Invalid value for paramter antenna_pattern - {self.antenna_pattern}. \
                              Allowed values are \
@@ -194,10 +196,13 @@ class ParametersFssEs(ParametersBase):
                              Invalid value for parameter bs_building_entry_loss_type - \
                              {self.bs_building_entry_loss_type} \
                              Allowd values are \"P2109_RANDOM\", \"P2109_FIXED\", \"FIXED_VALUE\".")
-        if self.channel_model.upper() not in ["FSPL", "TERRESTRIALSIMPLE", "P452", "P619",
-                                              "TVRO-URBAN", "TVRO-SUBURBAN", "HDFSS"]:
+        if self.channel_model.upper() not in [
+            "FSPL", "TERRESTRIALSIMPLE", "P452", "P619",
+            "TVRO-URBAN", "TVRO-SUBURBAN", "HDFSS",
+        ]:
             raise ValueError(
-                f"ParametersFssEs: Invalid value for parameter channel_model - {self.channel_model}")
+                f"ParametersFssEs: Invalid value for parameter channel_model - {self.channel_model}",
+            )
 
         if self.channel_model == "P452":
             self.param_p452.load_from_paramters(self)

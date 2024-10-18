@@ -11,6 +11,11 @@ import numpy as np
 
 class SpectralMask(ABC):
 
+    def __init__(self) -> None:
+        self.mask_dbm = None
+        self.freq_lim = None
+        self.p_tx = None
+
     @abstractmethod
     def set_mask(self, p_tx=0):
         pass
@@ -36,8 +41,12 @@ class SpectralMask(ABC):
 
         # Included delta f values: values of spectral mask delta f break limist
         # which are contained within the band
-        inc_df = np.where(np.logical_and(self.freq_lim > df_min,
-                                         self.freq_lim < df_max))[0]
+        inc_df = np.where(
+            np.logical_and(
+                self.freq_lim > df_min,
+                self.freq_lim < df_max,
+            ),
+        )[0]
 
         # If no break limits are within band: the band does not need to be
         # divided into rectangles

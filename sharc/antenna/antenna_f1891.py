@@ -64,8 +64,10 @@ if __name__ == '__main__':
     antenna30 = AntennaF1891(param)
     gain30 = antenna30.calculate_gain(off_axis_angle_vec=psi)
 
-    fig = plt.figure(figsize=(16, 6), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(16, 6), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
     ax1 = fig.add_subplot(121)
 
     ax1.plot(psi, gain47, "-b", label="$G_m = 47$ dB")

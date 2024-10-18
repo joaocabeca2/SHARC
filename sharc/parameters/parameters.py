@@ -186,8 +186,10 @@ class Parameters(object):
 if __name__ == "__main__":
     from pprint import pprint
     parameters = Parameters()
-    param_sections = [a for a in dir(parameters) if not a.startswith('__') and not
-                      callable(getattr(parameters, a))]
+    param_sections = [
+        a for a in dir(parameters) if not a.startswith('__') and not
+        callable(getattr(parameters, a))
+    ]
     print("\n#### Dumping default parameters:")
     for p in param_sections:
         print("\n")

@@ -16,7 +16,7 @@ class ParametersAntennaWithDiameter(ParametersBase):
         if None in [
             self.antenna_gain,
             self.diameter,
-            self.frequency
+            self.frequency,
         ]:
             raise ValueError(f"{ctx} needs to have all its parameters set")
 

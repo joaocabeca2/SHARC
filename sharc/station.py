@@ -37,20 +37,24 @@ class Station(object):
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            equal = (self.id == other.id and
-                     self.x == other.x and
-                     self.y == other.y and
-                     self.height == other.height)
+            equal = (
+                self.id == other.id and
+                self.x == other.x and
+                self.y == other.y and
+                self.height == other.height
+            )
             return equal
         else:
             return NotImplemented
 
     def __ne__(self, other):
         if isinstance(other, self.__class__):
-            not_equal = (self.id != other.id or
-                         self.x != other.x or
-                         self.y != other.y or
-                         self.height != other.height)
+            not_equal = (
+                self.id != other.id or
+                self.x != other.x or
+                self.y != other.y or
+                self.height != other.height
+            )
             return not_equal
         else:
             return NotImplemented

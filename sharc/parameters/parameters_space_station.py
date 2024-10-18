@@ -81,7 +81,8 @@ class ParametersSpaceStation(ParametersBase):
 
         if self.space_station_alt_m is not None:
             raise ValueError(
-                "'space_station_alt_m' should not be set manually. It is always equal to 'altitude'")
+                "'space_station_alt_m' should not be set manually. It is always equal to 'altitude'",
+            )
 
         if self.nadir_angle != 0 and self.elevation != 0:
             raise ValueError("'elevation' and 'nadir_angle' should not both be set at the same time. Choose either\
@@ -90,12 +91,13 @@ class ParametersSpaceStation(ParametersBase):
         # Check channel model
         if self.channel_model not in ["FSPL", "P619"]:
             raise ValueError(
-                "Invalid channel_model, must be either 'FSPL' or 'P619'")
+                "Invalid channel_model, must be either 'FSPL' or 'P619'",
+            )
 
         if self.channel_model == "P619":
             # check necessary parameters for P619
             if None in [
-                self.param_p619, self.earth_station_alt_m, self.earth_station_lat_deg, self.earth_station_long_diff_deg
+                self.param_p619, self.earth_station_alt_m, self.earth_station_lat_deg, self.earth_station_long_diff_deg,
             ]:
                 raise ValueError("When using P619 should set 'self.earth_station_alt_m', 'self.earth_station_lat_deg',\
                                  'self.earth_station_long_diff_deg' deafult or on parameter file and 'param_p619' \
@@ -103,7 +105,8 @@ class ParametersSpaceStation(ParametersBase):
             # Check season
             if self.season not in ["SUMMER", "WINTER"]:
                 raise ValueError(
-                    "Invalid season, must be either 'SUMMER' or 'WINTER'")
+                    "Invalid season, must be either 'SUMMER' or 'WINTER'",
+                )
 
         self.set_derived_parameters()
 
@@ -118,8 +121,8 @@ class ParametersSpaceStation(ParametersBase):
             self.nadir_angle = math.degrees(
                 math.asin(
                     EARTH_RADIUS * math.sin(math.radians(self.elevation + 90)) /
-                    (EARTH_RADIUS + self.altitude)
-                )
+                    (EARTH_RADIUS + self.altitude),
+                ),
             )
         elif self.nadir_angle != 0.0:
             # this relationship comes directly from law of sines
@@ -128,6 +131,6 @@ class ParametersSpaceStation(ParametersBase):
                 math.asin(
                     (EARTH_RADIUS + self.altitude) *
                     math.sin(math.radians(self.nadir_angle)) /
-                    EARTH_RADIUS
-                )
+                    EARTH_RADIUS,
+                ),
             ) - 90

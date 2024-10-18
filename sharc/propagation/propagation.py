@@ -23,13 +23,15 @@ class Propagation(ABC):
         self.is_earth_space_model = False
 
     @abstractmethod
-    def get_loss(self,
-                 params: Parameters,
-                 frequency: float,
-                 station_a: StationManager,
-                 station_b: StationManager,
-                 station_a_gains=None,
-                 station_b_gains=None) -> np.array:
+    def get_loss(
+        self,
+        params: Parameters,
+        frequency: float,
+        station_a: StationManager,
+        station_b: StationManager,
+        station_a_gains=None,
+        station_b_gains=None,
+    ) -> np.array:
         """Calculates the loss between station_a and station_b
 
         Parameters

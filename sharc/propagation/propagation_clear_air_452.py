@@ -28,7 +28,8 @@ class PropagationClearAir(Propagation):
 
         self.clutter = PropagationClutterLoss(random_number_gen)
         self.building_entry = PropagationBuildingEntryLoss(
-            self.random_number_gen)
+            self.random_number_gen,
+        )
         self.building_loss = 20
         self.model_params = model_params
 
@@ -127,8 +128,10 @@ class PropagationClearAir(Propagation):
 
         tau = 1 - np.exp(-(4.12 * 1e-4 * dlm ** 2.41))  # (3a)
 
-        mu1 = (10 ** (-dtm / (16 - 6.6 * tau)) + 10 **
-               (-5 * (0.496 + 0.354 * tau))) ** 0.2
+        mu1 = (
+            10 ** (-dtm / (16 - 6.6 * tau)) + 10 **
+            (-5 * (0.496 + 0.354 * tau))
+        ) ** 0.2
 
         indices = np.nonzero(mu1 > 1)
         mu1[indices] = 1
@@ -169,9 +172,12 @@ class PropagationClearAir(Propagation):
 
         v2 = 0
         for ii in range(2, n):
-            v2 = v2 + (d[ii] - d[ii - 1]) * (h[ii] * (2 * d[ii] + d[ii - 1]
-                                                      # Eq(162)
-                                                      ) + h[ii - 1] * (d[ii] + 2 * d[ii - 1]))
+            v2 = v2 + (d[ii] - d[ii - 1]) * (
+                h[ii] * (
+                    2 * d[ii] + d[ii - 1]
+                    # Eq(162)
+                ) + h[ii - 1] * (d[ii] + 2 * d[ii - 1])
+            )
 
         hst = (2 * v1 * dtot - v2) / dtot ** 2  # Eq(163)
         hsr = (v2 - v1 * dtot) / dtot ** 2  # Eq(164)
@@ -374,8 +380,10 @@ class PropagationClearAir(Propagation):
         return Lbs
 
     @staticmethod
-    def tl_anomalous(dtot, dlt, dlr, dct, dcr, dlm, hts, hrs, hte, hre, hm, theta_t, theta_r, f, p, T, press,
-                     omega, ae, b0):
+    def tl_anomalous(
+        dtot, dlt, dlr, dct, dcr, dlm, hts, hrs, hte, hre, hm, theta_t, theta_r, f, p, T, press,
+        omega, ae, b0,
+    ):
         Alf = 0
 
         if f < 0.5:
@@ -391,12 +399,16 @@ class PropagationClearAir(Propagation):
         Asr = 0
 
         if theta_t1 > 0:
-            Ast = 20 * np.log10(1 + 0.361 * theta_t1 *
-                                np.sqrt(f * dlt)) + 0.264 * theta_t1 * f ** (1 / 3)
+            Ast = 20 * np.log10(
+                1 + 0.361 * theta_t1 *
+                np.sqrt(f * dlt),
+            ) + 0.264 * theta_t1 * f ** (1 / 3)
 
         if theta_r1 > 0:
-            Asr = 20 * np.log10(1 + 0.361 * theta_r1 *
-                                np.sqrt(f * dlr)) + 0.264 * theta_r1 * f ** (1 / 3)
+            Asr = 20 * np.log10(
+                1 + 0.361 * theta_r1 *
+                np.sqrt(f * dlr),
+            ) + 0.264 * theta_r1 * f ** (1 / 3)
 
         # over - sea surface duct coupling correction for the interfering and
         # interfered-with stations(49) and (49a)
@@ -457,8 +469,8 @@ class PropagationClearAir(Propagation):
         # beta = max(beta, eps); % to avoid division by zero
 
         Gamma = 1.076 / (2.0058 - np.log10(beta)) ** 1.012 * \
-            np.exp(-(9.51 - 4.8 * np.log10(beta) + 0.198 *
-                   (np.log10(beta)) ** 2) * 1e-6 * dtot ** (1.13))
+            np.exp(
+                -(9.51 - 4.8 * np.log10(beta) + 0.198 * (np.log10(beta)) ** 2) * 1e-6 * dtot ** (1.13),)
 
         # time percentage variablity(cumulative distribution):
         Ap = -12 + (1.2 + 3.7e-3 * dtot) * \
@@ -520,9 +532,12 @@ class PropagationClearAir(Propagation):
 
             # Find the intermediate profile point with the highest diffraction parameter nu:
             numax = np.max(
-                (hi + 500 * Ce * di * (dtot - di) -
-                 (hts * (dtot - di) + hrs * di) / dtot) *
-                np.sqrt(0.002 * dtot / (lamb * di * (dtot - di))))
+                (
+                    hi + 500 * Ce * di * (dtot - di) -
+                    (hts * (dtot - di) + hrs * di) / dtot
+                ) *
+                np.sqrt(0.002 * dtot / (lamb * di * (dtot - di))),
+            )
 
             Luc = 0
             if numax > -0.78:
@@ -533,7 +548,8 @@ class PropagationClearAir(Propagation):
             # Find the intermediate profile pointwith the highest slope of the
             # line from the receiver to the point
             Srim = np.max(
-                (hi + 500 * Ce * di * (dtot - di) - hrs) / (dtot - di))
+                (hi + 500 * Ce * di * (dtot - di) - hrs) / (dtot - di),
+            )
 
             # Calculate the distance of the Bullington point from the transmitter:
             dbp = (hrs - hts + Srim * dtot) / (Stim + Srim)
@@ -558,8 +574,10 @@ class PropagationClearAir(Propagation):
         # Normalized factor for surface admittance for horizontal (1) and vertical
         # (2) polarizations
         K = np.empty(2)
-        K[0] = 0.036 * (adft * f) ** (-1 / 3) * ((epsr - 1) **
-                                                 2 + (18 * sigma / f) ** 2) ** (-1 / 4)
+        K[0] = 0.036 * (adft * f) ** (-1 / 3) * (
+            (epsr - 1) **
+            2 + (18 * sigma / f) ** 2
+        ) ** (-1 / 4)
         K[1] = K[0] * (epsr ** 2 + (18 * sigma / f) ** 2) ** (1 / 2)
 
         # Earth ground / polarization parameter
@@ -617,14 +635,16 @@ class PropagationClearAir(Propagation):
         sigma = 0.003
 
         Ldft_land = PropagationClearAir.dl_se_ft_inner(
-            epsr, sigma, d, hte, hre, adft, f)
+            epsr, sigma, d, hte, hre, adft, f,
+        )
 
         # First - term part of the spherical - Earth diffraction loss over sea
         epsr = 80
         sigma = 5
 
         Ldft_sea = PropagationClearAir.dl_se_ft_inner(
-            epsr, sigma, d, hte, hre, adft, f)
+            epsr, sigma, d, hte, hre, adft, f,
+        )
 
         # First - term spherical diffraction loss
         Ldft = omega * Ldft_sea + (1 - omega) * Ldft_land
@@ -649,8 +669,10 @@ class PropagationClearAir(Propagation):
             c = (hte - hre) / (hte + hre)
             m = 250 * d * d / (ap * (hte + hre))
 
-            b = 2 * np.sqrt((m + 1) / (3 * m)) * np.cos(np.pi / 3 +
-                                                        1 / 3 * np.arccos(3 * c / 2 * np.sqrt(3 * m / (m + 1) ** 3)))
+            b = 2 * np.sqrt((m + 1) / (3 * m)) * np.cos(
+                np.pi / 3 +
+                1 / 3 * np.arccos(3 * c / 2 * np.sqrt(3 * m / (m + 1) ** 3)),
+            )
 
             dse1 = d / 2 * (1 + b)
             dse2 = d - dse1
@@ -722,7 +744,8 @@ class PropagationClearAir(Propagation):
         ap = ae
 
         Ld50 = PropagationClearAir.dl_delta_bull(
-            d, h, hts, hrs, hstd, hsrd, ap, f, omega)
+            d, h, hts, hrs, hstd, hsrd, ap, f, omega,
+        )
 
         if p == 50:
             Ldp = Ld50
@@ -733,7 +756,8 @@ class PropagationClearAir(Propagation):
             ap = ab
 
             Ldb = PropagationClearAir.dl_delta_bull(
-                d, h, hts, hrs, hstd, hsrd, ap, f, omega)
+                d, h, hts, hrs, hstd, hsrd, ap, f, omega,
+            )
 
             # Compute the interpolation factor Fi
             if p > b0:
@@ -747,13 +771,15 @@ class PropagationClearAir(Propagation):
         return Ldp, Ld50
 
     @dispatch(Parameters, float, StationManager, StationManager, np.ndarray, np.ndarray)
-    def get_loss(self,
-                 params: Parameters,
-                 frequency: float,
-                 station_a: StationManager,
-                 station_b: StationManager,
-                 station_a_gains=None,
-                 station_b_gains=None) -> np.array:
+    def get_loss(
+        self,
+        params: Parameters,
+        frequency: float,
+        station_a: StationManager,
+        station_b: StationManager,
+        station_a_gains=None,
+        station_b_gains=None,
+    ) -> np.array:
         """Wrapper function for the get_loss method to fit the Propagation ABC class interface
         Calculates the loss between station_a and station_b
 
@@ -779,11 +805,13 @@ class PropagationClearAir(Propagation):
             between each station
         """
         distance = station_a.get_3d_distance_to(
-            station_b) * (1e-3)  # P.452 expects Kms
+            station_b,
+        ) * (1e-3)  # P.452 expects Kms
         frequency_array = frequency * \
             np.ones(distance.shape) * (1e-3)  # P.452 expects GHz
         indoor_stations = np.tile(
-            station_b.indoor, (station_a.num_stations, 1))
+            station_b.indoor, (station_a.num_stations, 1),
+        )
         elevation = station_b.get_elevation(station_a)
         if params.imt.interfered_with:
             tx_gain = station_a_gains
@@ -798,14 +826,16 @@ class PropagationClearAir(Propagation):
             indoor_stations,
             elevation,
             tx_gain,
-            rx_gain
+            rx_gain,
         )
 
     # pylint: disable=arguments-differ
     @dispatch(np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray)
-    def get_loss(self, distance: np.ndarray, frequency: np.ndarray,
-                 indoor_stations: np.ndarray, elevation: np.ndarray,
-                 tx_gain: np.ndarray, rx_gain: np.ndarray) -> np.array:
+    def get_loss(
+        self, distance: np.ndarray, frequency: np.ndarray,
+        indoor_stations: np.ndarray, elevation: np.ndarray,
+        tx_gain: np.ndarray, rx_gain: np.ndarray,
+    ) -> np.array:
         """Calculates the loss according to P.452
 
         Parameters
@@ -912,12 +942,15 @@ class PropagationClearAir(Propagation):
 
         for ii in range(num_dists):
             [dc, hc, zonec, htg, hrg, Aht, Ahr] = self.closs_corr(
-                frequency, d[ii, :], h[ii, :], zone, Hte, Hre, ha_t, ha_r, dk_t, dk_r)
+                frequency, d[ii, :], h[ii, :], zone, Hte, Hre, ha_t, ha_r, dk_t, dk_r,
+            )
             d[ii, :] = dc
             h[ii, :] = hc
 
-            [hst, hsr, hstd, hsrd, hte, hre, hm, dlt,
-             dlr, theta_t, theta_r, theta, pathtype] = self.smooth_earth_heights(d[ii, :], h[ii, :], htg, hrg, ae, frequency)
+            [
+                hst, hsr, hstd, hsrd, hte, hre, hm, dlt,
+                dlr, theta_t, theta_r, theta, pathtype,
+            ] = self.smooth_earth_heights(d[ii, :], h[ii, :], htg, hrg, ae, frequency)
 
             dtot = d[ii, -1] - d[ii, 0]
 
@@ -953,10 +986,12 @@ class PropagationClearAir(Propagation):
             Fk = 1.0 - 0.5 * (1.0 + np.tanh(3.0 * kappa * (dtot - dsw) / dsw))
 
             [Lbfsg, Lb0p, Lb0b] = self.pl_los(
-                dtot, frequency, p[ii], b0[ii], omega[ii], T, Ph, dlt, dlr)
+                dtot, frequency, p[ii], b0[ii], omega[ii], T, Ph, dlt, dlr,
+            )
 
             [Ldp, Ld50] = self.dl_p(
-                d[ii], h[ii], hts, hrs, hstd, hsrd, frequency, omega[ii], p[ii], b0[ii], deltaN)
+                d[ii], h[ii], hts, hrs, hstd, hsrd, frequency, omega[ii], p[ii], b0[ii], deltaN,
+            )
 
             # The median basic transmission loss associated with diffraction Eq (43)
             Lbd50 = Lbfsg + Ld50
@@ -976,9 +1011,11 @@ class PropagationClearAir(Propagation):
             # and transhorizon signal enhancements
             eta = 2.5
 
-            Lba = self.tl_anomalous(dtot, dlt, dlr, Dct, Dcr, dlm[ii], hts, hrs, hte, hre, hm, theta_t, theta_r,
-                                    frequency, p[ii], T, Ph,
-                                    omega[ii], ae, b0[ii])
+            Lba = self.tl_anomalous(
+                dtot, dlt, dlr, Dct, Dcr, dlm[ii], hts, hrs, hte, hre, hm, theta_t, theta_r,
+                frequency, p[ii], T, Ph,
+                omega[ii], ae, b0[ii],
+            )
 
             Lminbap = eta * np.log(np.exp(Lba / eta) + np.exp(Lb0p / eta))
 
@@ -994,12 +1031,16 @@ class PropagationClearAir(Propagation):
 
             # Calculate the basic transmission loss due to troposcatter not exceeded
             # for any time percantage p
-            Lbs = self.tl_tropo(dtot, theta, frequency,
-                                p[ii], T, Ph, N0, tx_gain[ii], rx_gain[ii])
+            Lbs = self.tl_tropo(
+                dtot, theta, frequency,
+                p[ii], T, Ph, N0, tx_gain[ii], rx_gain[ii],
+            )
 
             # Calculate the final transmission loss not exceeded for p % time
-            Lb_pol = -5 * np.log10(10 ** (-0.2 * Lbs) +
-                                   10 ** (-0.2 * Lbam)) + Aht + Ahr
+            Lb_pol = -5 * np.log10(
+                10 ** (-0.2 * Lbs) +
+                10 ** (-0.2 * Lbam),
+            ) + Aht + Ahr
 
             if (self.model_params.polarization).lower() == "horizontal":
                 Lb[0, ii] = Lb_pol[0]
@@ -1010,15 +1051,18 @@ class PropagationClearAir(Propagation):
                 raise ValueError(error_message)
 
         if self.model_params.clutter_loss:
-            clutter_loss = self.clutter.get_loss(frequency=frequency * 1000,
-                                                 distance=distance * 1000,
-                                                 station_type=StationType.FSS_ES)
+            clutter_loss = self.clutter.get_loss(
+                frequency=frequency * 1000,
+                distance=distance * 1000,
+                station_type=StationType.FSS_ES,
+            )
         else:
             clutter_loss = np.zeros(distance.shape)
 
 #        building_loss = self.building_loss * indoor_stations
         b_loss = np.transpose(
-            self.building_entry.get_loss(frequency, elevation))
+            self.building_entry.get_loss(frequency, elevation),
+        )
         building_loss = b_loss * indoor_stations
         lb_new = Lb + clutter_loss + building_loss
 

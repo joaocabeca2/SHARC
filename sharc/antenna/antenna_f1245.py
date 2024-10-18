@@ -96,8 +96,10 @@ class AntennaF1245(Antenna):
         Az0 = self.beams_list[0][0]
         a = 90 - self.beams_list[0][1]
         C = Az0 - Az
-        off_axis_rad = np.arccos(np.cos(np.radians(a)) * np.cos(np.radians(b)) + np.sin(np.radians(a)) *
-                                 np.sin(np.radians(b)) * np.cos(np.radians(C)))
+        off_axis_rad = np.arccos(
+            np.cos(np.radians(a)) * np.cos(np.radians(b)) + np.sin(np.radians(a)) *
+            np.sin(np.radians(b)) * np.cos(np.radians(C)),
+        )
         off_axis_deg = np.degrees(off_axis_rad)
         return off_axis_deg
 
@@ -114,24 +116,30 @@ if __name__ == '__main__':
     param_gt.diameter = 3
     antenna_gt = AntennaF1245(param, param_gt)
     antenna_gt.add_beam(0, 0)
-    gain_gt = antenna_gt.calculate_gain(phi_vec=phi,
-                                        theta_vec=theta,
-                                        beams_l=beams_idx)
+    gain_gt = antenna_gt.calculate_gain(
+        phi_vec=phi,
+        theta_vec=theta,
+        beams_l=beams_idx,
+    )
     param.frequency = 27500
     param_lt = ParametersAntennaImt()
     param_lt.peak_gain = 36.9
     param_lt.diameter = 0.3
     antenna_lt = AntennaF1245(param, param_lt)
     antenna_lt.add_beam(0, 0)
-    gain_lt = antenna_lt.calculate_gain(phi_vec=phi,
-                                        theta_vec=theta,
-                                        beams_l=beams_idx)
-    fig = plt.figure(figsize=(8, 7), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    gain_lt = antenna_lt.calculate_gain(
+        phi_vec=phi,
+        theta_vec=theta,
+        beams_l=beams_idx,
+    )
+    fig = plt.figure(
+        figsize=(8, 7), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
     plt.semilogx(phi, gain_gt, "-b", label="$f = 10.7$ $GHz,$ $D = 3$ $m$")
     plt.semilogx(phi, gain_lt, "-r", label="$f = 27.5$ $GHz,$ $D = 0.3$ $m$")
     plt.title("ITU-R F.1245 antenna radiation pattern")
-    plt.xlabel("Off-axis angle $\phi$ [deg]")
+    plt.xlabel(r"Off-axis angle $\phi$ [deg]")
     plt.ylabel("Gain relative to $G_m$ [dB]")
     plt.legend(loc="lower left")
     plt.xlim((phi[0], phi[-1]))

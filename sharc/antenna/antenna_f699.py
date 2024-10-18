@@ -128,14 +128,16 @@ if __name__ == '__main__':
     antenna_lt = AntennaF699(param_lt)
     gain_lt = antenna_lt.calculate_gain(off_axis_angle_vec=phi)
 
-    fig = plt.figure(figsize=(8, 7), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(8, 7), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
 
     plt.semilogx(phi, gain_gt, "-b", label="$f = 10.7$ $GHz,$ $D = 3$ $m$")
     plt.semilogx(phi, gain_lt, "-r", label="$f = 27.5$ $GHz,$ $D = 0.3$ $m$")
 
     plt.title("ITU-R F.699 antenna radiation pattern")
-    plt.xlabel("Off-axis angle $\phi$ [deg]")
+    plt.xlabel(r"Off-axis angle $\phi$ [deg]")
     plt.ylabel("Gain relative to $G_m$ [dB]")
     plt.legend(loc="lower left")
     plt.xlim((phi[0], phi[-1]))

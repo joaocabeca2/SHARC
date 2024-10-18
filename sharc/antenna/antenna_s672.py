@@ -31,7 +31,8 @@ class AntennaS672(Antenna):
             self.a = 3.16
         else:
             sys.stderr.write(
-                "ERROR\nInvalid AntennaS672 L_s parameter: " + self.l_s)
+                "ERROR\nInvalid AntennaS672 L_s parameter: " + self.l_s,
+            )
             sys.exit(1)
 
         self.b = 6.32
@@ -84,27 +85,37 @@ if __name__ == '__main__':
     antenna = AntennaS672(param)
     gain30 = antenna.calculate_gain(off_axis_angle_vec=psi)
 
-    fig = plt.figure(figsize=(12, 7), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(12, 7), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
 
-    plt.semilogx(psi, gain20 - param.antenna_gain,
-                 "-b", label="$L_S = -20$ dB")
-    plt.semilogx(psi, gain25 - param.antenna_gain,
-                 "-r", label="$L_S = -25$ dB")
-    plt.semilogx(psi, gain30 - param.antenna_gain,
-                 "-g", label="$L_S = -30$ dB")
+    plt.semilogx(
+        psi, gain20 - param.antenna_gain,
+        "-b", label="$L_S = -20$ dB",
+    )
+    plt.semilogx(
+        psi, gain25 - param.antenna_gain,
+        "-r", label="$L_S = -25$ dB",
+    )
+    plt.semilogx(
+        psi, gain30 - param.antenna_gain,
+        "-g", label="$L_S = -30$ dB",
+    )
 
     plt.ylim((-33.8, 0))
     plt.xlim((1, 100))
     plt.title("ITU-R S.672-4 antenna radiation pattern")
-    plt.xlabel("Relative off-axis angle, $\psi/\psi_0$")
+    plt.xlabel(r"Relative off-axis angle, $\psi/\psi_0$")
     plt.ylabel("Gain relative to $G_m$ [dB]")
     plt.legend(loc="upper right")
 
     ax = plt.gca()
     ax.set_yticks([-30, -20, -10, 0])
-    ax.set_xticks(np.linspace(1, 9, 9).tolist() +
-                  np.linspace(10, 100, 10).tolist())
+    ax.set_xticks(
+        np.linspace(1, 9, 9).tolist() +
+        np.linspace(10, 100, 10).tolist(),
+    )
 
     plt.grid()
     plt.show()

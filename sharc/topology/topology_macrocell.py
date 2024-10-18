@@ -36,7 +36,8 @@ class TopologyMacrocell(Topology):
         """
         if num_clusters not in TopologyMacrocell.ALLOWED_NUM_CLUSTERS:
             error_message = "invalid number of clusters ({})".format(
-                num_clusters)
+                num_clusters,
+            )
             raise ValueError(error_message)
 
         cell_radius = intersite_distance * 2 / 3
@@ -60,21 +61,27 @@ class TopologyMacrocell(Topology):
             h = (d / 3) * math.sqrt(3) / 2
 
             # these are the coordinates of the central cluster
-            x_central = np.array([0, d, d / 2, -d / 2, -d, -d / 2,
-                                  d / 2, 2 * d, 3 * d / 2, d, 0, -d,
-                                  -3 * d / 2, -2 * d, -3 * d / 2, -d, 0, d, 3 * d / 2])
-            y_central = np.array([0, 0, 3 * h, 3 * h, 0, -3 * h,
-                                  -3 * h, 0, 3 * h, 6 * h, 6 * h, 6 * h,
-                                  3 * h, 0, -3 * h, -6 * h, -6 * h, -6 * h, -3 * h])
+            x_central = np.array([
+                0, d, d / 2, -d / 2, -d, -d / 2,
+                d / 2, 2 * d, 3 * d / 2, d, 0, -d,
+                -3 * d / 2, -2 * d, -3 * d / 2, -d, 0, d, 3 * d / 2,
+            ])
+            y_central = np.array([
+                0, 0, 3 * h, 3 * h, 0, -3 * h,
+                -3 * h, 0, 3 * h, 6 * h, 6 * h, 6 * h,
+                3 * h, 0, -3 * h, -6 * h, -6 * h, -6 * h, -3 * h,
+            ])
             self.x = np.copy(x_central)
             self.y = np.copy(y_central)
 
             # other clusters are calculated by shifting the central cluster
             if self.num_clusters == 7:
                 x_shift = np.array(
-                    [7 * d / 2, -d / 2, -4 * d, -7 * d / 2, d / 2, 4 * d])
+                    [7 * d / 2, -d / 2, -4 * d, -7 * d / 2, d / 2, 4 * d],
+                )
                 y_shift = np.array(
-                    [9 * h, 15 * h, 6 * h, -9 * h, -15 * h, -6 * h])
+                    [9 * h, 15 * h, 6 * h, -9 * h, -15 * h, -6 * h],
+                )
                 for xs, ys in zip(x_shift, y_shift):
                     self.x = np.concatenate((self.x, x_central + xs))
                     self.y = np.concatenate((self.y, y_central + ys))
@@ -95,15 +102,19 @@ class TopologyMacrocell(Topology):
             se = list([[x, y]])
             angle = int(az - 60)
             for a in range(6):
-                se.extend([[se[-1][0] + r * math.cos(math.radians(angle)),
-                          se[-1][1] + r * math.sin(math.radians(angle))]])
+                se.extend([[
+                    se[-1][0] + r * math.cos(math.radians(angle)),
+                    se[-1][1] + r * math.sin(math.radians(angle)),
+                ]])
                 angle += 60
             sector = plt.Polygon(se, fill=None, edgecolor='k')
             ax.add_patch(sector)
 
         # macro cell base stations
-        ax.scatter(self.x, self.y, color='k', edgecolor="k",
-                   linewidth=4, label="Macro cell")
+        ax.scatter(
+            self.x, self.y, color='k', edgecolor="k",
+            linewidth=4, label="Macro cell",
+        )
 
 
 if __name__ == '__main__':
@@ -112,8 +123,10 @@ if __name__ == '__main__':
     topology = TopologyMacrocell(intersite_distance, num_clusters)
     topology.calculate_coordinates()
 
-    fig = plt.figure(figsize=(8, 8), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(8, 8), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
     ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
 
     topology.plot(ax)

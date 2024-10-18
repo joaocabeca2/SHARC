@@ -33,13 +33,16 @@ class AntennaRS1813(Antenna):
 
         # for sensor F3 with n = 60% and D = 2.2 m, G_max = 52.7 dBi
         self.peak_gain = 10 * \
-            math.log10(param.antenna_efficiency *
-                       math.pow(math.pi * self.d_lmbda, 2))
+            math.log10(
+                param.antenna_efficiency *
+                math.pow(math.pi * self.d_lmbda, 2),
+            )
         # self.peak_gain = param.antenna_gain
 
         self.phi_m = 22 / self.d_lmbda * \
             math.sqrt(
-                5.5 + 5 * math.log10(math.pow(param.antenna_efficiency, 2) * self.d_lmbda))
+                5.5 + 5 * math.log10(math.pow(param.antenna_efficiency, 2) * self.d_lmbda),
+            )
 
     def calculate_gain(self, *args, **kwargs) -> np.array:
         phi = np.absolute(kwargs["off_axis_angle_vec"])
@@ -52,7 +55,8 @@ class AntennaRS1813(Antenna):
 
         id1 = np.where((self.phi_m < phi) & (phi <= 69))[0]
         gain[id1] = np.maximum(
-            gain[id1], 33 - 5 * math.log10(self.d_lmbda) - 25 * np.log10(phi[id1]))
+            gain[id1], 33 - 5 * math.log10(self.d_lmbda) - 25 * np.log10(phi[id1]),
+        )
 
         id2 = np.where((69 < phi) & (phi <= 180))[0]
         gain[id2] = -13 - 5 * math.log10(self.d_lmbda)
@@ -78,12 +82,14 @@ if __name__ == '__main__':
 
     gain = antenna.calculate_gain(off_axis_angle_vec=phi)
 
-    fig = plt.figure(figsize=(8, 7), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(8, 7), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
     plt.semilogx(phi, gain - param.antenna_gain, "-b", label="$f = 23.9$ GHz")
 
     plt.title("ITU-R RS.1813-1 antenna radiation pattern")
-    plt.xlabel("Off-axis angle $\phi$ [deg]")
+    plt.xlabel(r"Off-axis angle $\phi$ [deg]")
     plt.ylabel("Normalized antenna gain [dBi]")
     plt.legend(loc="lower left")
     plt.xlim((phi[0], phi[-1]))

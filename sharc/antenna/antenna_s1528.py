@@ -36,8 +36,10 @@ class AntennaS1528(Antenna):
         self.l_f = 0
 
         # back-lobe level
-        self.l_b = np.maximum(0, 15 + self.l_s + 0.25 *
-                              self.peak_gain + 5 * math.log10(self.z))
+        self.l_b = np.maximum(
+            0, 15 + self.l_s + 0.25 *
+            self.peak_gain + 5 * math.log10(self.z),
+        )
 
         # one-half the 3 dB beamwidth in the plane of interest
         self.psi_b = param.antenna_3_dB / 2
@@ -52,7 +54,8 @@ class AntennaS1528(Antenna):
             self.a = 2.58 * math.sqrt(1 - 0.4 * math.log10(self.z))
         else:
             sys.stderr.write(
-                "ERROR\nInvalid AntennaS1528 L_s parameter: " + str(self.l_s))
+                "ERROR\nInvalid AntennaS1528 L_s parameter: " + str(self.l_s),
+            )
             sys.exit(1)
 
         self.b = 6.32
@@ -118,8 +121,10 @@ if __name__ == '__main__':
     antenna = AntennaS1528(param)
     gain30 = antenna.calculate_gain(off_axis_angle_vec=psi)
 
-    fig = plt.figure(figsize=(8, 7), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(8, 7), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
 
     plt.plot(psi, gain15 - param.antenna_gain, "-b", label="$L_S = -15$ dB")
     plt.plot(psi, gain20 - param.antenna_gain, "-r", label="$L_S = -20$ dB")
@@ -129,7 +134,7 @@ if __name__ == '__main__':
     plt.ylim((-40, 10))
     plt.xlim((0, 30))
     plt.title("ITU-R S.1528-0 antenna radiation pattern")
-    plt.xlabel("Relative off-axis angle, $\psi/\psi_{3dB}$")
+    plt.xlabel(r"Relative off-axis angle, $\psi/\psi_{3dB}$")
     plt.ylabel("Gain relative to $G_{max}$ [dB]")
     plt.legend(loc="upper right")
 

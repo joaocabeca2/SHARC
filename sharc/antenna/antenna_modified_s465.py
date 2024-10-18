@@ -70,15 +70,17 @@ if __name__ == '__main__':
     antenna10 = AntennaModifiedS465(param10)
     gain10 = antenna10.calculate_gain(off_axis_angle_vec=phi)
 
-    fig = plt.figure(figsize=(8, 7), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(8, 7), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
 
     plt.semilogx(phi, gain0, "-b", label="$G_{env}$ = 0 dBi")
     plt.semilogx(phi, gain4, "-r", label="$G_{env}$ = -4 dBi")
     plt.semilogx(phi, gain10, "-g", label="$G_{env}$ = -10 dBi")
 
     plt.title("Modified ITU-R S.465-6 antenna radiation pattern")
-    plt.xlabel("Off-axis angle $\phi$ [deg]")
+    plt.xlabel(r"Off-axis angle $\phi$ [deg]")
     plt.ylabel("Gain relative to $G_m$ [dB]")
     plt.legend(loc="upper right")
     plt.xlim((1, 180))

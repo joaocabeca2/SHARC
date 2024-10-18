@@ -91,11 +91,13 @@ class ParametersImt(ParametersBase):
         # Now do the sanity check for some parameters
         if self.topology.upper() not in ["MACROCELL", "HOTSPOT", "SINGLE_BS", "INDOOR", "NTN"]:
             raise ValueError(
-                f"ParamtersImt: Invalid topology name {self.topology}")
+                f"ParamtersImt: Invalid topology name {self.topology}",
+            )
 
         if self.spectral_mask.upper() not in ["IMT-2020", "3GPP E-UTRA"]:
             raise ValueError(
-                f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""")
+                f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
+            )
 
         if self.channel_model.upper() not in ["FSPL", "CI", "UMA", "UMI", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619"]:
             raise ValueError(f"ParamtersImt: \
@@ -105,7 +107,8 @@ class ParametersImt(ParametersBase):
 
         if self.topology == "NTN" and self.channel_model not in ["FSPL", "P619"]:
             raise ValueError(
-                f"ParametersImt: Invalid channel model {self.channel_model} for topology NTN")
+                f"ParametersImt: Invalid channel model {self.channel_model} for topology NTN",
+            )
 
         if self.season.upper() not in ["SUMMER", "WINTER"]:
             raise ValueError(f"ParamtersImt: \

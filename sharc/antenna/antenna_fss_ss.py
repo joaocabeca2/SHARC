@@ -39,7 +39,8 @@ class AntennaFssSs(Antenna):
             self.a = 3.16
         else:
             sys.stderr.write(
-                "ERROR\nInvalid AntennaFssSs L_s parameter: " + self.l_s)
+                "ERROR\nInvalid AntennaFssSs L_s parameter: " + self.l_s,
+            )
             sys.exit(1)
 
         self.b = 6.32
@@ -91,8 +92,10 @@ if __name__ == '__main__':
     antenna_672 = AntennaS672(param_672)
     gain_672 = antenna_672.calculate_gain(off_axis_angle_vec=psi)
 
-    fig = plt.figure(figsize=(8, 7), facecolor='w',
-                     edgecolor='k')  # create a figure object
+    fig = plt.figure(
+        figsize=(8, 7), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
 
     plt.semilogx(psi, gain_672, "-b", label="carrier #06")
     plt.semilogx(psi, gain_fss, "-r", label="carrier #13")
@@ -106,8 +109,12 @@ if __name__ == '__main__':
 
     ax = plt.gca()
     # ax.set_yticks([-40, -30, -20, -10, 0])
-    ax.set_xticks(np.linspace(0.1, 0.9, 9).tolist() + np.linspace(1,
-                  9, 9).tolist() + np.linspace(10, 100, 10).tolist())
+    ax.set_xticks(
+        np.linspace(0.1, 0.9, 9).tolist() + np.linspace(
+            1,
+            9, 9,
+        ).tolist() + np.linspace(10, 100, 10).tolist(),
+    )
 
     plt.grid()
     plt.show()

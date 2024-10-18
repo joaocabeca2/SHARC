@@ -41,8 +41,10 @@ def convert_ini_to_yaml(input_file, output_file):
                 for comment in current_attr_comments:
                     output_file.write(' ' * current_ident + comment)
                 current_attr_comments = []
-                output_file.write(' ' * current_ident +
-                                  f"{current_section}:\n")
+                output_file.write(
+                    ' ' * current_ident +
+                    f"{current_section}:\n",
+                )
                 current_ident += num_spaces_ident
             else:
                 # line is attribute
@@ -57,7 +59,8 @@ def convert_ini_to_yaml(input_file, output_file):
                         output_file.write(' ' * current_ident + comment)
                     current_attr_comments = []
                     output_file.write(
-                        ' ' * current_ident + f"{current_attr_name} :{current_attr_value}\n")
+                        ' ' * current_ident + f"{current_attr_name} :{current_attr_value}\n",
+                    )
                 except IndexError:
                     print(input_file, 'did not match the expected format. Skipping...')
 

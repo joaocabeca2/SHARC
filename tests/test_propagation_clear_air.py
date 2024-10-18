@@ -4,12 +4,9 @@
 import unittest
 import numpy as np
 import numpy.testing as npt
-import matplotlib.pyplot as plt
 from sharc.parameters.parameters_p452 import ParametersP452
-
-import numpy.testing as npt
-
 from sharc.propagation.propagation_clear_air_452 import PropagationClearAir
+
 
 class PropagationClearAirTest(unittest.TestCase):
 
@@ -29,26 +26,36 @@ class PropagationClearAirTest(unittest.TestCase):
 
         # param_p452.clutter_loss = False
 
-        self.prop_clear_air = PropagationClearAir(np.random.RandomState(), param_p452)
+        self.prop_clear_air = PropagationClearAir(
+            np.random.RandomState(), param_p452)
 
     def test_loss(self):
 
-        distances = np.ones((1,1), dtype=float) * 1000 # distance between stations in meters
-        frequencies = np.ones((1,1), dtype=float) * 27000 # frequency in MHz
-        indoor_stations = np.zeros((1,1), dtype=bool)
-        elevations = np.zeros((1,1), dtype=float) # elevation between stations in degrees
-        tx_gain = np.ones((1,1), dtype=float) * 0
-        rx_gain = np.ones((1,1), dtype=float) * 0
+        # distance between stations in meters
+        distances = np.ones((1, 1), dtype=float) * 1000
+        frequencies = np.ones((1, 1), dtype=float) * 27000  # frequency in MHz
+        indoor_stations = np.zeros((1, 1), dtype=bool)
+        # elevation between stations in degrees
+        elevations = np.zeros((1, 1), dtype=float)
+        tx_gain = np.ones((1, 1), dtype=float) * 0
+        rx_gain = np.ones((1, 1), dtype=float) * 0
 
-        loss = self.prop_clear_air.get_loss(distances, frequencies, indoor_stations, elevations, tx_gain, rx_gain)
-        # npt.assert_allclose(158.491, loss, atol=1e-3)
+        loss = self.prop_clear_air.get_loss(
+            distances,
+            frequencies,
+            indoor_stations,
+            elevations,
+            tx_gain,
+            rx_gain)
+        npt.assert_allclose(158.491, loss, atol=1e-3)
 
-
-    #    Ld50, Ldbeta, Ldb = self.__Diffraction.get_loss(beta = Beta, distance=d, frequency=f, atmospheric_pressure=Ph, air_temperature=T, water_vapour=ro, delta_N=deltaN, Hrs=hrs, Hts=hts, Hte=hte, Hre=hre, Hsr=hsr, Hst=hst, H0=h0, Hn=hn, dist_di=di, hight_hi=hi, omega=omega, Dlt=dlt ,Dlr=dlr, percentage_p=p)
+    #    Ld50, Ldbeta, Ldb = self.__Diffraction.get_loss(beta = Beta, distance=d, frequency=f, atmospheric_pressure=Ph,
+    # air_temperature=T, water_vapour=ro, delta_N=deltaN, Hrs=hrs, Hts=hts, Hte=hte, Hre=hre, Hsr=hsr, Hst=hst, H0=h0,
+    # Hn=hn, dist_di=di, hight_hi=hi, omega=omega, Dlt=dlt ,Dlr=dlr, percentage_p=p)
 
     #    npt.assert_allclose(158.491,Ldb,atol=1e-3)
 
-        #Grafico da perda de difraçao em funçao da distancia e da frequencia
+        # Grafico da perda de difraçao em funçao da distancia e da frequencia
 #        data1 = []
 #        data2 = []
 #        data3 = []

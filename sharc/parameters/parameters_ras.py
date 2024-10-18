@@ -129,4 +129,5 @@ class ParametersRas(ParametersBase):
             self.param_p619.load_from_paramters(self)
             # This is relative to the IMT space station nadir point which is always x=0; y=0.
             self.param_p619.earth_station_long_diff_deg = np.rad2deg(
-                self.x / EARTH_RADIUS)
+                self.x / EARTH_RADIUS,
+            )

@@ -10,31 +10,36 @@ import typing
 class ParametersAntenna(ParametersBase):
     # available antenna radiation patterns
     __SUPPORTED_ANTENNA_PATTERNS = [
-        "OMNI", "ITU-R F.699", "ITU-R S.465", "ITU-R S.580", "MODIFIED ITU-R S.465", "ITU-R S.1855"
+        "OMNI", "ITU-R F.699", "ITU-R S.465", "ITU-R S.580", "MODIFIED ITU-R S.465", "ITU-R S.1855",
     ]
 
     # chosen antenna radiation pattern
     pattern: typing.Literal[
-        "OMNI", "ITU-R F.699", "ITU-R S.465", "ITU-R S.580", "MODIFIED ITU-R S.465", "ITU-R S.1855"
+        "OMNI", "ITU-R F.699", "ITU-R S.465", "ITU-R S.580", "MODIFIED ITU-R S.465", "ITU-R S.1855",
     ] = None
 
     # antenna gain [dBi]
     gain: float = None
 
     itu_r_f_699: ParametersAntennaWithDiameter = field(
-        default_factory=ParametersAntennaWithDiameter)
+        default_factory=ParametersAntennaWithDiameter,
+    )
 
     itu_r_s_465: ParametersAntennaWithDiameter = field(
-        default_factory=ParametersAntennaWithDiameter)
+        default_factory=ParametersAntennaWithDiameter,
+    )
 
     itu_r_s_1855: ParametersAntennaWithDiameter = field(
-        default_factory=ParametersAntennaWithDiameter)
+        default_factory=ParametersAntennaWithDiameter,
+    )
 
     itu_r_s_580: ParametersAntennaWithDiameter = field(
-        default_factory=ParametersAntennaWithDiameter)
+        default_factory=ParametersAntennaWithDiameter,
+    )
 
     itu_r_s_465_modified: ParametersAntennaWithEnvelopeGain = field(
-        default_factory=ParametersAntennaWithEnvelopeGain)
+        default_factory=ParametersAntennaWithEnvelopeGain,
+    )
 
     def set_external_parameters(self, *, frequency):
         attr_list = [
@@ -56,11 +61,13 @@ class ParametersAntenna(ParametersBase):
     def validate(self, ctx):
         if None in [self.pattern, self.gain]:
             raise ValueError(
-                f"Required parameters for Antenna were not met. At {ctx}")
+                f"Required parameters for Antenna were not met. At {ctx}",
+            )
 
         if self.pattern not in self.__SUPPORTED_ANTENNA_PATTERNS:
             raise ValueError(
-                f"Invalid ParametersAntenna.pattern. It should be one of: {self.__SUPPORTED_ANTENNA_PATTERNS}. At {ctx}")
+                f"Invalid ParametersAntenna.pattern. It should be one of: {self.__SUPPORTED_ANTENNA_PATTERNS}. At {ctx}",
+            )
 
         match self.pattern:
             case "OMNI":
@@ -73,9 +80,11 @@ class ParametersAntenna(ParametersBase):
                 self.itu_r_s_1855.validate(f"{ctx}.itu_r_s_1855")
             case "MODIFIED ITU-R S.465":
                 self.itu_r_s_465_modified.validate(
-                    f"{ctx}.itu_r_s_465_modified")
+                    f"{ctx}.itu_r_s_465_modified",
+                )
             case "ITU-R S.580":
                 self.itu_r_s_580.validate(f"{ctx}.itu_r_s_580")
             case _:
                 raise NotImplementedError(
-                    "ParametersAntenna.validate does not implement this antenna validation!")
+                    "ParametersAntenna.validate does not implement this antenna validation!",
+                )

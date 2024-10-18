@@ -94,23 +94,29 @@ class ParametersEessSS(ParametersSpaceStation):
         if not (0 <= self.antenna_efficiency or self.antenna_efficiency <= 1):
             raise ValueError("antenna_efficiency must be between 0 and 1")
 
-        if self.antenna_pattern not in ["ITU-R RS.1813", "ITU-R RS.1861 9a",
-                                        "ITU-R RS.1861 9b", "ITU-R RS.1861 9c",
-                                        "ITU-R RS.2043", "OMNI"]:
+        if self.antenna_pattern not in [
+            "ITU-R RS.1813", "ITU-R RS.1861 9a",
+            "ITU-R RS.1861 9b", "ITU-R RS.1861 9c",
+            "ITU-R RS.2043", "OMNI",
+        ]:
             raise ValueError(f"Invalid antenna_pattern: {
-                             self.antenna_pattern}")
+                             self.antenna_pattern
+            }")
 
         if self.antenna_pattern == "ITU-R RS.2043" and \
                 (self.frequency <= 9000.0 or self.frequency >= 10999.0):
             raise ValueError(
-                f"Frequency {self.frequency} MHz is not in the range for antenna pattern \"ITU-R RS.2043\"")
+                f"Frequency {self.frequency} MHz is not in the range for antenna pattern \"ITU-R RS.2043\"",
+            )
 
         # Check channel model
         if self.channel_model not in ["FSPL", "P619"]:
             raise ValueError(
-                "Invalid channel_model, must be either 'FSPL' or 'P619'")
+                "Invalid channel_model, must be either 'FSPL' or 'P619'",
+            )
 
         # Check season
         if self.season not in ["SUMMER", "WINTER"]:
             raise ValueError(
-                "Invalid season, must be either 'SUMMER' or 'WINTER'")
+                "Invalid season, must be either 'SUMMER' or 'WINTER'",
+            )
