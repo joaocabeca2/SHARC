@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Parameters definitions for IMT systems
 """
-import configparser
 from dataclasses import dataclass
 
 from sharc.parameters.parameters_base import ParametersBase
@@ -74,7 +73,6 @@ class ParametersImt(ParametersBase):
     season: str = "SUMMER"
     los_adjustment_factor: float = 18.0
 
-
     def load_parameters_from_file(self, config_file: str):
         """Load the parameters from file an run a sanity check
 
@@ -93,26 +91,32 @@ class ParametersImt(ParametersBase):
         # Now do the sanity check for some parameters
         if self.topology.upper() not in ["MACROCELL", "HOTSPOT", "SINGLE_BS", "INDOOR", "NTN"]:
             raise ValueError(
-                f"ParamtersImt: Invalid topology name {self.topology}")
+                f"ParamtersImt: Invalid topology name {self.topology}",
+            )
 
         if self.spectral_mask.upper() not in ["IMT-2020", "3GPP E-UTRA"]:
-            raise ValueError(f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""")
+            raise ValueError(
+                f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
+            )
 
         if self.channel_model.upper() not in ["FSPL", "CI", "UMA", "UMI", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619"]:
             raise ValueError(f"ParamtersImt: \
                              Invalid value for parameter channel_model - {self.channel_model}. \
-                             Possible values are \"FSPL\",\"CI\", \"UMA\", \"UMI\", \"TVRO-URBAN\", \"TVRO-SUBURBAN\", \"ABG\", \"P619\".")
-  
+                             Possible values are \"FSPL\",\"CI\", \"UMA\", \"UMI\", \"TVRO-URBAN\", \"TVRO-SUBURBAN\", \
+                             \"ABG\", \"P619\".")
+
         if self.topology == "NTN" and self.channel_model not in ["FSPL", "P619"]:
-            raise ValueError(f"ParametersImt: Invalid channel model {self.channel_model} for topology NTN")
+            raise ValueError(
+                f"ParametersImt: Invalid channel model {self.channel_model} for topology NTN",
+            )
 
         if self.season.upper() not in ["SUMMER", "WINTER"]:
             raise ValueError(f"ParamtersImt: \
                              Invalid value for parameter season - {self.season}. \
                              Possible values are \"SUMMER\", \"WINTER\".")
-        
+
         if self.topology == "NTN":
             self.is_space_to_earth = True
             self.param_p619.load_from_paramters(self)
-        
+
         self.frequency = float(self.frequency)
