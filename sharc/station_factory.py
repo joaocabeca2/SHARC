@@ -191,7 +191,19 @@ class StationFactory(object):
         elevation = (elevation_range[1] - elevation_range[0]) * random_number_gen.random_sample(num_ue) + \
             elevation_range[0]
 
-        if param.ue_distribution_type.upper() == "UNIFORM":
+        if param.ue_distribution_type.upper() == "UNIFORM" or \
+           param.ue_distribution_type.upper() == "CELL" or \
+           param.ue_distribution_type.upper() == "UNIFORM_IN_CELL":
+
+            deterministic_cell = False
+            central_cell = False
+
+            if param.ue_distribution_type.upper() == "UNIFORM_IN_CELL" or \
+               param.ue_distribution_type.upper() == "CELL":
+                deterministic_cell = True
+
+                if param.ue_distribution_type.upper() == "CELL":
+                    central_cell = True
 
             if not (type(topology) is TopologyMacrocell):
                 sys.stderr.write(
@@ -1113,68 +1125,100 @@ class StationFactory(object):
         return space_station
 
     @staticmethod
-    def get_random_position(
-        num_stas: int, topology: Topology,
-        random_number_gen: np.random.RandomState,
-        min_dist_to_bs=0, central_cell=False,
-        deterministic_cell=False,
-    ):
+    def get_random_position(num_stas: int,
+                            topology: Topology,
+                            random_number_gen: np.random.RandomState,
+                            min_dist_to_bs=0.,
+                            central_cell=False,
+                            deterministic_cell=False):
+        """
+        Generate UE random-possitions inside the topolgy area.
+
+        Parameters
+        ----------
+        num_stas : int
+            Number of UE stations
+        topology : Topology
+            The IMT topology object
+        random_number_gen : np.random.RandomState
+            Random number generator
+        min_dist_to_bs : _type_, optional
+            Minimum distance to the BS, by default 0.
+        central_cell : bool, optional
+            Whether the central cell in the cluster is used, by default False
+        deterministic_cell : bool, optional
+            Fix the cell to be used as anchor point, by default False
+
+        Returns
+        -------
+        tuple
+            x, y, azimuth and elevation angles.
+        """
         hexagon_radius = topology.intersite_distance / 3
 
-        min_dist_ok = False
+        x = np.array([])
+        y = np.array([])
+        bs_x = -hexagon_radius
+        bs_y = 0
 
-        while not min_dist_ok:
+        while len(x) < num_stas:
+            num_stas_temp = num_stas - len(x)
             # generate UE uniformly in a triangle
-            x = random_number_gen.uniform(
-                0, hexagon_radius * np.cos(np.pi / 6), num_stas,
-            )
-            y = random_number_gen.uniform(0, hexagon_radius / 2, num_stas)
+            x_temp = random_number_gen.uniform(0, hexagon_radius * np.cos(np.pi / 6), num_stas_temp)
+            y_temp = random_number_gen.uniform(0, hexagon_radius / 2, num_stas_temp)
 
-            invert_index = np.arctan(y / x) > np.pi / 6
-            y[invert_index] = -(hexagon_radius / 2 - y[invert_index])
-            x[invert_index] = (
-                hexagon_radius * np.cos(np.pi / 6) - x[invert_index]
-            )
+            invert_index = np.arctan(y_temp / x_temp) > np.pi / 6
+            y_temp[invert_index] = -(hexagon_radius / 2 - y_temp[invert_index])
+            x_temp[invert_index] = (hexagon_radius * np.cos(np.pi / 6) - x_temp[invert_index])
 
-            if any(np.sqrt(x**2 + y**2) < min_dist_to_bs):
-                min_dist_ok = False
-            else:
-                min_dist_ok = True
+            # randomly choose a hextant
+            hextant = random_number_gen.random_integers(0, 5, num_stas_temp)
+            hextant_angle = np.pi / 6 + np.pi / 3 * hextant
 
-        # randomly choose an hextant
-        hextant = random_number_gen.random_integers(0, 5, num_stas)
-        hextant_angle = np.pi / 6 + np.pi / 3 * hextant
+            old_x = x_temp
+            x_temp = x_temp * np.cos(hextant_angle) - y_temp * np.sin(hextant_angle)
+            y_temp = old_x * np.sin(hextant_angle) + y_temp * np.cos(hextant_angle)
 
-        old_x = x
-        x = x * np.cos(hextant_angle) - y * np.sin(hextant_angle)
-        y = old_x * np.sin(hextant_angle) + y * np.cos(hextant_angle)
+            dist = np.sqrt((x_temp - bs_x) ** 2 + (y_temp - bs_y) ** 2)
+            indices = dist > min_dist_to_bs
 
-        # randomly choose a cell
+            x_temp = x_temp[indices]
+            y_temp = y_temp[indices]
+
+            x = np.append(x, x_temp)
+            y = np.append(y, y_temp)
+
+        x = x - bs_x
+        y = y - bs_y
+
+        # choose cells
         if central_cell:
-            central_cell_indices = np.where(
-                (topology.x == 0) & (topology.y == 0),
-            )
-            cell = central_cell_indices[0][
-                random_number_gen.random_integers(
-                    0, len(central_cell_indices[0]) - 1,
-                    num_stas,
-                )
-            ]
+            central_cell_indices = np.where((topology.x == 0) & (topology.y == 0))
+
+            if not len(central_cell_indices[0]):
+                sys.stderr.write("ERROR\nTopology does not have a central cell")
+                sys.exit(1)
+
+            cell = central_cell_indices[0][random_number_gen.random_integers(0, len(central_cell_indices[0]) - 1,
+                                                                             num_stas)]
         elif deterministic_cell:
             num_bs = topology.num_base_stations
             stas_per_cell = num_stas / num_bs
             cell = np.repeat(np.arange(num_bs, dtype=int), stas_per_cell)
-        else:
+
+        else:  # random cells
             num_bs = topology.num_base_stations
             cell = random_number_gen.random_integers(0, num_bs - 1, num_stas)
 
         cell_x = topology.x[cell]
         cell_y = topology.y[cell]
 
-        x = x + cell_x + hexagon_radius * \
-            np.cos(topology.azimuth[cell] * np.pi / 180)
-        y = y + cell_y + hexagon_radius * \
-            np.sin(topology.azimuth[cell] * np.pi / 180)
+        azimuth_rad = topology.azimuth * np.pi / 180
+
+        # rotqte
+        x_old = x
+        x = cell_x + x * np.cos(azimuth_rad[cell]) - y * np.sin(azimuth_rad[cell])
+        y = cell_y + x_old * np.sin(azimuth_rad[cell]) + y * np.cos(azimuth_rad[cell])
 
         x = list(x)
         y = list(y)
@@ -1187,14 +1231,8 @@ class StationFactory(object):
             # psi is the vertical angle of the UE wrt the serving BS
             distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2)
         else:
-            theta = np.arctan2(
-                y - topology.space_station_y[cell], x -
-                topology.space_station_x[cell],
-            )
-            distance = np.sqrt(
-                (cell_x - x) ** 2 + (cell_y - y) **
-                2 + (topology.bs_height)**2,
-            )
+            theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
+            distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs_height)**2)
 
         return x, y, theta, distance
 
@@ -1213,7 +1251,7 @@ if __name__ == '__main__':
             self.spectral_mask = 'IMT-2020'
             self.frequency = 10000
             self.topology = 'MACROCELL'
-            self.ue_distribution_type = "UNIFORM"
+            self.ue_distribution_type = "UNIFORM_IN_CELL"
             self.bs_height = 30
             self.ue_height = 3
             self.ue_indoor_percent = 0
@@ -1221,7 +1259,7 @@ if __name__ == '__main__':
             self.ue_k_m = 1
             self.bandwidth = np.random.rand()
             self.ue_noise_figure = np.random.rand()
-            self.minimum_separation_distance_bs_ue = 10
+            self.minimum_separation_distance_bs_ue = 200
             self.spurious_emissions = -30
             self.intersite_distance = 1000
 
