@@ -1125,10 +1125,35 @@ class StationFactory(object):
         return space_station
 
     @staticmethod
-    def get_random_position( num_stas: int, topology: Topology,
-                             random_number_gen: np.random.RandomState,
-                             min_dist_to_bs = 0., central_cell = False,
-                             deterministic_cell = False):
+    def get_random_position(num_stas: int,
+                            topology: Topology,
+                            random_number_gen: np.random.RandomState,
+                            min_dist_to_bs=0.,
+                            central_cell=False,
+                            deterministic_cell=False):
+        """
+        Generate UE random-possitions inside the topolgy area.
+
+        Parameters
+        ----------
+        num_stas : int
+            Number of UE stations
+        topology : Topology
+            The IMT topology object
+        random_number_gen : np.random.RandomState
+            Random number generator
+        min_dist_to_bs : _type_, optional
+            Minimum distance to the BS, by default 0.
+        central_cell : bool, optional
+            Whether the central cell in the cluster is used, by default False
+        deterministic_cell : bool, optional
+            Fix the cell to be used as anchor point, by default False
+
+        Returns
+        -------
+        tuple
+            x, y, azimuth and elevation angles.
+        """
         hexagon_radius = topology.intersite_distance / 3
 
         x = np.array([])
@@ -1208,7 +1233,6 @@ class StationFactory(object):
         else:
             theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
             distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs_height)**2)
-
 
         return x, y, theta, distance
 
