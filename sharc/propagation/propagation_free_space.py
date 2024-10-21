@@ -48,7 +48,7 @@ class PropagationFreeSpace(Propagation):
         """
         distance_3d = station_a.get_3d_distance_to(station_b)
         loss = self.get_free_space_loss(frequency=frequency, distance=distance_3d)
-        
+
         return loss
 
     @dispatch(np.ndarray, np.ndarray)
