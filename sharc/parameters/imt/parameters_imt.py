@@ -33,8 +33,6 @@ class ParametersImt(ParametersBase):
         conducted_power = 10.0
         height: float = 6.0
         noise_figure: float = 10.0
-        # TODO: remove this
-        # noise_temperature: float = 290.0
         ohmic_loss: float = 3.0
         antenna: ParametersAntennaImt = field(default_factory=ParametersAntennaImt)
 
@@ -156,4 +154,12 @@ class ParametersImt(ParametersBase):
             bs_height=self.bs.height
         )
 
+        self.bs.antenna.set_external_parameters(
+            adjacent_antenna_model=self.adjacent_antenna_model
+        )
+
+        self.ue.antenna.set_external_parameters(
+            adjacent_antenna_model=self.adjacent_antenna_model
+        )
+        
         self.validate("imt")
