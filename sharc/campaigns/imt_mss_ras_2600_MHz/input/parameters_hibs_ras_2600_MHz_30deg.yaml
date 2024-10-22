@@ -283,7 +283,7 @@ imt_antenna:
 ntn:
     ###########################################################################
     # NTN Airborne Platform height (m)
-    bs_height: 1000000
+    bs_height: 200000
     ###########################################################################
     # NTN cell radius in network topology [m]
     cell_radius: 90000

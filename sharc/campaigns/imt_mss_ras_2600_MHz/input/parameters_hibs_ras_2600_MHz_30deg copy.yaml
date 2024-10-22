@@ -24,7 +24,7 @@ general:
     output_dir: campaigns/imt_mss_ras_2600_MHz/output/
     ###########################################################################
     # output folder prefix
-    output_dir_prefix: output_imt_mss_ras_2600_MHz_fspl_30deg
+    output_dir_prefix: output_imt_mss_ras_2600_MHz_30deg
 imt:
     topology:
         ###########################################################################
@@ -306,7 +306,28 @@ imt:
     #                                    "TVRO-SUBURBAN"
     #                                    "ABG" (Alpha-Beta-Gamma)
     #                                    "P619"
-    channel_model: FSPL
+    channel_model: P619
+    ###########################################################################
+    # Parameters for the P.619 propagation model
+    # For IMT NTN the model is used for calculating the coupling loss between
+    # the BS space station and the UEs on Earth's surface.
+    #    space_station_alt_m - altitude of IMT space station (BS) (in meters)
+    #    earth_station_alt_m - altitude of the system's earth station (in meters)
+    #    earth_station_lat_deg - latitude of the system's earth station (in degrees)
+    #    earth_station_long_diff_deg - difference between longitudes of IMT space station and system's earth station
+    #      (positive if space-station is to the East of earth-station)
+    #    season - season of the year.
+    # Enter the IMT space station height
+    param_p619:
+        space_station_alt_m: 20000.0
+        # Enter the UE antenna heigth above sea level
+        earth_station_alt_m: 1000
+        # The RAS station lat
+        earth_station_lat_deg: -15.7801
+        # This parameter is ignored as it will be calculated from x,y positions in run time
+        earth_station_long_diff_deg: 0.0
+
+    season: SUMMER
 #### System Parameters
 single_earth_station:
     ###########################################################################
@@ -350,4 +371,14 @@ single_earth_station:
         pattern: OMNI
         gain: 0
 
-    channel_model: FSPL
+    channel_model: P619
+    param_p619:
+        space_station_alt_m: 20000.0
+        # Enter the RAS antenna heigth above sea level
+        earth_station_alt_m: 1000
+        # The RAS station lat
+        earth_station_lat_deg: -15.7801
+        # This parameter is ignored as it will be calculated from x,y positions in run time
+        earth_station_long_diff_deg: 0.0
+
+    season: SUMMER
