@@ -300,6 +300,11 @@ imt:
         # Possible values: NORMAL, UNIFORM
         distribution_azimuth  : NORMAL
         ###########################################################################
+        # Azimuth range used when distributing the UE within the cell.
+        # Default value is (-60, 60) which representes a 120 degree sector.
+        # Change this to (-180, 180) when deploying the NTN topology
+        azimuth_range: !!python/tuple [-70, 90]
+        ###########################################################################
         # Power control algorithm
         # tx_power_control = "ON",power control On
         # tx_power_control = "OFF",power control Off
