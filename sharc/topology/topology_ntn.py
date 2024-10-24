@@ -55,16 +55,6 @@ class TopologyNTN(Topology):
             np.cos(self.bs_elevation) * np.sin(self.bs_azimuth)
         self.space_station_z = bs_height
 
-        print("bs_height", bs_height)
-        print("bs_elevation", bs_elevation)
-        print("self.space_station_x", self.space_station_x)
-        print("self.space_station_y", self.space_station_y)
-        print("self.space_station_z", self.space_station_z)
-        print("self.bs_azimuth", self.bs_azimuth)
-        print("self.bs_elevation", self.bs_elevation)
-        print("self.bs_radius", self.bs_radius)
-        print("self.num_sectors", self.num_sectors)
-
         self.calculate_coordinates()
 
     def calculate_coordinates(self, random_number_gen=np.random.RandomState()):
@@ -73,7 +63,6 @@ class TopologyNTN(Topology):
         """
 
         d = self.intersite_distance
-        print("self.intersite_distance", self.intersite_distance)
 
         self.x = [0]
         self.y = [0]
@@ -131,12 +120,6 @@ class TopologyNTN(Topology):
         # Update the number of base stations after setup
         self.num_base_stations = len(self.x)
         self.indoor = np.zeros(self.num_base_stations, dtype=bool)
-
-        print("self.x", self.x)
-        print("self.y", self.y)
-
-        print("self.x", self.x_rotated)
-        print("self.y", self.y_rotated)
 
         self.x = self.x_rotated
         self.y = self.y_rotated

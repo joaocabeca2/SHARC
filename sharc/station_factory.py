@@ -176,6 +176,17 @@ class StationFactory(object):
             return StationFactory.generate_imt_ue_outdoor(param, ue_param_ant, random_number_gen, topology)
 
     @staticmethod
+    def generate_ras_station(
+        param: ParametersRas,
+        random_number_gen: np.random.RandomState,
+        topology: Topology,
+    ) -> StationManager:
+        return StationFactory.generate_single_earth_station(
+            param, random_number_gen,
+            StationType.RAS, topology
+        )
+
+    @staticmethod
     def generate_imt_ue_outdoor(
         param: ParametersImt,
         ue_param_ant: ParametersAntennaImt,
@@ -512,7 +523,13 @@ class StationFactory(object):
         elif parameters.general.system == "FSS_ES":
             return StationFactory.generate_fss_earth_station(parameters.fss_es, random_number_gen, topology)
         elif parameters.general.system == "SINGLE_EARTH_STATION":
-            return StationFactory.generate_single_earth_station(parameters.single_earth_station, random_number_gen, topology)
+            return StationFactory.generate_single_earth_station(parameters.single_earth_station, random_number_gen,
+                                                                StationType.SINGLE_EARTH_STATION, topology)
+        elif parameters.general.system == "RAS":
+            return StationFactory.generate_ras_station(
+                                                       parameters.ras, random_number_gen,
+                                                       topology
+                                                   )
         elif parameters.general.system == "FSS_SS":
             return StationFactory.generate_fss_space_station(parameters.fss_ss)
         elif parameters.general.system == "FS":
@@ -521,8 +538,6 @@ class StationFactory(object):
             return StationFactory.generate_haps(parameters.haps, parameters.imt.intersite_distance, random_number_gen)
         elif parameters.general.system == "RNS":
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
-        elif parameters.general.system == "RAS":
-            return StationFactory.generate_ras_station(parameters.ras)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -720,7 +735,7 @@ class StationFactory(object):
     @staticmethod
     def generate_single_earth_station(
         param: ParametersSingleEarthStation, random_number_gen: np.random.RandomState,
-        topology=None,
+        station_type=StationType.SINGLE_EARTH_STATION, topology=None,
     ):
         """
         Generates a Single Earth Station.
@@ -995,51 +1010,6 @@ class StationFactory(object):
         rns.rx_interference = -500
 
         return rns
-
-    @staticmethod
-    def generate_ras_station(param: ParametersRas):
-        """
-        @deprecated
-        Since this creates a Single Earth Station, you should use StationFactory.generate_single_earth_station instead.
-        This will be deleted in the future
-        """
-        warn(
-            "This is deprecated, use StationFactory.generate_single_earth_station() instead; date=2024-10-11",
-            DeprecationWarning, stacklevel=2,
-        )
-
-        ras_station = StationManager(1)
-        ras_station.station_type = StationType.RAS
-
-        ras_station.x = np.array([param.x])
-        ras_station.y = np.array([param.y])
-        ras_station.height = np.array([param.height])
-
-        ras_station.azimuth = np.array([param.azimuth])
-        ras_station.elevation = np.array([param.elevation])
-
-        ras_station.active = np.array([True])
-        ras_station.rx_interference = -500
-
-        if param.antenna_pattern == "OMNI":
-            ras_station.antenna = np.array([AntennaOmni(param.antenna_gain)])
-            ras_station.antenna[0].effective_area = SPEED_OF_LIGHT**2 / \
-                (4 * np.pi * (param.frequency * 1e6)**2)
-        elif param.antenna_pattern == "ITU-R SA.509":
-            ras_station.antenna = np.array([AntennaSA509(param)])
-        else:
-            sys.stderr.write(
-                "ERROR\nInvalid RAS antenna pattern: " + param.antenna_pattern,
-            )
-            sys.exit(1)
-
-        ras_station.noise_temperature = np.array(
-            param.antenna_noise_temperature +
-            param.receiver_noise_temperature,
-        )
-        ras_station.bandwidth = np.array(param.bandwidth)
-
-        return ras_station
 
     @staticmethod
     def generate_eess_space_station(param: ParametersEessSS):

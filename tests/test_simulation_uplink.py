@@ -149,20 +149,22 @@ class SimulationUplinkTest(unittest.TestCase):
         self.param.fss_es.line_of_sight_prob = 1
         self.param.fss_es.acs = 0
 
-        self.param.ras.x = -5000
-        self.param.ras.y = 0
+        self.param.ras.geometry.location.type = "FIXED"
+        self.param.ras.geometry.location.fixed.x = -5000
+        self.param.ras.geometry.location.fixed.y = 0
         self.param.ras.height = 10
-        self.param.ras.elevation = 20
-        self.param.ras.azimuth = 0
-        self.param.ras.frequency = 10000
+        self.param.ras.geometry.elevation.fixed = 20
+        self.param.ras.geometry.azimuth.fixed = 0
+        self.param.ras.geometry.elevation.type = "FIXED"
+        self.param.ras.geometry.azimuth.type = "FIXED"
+        self.param.ras.frequency = 1000
         self.param.ras.bandwidth = 100
-        self.param.ras.antenna_noise_temperature = 50
-        self.param.ras.receiver_noise_temperature = 50
-        self.param.ras.antenna_gain = 50
+        self.param.ras.noise_temperature = 100
+        self.param.ras.antenna.gain = 50
         self.param.ras.antenna_efficiency = 0.7
-        self.param.ras.diameter = 10
-        self.param.ras.acs = 0
-        self.param.ras.antenna_pattern = "OMNI"
+        self.param.ras.adjacent_ch_selectivity = 0
+        self.param.ras.tx_power_density = -500
+        self.param.ras.antenna.pattern = "OMNI"
         self.param.ras.channel_model = "FSPL"
         self.param.ras.line_of_sight_prob = 1
         self.param.ras.BOLTZMANN_CONSTANT = 1.38064852e-23
@@ -589,7 +591,8 @@ class SimulationUplinkTest(unittest.TestCase):
 
         # Create system
         self.simulation.system = StationFactory.generate_ras_station(
-            self.param.ras)
+            self.param.ras, random_number_gen, None
+        )
         self.simulation.system.x = np.array([-2000])
         self.simulation.system.y = np.array([0])
         self.simulation.system.height = np.array([self.param.ras.height])

@@ -189,8 +189,8 @@ class Simulation(ABC, Observable):
             self.parameters.general.output_dir_prefix,
         )
 
-        if self.parameters.general.system == 'RAS':
-            self.polarization_loss = 0.0
+        if hasattr(self.param_system, "polarization_loss"):
+            self.polarization_loss = self.param_system.polarization_loss
         else:
             self.polarization_loss = 3.0
 
@@ -328,15 +328,6 @@ class Simulation(ABC, Observable):
             values.
         """
         # Calculate the antenna gains
-        for attr in dir(imt_bs_station):
-            if attr.startswith("_"):
-                continue
-            val = getattr(imt_bs_station, attr)
-            if callable(val):
-                continue
-            print(attr, val)
-        # for attr in dir(imt_ue_station):
-        #     print(attr, getattr(imt_ue_station, attr))
 
         ant_gain_bs_to_ue = self.calculate_gains(
             imt_bs_station, imt_ue_station,
@@ -536,7 +527,6 @@ class Simulation(ABC, Observable):
                     ],
                     beams_l=beams_idx,
                 )
-        print("gains", gains)
         return gains
 
     def calculate_imt_tput(

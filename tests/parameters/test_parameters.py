@@ -290,34 +290,21 @@ class ParametersTest(unittest.TestCase):
     def test_parametes_ras(self):
         """Test ParametersRas
         """
-        self.assertEqual(self.parameters.ras.x, 81000.1)
-        self.assertEqual(self.parameters.ras.y, 0.1)
-        self.assertEqual(self.parameters.ras.height, 15.1)
-        self.assertEqual(self.parameters.ras.elevation, 45.1)
-        self.assertEqual(self.parameters.ras.azimuth, -90.1)
-        self.assertEqual(self.parameters.ras.frequency, 43000.1)
-        self.assertEqual(self.parameters.ras.bandwidth, 1000.1)
-        self.assertEqual(self.parameters.ras.antenna_noise_temperature, 25.1)
-        self.assertEqual(self.parameters.ras.receiver_noise_temperature, 65.1)
+        self.assertEqual(self.parameters.ras.frequency, 2695)
+        self.assertEqual(self.parameters.ras.bandwidth, 10)
+        self.assertEqual(self.parameters.ras.noise_temperature, 90)
         self.assertEqual(self.parameters.ras.adjacent_ch_selectivity, 20.1)
-        self.assertEqual(self.parameters.ras.antenna_efficiency, 0.9)
-        self.assertEqual(self.parameters.ras.antenna_pattern, "ITU-R SA.509")
-        self.assertEqual(self.parameters.ras.antenna_gain, 0.5)
-        self.assertEqual(self.parameters.ras.diameter, 15.1)
+
+        self.assertEqual(self.parameters.ras.geometry.height, 15)
+        self.assertEqual(self.parameters.ras.geometry.azimuth.type, "FIXED")
+        self.assertEqual(self.parameters.ras.geometry.azimuth.fixed, -90)
+        self.assertEqual(self.parameters.ras.geometry.elevation.type, "FIXED")
+        self.assertEqual(self.parameters.ras.geometry.elevation.fixed, 45)
+        self.assertEqual(self.parameters.ras.antenna.pattern, "OMNI")
+        self.assertEqual(self.parameters.ras.antenna.gain, 0.5)
         self.assertEqual(self.parameters.ras.channel_model, "P452")
-        self.assertEqual(self.parameters.ras.atmospheric_pressure, 935.2)
-        self.assertEqual(self.parameters.ras.air_temperature, 300.1)
-        self.assertEqual(self.parameters.ras.N0, 352.58)
-        self.assertEqual(self.parameters.ras.delta_N, 43.127)
-        self.assertEqual(self.parameters.ras.percentage_p, 0.2)
-        self.assertEqual(self.parameters.ras.Dct, 70.1)
-        self.assertEqual(self.parameters.ras.Dcr, 70.1)
-        self.assertEqual(self.parameters.ras.Hte, 20.1)
-        self.assertEqual(self.parameters.ras.Hre, 3.1)
-        self.assertEqual(self.parameters.ras.tx_lat, -23.55028)
-        self.assertEqual(self.parameters.ras.rx_lat, -23.17889)
-        self.assertEqual(self.parameters.ras.polarization, "horizontal")
-        self.assertEqual(self.parameters.ras.clutter_loss, True)
+        self.assertEqual(self.parameters.ras.polarization_loss, 0.0)
+        
 
     def test_parameters_single_earth_station(self):
         """Test ParametersSingleEarthStation

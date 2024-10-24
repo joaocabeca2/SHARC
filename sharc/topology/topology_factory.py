@@ -28,7 +28,6 @@ class TopologyFactory(object):
         elif parameters.imt.topology.type == "INDOOR":
             return TopologyIndoor(parameters.imt.topology.indoor)
         elif parameters.imt.topology.type == "NTN":
-            print("parameters.imt.topology.ntn.intersite_distance", parameters.imt.topology.ntn.intersite_distance)
             return TopologyNTN(
                 parameters.imt.topology.ntn.intersite_distance, parameters.imt.topology.ntn.cell_radius, parameters.imt.topology.ntn.bs_height,
                 parameters.imt.topology.ntn.bs_azimuth, parameters.imt.topology.ntn.bs_elevation, parameters.imt.topology.ntn.num_sectors,
