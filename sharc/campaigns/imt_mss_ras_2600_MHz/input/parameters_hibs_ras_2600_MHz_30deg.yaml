@@ -8,7 +8,7 @@ general:
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS,
-    system: SINGLE_EARTH_STATION
+    system: RAS
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel: FALSE
@@ -325,7 +325,7 @@ imt:
 
     season: SUMMER
 #### System Parameters
-single_earth_station:
+ras:
     ###########################################################################
     frequency: 2695
     ###########################################################################

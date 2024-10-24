@@ -8,7 +8,7 @@ general:
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS,
-    system: SINGLE_EARTH_STATION
+    system: RAS
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel  : FALSE
@@ -311,7 +311,7 @@ imt:
     # Possible values: SINGLE_ELEMENT, BEAMFORMING
     adjacent_antenna_model  : SINGLE_ELEMENT
 #### System Parameters
-single_earth_station:
+ras:
     ###########################################################################
     # frequency [MHz]
     frequency: 2695
