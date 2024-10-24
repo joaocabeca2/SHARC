@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from sharc.parameters.parameters_base import ParametersBase
 
+
 @dataclass
 class ParametersSingleBS(ParametersBase):
     intersite_distance: int = None

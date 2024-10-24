@@ -161,5 +161,5 @@ class ParametersImt(ParametersBase):
         self.ue.antenna.set_external_parameters(
             adjacent_antenna_model=self.adjacent_antenna_model
         )
-        
+
         self.validate("imt")

@@ -304,7 +304,6 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.ras.antenna.gain, 0.5)
         self.assertEqual(self.parameters.ras.channel_model, "P452")
         self.assertEqual(self.parameters.ras.polarization_loss, 0.0)
-        
 
     def test_parameters_single_earth_station(self):
         """Test ParametersSingleEarthStation

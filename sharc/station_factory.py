@@ -150,15 +150,6 @@ class StationFactory(object):
             imt_base_stations.intersite_dist = param.topology.macrocell.intersite_distance
         elif param.topology.type == 'HOTSPOT':
             imt_base_stations.intersite_dist = param.topology.hotspot.intersite_distance
-        
-        # print("########### BS")
-        # for attr in dir(imt_base_stations):
-        #     if attr.startswith("_"):
-        #         continue
-        #     val = getattr(imt_base_stations, attr)
-        #     if callable(val):
-        #         continue
-        #     print(attr, val)
 
         return imt_base_stations
 
@@ -1283,7 +1274,7 @@ if __name__ == '__main__':
 
     rnd = np.random.RandomState(1)
 
-    imt_ue = factory.generate_imt_ue(params, ant_param, topology, rnd)
+    imt_ue = factory.generate_imt_ue(params, ue_ant_param, topology, rnd)
 
     fig = plt.figure(
         figsize=(8, 8), facecolor='w',

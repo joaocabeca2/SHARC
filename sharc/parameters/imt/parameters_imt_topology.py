@@ -8,6 +8,7 @@ from sharc.parameters.imt.parameters_macrocell import ParametersMacrocell
 from sharc.parameters.imt.parameters_ntn import ParametersNTN
 from sharc.parameters.imt.parameters_single_bs import ParametersSingleBS
 
+
 @dataclass
 class ParametersImtTopology(ParametersBase):
     type: typing.Literal[
