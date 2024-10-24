@@ -306,7 +306,24 @@ imt:
     #                                    "TVRO-SUBURBAN"
     #                                    "ABG" (Alpha-Beta-Gamma)
     #                                    "P619"
-    channel_model: FSPL
+    channel_model: P619
+
+    param_p619:
+        ###########################################################################
+        # altitude of the space station [m]
+        space_station_alt_m: 20000.0
+        ###########################################################################
+        # altitude of ES system [m]
+        earth_station_alt_m: 1000
+        ###########################################################################
+        # latitude of ES system [m]
+        earth_station_lat_deg: -15.7801
+        ###########################################################################
+        # difference between longitudes of IMT-NTN station and FSS-ES system [deg]
+        #   (positive if space-station is to the East of earth-station)
+        earth_station_long_diff_deg: 0.0
+
+    season: SUMMER
 #### System Parameters
 single_earth_station:
     ###########################################################################
