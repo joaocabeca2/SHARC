@@ -123,8 +123,8 @@ class PropagationUMi(Propagation):
         )
         los_condition = self.get_los_condition(los_probability)
 
-        i_los = np.where(los_condition is True)[:2]
-        i_nlos = np.where(los_condition is False)[:2]
+        i_los = np.atleast_1d(los_condition).nonzero()[:2]
+        i_nlos = np.atleast_1d(los_condition).nonzero()[:2]
 
         loss = np.empty(distance_2D.shape)
 

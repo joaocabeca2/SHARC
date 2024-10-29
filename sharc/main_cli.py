@@ -4,15 +4,16 @@ Created on Fri Aug 11 13:17:14 2017
 
 @author: edgar
 """
-
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from sharc.support.logging import Logging
 from sharc.controller import Controller
 from sharc.gui.view_cli import ViewCli
 from sharc.model import Model
-import sys
+
 import getopt
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
 
 
 def main(argv):
@@ -27,7 +28,7 @@ def main(argv):
         sys.exit(2)
 
     if not opts:
-        param_file = os.path.join(os.getcwd(), "input", "parameters.yaml")
+        param_file = os.path.join(os.getcwd(), "input", "parameters_wifi.yaml")
     else:
         for opt, arg in opts:
             if opt == "-h":
