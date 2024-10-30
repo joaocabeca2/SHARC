@@ -23,16 +23,16 @@ post_processor\
         legend="90 deg (P619)"
     ).add_plot_legend_pattern(
         dir_name_contains="fspl_30deg",
-        legend= "30 deg (FSPL)"
+        legend="30 deg (FSPL)"
     ).add_plot_legend_pattern(
         dir_name_contains="fspl_45deg",
-        legend= "45 deg (FSPL)"
+        legend="45 deg (FSPL)"
     ).add_plot_legend_pattern(
         dir_name_contains="fspl_60deg",
-        legend= "60 deg (FSPL)"
+        legend="60 deg (FSPL)"
     ).add_plot_legend_pattern(
         dir_name_contains="fspl_90deg",
-        legend= "90 deg (FSPL)"
+        legend="90 deg (FSPL)"
     )
 
 campaign_base_dir = str((Path(__file__) / ".." / "..").resolve())
@@ -108,4 +108,3 @@ with open(os.path.join(campaign_base_dir, "output", "stats.txt"), "w") as f:
 # )
 
 # relevant.show()
-

@@ -6,6 +6,7 @@ import os
 import numpy as np
 import scipy
 
+
 class FieldStatistics:
     field_name: str
     median: float
@@ -14,7 +15,9 @@ class FieldStatistics:
     confidence_interval: (float, float)
     standard_deviation: float
 
-    def load_from_sample(self, field_name: str, sample: list[float], *, confidence=0.95) -> "FieldStatistics":
+    def load_from_sample(
+        self, field_name: str, sample: list[float], *, confidence=0.95
+    ) -> "FieldStatistics":
         self.field_name = field_name
         self.median = np.median(sample)
         self.mean = np.mean(sample)
@@ -27,13 +30,27 @@ class FieldStatistics:
         return self
 
     def __str__(self):
-        attr_names = filter(lambda x: x != "field_name" and not x.startswith("__") and not callable(getattr(self, x)), dir(self))
+        attr_names = filter(
+            lambda x: x != "field_name"
+            and not x.startswith("__")
+            and not callable(getattr(self, x)),
+            dir(self),
+        )
+        readable_attrs = "\n".join(
+            list(
+                map(
+                    lambda attr_name: f"\t{attr_name}: {getattr(self, attr_name)}",
+                    attr_names,
+                )
+            )
+        )
         return f"""{self.field_name}:
-{"\n".join(list(map(lambda attr_name: f"\t{attr_name}: {getattr(self,attr_name)}", attr_names)))}"""
+{readable_attrs}"""
+
 
 class ResultsStatistics:
     fields_statistics: list[FieldStatistics]
-    results_output_dir : str = "default_output"
+    results_output_dir: str = "default_output"
 
     def load_from_results(self, result: Results) -> "ResultsStatistics":
         self.results_output_dir = result.output_directory
@@ -43,23 +60,24 @@ class ResultsStatistics:
             samples = getattr(result, attr_name)
             if len(samples) == 0:
                 continue
-            self.fields_statistics.append(FieldStatistics().load_from_sample(
-                attr_name, samples
-            ))
+            self.fields_statistics.append(
+                FieldStatistics().load_from_sample(attr_name, samples)
+            )
 
         return self
 
     def __str__(self):
         return f"[{self.results_output_dir}]\n{'\n'.join(list(map(str, self.fields_statistics)))}"
 
+
 @dataclass
 class PostProcessor:
     IGNORE_FIELD = {
-            "title": "NEM PLOTAMOS ISSO, ENTÃO CONTINUA SEM PLOTAR",
-            "x_label": "",
+        "title": "NEM PLOTAMOS ISSO, ENTÃO CONTINUA SEM PLOTAR",
+        "x_label": "",
     }
     # TODO: move units in the result to the Results class instead of Plot Info
-    RESULT_FIELDNAME_TO_PLOT_INFO  = {
+    RESULT_FIELDNAME_TO_PLOT_INFO = {
         "imt_ul_tx_power_density": {
             "x_label": "Transmit power density [dBm/Hz]",
             "title": "[IMT] UE transmit power density",
@@ -184,23 +202,27 @@ class PostProcessor:
     plots: list[go.Figure] = field(default_factory=list)
     results: list[Results] = field(default_factory=list)
 
-    def add_plot_legend_pattern(self, *, dir_name_contains: str, legend: str) -> "PostProcessor":
-        self.plot_legend_patterns.append({
-            "dir_name_contains": dir_name_contains,
-            "legend": legend
-        })
+    def add_plot_legend_pattern(
+        self, *, dir_name_contains: str, legend: str
+    ) -> "PostProcessor":
+        self.plot_legend_patterns.append(
+            {"dir_name_contains": dir_name_contains, "legend": legend}
+        )
         self.plot_legend_patterns.sort(key=lambda p: len(p["dir_name_contains"]))
 
         return self
 
-    def generate_cdf_plots_from_results(self, results: list[Results],*, n_bins=200) -> list[go.Figure]:
+    def generate_cdf_plots_from_results(
+        self, results: list[Results], *, n_bins=200
+    ) -> list[go.Figure]:
         figs: dict[str, list[go.Figure]] = {}
 
         for res in results:
             possible_legends_mapping = list(
                 filter(
-                    lambda pl: pl["dir_name_contains"] in os.path.basename(res.output_directory),
-                    self.plot_legend_patterns
+                    lambda pl: pl["dir_name_contains"]
+                    in os.path.basename(res.output_directory),
+                    self.plot_legend_patterns,
                 )
             )
 
@@ -216,7 +238,9 @@ class PostProcessor:
                 if not len(attr_val):
                     continue
                 if attr_name not in PostProcessor.RESULT_FIELDNAME_TO_PLOT_INFO:
-                    print(f"[WARNING]: {attr_name} is not a plottable field, because it does not have a configuration set on PostProcessor.")
+                    print(
+                        f"[WARNING]: {attr_name} is not a plottable field, because it does not have a configuration set on PostProcessor."
+                    )
                     continue
                 attr_plot_info = PostProcessor.RESULT_FIELDNAME_TO_PLOT_INFO[attr_name]
                 if attr_plot_info == PostProcessor.IGNORE_FIELD:
@@ -226,11 +250,11 @@ class PostProcessor:
                     figs[attr_name].update_layout(
                         title=f'CDF Plot for {attr_plot_info["title"]}',
                         xaxis_title=attr_plot_info["x_label"],
-                        yaxis_title='CDF',
-                        yaxis=dict(tickmode='array', tickvals=[0, 0.25, 0.5, 0.75, 1]),
-                        xaxis=dict(tickmode='linear', dtick=5),
+                        yaxis_title="CDF",
+                        yaxis=dict(tickmode="array", tickvals=[0, 0.25, 0.5, 0.75, 1]),
+                        xaxis=dict(tickmode="linear", dtick=5),
                         legend_title="Labels",
-                        meta={ "related_results_attribute": attr_name }
+                        meta={"related_results_attribute": attr_name},
                     )
 
                 x, y = PostProcessor.cdf_from(attr_val, n_bins=n_bins)
@@ -238,7 +262,12 @@ class PostProcessor:
                 fig = figs[attr_name]
 
                 fig.add_trace(
-                    go.Scatter(x=x, y=y, mode='lines', name=f'{legend}',),
+                    go.Scatter(
+                        x=x,
+                        y=y,
+                        mode="lines",
+                        name=f"{legend}",
+                    ),
                 )
 
         return figs.values()
@@ -253,25 +282,32 @@ class PostProcessor:
         filtered_results = list(
             filter(
                 lambda res: dir_name_contains in os.path.basename(res.output_directory),
-                self.results
+                self.results,
             )
         )
-        if (len(filtered_results) == 0):
-            raise ValueError(f"Could not find result that contains '{dir_name_contains}'")
+        if len(filtered_results) == 0:
+            raise ValueError(
+                f"Could not find result that contains '{dir_name_contains}'"
+            )
 
-        if (len(filtered_results) > 1):
-            raise ValueError(f"There is more than one possible result with pattern '{dir_name_contains}'")
+        if len(filtered_results) > 1:
+            raise ValueError(
+                f"There is more than one possible result with pattern '{dir_name_contains}'"
+            )
 
         return filtered_results[0]
 
-        
-
     def get_plot_by_results_attribute_name(self, attr_name: str) -> go.Figure:
         """
-            You can get a plot using an attribute name from Results.
-            See Results class to check what attributes exist.
+        You can get a plot using an attribute name from Results.
+        See Results class to check what attributes exist.
         """
-        filtered = list(filter(lambda x: x.layout.meta["related_results_attribute"] == attr_name, self.plots))
+        filtered = list(
+            filter(
+                lambda x: x.layout.meta["related_results_attribute"] == attr_name,
+                self.plots,
+            )
+        )
 
         if 0 == len(filtered):
             return None
@@ -287,33 +323,35 @@ class PostProcessor:
         ul_tdd_factor: (int, int),
         n_bs_sim: int,
         n_bs_actual: int,
-        random_number_gen = np.random.RandomState(31)
+        random_number_gen=np.random.RandomState(31),
     ):
         """
-            The method was adapted from document 'TG51_201805_E07_FSS_Uplink_ study 48GHz_GSMA_v1.5.pdf',
-            a document created for Task Group 5/1.
-            This is used to aggregate both uplink and downlink interference towards another system
-                into a result that makes more sense to the case study.
-            Inputs:
-                downlink/uplink_result: Results
-                    Results that should be aggregated. You need to specify both correctly,
-                    since there is no way to check if both results should really be aggregated
-                ul_tdd_factor: (int, int)
-                    The tdd ratio that uplink is activated for.
-                    For example, a UL TDD factor of 25% should be passed as (3, 4).
-                n_bs_sim: int
-                    Number of simulated base stations.
-                    Should probably be 7 * 19 * 3 * 3 or 1 * 19 * 3 * 3
-                n_bs_actual: int
-                    The number of base stations the study wants to have conclusions for.
-                random_number_gen: np.random.RandomState
-                    Since this methods uses another montecarlo to aggregate results,
-                    it needs a random number generator
+        The method was adapted from document 'TG51_201805_E07_FSS_Uplink_ study 48GHz_GSMA_v1.5.pdf',
+        a document created for Task Group 5/1.
+        This is used to aggregate both uplink and downlink interference towards another system
+            into a result that makes more sense to the case study.
+        Inputs:
+            downlink/uplink_result: Results
+                Results that should be aggregated. You need to specify both correctly,
+                since there is no way to check if both results should really be aggregated
+            ul_tdd_factor: (int, int)
+                The tdd ratio that uplink is activated for.
+                For example, a UL TDD factor of 25% should be passed as (3, 4).
+            n_bs_sim: int
+                Number of simulated base stations.
+                Should probably be 7 * 19 * 3 * 3 or 1 * 19 * 3 * 3
+            n_bs_actual: int
+                The number of base stations the study wants to have conclusions for.
+            random_number_gen: np.random.RandomState
+                Since this methods uses another montecarlo to aggregate results,
+                it needs a random number generator
         """
-        if not isinstance(ul_tdd_factor, tuple)\
-                or len(ul_tdd_factor) != 2\
-                or not isinstance(ul_tdd_factor[0], int)\
-                or not isinstance(ul_tdd_factor[1], int):
+        if (
+            not isinstance(ul_tdd_factor, tuple)
+            or len(ul_tdd_factor) != 2
+            or not isinstance(ul_tdd_factor[0], int)
+            or not isinstance(ul_tdd_factor[1], int)
+        ):
             raise ValueError(
                 f"PostProcessor.aggregate_results invalid argument: ul_tdd_factor={ul_tdd_factor}."
                 + "\n For example, a UL TDD factor of 25% should be passed as (3, 4)."
@@ -332,34 +370,44 @@ class PostProcessor:
             n_aggregate = len(ul_interference)
         else:
             n_aggregate = min(len(ul_interference), len(dl_interference))
-        
+
         aggregate_samples = np.empty(n_aggregate)
 
         for i in range(n_aggregate):
             # choose S random samples
-            ul_random_indexes = np.floor(random_number_gen.random(size=int(np.ceil(segment_factor))) * n_aggregate)
+            ul_random_indexes = np.floor(
+                random_number_gen.random(size=int(np.ceil(segment_factor)))
+                * n_aggregate
+            )
             sample = 0
             sample_n = 0
 
-            for j in ul_random_indexes: # random samples
+            for j in ul_random_indexes:  # random samples
                 # Respect the tdd factor
 
                 choose_from_ul = sample_n < ul_tdd_factor[0]
-                sample_n+=1
+                sample_n += 1
                 if choose_from_ul:
-                    sample += np.power(10, (ul_interference[int(j)])/10) * ul_tdd_factor[0]
+                    sample += (
+                        np.power(10, (ul_interference[int(j)]) / 10) * ul_tdd_factor[0]
+                    )
                 else:
-                    sample += np.power(10, (dl_interference[int(j)])/10) * (ul_tdd_factor[1] - ul_tdd_factor[0])
-            aggregate_samples[i] = 10 * np.log10(sample * (segment_factor / np.ceil(segment_factor)))
+                    sample += np.power(10, (dl_interference[int(j)]) / 10) * (
+                        ul_tdd_factor[1] - ul_tdd_factor[0]
+                    )
+            aggregate_samples[i] = 10 * np.log10(
+                sample * (segment_factor / np.ceil(segment_factor))
+            )
 
         return aggregate_samples
 
     def cdf_from(data: list[float], *, n_bins=200) -> (list[float], list[float]):
         """
-            Takes a dataset and returns both axis of a cdf (x, y)
+        Takes a dataset and returns both axis of a cdf (x, y)
         """
         values, base = np.histogram(
-            data, bins=n_bins,
+            data,
+            bins=n_bins,
         )
         cumulative = np.cumsum(values)
         x = base[:-1]
@@ -370,5 +418,3 @@ class PostProcessor:
     @staticmethod
     def generate_statistics(result: Results) -> ResultsStatistics:
         return ResultsStatistics().load_from_results(result)
-        
-
