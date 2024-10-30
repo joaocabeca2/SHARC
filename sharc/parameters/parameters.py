@@ -17,6 +17,7 @@ from sharc.parameters.parameters_antenna_imt import ParametersAntennaImt
 from sharc.parameters.parameters_eess_passive import ParametersEessPassive
 from sharc.parameters.parameters_fs import ParametersFs
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
+from sharc.parameters.parameters_antenna_s1528 import ParametersAntennaS1528
 from sharc.parameters.parameters_fss_es import ParametersFssEs
 from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
@@ -40,12 +41,11 @@ class Parameters(object):
         self.ntn = ParametersNTN()
         self.eess_passive = ParametersEessPassive()
         self.fs = ParametersFs()
-        self.fss_ss = ParametersFssSs()
+        self.fss_ss = ParametersAntennaS1528()
         self.fss_es = ParametersFssEs()
         self.haps = ParametersHaps()
         self.rns = ParametersRns()
         self.ras = ParametersRas()
-
 
     def set_file_name(self, file_name: str):
         """sets the configuration file name
@@ -57,16 +57,16 @@ class Parameters(object):
         """
         self.file_name = file_name
 
-
     def read_params(self):
         """Read the parameters from the config file
         """
+        #self.file_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'input/parameters.yaml')
         if not os.path.isfile(self.file_name):
             err_msg = f"PARAMETER ERROR [{self.__class__.__name__}]: \
                 Could not find the configuration file {self.file_name}"
             sys.stderr.write(err_msg)
             sys.exit(1)
-            
+
         with open(self.file_name, 'r') as yaml_file:
             # yaml_config = yaml.safe_load(yaml_file)
 
@@ -179,11 +179,12 @@ class Parameters(object):
         #######################################################################
         self.ntn.load_parameters_from_file(self.file_name)
 
+
 if __name__ == "__main__":
     from pprint import pprint
     parameters = Parameters()
     param_sections = [a for a in dir(parameters) if not a.startswith('__') and not
-                callable(getattr(parameters, a))]
+                      callable(getattr(parameters, a))]
     print("\n#### Dumping default parameters:")
     for p in param_sections:
         print("\n")
