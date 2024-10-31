@@ -8,7 +8,7 @@ general:
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS, SINGLE_EARTH_STATION
-    system  : FSS_SS
+    system  : FSS_ES
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel  : FALSE
@@ -417,7 +417,8 @@ imt:
     #                                    "TVRO-SUBURBAN"
     #                                    "ABG" (Alpha-Beta-Gamma)
     #                                    "P619"
-    channel_model  : FSPL
+    channel_model  : UMa
+    season  : SUMMER
     ###########################################################################
     # Adjustment factor for LoS probability in UMi path loss model.
     #       Original value: 18 (3GPP)
@@ -572,6 +573,8 @@ fss_es:
     #                                    "TVRO-URBAN"
     #                                    "TVRO-SUBURBAN"
     #                                    "HDFSS"
+    #                                    "UMa"
+    #                                    "UMi"
     channel_model  : P452
     ###########################################################################
     # Constants

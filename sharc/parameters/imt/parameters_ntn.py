@@ -12,6 +12,11 @@ from sharc.parameters.parameters_base import ParametersBase
 
 @dataclass
 class ParametersNTN(ParametersBase):
+    """
+    Simulation parameters for NTN network topology.
+    """
+    section_name: str = "ntn"
+
     # NTN Airborne Platform height (m)
     bs_height: float = None
 
