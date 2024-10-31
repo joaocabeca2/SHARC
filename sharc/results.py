@@ -112,6 +112,10 @@ class Results(object):
             copy(parameters_filename, self.output_directory)
         else:
             self.output_directory = self.__sharc_dir / self.output_dir_parent
+            try:
+                os.makedirs(self.output_directory)
+            except FileExistsError:
+                pass
 
         return self
 
