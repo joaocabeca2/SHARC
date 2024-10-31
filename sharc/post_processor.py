@@ -73,10 +73,11 @@ class ResultsStatistics:
 @dataclass
 class PostProcessor:
     IGNORE_FIELD = {
-        "title": "NEM PLOTAMOS ISSO, ENTÃO CONTINUA SEM PLOTAR",
+        "title": "ANTES NAO PLOTAVAMOS ISSO, ENTÃO CONTINUA SEM PLOTAR",
         "x_label": "",
     }
-    # TODO: move units in the result to the Results class instead of Plot Info
+    # TODO: move units in the result to the Results class instead of Plot Info?
+    # TODO: rename x_label to something else when making plots other than cdf
     RESULT_FIELDNAME_TO_PLOT_INFO = {
         "imt_ul_tx_power_density": {
             "x_label": "Transmit power density [dBm/Hz]",
@@ -244,6 +245,9 @@ class PostProcessor:
                     continue
                 attr_plot_info = PostProcessor.RESULT_FIELDNAME_TO_PLOT_INFO[attr_name]
                 if attr_plot_info == PostProcessor.IGNORE_FIELD:
+                    print(
+                        f"[WARNING]: {attr_name} is currently being ignored on plots."
+                    )
                     continue
                 if attr_name not in figs:
                     figs[attr_name] = go.Figure()
@@ -257,6 +261,7 @@ class PostProcessor:
                         meta={"related_results_attribute": attr_name},
                     )
 
+                # TODO: take this fn as argument, to plot more than only cdf's
                 x, y = PostProcessor.cdf_from(attr_val, n_bins=n_bins)
 
                 fig = figs[attr_name]
@@ -314,12 +319,12 @@ class PostProcessor:
 
         return filtered[0]
 
-    # TODO: make this more generic and useful with SNR, SINR, etc...
+    # TODO: check if this agrees with professor Judson's analysis
     @staticmethod
-    def aggregate_interference_results(
+    def aggregate_results(
         *,
-        downlink_result: Results,
-        uplink_result: Results,
+        dl_samples: Results,
+        ul_samples: Results,
         ul_tdd_factor: (int, int),
         n_bs_sim: int,
         n_bs_actual: int,
@@ -359,17 +364,14 @@ class PostProcessor:
                 + "\n \tetc..."
             )
 
-        ul_interference = uplink_result.system_ul_interf_power
-        dl_interference = downlink_result.system_dl_interf_power
-
         segment_factor = n_bs_actual / n_bs_sim
 
         if ul_tdd_factor[0] == 0:
-            n_aggregate = len(dl_interference)
+            n_aggregate = len(dl_samples)
         elif ul_tdd_factor[0] == ul_tdd_factor[1]:
-            n_aggregate = len(ul_interference)
+            n_aggregate = len(ul_samples)
         else:
-            n_aggregate = min(len(ul_interference), len(dl_interference))
+            n_aggregate = min(len(ul_samples), len(dl_samples))
 
         aggregate_samples = np.empty(n_aggregate)
 
@@ -389,10 +391,10 @@ class PostProcessor:
                 sample_n += 1
                 if choose_from_ul:
                     sample += (
-                        np.power(10, (ul_interference[int(j)]) / 10) * ul_tdd_factor[0]
+                        np.power(10, (ul_samples[int(j)]) / 10) * ul_tdd_factor[0]
                     )
                 else:
-                    sample += np.power(10, (dl_interference[int(j)]) / 10) * (
+                    sample += np.power(10, (dl_samples[int(j)]) / 10) * (
                         ul_tdd_factor[1] - ul_tdd_factor[0]
                     )
             aggregate_samples[i] = 10 * np.log10(

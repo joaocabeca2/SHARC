@@ -91,8 +91,8 @@ with open(os.path.join(campaign_base_dir, "output", "stats.txt"), "w") as f:
 # # example on how to aggregate results and add it to plot:
 # dl_res = post_processor.get_results_by_output_dir("1_cluster")
 # aggregated_results = PostProcessor.aggregate_interference_results(
-#     downlink_result=dl_res,
-#     uplink_result=dl_res,
+#     dl_samples=dl_res.system_ul_interf_power,
+#     ul_samples=dl_res.system_ul_interf_power, # isn't actually used in this case
 #     ul_tdd_factor=(0, 1),
 #     n_bs_sim=1 * 19 * 3 * 3,
 #     n_bs_actual=7 * 19 * 3 * 3
