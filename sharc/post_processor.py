@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import os
 import numpy as np
 import scipy
+import typing
 
 
 class FieldStatistics:
@@ -53,6 +54,9 @@ class ResultsStatistics:
     results_output_dir: str = "default_output"
 
     def load_from_results(self, result: Results) -> "ResultsStatistics":
+        """
+        Loads all relevant attributes from result and generates their statistics
+        """
         self.results_output_dir = result.output_directory
         self.fields_statistics = []
         attr_names = result.get_relevant_attributes()
@@ -65,6 +69,36 @@ class ResultsStatistics:
             )
 
         return self
+
+    def write_to_results_dir(self, filename="stats.txt") -> "ResultsStatistics":
+        """
+        Writes statistics file to the same directory of the results loaded into this class
+        """
+        with open(os.path.join(self.results_output_dir, filename), "w") as f:
+            f.write(str(self))
+
+        return self
+
+    def get_stat_by_name(self, field_name: str) -> typing.Union[None, FieldStatistics]:
+        """
+        Gets a single field's statistics by its name.
+        E.g.: get_stat_by_name("system_dl_interf_power")
+        Returns
+            None if not found
+            FieldStatistics if found only one match
+        """
+        stats_found = filter(lambda field_stat: field_stat.field_name == field_name, self.fields_statistics)
+
+        if len(stats_found) > 1:
+            raise Exception(
+                f"ResultsStatistics.get_stat_by_name found more than one statistic by the field name '{field_name}'\n"
+                + "You probably loaded more than one result to the same ResultsStatistics object"
+            )
+
+        if len(stats_found) == 0:
+            return None
+
+        return stats_found[0]
 
     def __str__(self):
         return f"[{self.results_output_dir}]\n{'\n'.join(list(map(str, self.fields_statistics)))}"
