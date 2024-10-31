@@ -403,6 +403,7 @@ class PostProcessor:
 
         return aggregate_samples
 
+    @staticmethod
     def cdf_from(data: list[float], *, n_bins=200) -> (list[float], list[float]):
         """
         Takes a dataset and returns both axis of a cdf (x, y)
