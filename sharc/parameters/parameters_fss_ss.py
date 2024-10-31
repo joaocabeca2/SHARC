@@ -12,9 +12,9 @@ class ParametersFssSs(ParametersBase):
     section_name: str = "FSS_SS"
     is_space_to_earth: bool = True
     # satellite center frequency [MHz]
-    frequency: float = 43000.0
+    frequency: float = 7000
     # satellite bandwidth [MHz]
-    bandwidth: float = 200.0
+    bandwidth: float = 80
     # Peak transmit power spectral density (clear sky) [dBW/Hz]
     tx_power_density: float = -5.0
     # satellite altitude [m]
@@ -33,7 +33,15 @@ class ParametersFssSs(ParametersBase):
     antenna_gain: float = 46.6
     # Antenna pattern of the FSS space station
     # Possible values: "ITU-R S.672", "ITU-R S.1528", "FSS_SS", "OMNI"
-    antenna_pattern: str = "FSS_SS"
+    antenna_pattern: str = "ITU-R S.1528"
+    ############################
+    # Parameters if antenna_pattern = ITU_R S.1528
+    slr: float = 0.0
+    n_side_lobes: int = 0
+    l_r: float = 0.0
+    l_t: float = 0.0
+    roll_off: int = 0
+    ############################
     # Parameters for the P.619 propagation model
     #    earth_station_alt_m - altitude of IMT system (in meters)
     #    earth_station_lat_deg - latitude of IMT system (in degrees)

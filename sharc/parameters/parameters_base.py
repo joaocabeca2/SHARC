@@ -42,7 +42,7 @@ class ParametersBase:
                 if isinstance(attr_val, str):
                     setattr(self, attr, config[self.section_name][attr])
                 elif isinstance(attr_val, bool):
-                    setattr(self, attr, config[self.section_name][attr])
+                    setattr(self, attr, bool(config[self.section_name][attr]))
                 elif isinstance(attr_val, float):
                     setattr(self, attr, float(config[self.section_name][attr]))
                 elif isinstance(attr_val, int):

@@ -41,7 +41,7 @@ class Parameters(object):
         self.ntn = ParametersNTN()
         self.eess_passive = ParametersEessPassive()
         self.fs = ParametersFs()
-        self.fss_ss = ParametersAntennaS1528()
+        self.fss_ss = ParametersFssSs()
         self.fss_es = ParametersFssEs()
         self.haps = ParametersHaps()
         self.rns = ParametersRns()
@@ -60,7 +60,7 @@ class Parameters(object):
     def read_params(self):
         """Read the parameters from the config file
         """
-        #self.file_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'input/parameters.yaml')
+        self.file_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'input/parameters.yaml')
         if not os.path.isfile(self.file_name):
             err_msg = f"PARAMETER ERROR [{self.__class__.__name__}]: \
                 Could not find the configuration file {self.file_name}"

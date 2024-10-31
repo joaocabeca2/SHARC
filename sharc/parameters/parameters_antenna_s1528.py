@@ -1,6 +1,8 @@
 import configparser
 from dataclasses import dataclass
 from sharc.parameters.parameters_base import ParametersBase
+from sharc.parameters.parameters_p619 import ParametersP619
+
 
 @dataclass
 class ParametersAntennaS1528(ParametersBase):
@@ -15,8 +17,25 @@ class ParametersAntennaS1528(ParametersBase):
     roll_off: int = 0
     antenna_3_dB: float = 0.0
     antenna_l_s: float = 0.0
-    antenna_patern: str = "ITU-R S.1528"
-    
+    antenna_pattern: str = "FSS_SS"
+
+    param_p619 = ParametersP619()
+    space_station_alt_m: float = 35780000.0
+    earth_station_alt_m: float = 0.0
+    earth_station_lat_deg: float = 0.0
+    earth_station_long_diff_deg: float = 0.0
+    season: str = "SUMMER"
+    # Channel parameters
+    # channel model, possible values are "FSPL" (free-space path loss),
+    #                                    "SatelliteSimple" (FSPL + 4 + clutter loss)
+    #                                    "P619"
+    channel_model: str = "P619"
+    # The required near-in-side-lobe level (dB) relative to peak gain
+    # according to ITU-R S.672-4
+    antenna_l_s: float = -20.0
+    # 3 dB beamwidth angle (3 dB below maximum gain) [degrees]
+    antenna_3_dB: float = 0.65
+
     def load_parameters_from_file(self, config_file: str):
         """Load the parameters from file and perform sanity checks specific to antenna parameters"""
         super().load_parameters_from_file(config_file)

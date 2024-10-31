@@ -4,7 +4,7 @@ Created on Tue Aug 15 14:49:01 2017
 
 @author: edgar
 """
-import sys, getopt
+import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".."))
 
