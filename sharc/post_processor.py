@@ -23,7 +23,7 @@ class FieldStatistics:
         self.mean = np.mean(sample)
         self.variance = np.var(sample)
         self.standard_deviation = np.std(sample)
-        # TODO: check if using t distribution here is correct
+        # @important TODO: check if using t distribution here is correct
         self.confidence_interval = scipy.stats.norm.interval(
             confidence, loc=self.mean, scale=scipy.stats.sem(sample)
         )
@@ -319,13 +319,12 @@ class PostProcessor:
 
         return filtered[0]
 
-    # TODO: check if this agrees with professor Judson's analysis
     @staticmethod
     def aggregate_results(
         *,
-        dl_samples: Results,
-        ul_samples: Results,
-        ul_tdd_factor: (int, int),
+        dl_samples: list[float],
+        ul_samples: list[float],
+        ul_tdd_factor: float,
         n_bs_sim: int,
         n_bs_actual: int,
         random_number_gen=np.random.RandomState(31),
@@ -336,12 +335,10 @@ class PostProcessor:
         This is used to aggregate both uplink and downlink interference towards another system
             into a result that makes more sense to the case study.
         Inputs:
-            downlink/uplink_result: Results
-                Results that should be aggregated. You need to specify both correctly,
-                since there is no way to check if both results should really be aggregated
-            ul_tdd_factor: (int, int)
+            downlink/uplink_result: list[float]
+                Samples that should be aggregated.
+            ul_tdd_factor: float
                 The tdd ratio that uplink is activated for.
-                For example, a UL TDD factor of 25% should be passed as (3, 4).
             n_bs_sim: int
                 Number of simulated base stations.
                 Should probably be 7 * 19 * 3 * 3 or 1 * 19 * 3 * 3
@@ -351,24 +348,19 @@ class PostProcessor:
                 Since this methods uses another montecarlo to aggregate results,
                 it needs a random number generator
         """
-        if (
-            not isinstance(ul_tdd_factor, tuple)
-            or len(ul_tdd_factor) != 2
-            or not isinstance(ul_tdd_factor[0], int)
-            or not isinstance(ul_tdd_factor[1], int)
-        ):
+        if ul_tdd_factor > 1 or ul_tdd_factor < 0:
             raise ValueError(
-                f"PostProcessor.aggregate_results invalid argument: ul_tdd_factor={ul_tdd_factor}."
-                + "\n For example, a UL TDD factor of 25% should be passed as (3, 4)."
-                + "\n \tof 50% should be passed as (1, 2)."
-                + "\n \tetc..."
+                "PostProcessor.aggregate_results() was called with invalid ul_tdd_factor parameter."
+                + f"ul_tdd_factor must be in interval [0, 1], but is {ul_tdd_factor}"
             )
 
-        segment_factor = n_bs_actual / n_bs_sim
+        segment_factor = round(n_bs_actual / n_bs_sim)
 
-        if ul_tdd_factor[0] == 0:
+        dl_tdd_factor = 1 - ul_tdd_factor
+
+        if ul_tdd_factor == 0:
             n_aggregate = len(dl_samples)
-        elif ul_tdd_factor[0] == ul_tdd_factor[1]:
+        elif dl_tdd_factor == 0:
             n_aggregate = len(ul_samples)
         else:
             n_aggregate = min(len(ul_samples), len(dl_samples))
@@ -378,27 +370,30 @@ class PostProcessor:
         for i in range(n_aggregate):
             # choose S random samples
             ul_random_indexes = np.floor(
-                random_number_gen.random(size=int(np.ceil(segment_factor)))
-                * n_aggregate
+                random_number_gen.random(size=segment_factor)
+                * len(ul_samples)
             )
-            sample = 0
-            sample_n = 0
+            dl_random_indexes = np.floor(
+                random_number_gen.random(size=segment_factor)
+                * len(dl_samples)
+            )
+            aggregate_samples[i] = 0
 
-            for j in ul_random_indexes:  # random samples
-                # Respect the tdd factor
+            if ul_tdd_factor:
+                for j in ul_random_indexes:  # random samples
+                    aggregate_samples[i] += (
+                        np.power(10, ul_samples[int(j)] / 10) * ul_tdd_factor
+                    )
 
-                choose_from_ul = sample_n < ul_tdd_factor[0]
-                sample_n += 1
-                if choose_from_ul:
-                    sample += (
-                        np.power(10, (ul_samples[int(j)]) / 10) * ul_tdd_factor[0]
+            if dl_tdd_factor:
+                for j in dl_random_indexes:  # random samples
+                    aggregate_samples[i] += (
+                        np.power(10, dl_samples[int(j)] / 10) * dl_tdd_factor
                     )
-                else:
-                    sample += np.power(10, (dl_samples[int(j)]) / 10) * (
-                        ul_tdd_factor[1] - ul_tdd_factor[0]
-                    )
+
+            # convert back to dB or dBm (as was previously)
             aggregate_samples[i] = 10 * np.log10(
-                sample * (segment_factor / np.ceil(segment_factor))
+                aggregate_samples[i]
             )
 
         return aggregate_samples
