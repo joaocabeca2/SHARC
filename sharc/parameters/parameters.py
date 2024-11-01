@@ -17,7 +17,6 @@ from sharc.parameters.parameters_antenna_imt import ParametersAntennaImt
 from sharc.parameters.parameters_eess_passive import ParametersEessPassive
 from sharc.parameters.parameters_fs import ParametersFs
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
-from sharc.parameters.parameters_antenna_s1528 import ParametersAntennaS1528
 from sharc.parameters.parameters_fss_es import ParametersFssEs
 from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
