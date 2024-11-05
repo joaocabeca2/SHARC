@@ -7,14 +7,14 @@ Created on Mon Jul  3 10:29:47 2017
 import numpy as np
 from multipledispatch import dispatch
 
+from sharc.parameters.parameters import Parameters
 from sharc.propagation.propagation import Propagation
 from sharc.station_manager import StationManager
-from sharc.parameters.parameters import Parameters
 
 
 class PropagationUHF(Propagation):
     """
-    Implements the Urban Micro path loss model (Street Canyon) with LOS
+    Implements the Urban Micro path basic_transmission_loss model (Street Canyon) with LOS
     probability according to 3GPP TR 38.900 v14.2.0.
     TODO: calculate the effective environment height for the generic case
     """
@@ -38,10 +38,10 @@ class PropagationUHF(Propagation):
         bs_height: np.array,
         ue_height: np.array,
         shadowing_flag: bool,
-        loss : np.array,
+        basic_transmission_loss : np.array,
     ) -> np.array:
         """
-        Calculates path loss for LOS and NLOS cases with respective shadowing
+        Calculates path basic_transmission_loss for LOS and NLOS cases with respective shadowing
         (if shadowing is to be added)
 
         Parameters
@@ -58,13 +58,22 @@ class PropagationUHF(Propagation):
             array with path loss values with dimensions of distance_2D
         """
 
-        wavelenght = self.c/frequency
+        wavelenght = self.c / frequency
         breakpoint_dist = (4*bs_height*ue_height) / wavelenght
+        basic_transmission_loss = 20 * np.log10(wavelenght**2 / (8 * np.pi * bs_height * ue_height))
 
-        if breakpoint_dist <= distance_3D:
-            lower_bound_aproximation = loss + (20 * np.log10(distance_3D / breakpoint_dist))
+        if breakpoint_dist >= distance_3D:
+            lower_bound_loss = basic_transmission_loss + (20 * np.log10(distance_3D / breakpoint_dist))
         else:
-            lower_bound_aproximation = loss + (40 * np.log10(distance_3D / breakpoint_dist))
+            lower_bound_loss = basic_transmission_loss + (40 * np.log10(distance_3D / breakpoint_dist))
         
+
+        if breakpoint_dist >= distance_3D:
+            upper_bound_loss = basic_transmission_loss + 20 + (25 * np.log10(distance_3D / breakpoint_dist))
+        else:
+            upper_bound_loss = basic_transmission_loss + 20 + (40 * np.log10(distance_3D / breakpoint_dist))
         
-        
+        if breakpoint_dist >= distance_3D:
+            median_bound_loss = basic_transmission_loss + 6 + (20 * np.log10(distance_3D / breakpoint_dist))
+        else:
+            median_bound_loss = basic_transmission_loss + 6 (40 * np.log10(distance_3D / breakpoint_dist))
