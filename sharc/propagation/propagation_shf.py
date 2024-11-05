@@ -14,7 +14,7 @@ from sharc.propagation.propagation import Propagation
 from sharc.station_manager import StationManager
 
 
-class PropagationUHF(Propagation):
+class PropagationSHF(Propagation):
     """
     Represents the propagation characteristics in the Ultra High Frequency (UHF) range.
 
@@ -83,39 +83,55 @@ class PropagationUHF(Propagation):
 
         return loss
     
-    @dispatch(np.ndarray, np.ndarray, np.ndarray, np.ndarray)
+    @dispatch(np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, bool)
     def get_loss(
         self,
         distance_3D: np.array,
         frequency: np.array,
         bs_height: np.array,
         ue_height: np.array,
+        road_height : np.array,
+        heavy_traffic: bool,
     ) -> np.array:
 
-        c = 3e8 # speed of light
-        wavelenght =  c / frequency
-        breakpoint_dist = (4*bs_height*ue_height) / wavelenght
-        basic_transmission_loss = 20 * np.log10(wavelenght**2 / (8 * np.pi * bs_height * ue_height))
+        c = 3e8  # velocidade da luz
+        wavelength = c / frequency  # comprimento de onda
+        
+        # Cálculo do breakpoint_dist
+        if heavy_traffic:
+            breakpoint_dist = (4 * ((bs_height - road_height) * (ue_height - road_height))) / wavelength
+        else:
+            breakpoint_dist = 0
+        
+        # Condições para alturas da estação base (BS) e da unidade do usuário (UE)
+        if np.all(ue_height > road_height) and np.all(bs_height > road_height):
+            # Perda básica de transmissão para ambos acima da altura da estrada
+            basic_transmission_loss = 20 * np.log10(wavelength**2 / (8 * np.pi * (bs_height - road_height) * (ue_height - road_height)))
+            
+            # Limites de perda de transmissão
+            lower_bound_loss = np.where(
+                breakpoint_dist >= distance_3D,
+                basic_transmission_loss + (20 * np.log10(distance_3D / breakpoint_dist)),
+                basic_transmission_loss + (40 * np.log10(distance_3D / breakpoint_dist))
+            )
 
-       # A comparação deve ser feita element-wise
-        lower_bound_loss = np.where(
-            breakpoint_dist >= distance_3D,
-            basic_transmission_loss + (20 * np.log10(distance_3D / breakpoint_dist)),
-            basic_transmission_loss + (40 * np.log10(distance_3D / breakpoint_dist))
-        )
+            upper_bound_loss = np.where(
+                breakpoint_dist >= distance_3D,
+                basic_transmission_loss + 20 + (25 * np.log10(distance_3D / breakpoint_dist)),
+                basic_transmission_loss + 20 + (40 * np.log10(distance_3D / breakpoint_dist))
+            )
 
-        upper_bound_loss = np.where(
-            breakpoint_dist >= distance_3D,
-            basic_transmission_loss + 20 + (25 * np.log10(distance_3D / breakpoint_dist)),
-            basic_transmission_loss + 20 + (40 * np.log10(distance_3D / breakpoint_dist))
-        )
+            # Como ambos estão acima da altura da estrada, `median_bound_loss` não é calculado
+            median_bound_loss = np.full(lower_bound_loss.shape, np.nan)
 
-        median_bound_loss = np.where(
-            breakpoint_dist >= distance_3D,
-            basic_transmission_loss + 6 + (20 * np.log10(distance_3D / breakpoint_dist)),
-            basic_transmission_loss + 6 + (40 * np.log10(distance_3D / breakpoint_dist))
-        )
-
+        else:
+            # Perda básica de transmissão para quando um ou ambos estão abaixo da altura da estrada
+            basic_transmission_loss = 20 * np.log10(wavelength / (2 * np.pi * road_height))
+            
+            # Limites de perda de transmissão para esta condição
+            lower_bound_loss = basic_transmission_loss + (30 * np.log10(distance_3D / road_height))
+            upper_bound_loss = basic_transmission_loss + 20 + (30 * np.log10(distance_3D / road_height))
+            median_bound_loss = basic_transmission_loss + 6 + (30 * np.log10(distance_3D / road_height))
         
         return np.array([lower_bound_loss, upper_bound_loss, median_bound_loss])
 
@@ -130,12 +146,15 @@ if __name__ == '__main__':
     distance_2D = np.repeat(np.linspace(1, num_bs, num=num_bs)[np.newaxis, :], num_ue, axis=0)
     freq = 27000 * np.ones(distance_2D.shape)
     h_bs = 6 * np.ones(num_bs)
-    h_ue = 1.5 * np.ones(num_ue)
+    h_ue = 1.5 * np.ones(num_ue)  # Altura do usuário
+    h_road = 1 * np.ones(num_bs)  # Altura efetiva da estrada
+
+    # Cálculo da distância 3D
     distance_3D = np.sqrt(distance_2D**2 + (h_bs - h_ue[np.newaxis, :])**2)
 
-    # Criação do objeto PropagationUHF e cálculo da perda
-    uhf = PropagationUHF(np.random.RandomState(101))
-    loss = uhf.get_loss(distance_3D, freq, h_bs, h_ue)
+    # Criação do objeto PropagationSHF e cálculo da perda
+    shf = PropagationSHF(np.random.RandomState(101))
+    loss = shf.get_loss(distance_3D, freq, h_bs, h_ue, h_road, True)  # Removendo h_road se não for necessário
 
     # Separando os valores de perda
     lower_bound_loss, upper_bound_loss, median_bound_loss = loss
@@ -149,7 +168,7 @@ if __name__ == '__main__':
     ax.semilogx(distance_2D[0, :], median_bound_loss[0, :], label="Median Bound Loss")
     ax.semilogx(distance_2D[0, :], upper_bound_loss[0, :], label="Upper Bound Loss")
 
-    plt.title("UHF - Ultra High Frequency Path Loss")
+    plt.title("SHF - Super High Frequency Path Loss")
     plt.xlabel("Distance [m]")
     plt.ylabel("Path Loss [dB]")
     plt.xlim((0, distance_2D[0, -1]))
