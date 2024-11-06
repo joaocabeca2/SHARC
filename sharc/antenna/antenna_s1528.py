@@ -6,8 +6,6 @@ Created on Tue Aug 15 14:49:01 2017
 """
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".."))
-
 from numpy.core.multiarray import array as array
 from sharc.antenna.antenna import Antenna
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
@@ -130,6 +128,7 @@ class AntennaS1528Leo(Antenna):
         return gain
 
 
+
 class AntennaS1528(Antenna):
     """
     Implements Recommendation ITU-R S.1528-0: Satellite antenna radiation
@@ -154,29 +153,33 @@ class AntennaS1528(Antenna):
         self.l_f = 0
 
         # back-lobe level
-        self.l_b = np.maximum(0, 15 + self.l_s + 0.25 *
-                              self.peak_gain + 5*math.log10(self.z))
-
+        self.l_b = np.maximum(
+            0, 15 + self.l_s + 0.25 *
+            self.peak_gain + 5 * math.log10(self.z),
+        )
         # one-half the 3 dB beamwidth in the plane of interest
-        self.psi_b = param.antenna_3_dB/2
+        self.psi_b = param.antenna_3_dB / 2
 
         if self.l_s == -15:
-            self.a = 2.58*math.sqrt(1 - 1.4*math.log10(self.z))
+            self.a = 2.58 * math.sqrt(1 - 1.4 * math.log10(self.z))
         elif self.l_s == -20:
-            self.a = 2.58*math.sqrt(1 - 1.0*math.log10(self.z))
+            self.a = 2.58 * math.sqrt(1 - 1.0 * math.log10(self.z))
         elif self.l_s == -25:
-            self.a = 2.58*math.sqrt(1 - 0.6*math.log10(self.z))
+            self.a = 2.58 * math.sqrt(1 - 0.6 * math.log10(self.z))
         elif self.l_s == -30:
-            self.a = 2.58*math.sqrt(1 - 0.4*math.log10(self.z))
+            self.a = 2.58 * math.sqrt(1 - 0.4 * math.log10(self.z))
         else:
             sys.stderr.write(
-                "ERROR\nInvalid AntennaS1528 L_s parameter: " + str(self.l_s))
+                "ERROR\nInvalid AntennaS1528 L_s parameter: " + str(self.l_s),
+            )
             sys.exit(1)
 
         self.b = 6.32
         self.alpha = 1.5
 
-        self.x = self.peak_gain + self.l_s + 25*math.log10(self.b * self.psi_b)
+        self.x = self.peak_gain + self.l_s + \
+            25 * math.log10(self.b * self.psi_b)
+        
         self.y = self.b * self.psi_b * \
             math.pow(10, 0.04 * (self.peak_gain + self.l_s - self.l_f))
 
@@ -193,8 +196,9 @@ class AntennaS1528(Antenna):
                          (psi <= 0.5 * self.b * self.psi_b))[0]
         gain[idx_1] = self.peak_gain + self.l_s + 20 * math.log10(self.z)
 
-        idx_2 = np.where((0.5 * self.b * self.psi_b < psi)
-                         & (psi <= self.b * self.psi_b))[0]
+        idx_2 = np.where((0.5 * self.b * self.psi_b < psi) &
+                         (psi <= self.b * self.psi_b))[0]
+        
         gain[idx_2] = self.peak_gain + self.l_s
 
         idx_3 = np.where((self.b * self.psi_b < psi) & (psi <= self.y))[0]
@@ -215,9 +219,11 @@ if __name__ == '__main__':
     ## Plot gains for ITU-R-S.1528-SECTION1.2
     # initialize antenna parameters
     param = ParametersFssSs()
+
     param.antenna_gain = 30
     param.antenna_pattern = "ITU-R-S.1528-SECTION1.2"
     param.antenna_3_dB = 4.4127
+
     psi = np.linspace(0, 30, num=1000)
 
     param.antenna_l_s = -15
@@ -262,7 +268,7 @@ if __name__ == '__main__':
     plt.xlim((0, np.max(psi_norm)))
     plt.xticks(np.arange(np.floor(np.max(psi_norm))))
     plt.title("ITU-R S.1528-0 antenna radiation pattern")
-    plt.xlabel("Relative off-axis angle, $\psi/\psi_{3dB}$")
+    plt.xlabel(r"Relative off-axis angle, $\psi/\psi_{3dB}$")
     plt.ylabel("Gain relative to $G_{max}$ [dB]")
     plt.legend(loc="upper right")
     plt.grid()
