@@ -4,14 +4,17 @@ Created on Tue Jul  3 17:13:33 2018
 
 @author: Calil
 """
-import sys
 import os
+import sys
+
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".."))
-from sharc.propagation.propagation import Propagation
-from multipledispatch import dispatch
-from sharc.station_manager import StationManager
-from sharc.parameters.parameters import Parameters
 import numpy as np
+from multipledispatch import dispatch
+
+from sharc.parameters.parameters import Parameters
+from sharc.propagation.propagation import Propagation
+from sharc.propagation.propagation_free_space import PropagationFreeSpace
+from sharc.station_manager import StationManager
 
 
 class PropagationP1411_12(Propagation):
@@ -21,35 +24,72 @@ class PropagationP1411_12(Propagation):
     Frequency in MHz and distance in meters!
     """
 
-    def __init__(self, random_number_gen: np.random.RandomState, above_rooftop=True, environment=None):
+    def __init__(self, random_number_gen: np.random.RandomState):
         super().__init__(random_number_gen)
 
-        #Path loss parameters for above-rooftop propagation
-        if above_rooftop:
-            self.los_alpha = 2.29
-            self.los_beta = 28.6
-            self.los_gamma = 1.96
-            self.los_sigma = 3.48
+    def get_loss(
+        self,
+        params: Parameters,
+        frequency: float,
+        station_a: StationManager,
+        station_b: StationManager,
+        station_a_gains=None,
+        station_b_gains=None,
+    ) -> np.array:
+        """Wrapper function for the PropagationUMa get_loss method
+        Calculates the loss between station_a and station_b
 
-            self.nlos_alpha = 4.39
-            self.nlos_beta = -6.27
-            self.nlos_gamma = 2.30
-            self.nlos_sigma = 6.89
+        Parameters
+        ----------
+        station_a : StationManager
+            StationManager container representing IMT UE station - Station_type.IMT_UE
+        station_b : StationManager
+            StationManager container representing IMT BS stattion
+        params : Parameters
+            Simulation parameters needed for the propagation class - Station_type.IMT_BS
 
-        #transmission loss coefficients for below-rooftop propagation
+        Returns
+        -------
+        np.array
+            Return an array station_a.num_stations x station_b.num_stations with the path loss
+            between each station
+        """
+        wrap_around_enabled = False
+        if params.imt.topology.type == "MACROCELL":
+            wrap_around_enabled = params.imt.topology.macrocell.wrap_around \
+                                    and params.imt.topology.macrocell.num_clusters == 1
+        if params.imt.topology.type == "HOTSPOT":
+            wrap_around_enabled = params.imt.topology.hotspot.wrap_around \
+                                    and params.imt.topology.hotspot.num_clusters == 1
+
+        if wrap_around_enabled and (station_a.is_imt_station() and station_b.is_imt_station()):
+            distances_2d, distances_3d, _, _ = \
+                station_a.get_dist_angles_wrap_around(station_b)
         else:
-            self.los_alpha = 2.12
-            self.los_beta = 29.2
-            self.los_gamma = 2.11
-            self.los_sigma = 5.06
+            distances_2d = station_a.get_distance_to(station_b)
+            distances_3d = station_a.get_3d_distance_to(station_b)
 
-            self.nlos_alpha = 4.00
-            self.nlos_beta = 10.20
-            self.nlos_gamma = 2.36
-            self.nlos_sigma = 7.60
+        '''median_basic_loss = self.calculate_median_basic_loss(
+            distances_3d,
+            frequency * np.ones(distances_2d.shape)
+        )
 
-    def calculate_median_basic_loss(self, distance_3D: np.array,
-        frequency: np.array) -> np.array:
+        free_space_prop = PropagationFreeSpace()
+        free_space_loss = free_space_prop.get_free_space_loss(frequency * np.ones(distance_2D.shape), distance_3D)
+        excess_loss = self.calculate_excess_loss(free_space_loss, median_basic_loss, distance_3D)
+
+        # the interface expects station_a.num_stations x station_b.num_stations array
+        return median_basic_loss'''
+
+    def calculate_median_basic_loss(
+        distance_3D: np.array,
+        frequency: np.array,
+        los_alfa: np.array,
+        los_beta: np.array,
+        los_gamma: np.array,
+        los_sigma: np.array,
+        random_number_gen: np.random.Generator
+    ) -> np.array:
         """
         This site-general model is applicable to situations where both the transmitting and receiving stations 
         are located below-rooftop, regardless of their antenna heights.
@@ -66,36 +106,14 @@ class PropagationP1411_12(Propagation):
         np.array
             Median basic transmission loss in dB.
         """
-        median_loss = 10 * self.los_alfa * np.log10(distance_3D) + self.los_beta + 10 * self.los_gamma * np.log10(frequency)
+        median_loss = (10 * los_alfa * np.log10(distance_3D)) + los_beta + (10 * los_gamma * np.log10(frequency))
         # Add zero-mean Gaussian random variable for shadowing
-        shadowing = self.random_number_gen.normal(0, self.los_sigma, distance_3D.shape)
+        shadowing = random_number_gen.normal(0, los_sigma, distance_3D.shape)
 
         return median_loss + shadowing
 
-    def calculate_free_space_loss(self, distance_3D: np.array, frequency: np.array) -> np.array:
-        speed_light = 3e8 #m/s
-        """
-        Calculates the free-space basic transmission loss, LFS.
 
-        Parameters
-        ----------
-        distance_3D : np.array
-            3D direct distance between transmitting and receiving stations (m).
-        frequency : np.array
-            Operating frequency (GHz).
-
-        Returns
-        -------
-        np.array
-            Free-space basic transmission loss in dB.
-        """
-        # Convert frequency to Hz from GHz
-        frequency *= 1e9
-        # Calculate LFS using the given formula
-        return 20 * np.log10(4 * 10**9 * np.pi * distance_3D * frequency /speed_light)
-
-
-    def calculate_excess_loss(self, lfs: np.array, median_basic_loss: np.array, distance_3D: np.array) -> np.array:
+    def calculate_excess_loss(self, lfs: np.array, median_basic_loss: np.array, distance_3D: np.array, los_sigma: np.array) -> np.array:
         """
         Calculates the excess basic transmission loss for NLoS scenarios.
         
@@ -122,31 +140,58 @@ class PropagationP1411_12(Propagation):
         u = median_basic_loss - lfs
 
         # Generate the random variable A using a normal distribution with mean μ and standard deviation σ
-        a = self.random_number_gen.normal(u, self.los_sigma, distance_3D.shape)
+        a = self.random_number_gen.normal(u, los_sigma, distance_3D.shape)
 
         # Compute the excess loss using the specified formula
         return 10 * np.log10(10**(0.1 * a) + 1)
 
 
-    @dispatch(Parameters, float, StationManager, StationManager, np.ndarray, np.ndarray)
-    def get_loss(
-        self,
-        params: Parameters,
-        frequency: float,
-        station_a: StationManager,
-        station_b: StationManager,
-        station_a_gains=None,
-        station_b_gains=None,
-    ) -> np.array:
-        pass
-
-    def get_loss_nlos(
-        self, distance_2D: np.array, distance_3D: np.array,
-        frequency: np.array,
-        h_bs: np.array, h_ue: np.array, h_e: np.array,
-        shadowing_std=6,
-    ):
-        pass
-
 if __name__ == '__main__':
-    pass
+    
+    import matplotlib.pyplot as plt
+    from cycler import cycler
+
+    #transmission loss coefficients for below-rooftop propagation
+    los_alfa = np.array([2.12, 4.00, 5.06])
+    los_beta = np.array([29.2, 10.2, -4.68])
+    los_gamma = np.array([2.11, 2.36, 2.02])
+    los_sigma = np.array([5.06, 7.60, 9.33])
+
+
+    # Configuração de parâmetros
+    num_ue = 1
+    num_bs = 1000
+    distance_2D = np.repeat(np.linspace(1, num_bs, num=num_bs)[np.newaxis, :], num_ue, axis=0)
+    freq = 82000 * np.ones(distance_2D.shape)
+    h_bs = 6 * np.ones(num_bs)
+    h_ue = 1.5 * np.ones(num_ue)
+    distance_3D = np.sqrt(distance_2D**2 + (h_bs - h_ue[np.newaxis, :])**2)
+
+    # Gerador de números aleatórios
+    random_number_gen = np.random.RandomState()
+
+    p1411 = PropagationP1411_12(np.random.RandomState(101))
+    free_space_prop = PropagationFreeSpace(random_number_gen)
+
+    free_space_loss = free_space_prop.get_free_space_loss(freq, distance_3D)
+    median_basic_loss = p1411.calculate_median_basic_loss(distance_3D, freq, los_alfa, los_beta, los_gamma, los_sigma)
+    excess_loss = p1411.calculate_excess_loss(free_space_loss, median_basic_loss, distance_3D)
+
+    # Plotando os gráficos
+    fig = plt.figure(figsize=(8, 6), facecolor='w', edgecolor='k')
+    ax = fig.gca()
+    ax.set_prop_cycle(cycler('color', ['r', 'g', 'b']))
+
+    ax.semilogx(distance_2D[0, :], median_basic_loss[0, :], label="Median basic Loss")
+    ax.semilogx(distance_2D[0, :], excess_loss[0, :], label="Excess Loss")
+    ax.semilogx(distance_2D[0, :], free_space_loss[0, :], label="Free space Loss")
+
+    plt.title(" ")
+    plt.xlabel("Distance [m]")
+    plt.ylabel("Path Loss [dB]")
+    plt.xlim((0, distance_2D[0, -1]))
+    plt.legend(loc="upper left")
+    plt.tight_layout()
+    plt.grid()
+
+    plt.show()

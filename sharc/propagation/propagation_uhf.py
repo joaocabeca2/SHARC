@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on wed November  05 15:29:47 2024
+Created on Mon Jul  3 10:29:47 2017
 
-@author: https://github.com/joaocabeca2
+@author: LeticiaValle_Mac
 """
 import numpy as np
 from multipledispatch import dispatch
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".."))
+
 from sharc.parameters.parameters import Parameters
 from sharc.propagation.propagation import Propagation
 from sharc.station_manager import StationManager
@@ -16,111 +14,66 @@ from sharc.station_manager import StationManager
 
 class PropagationUHF(Propagation):
     """
-    Represents the propagation characteristics in the Ultra High Frequency (UHF) range.
-
-    In the UHF frequency range, basic transmission loss can be characterized by two slopes
-    and a single breakpoint, as defined by Recommendation ITU-R P.1411-12
+    Implements the Urban Micro path basic_transmission_loss model (Street Canyon) with LOS
+    probability according to 3GPP TR 38.900 v14.2.0.
+    TODO: calculate the effective environment height for the generic case
     """
-    
 
     def __init__(
         self,
-        random_number_gen: np.random.RandomState
+        random_number_gen: np.random.RandomState,
+        los_adjustment_factor: float,
     ):
         super().__init__(random_number_gen)
+        self.los_adjustment_factor = los_adjustment_factor
+        self.c = 3e8
 
-    @dispatch(Parameters, float, StationManager, StationManager, np.ndarray, np.ndarray)
-    def get_loss(
-        self,
-        params: Parameters,
-        frequency: float,
-        station_a: StationManager,
-        station_b: StationManager,
-        station_a_gains=None,
-        station_b_gains=None,
-    ) -> np.array:
-        """Wrapper function for the PropagationUHF get_loss method
-        Calculates the loss between station_a and station_b
-
-        Parameters
-        ----------
-        station_a : StationManager
-            StationManager container representing IMT UE station - Station_type.IMT_UE
-        station_b : StationManager
-            StationManager container representing IMT BS stattion
-        params : Parameters
-            Simulation parameters needed for the propagation class - Station_type.IMT_BS
-
-        Returns
-        -------
-        np.array
-            Return an array station_a.num_stations x station_b.num_stations with the path loss
-            between each station
-        """
-        wrap_around_enabled = False
-        if params.imt.topology.type == "MACROCELL":
-            wrap_around_enabled = params.imt.topology.macrocell.wrap_around \
-                                    and params.imt.topology.macrocell.num_clusters == 1
-        if params.imt.topology.type == "HOTSPOT":
-            wrap_around_enabled = params.imt.topology.hotspot.wrap_around \
-                                    and params.imt.topology.hotspot.num_clusters == 1
-
-        if wrap_around_enabled and (station_a.is_imt_station() and station_b.is_imt_station()):
-            distance_2d, distance_3d, _, _ = \
-                station_a.get_dist_angles_wrap_around(station_b)
-        else:
-            distance_2d = station_a.get_distance_to(station_b)
-            distance_3d = station_a.get_3d_distance_to(station_b)
-
-        loss = self.get_loss(
-            distance_3d,
-            distance_2d,
-            frequency * np.ones(distance_2d.shape),
-            station_b.height,
-            station_a.height,
-            params.imt.shadowing,
-        )
-
-        return loss
-    
-    @dispatch(np.ndarray, np.ndarray, np.ndarray, np.ndarray)
+        
+    @dispatch(np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, bool)
     def get_loss(
         self,
         distance_3D: np.array,
+        distance_2D: np.array,
         frequency: np.array,
         bs_height: np.array,
         ue_height: np.array,
+        shadowing_flag: bool,
+        basic_transmission_loss : np.array,
     ) -> np.array:
+        """
+        Calculates path basic_transmission_loss for LOS and NLOS cases with respective shadowing
+        (if shadowing is to be added)
 
-        c = 3e8 # speed of light
-        wavelenght =  c / frequency
+        Parameters
+        ----------
+            distance_3D (np.array) : 3D distances between base stations and user equipment
+            distance_2D (np.array) : 2D distances between base stations and user equipment
+            frequency (np.array) : center frequencies [MHz]
+            bs_height (np.array) : base station antenna heights
+            ue_height (np.array) : user equipment antenna heights
+            shadowing (bool) : if shadowing should be added or not
+
+        Returns
+        -------
+            array with path loss values with dimensions of distance_2D
+        """
+
+        wavelenght = self.c / frequency
         breakpoint_dist = (4*bs_height*ue_height) / wavelenght
         basic_transmission_loss = 20 * np.log10(wavelenght**2 / (8 * np.pi * bs_height * ue_height))
 
-       # A comparação deve ser feita element-wise
-        lower_bound_loss = np.where(
-            breakpoint_dist >= distance_3D,
-            basic_transmission_loss + (20 * np.log10(distance_3D / breakpoint_dist)),
-            basic_transmission_loss + (40 * np.log10(distance_3D / breakpoint_dist))
-        )
-
-        upper_bound_loss = np.where(
-            breakpoint_dist >= distance_3D,
-            basic_transmission_loss + 20 + (25 * np.log10(distance_3D / breakpoint_dist)),
-            basic_transmission_loss + 20 + (40 * np.log10(distance_3D / breakpoint_dist))
-        )
-
-        median_bound_loss = np.where(
-            breakpoint_dist >= distance_3D,
-            basic_transmission_loss + 6 + (20 * np.log10(distance_3D / breakpoint_dist)),
-            basic_transmission_loss + 6 + (40 * np.log10(distance_3D / breakpoint_dist))
-        )
-
+        if breakpoint_dist >= distance_3D:
+            lower_bound_loss = basic_transmission_loss + (20 * np.log10(distance_3D / breakpoint_dist))
+            upper_bound_loss = basic_transmission_loss + 20 + (25 * np.log10(distance_3D / breakpoint_dist))
+            median_bound_loss = basic_transmission_loss + 6 + (20 * np.log10(distance_3D / breakpoint_dist))
+        else:
+            lower_bound_loss = basic_transmission_loss + (40 * np.log10(distance_3D / breakpoint_dist))
+            upper_bound_loss = basic_transmission_loss + 20 + (40 * np.log10(distance_3D / breakpoint_dist))
+            median_bound_loss = basic_transmission_loss + 6 + (40 * np.log10(distance_3D / breakpoint_dist))
         
-        return np.array([lower_bound_loss, upper_bound_loss, median_bound_loss])
+        return (lower_bound_loss, median_bound_loss, upper_bound_loss)
 
 if __name__ == '__main__':
-
     import matplotlib.pyplot as plt
     from cycler import cycler
 
@@ -158,4 +111,3 @@ if __name__ == '__main__':
     plt.grid()
 
     plt.show()
-
