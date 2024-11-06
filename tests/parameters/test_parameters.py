@@ -46,6 +46,7 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(
             self.parameters.imt.ue.distribution_distance,
             "UNIFORM")
+        self.assertEqual(self.parameters.imt.ue.azimuth_range, (-70, 90))
         self.assertEqual(self.parameters.imt.ue.tx_power_control, True)
         self.assertEqual(self.parameters.imt.ue.p_o_pusch, -95.0)
         self.assertEqual(self.parameters.imt.ue.alpha, 1.0)

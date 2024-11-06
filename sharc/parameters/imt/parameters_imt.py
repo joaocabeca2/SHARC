@@ -58,6 +58,7 @@ class ParametersImt(ParametersBase):
         distribution_type: str = "ANGLE_AND_DISTANCE"
         distribution_distance: str = "RAYLEIGH"
         distribution_azimuth: str = "NORMAL"
+        azimuth_range: tuple = (-60, 60)
         tx_power_control: bool = True
         p_o_pusch: float = -95.0
         alpha: float = 1.0
