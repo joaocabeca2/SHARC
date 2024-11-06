@@ -450,3 +450,7 @@ class PostProcessor:
     @staticmethod
     def generate_statistics(result: Results) -> ResultsStatistics:
         return ResultsStatistics().load_from_results(result)
+
+    @staticmethod
+    def generate_sample_statistics(fieldname: str, sample: list[float]) -> ResultsStatistics:
+        return FieldStatistics().load_from_sample(fieldname, sample)
