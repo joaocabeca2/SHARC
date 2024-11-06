@@ -363,8 +363,10 @@ class StationFactory(object):
 
         imt_ue.spectral_mask.set_mask()
 
-        if param.topology.type == 'MACROCELL' or param.topology.type == 'HOTSPOT':
-            imt_ue.intersite_dist = param.intersite_distance
+        if param.topology.type == 'MACROCELL':
+            imt_ue.intersite_dist = param.topology.macrocell.intersite_distance
+        elif param.topology.type == 'HOTSPOT':
+            imt_ue.intersite_dist = param.topology.hotspot.intersite_distance
 
         return imt_ue
 
@@ -522,6 +524,11 @@ class StationFactory(object):
 
     @staticmethod
     def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState):
+        if parameters.imt.topology.type == 'MACROCELL':
+            intersite_dist = parameters.imt.topology.macrocell.intersite_distance
+        elif parameters.imt.topology.type == 'HOTSPOT':
+            intersite_dist = parameters.imt.topology.hotspot.intersite_distance
+
         if parameters.general.system == "METSAT_SS":
             return StationFactory.generate_metsat_ss(parameters.metsat_ss)
         elif parameters.general.system == "EESS_SS":
@@ -541,7 +548,7 @@ class StationFactory(object):
         elif parameters.general.system == "FS":
             return StationFactory.generate_fs_station(parameters.fs)
         elif parameters.general.system == "HAPS":
-            return StationFactory.generate_haps(parameters.haps, parameters.imt.intersite_distance, random_number_gen)
+            return StationFactory.generate_haps(parameters.haps, intersite_dist, random_number_gen)
         elif parameters.general.system == "RNS":
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         else:
