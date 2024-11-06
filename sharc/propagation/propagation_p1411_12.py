@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul  3 17:13:33 2018
+Created on wed November  05 15:29:47 2024
 
-@author: Calil
+@author: https://github.com/joaocabeca2
 """
 import os
 import sys
@@ -26,7 +26,7 @@ class PropagationP1411_12(Propagation):
 
     def __init__(self, random_number_gen: np.random.RandomState):
         super().__init__(random_number_gen)
-
+    
     def get_loss(
         self,
         params: Parameters,
@@ -81,8 +81,7 @@ class PropagationP1411_12(Propagation):
         # the interface expects station_a.num_stations x station_b.num_stations array
         return median_basic_loss'''
 
-    def calculate_median_basic_loss(
-        distance_3D: np.array,
+    def calculate_median_basic_loss(self, distance_3D: np.array,
         frequency: np.array,
         los_alfa: np.array,
         los_beta: np.array,
@@ -151,47 +150,57 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from cycler import cycler
 
-    #transmission loss coefficients for below-rooftop propagation
-    los_alfa = np.array([2.12, 4.00, 5.06])
-    los_beta = np.array([29.2, 10.2, -4.68])
-    los_gamma = np.array([2.11, 2.36, 2.02])
-    los_sigma = np.array([5.06, 7.60, 9.33])
-
-
     # Configuração de parâmetros
     num_ue = 1
     num_bs = 1000
-    distance_2D = np.repeat(np.linspace(1, num_bs, num=num_bs)[np.newaxis, :], num_ue, axis=0)
-    freq = 82000 * np.ones(distance_2D.shape)
     h_bs = 6 * np.ones(num_bs)
     h_ue = 1.5 * np.ones(num_ue)
-    distance_3D = np.sqrt(distance_2D**2 + (h_bs - h_ue[np.newaxis, :])**2)
 
-    # Gerador de números aleatórios
-    random_number_gen = np.random.RandomState()
+    # situations to be used for below-rooftop propagation in urban and suburban environments provided in ITU.R P1411-2 sec 4.1
+    scenarios = [
+    {"name": "Urban low-rise/Suburban (LoS)", "alfa": 2.12, "beta": 29.2, "gamma": 2.11, "sigma": 5.06, "distance_range": (5, 660), "frequency": (800, 82000)},
+    {"name": "Urban high-rise (NLoS)", "alfa": 4.00, "beta": 10.2, "gamma": 2.36, "sigma": 7.60, "distance_range": (30, 715), "frequency": (800, 82000)},
+    {"name": "Urban low-rise/Suburban (NLoS)", "alfa": 5.06, "beta": -4.68, "gamma": 2.02, "sigma": 9.33, "distance_range": (30, 250), "frequency": (1000, 73000)},
+    {"name": "Residential (NLoS)", "alfa": 3.01, "beta": 18.8, "gamma": 2.07, "sigma": 3.07, "distance_range": (30, 170), "frequency": (800, 73000)},
+]
+    for scenario in scenarios:
+        # Parâmetros específicos do cenário
+        los_alfa = scenario["alfa"] * np.ones(num_bs)
+        los_beta = scenario["beta"] * np.ones(num_bs)
+        los_gamma = scenario["gamma"] * np.ones(num_bs)
+        los_sigma = scenario["sigma"] * np.ones(num_bs)
+    
+        # Configuração da distância para o cenário
+        distance_2D = np.repeat(np.linspace(scenario["distance_range"][0], scenario["distance_range"][1], num=num_bs)[np.newaxis, :], num_ue, axis=0)
+        frequency = np.linspace(scenario["frequency"][0], scenario["frequency"][1], num=num_bs)   
+        distance_3D = np.sqrt(distance_2D**2 + (h_bs - h_ue[np.newaxis, :])**2)
 
-    p1411 = PropagationP1411_12(np.random.RandomState(101))
-    free_space_prop = PropagationFreeSpace(random_number_gen)
+        # Gerador de números aleatórios
+        random_number_gen = np.random.RandomState(101)
 
-    free_space_loss = free_space_prop.get_free_space_loss(freq, distance_3D)
-    median_basic_loss = p1411.calculate_median_basic_loss(distance_3D, freq, los_alfa, los_beta, los_gamma, los_sigma)
-    excess_loss = p1411.calculate_excess_loss(free_space_loss, median_basic_loss, distance_3D)
+        p1411 = PropagationP1411_12(random_number_gen)
+        free_space_prop = PropagationFreeSpace(random_number_gen)
 
-    # Plotando os gráficos
-    fig = plt.figure(figsize=(8, 6), facecolor='w', edgecolor='k')
-    ax = fig.gca()
-    ax.set_prop_cycle(cycler('color', ['r', 'g', 'b']))
+        free_space_loss = free_space_prop.get_free_space_loss(frequency, distance_3D)
+        median_basic_loss = p1411.calculate_median_basic_loss(distance_3D, frequency, los_alfa,
+                                                            los_beta, los_gamma, los_sigma, random_number_gen)
+        excess_loss = p1411.calculate_excess_loss(free_space_loss, median_basic_loss, distance_3D, los_sigma)
 
-    ax.semilogx(distance_2D[0, :], median_basic_loss[0, :], label="Median basic Loss")
-    ax.semilogx(distance_2D[0, :], excess_loss[0, :], label="Excess Loss")
-    ax.semilogx(distance_2D[0, :], free_space_loss[0, :], label="Free space Loss")
+        # Plotando os gráficos
+        fig = plt.figure(figsize=(8, 6), facecolor='w', edgecolor='k')
+        ax = fig.gca()
+        ax.set_prop_cycle(cycler('color', ['r', 'g', 'b']))
 
-    plt.title(" ")
-    plt.xlabel("Distance [m]")
-    plt.ylabel("Path Loss [dB]")
-    plt.xlim((0, distance_2D[0, -1]))
-    plt.legend(loc="upper left")
-    plt.tight_layout()
-    plt.grid()
+        ax.semilogx(distance_2D[0, :], median_basic_loss[0, :], label="Median basic Loss")
+        ax.semilogx(distance_2D[0, :], excess_loss[0, :], label="Excess Loss")
+        ax.semilogx(distance_2D[0, :], free_space_loss[0, :], label="Free space Loss")
 
-    plt.show()
+        plt.title(scenario["name"])
+        plt.xlabel("Distance [m]")
+        plt.ylabel("Path Loss [dB]")
+        plt.xlim((0, distance_2D[0, -1]))
+        plt.legend(loc="upper left")
+        plt.tight_layout()
+        plt.grid()
+
+        plt.show()

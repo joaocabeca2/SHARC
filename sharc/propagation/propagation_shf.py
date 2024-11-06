@@ -91,22 +91,16 @@ class PropagationSHF(Propagation):
         bs_height: np.array,
         ue_height: np.array,
         road_height : np.array,
-        heavy_traffic: bool,
     ) -> np.array:
 
         c = 3e8  # velocidade da luz
-        wavelength = c / frequency  # comprimento de onda
-        
-        # Cálculo do breakpoint_dist
-        if heavy_traffic:
-            breakpoint_dist = (4 * ((bs_height - road_height) * (ue_height - road_height))) / wavelength
-        else:
-            breakpoint_dist = 0
+        wavelenght = c / frequency  # comprimento de onda
         
         # Condições para alturas da estação base (BS) e da unidade do usuário (UE)
         if np.all(ue_height > road_height) and np.all(bs_height > road_height):
             # Perda básica de transmissão para ambos acima da altura da estrada
-            basic_transmission_loss = 20 * np.log10(wavelength**2 / (8 * np.pi * (bs_height - road_height) * (ue_height - road_height)))
+            breakpoint_dist = (4 * ((bs_height - road_height) * (ue_height - road_height))) / wavelenght
+            basic_transmission_loss = 20 * np.log10(wavelenght**2 / (8 * np.pi * (bs_height - road_height) * (ue_height - road_height)))
             
             # Limites de perda de transmissão
             lower_bound_loss = np.where(
@@ -125,14 +119,23 @@ class PropagationSHF(Propagation):
             median_bound_loss = np.full(lower_bound_loss.shape, np.nan)
 
         else:
-            # Perda básica de transmissão para quando um ou ambos estão abaixo da altura da estrada
-            basic_transmission_loss = 20 * np.log10(wavelength / (2 * np.pi * road_height))
+            #Rs in equations has been experimentally determined to be 20 m
+            rs = 20
+            '''# Perda básica de transmissão para quando um ou ambos estão abaixo da altura da estrada
+            basic_transmission_loss = 20 * np.log10(wavelenght / (2 * np.pi * road_height))
+            basic_transmission_loss = 20 * np.log10(wavelenght**2 / (8 * np.pi * bs_height * ue_height))
+            if distance_3D < rs:
+                lower_bound_loss = basic_transmission_loss + (20 * np.log10(distance_3D / rs))
+                upper_bound_loss = basic_transmission_loss + 20 + (25 * np.log10(distance_3D / rs))
+                median_bound_loss = basic_transmission_loss + 6 + (20 * np.log10(distance_3D / rs))
+
+            elif distance_3D >= rs:
             
-            # Limites de perda de transmissão para esta condição
-            lower_bound_loss = basic_transmission_loss + (30 * np.log10(distance_3D / road_height))
-            upper_bound_loss = basic_transmission_loss + 20 + (30 * np.log10(distance_3D / road_height))
-            median_bound_loss = basic_transmission_loss + 6 + (30 * np.log10(distance_3D / road_height))
-        
+                # Limites de perda de transmissão para esta condição
+                lower_bound_loss = basic_transmission_loss + (30 * np.log10(distance_3D / road_height))
+                upper_bound_loss = basic_transmission_loss + 20 + (30 * np.log10(distance_3D / road_height))
+                median_bound_loss = basic_transmission_loss + 6 + (30 * np.log10(distance_3D / road_height))
+        '''
         return np.array([lower_bound_loss, upper_bound_loss, median_bound_loss])
 
 if __name__ == '__main__':
@@ -140,41 +143,53 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from cycler import cycler
 
-    # Configuração de parâmetros
+    #Configuração de parâmetros
     num_ue = 1
     num_bs = 1000
     distance_2D = np.repeat(np.linspace(1, num_bs, num=num_bs)[np.newaxis, :], num_ue, axis=0)
-    freq = 27000 * np.ones(distance_2D.shape)
-    h_bs = 6 * np.ones(num_bs)
-    h_ue = 1.5 * np.ones(num_ue)  # Altura do usuário
-    h_road = 1 * np.ones(num_bs)  # Altura efetiva da estrada
 
-    # Cálculo da distância 3D
-    distance_3D = np.sqrt(distance_2D**2 + (h_bs - h_ue[np.newaxis, :])**2)
+    # situations to be used for below-rooftop propagation in urban and suburban environments provided in ITU.R P1411-2 sec 4.1
+    scenarios = [
+        {'name': 'heavy traffic', 'bs_height': 4, 'ue_height': 2.7, 'road_height': 1.3, 'frequency': 3350},
+        {'name': 'light traffic', 'bs_height': 4, 'ue_height': 1.6, 'road_height': 0.74, 'frequency': 15750},    
+    ]
 
-    # Criação do objeto PropagationSHF e cálculo da perda
-    shf = PropagationSHF(np.random.RandomState(101))
-    loss = shf.get_loss(distance_3D, freq, h_bs, h_ue, h_road, True)  # Removendo h_road se não for necessário
+    for scenario in scenarios:
+        h_bs = scenario['bs_height'] * np.ones(num_bs)
+        h_ue = scenario['ue_height'] * np.ones(num_bs)
+        h_road = scenario['road_height'] * np.ones(num_bs)
+        frequency = scenario['frequency'] * np.ones(num_bs)
 
-    # Separando os valores de perda
-    lower_bound_loss, upper_bound_loss, median_bound_loss = loss
+        # Cálculo da distância 3D
+        distance_3D = np.sqrt(distance_2D**2 + (h_bs - h_ue[np.newaxis, :])**2)
+        # Criação do objeto PropagationSHF e cálculo da perda
+        shf = PropagationSHF(np.random.RandomState(101))
+        if scenario['name'] == 'heavy traffic':
+            heavy_traffic = True
+        else:
+            heavy_traffic = False
 
-    # Plotando os gráficos
-    fig = plt.figure(figsize=(8, 6), facecolor='w', edgecolor='k')
-    ax = fig.gca()
-    ax.set_prop_cycle(cycler('color', ['r', 'g', 'b']))
+        loss = shf.get_loss(distance_3D, frequency, h_bs, h_ue, h_road, heavy_traffic)  # Removendo h_road se não for necessário
 
-    ax.semilogx(distance_2D[0, :], lower_bound_loss[0, :], label="Lower Bound Loss")
-    ax.semilogx(distance_2D[0, :], median_bound_loss[0, :], label="Median Bound Loss")
-    ax.semilogx(distance_2D[0, :], upper_bound_loss[0, :], label="Upper Bound Loss")
+        # Separando os valores de perda
+        lower_bound_loss, upper_bound_loss, median_bound_loss = loss
 
-    plt.title("SHF - Super High Frequency Path Loss")
-    plt.xlabel("Distance [m]")
-    plt.ylabel("Path Loss [dB]")
-    plt.xlim((0, distance_2D[0, -1]))
-    plt.legend(loc="upper left")
-    plt.tight_layout()
-    plt.grid()
+        # Plotando os gráficos
+        fig = plt.figure(figsize=(8, 6), facecolor='w', edgecolor='k')
+        ax = fig.gca()
+        ax.set_prop_cycle(cycler('color', ['r', 'g', 'b']))
 
-    plt.show()
+        ax.semilogx(distance_2D[0, :], lower_bound_loss[0, :], label="Lower Bound Loss")
+        ax.semilogx(distance_2D[0, :], median_bound_loss[0, :], label="Median Bound Loss")
+        ax.semilogx(distance_2D[0, :], upper_bound_loss[0, :], label="Upper Bound Loss")
+
+        plt.title(scenario['name'])
+        plt.xlabel("Distance [m]")
+        plt.ylabel("Path Loss [dB]")
+        plt.xlim((0, distance_2D[0, -1]))
+        plt.legend(loc="upper left")
+        plt.tight_layout()
+        plt.grid()
+
+        plt.show()
 
