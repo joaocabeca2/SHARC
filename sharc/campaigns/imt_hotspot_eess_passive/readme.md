@@ -9,7 +9,7 @@ We did not take the time to process the Uplink analysis to try and reach the sam
 
 The document that should be referenced is
 "HIBS and IMT-2020 Coexistence with other Space/Terrestrial
-Communications and Radar Systems", a Doctoral Thesis by Luciano Camilo Alexandre
+Communications and Radar Systems", a Doctoral Thesis by Luciano Camilo Alexandre publicated on Dec 2022
 
 The document can be downloaded found [here](https://www2.inatel.br/biblioteca/teses-de-doutorado)
 and
