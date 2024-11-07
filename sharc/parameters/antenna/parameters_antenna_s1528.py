@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 
 from sharc.parameters.parameters_base import ParametersBase
-from sharc.parameters.parameters_p619 import ParametersP619
+
 
 @dataclass
 class ParametersAntennaS1528(ParametersBase):
@@ -18,7 +18,7 @@ class ParametersAntennaS1528(ParametersBase):
     antenna_gain: float = 46.6
     # Antenna pattern from ITU-R S.1528
     # Possible values: "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO", "ITU-R-S.1528-Taylor"
-    # antenna_pattern: str = "ITU-R-S.1528-LEO"
+    antenna_pattern: str = "ITU-R-S.1528-LEO"
     # The required near-in-side-lobe level (dB) relative to peak gain
     # according to ITU-R S.672-4
     antenna_l_s: float = -20.0
@@ -26,7 +26,7 @@ class ParametersAntennaS1528(ParametersBase):
     antenna_3_dB: float = 0.65
 
     # The following parameters are used for S.1528-Tayloer antenna pattern
-    # SLR is the side-lobe ratio of the pattern (dB), the difference in gain between the maximum 
+    # SLR is the side-lobe ratio of the pattern (dB), the difference in gain between the maximum
     # gain and the gain at the peak of the first side lobe.
     slr: float = 20.0
     # Number of secondary lobes considered in the diagram (coincide with the roots of the Bessel function)
@@ -78,5 +78,19 @@ class ParametersAntennaS1528(ParametersBase):
         self.antenna_pattern = param.antenna_pattern
         self.antenna_l_s = param.antenna_l_s
         self.antenna_3_dB = param.antenna_3_dB_bw
+        self.slr = param.slr
+        self.n_side_lobes = param.n_side_lobes
+        self.roll_off = param.roll_off
+        self.l_r = param.l_r
+        self.l_t = param.l_t
         return self
 
+    def set_external_parameters(self, frequency: float, bandwidth: float, antenna_gain: float, antenna_l_s: float):
+        """
+            This method is used to "propagate" parameters from external context
+            to the values required by antenna S1528.
+        """
+        self.frequency = frequency
+        self.bandwidth = bandwidth
+        self.antenna_gain = antenna_gain
+        self.antenna_l_s = antenna_l_s

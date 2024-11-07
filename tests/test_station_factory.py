@@ -10,8 +10,6 @@ import numpy as np
 import numpy.testing as npt
 
 from sharc.parameters.imt.parameters_imt import ParametersImt
-# from sharc.parameters.parameters_ntn import ParametersNTN
-# from sharc.parameters.parameters_antenna_imt import ParametersAntennaImt
 from sharc.station_factory import StationFactory
 from sharc.topology.topology_ntn import TopologyNTN
 

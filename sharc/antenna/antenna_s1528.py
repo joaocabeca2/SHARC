@@ -6,7 +6,7 @@ Created on Tue Aug 15 14:49:01 2017
 """
 import sys
 from sharc.antenna.antenna import Antenna
-from sharc.parameters.parameters_antenna_s1528 import ParametersAntennaS1528
+from sharc.parameters.antenna.parameters_antenna_s1528 import ParametersAntennaS1528
 from sharc.parameters.constants import SPEED_OF_LIGHT
 import math
 import numpy as np
