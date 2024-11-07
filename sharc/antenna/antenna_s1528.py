@@ -6,7 +6,7 @@ Created on Tue Aug 15 14:49:01 2017
 """
 import sys
 from sharc.antenna.antenna import Antenna
-from sharc.parameters.parameters_fss_ss import ParametersFssSs
+from sharc.parameters.parameters_antenna_s1528 import ParametersAntennaS1528
 from sharc.parameters.constants import SPEED_OF_LIGHT
 import math
 import numpy as np
@@ -21,7 +21,8 @@ class AntennaS1528Taylor(Antenna):
     adapt the theoretical pattern to the real one. It takes into account the side-lobes effect of an antenna
     diagram.
     """
-    def __init__(self, param: ParametersFssSs):
+
+    def __init__(self, param: ParametersAntennaS1528):
         # Gmax
         self.peak_gain = param.antenna_gain
         self.frequency_mhz = param.frequency
@@ -82,7 +83,7 @@ class AntennaS1528Leo(Antenna):
     fixed-satellite service below 30 GHz.
     """
 
-    def __init__(self, param: ParametersFssSs):
+    def __init__(self, param: ParametersAntennaS1528):
         super().__init__()
         self.peak_gain = param.antenna_gain
         self.psi_b = param.antenna_3_dB / 2
@@ -134,7 +135,7 @@ class AntennaS1528(Antenna):
     This implementation refers to the pattern described in S.1528-0 Section 1.2
     """
 
-    def __init__(self, param: ParametersFssSs):
+    def __init__(self, param: ParametersAntennaS1528):
         super().__init__()
         self.peak_gain = param.antenna_gain
 
@@ -213,8 +214,7 @@ if __name__ == '__main__':
 
     ## Plot gains for ITU-R-S.1528-SECTION1.2
     # initialize antenna parameters
-    param = ParametersFssSs()
-
+    param = ParametersAntennaS1528()
     param.antenna_gain = 30
     param.antenna_pattern = "ITU-R-S.1528-SECTION1.2"
     param.antenna_3_dB = 4.4127
@@ -239,7 +239,7 @@ if __name__ == '__main__':
 
     ## Plot gains for ITU-R-S.1528-LEO
     # initialize antenna parameters
-    param = ParametersFssSs()
+    param = ParametersAntennaS1528()
     param.antenna_gain = 30
     param.antenna_pattern = "ITU-R-S.1528-LEO"
     param.antenna_3_dB = 1.6
@@ -270,7 +270,7 @@ if __name__ == '__main__':
 
     ## Plot gains for ITU-R-S.1528-LEO
     # initialize antenna parameters
-    param = ParametersFssSs()
+    param = ParametersAntennaS1528()
     param.antenna_gain = 35
     param.antenna_pattern = "ITU-R-S.1528-LEO"
     param.antenna_3_dB = 1.6
@@ -294,7 +294,7 @@ if __name__ == '__main__':
     plt.grid()
 
     # Section 1.4 (Taylor)
-    params = ParametersFssSs(
+    params = ParametersAntennaS1528(
         antenna_gain=0,
         frequency=6000,
         bandwidth=500,
