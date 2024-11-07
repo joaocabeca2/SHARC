@@ -15,10 +15,10 @@ from scipy.special import jn, jn_zeros
 
 class AntennaS1528Taylor(Antenna):
     """
-    Implements Recommendation ITU-R S.1528-0 Section 1.4: Satellite antenna reference pattern given by an analytical 
+    Implements Recommendation ITU-R S.1528-0 Section 1.4: Satellite antenna reference pattern given by an analytical
     function which models the side lobes of the non-GSO satellite operating in the fixed-satellite service below 30 GHz.
-    It is proposed to use a circular Taylor illumination function which gives the maximum flexibility to 
-    adapt the theoretical pattern to the real one. It takes into account the side-lobes effect of an antenna 
+    It is proposed to use a circular Taylor illumination function which gives the maximum flexibility to
+    adapt the theoretical pattern to the real one. It takes into account the side-lobes effect of an antenna
     diagram.
     """
     def __init__(self, param: ParametersFssSs):
@@ -27,7 +27,7 @@ class AntennaS1528Taylor(Antenna):
         self.frequency_mhz = param.frequency
         self.bandwidth_mhz = param.bandwidth
         # Wavelength of the lowest frequency of the band of interest (in meters).
-        self.lamb = (SPEED_OF_LIGHT/1e6) / (self.frequency_mhz - self.bandwidth_mhz / 2)
+        self.lamb = (SPEED_OF_LIGHT / 1e6) / (self.frequency_mhz - self.bandwidth_mhz / 2)
         # SLR is the side-lobe ratio of the pattern (dB), the difference in gain between the maximum
         # gain and the gain at the peak of the first side lobe.
         self.slr = param.slr
@@ -54,7 +54,7 @@ class AntennaS1528Taylor(Antenna):
         A = (1 / np.pi) * np.arccosh(10 ** (self.slr / 20))
         j1_roots = jn_zeros(1, self.n_side_lobes) / np.pi
         sigma = j1_roots[-1] / np.sqrt(A ** 2 + (self.n_side_lobes - 1 / 2) ** 2)
-        u = (np.pi / self.lamb) * np.sqrt((self.l_r * np.sin(theta) * np.cos(phi)) ** 2 + 
+        u = (np.pi / self.lamb) * np.sqrt((self.l_r * np.sin(theta) * np.cos(phi)) ** 2 +
                                           (self.l_t * np.sin(theta) * np.sin(phi)) ** 2)
 
         mu = jn_zeros(1, self.n_side_lobes - 1) / np.pi
