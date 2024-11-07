@@ -58,24 +58,26 @@ class PropagationABG(Propagation):
             Return an array station_a.num_stations x station_b.num_stations with the path loss
             between each station
         """
-        wrap_around_enabled = \
-            params.imt.wrap_around and \
-            (params.imt.topology == 'MACROCELL' or params.imt.topology == 'HOTSPOT') and \
-            params.imt.num_clusters == 1
+        wrap_around_enabled = False
+        if params.imt.topology.type == "MACROCELL":
+            wrap_around_enabled = params.imt.topology.macrocell.wrap_around \
+                                    and params.imt.topology.macrocell.num_clusters == 1
+        if params.imt.topology.type == "HOTSPOT":
+            wrap_around_enabled = params.imt.topology.hotspot.wrap_around \
+                                    and params.imt.topology.hotspot.num_clusters == 1
 
         if wrap_around_enabled:
-            _, bs_to_ue_dist_3d, _, _ = \
-                station_b.get_dist_angles_wrap_around(station_a)
+            _, distances_3d, _, _ = \
+                station_a.get_dist_angles_wrap_around(station_b)
         else:
-            bs_to_ue_dist_3d = station_b.get_3d_distance_to(station_a)
+            distances_3d = station_a.get_3d_distance_to(station_b)
 
-        indoor_stations = np.tile(
-            station_a.indoor, (station_b.num_stations, 1),
-        )
+        indoor_stations = station_a.indoor
+
         loss = \
             self.get_loss(
-                bs_to_ue_dist_3d,
-                frequency * np.ones(bs_to_ue_dist_3d.shape),
+                distances_3d,
+                frequency * np.ones(distances_3d.shape),
                 indoor_stations,
                 params.imt.shadowing,
             )
@@ -110,7 +112,7 @@ class PropagationABG(Propagation):
         else:
             shadowing = 0
 
-        building_loss = self.building_loss * indoor_stations
+        building_loss = self.building_loss * np.tile(indoor_stations, (distance.shape[1], 1)).transpose()
 
         loss = 10 * self.alpha * np.log10(distance) + self.beta + 10 * self.gamma * np.log10(frequency * 1e-3) + \
             shadowing + building_loss

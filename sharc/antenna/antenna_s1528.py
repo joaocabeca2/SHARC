@@ -95,7 +95,7 @@ class AntennaS1528Leo(Antenna):
         # far-out side-lobe level [dBi]
         self.l_f = 5
         self.y = 1.5 * self.psi_b
-        self.z = self.y * np.power(10, 0.04*(self.peak_gain + self.l_s - self.l_f))
+        self.z = self.y * np.power(10, 0.04 * (self.peak_gain + self.l_s - self.l_f))
 
     def calculate_gain(self, *args, **kwargs) -> np.array:
         """
@@ -118,7 +118,7 @@ class AntennaS1528Leo(Antenna):
 
         idx_1 = np.where((self.y < psi) & (psi <= self.z))[0]
         gain[idx_1] = self.peak_gain + self.l_s - \
-            25 * np.log10(psi[idx_1]/self.y)
+            25 * np.log10(psi[idx_1] / self.y)
 
         idx_3 = np.where((self.z < psi) & (psi <= 180))[0]
         gain[idx_3] = self.l_f

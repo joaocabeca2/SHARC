@@ -2,11 +2,21 @@ import yaml
 from dataclasses import dataclass
 
 
+# Register a tuple constructor with PyYAML
+def tuple_constructor(loader, node):
+    """Load the sequence of values from the YAML node and returns a tuple constructed from the sequence."""
+    values = loader.construct_sequence(node)
+    return tuple(values)
+
+
+yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple', tuple_constructor)
+
+
 @dataclass
 class ParametersBase:
     """Base class for parameter dataclassess
     """
-    section_name: str = "DEFAULT"
+    section_name: str = "default"
     is_space_to_earth: bool = False  # whether the system is a space station or not
 
     # whether to enable recursive parameters setting on .yaml file
@@ -83,7 +93,7 @@ class ParametersBase:
         with open(config_file, 'r') as file:
             config = yaml.safe_load(file)
 
-        if self.section_name not in config.keys():
+        if self.section_name.lower() not in config.keys():
             if not quiet:
                 print(f"ParameterBase: section {self.section_name} not in parameter file.\
                     Only default parameters where loaded.")
