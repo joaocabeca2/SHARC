@@ -612,7 +612,7 @@ class StationFactory(object):
         elif param.antenna_pattern == "ITU-R S.672":
             fss_space_station.antenna = np.array([AntennaS672(param)])
         elif param.antenna_pattern == "ITU-R S.1528":
-            fss_space_station.antenna = np.array([AntennaS1528(param)])
+            fss_space_station.antenna = np.array([AntennaS1528(param.antenna_s1528)])
         elif param.antenna_pattern == "FSS_SS":
             fss_space_station.antenna = np.array([AntennaFssSs(param)])
         else:
