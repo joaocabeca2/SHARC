@@ -4,9 +4,7 @@ Created on Wed Aug  9 14:16:29 2017
 
 @author: edgar
 """
-import sys, getopt
-import os
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".."))
+
 from sharc.antenna.antenna import Antenna
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
 

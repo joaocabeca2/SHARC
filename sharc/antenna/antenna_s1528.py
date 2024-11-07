@@ -5,11 +5,9 @@ Created on Tue Aug 15 14:49:01 2017
 @author: edgar
 """
 import sys
-import os
-from numpy.core.multiarray import array as array
 from sharc.antenna.antenna import Antenna
 from sharc.parameters.parameters_fss_ss import ParametersFssSs
-from sharc.parameters.constants import BOLTZMANN_CONSTANT, EARTH_RADIUS, SPEED_OF_LIGHT
+from sharc.parameters.constants import SPEED_OF_LIGHT
 import math
 import numpy as np
 from scipy.special import jn, jn_zeros
@@ -128,7 +126,6 @@ class AntennaS1528Leo(Antenna):
         return gain
 
 
-
 class AntennaS1528(Antenna):
     """
     Implements Recommendation ITU-R S.1528-0: Satellite antenna radiation
@@ -179,7 +176,6 @@ class AntennaS1528(Antenna):
 
         self.x = self.peak_gain + self.l_s + \
             25 * math.log10(self.b * self.psi_b)
-        
         self.y = self.b * self.psi_b * \
             math.pow(10, 0.04 * (self.peak_gain + self.l_s - self.l_f))
 
@@ -198,7 +194,6 @@ class AntennaS1528(Antenna):
 
         idx_2 = np.where((0.5 * self.b * self.psi_b < psi) &
                          (psi <= self.b * self.psi_b))[0]
-        
         gain[idx_2] = self.peak_gain + self.l_s
 
         idx_3 = np.where((self.b * self.psi_b < psi) & (psi <= self.y))[0]
@@ -269,7 +264,7 @@ if __name__ == '__main__':
     plt.xticks(np.arange(np.floor(np.max(psi_norm))))
     plt.title("ITU-R S.1528-0 antenna radiation pattern")
     plt.xlabel(r"Relative off-axis angle, $\psi/\psi_{3dB}$")
-    plt.ylabel("Gain relative to $G_{max}$ [dB]")
+    plt.ylabel(r"Gain relative to $G_{max}$ [dB]")
     plt.legend(loc="upper right")
     plt.grid()
 
@@ -293,26 +288,26 @@ if __name__ == '__main__':
     plt.xlim((0, np.max(psi_norm)))
     plt.xticks(np.arange(np.floor(np.max(psi_norm))))
     plt.title("ITU-R S.1528-0 LEO antenna radiation pattern")
-    plt.xlabel("Relative off-axis angle, $\psi/\psi_{3dB}$")
-    plt.ylabel("Gain relative to $G_{max}$ [dB]")
+    plt.xlabel(r"Relative off-axis angle, $\psi/\psi_{3dB}$")
+    plt.ylabel(r"Gain relative to $G_{max}$ [dB]")
     plt.legend(loc="upper right")
     plt.grid()
 
-
     # Section 1.4 (Taylor)
     params = ParametersFssSs(
-    antenna_gain=0,
-    frequency=6000,
-    bandwidth=500,
-    slr=20,
-    n_side_lobes=4,
-    l_r=0.5,
-    l_t=0.5,
-    roll_off=3)
+        antenna_gain=0,
+        frequency=6000,
+        bandwidth=500,
+        slr=20,
+        n_side_lobes=4,
+        l_r=0.5,
+        l_t=0.5,
+        roll_off=3
+    )
 
     # Create an instance of AntennaS1528Taylor
     antenna = AntennaS1528Taylor(params)
-    print(antenna.lamb)
+    print(f"Taylor antenna.lamb = {antenna.lamb}")
 
     # Define phi angles from 0 to 60 degrees for plotting
     theta_angles = np.linspace(0, 60, 600)

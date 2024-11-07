@@ -62,14 +62,13 @@ class Parameters(object):
     def read_params(self):
         """Read the parameters from the config file
         """
-        self.file_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'input/parameters.yaml')
         if not os.path.isfile(self.file_name):
             err_msg = f"PARAMETER ERROR [{self.__class__.__name__}]: \
                 Could not find the configuration file {self.file_name}"
             sys.stderr.write(err_msg)
             sys.exit(1)
 
-        with open(self.file_name, 'r') as yaml_file:
+        with open(self.file_name, 'r'):
             # yaml_config = yaml.safe_load(yaml_file)
 
             #######################################################################
@@ -183,12 +182,14 @@ class Parameters(object):
 
         self.single_earth_station.load_parameters_from_file(self.file_name)
 
+
 if __name__ == "__main__":
     from pprint import pprint
     parameters = Parameters()
-    param_sections = [a for a in dir(parameters) if not a.startswith('__') and not
-                      callable(getattr(parameters, a))]
-    
+    param_sections = [
+        a for a in dir(parameters) if not a.startswith('__') and not
+        callable(getattr(parameters, a))
+    ]
     print("\n#### Dumping default parameters:")
     for p in param_sections:
         print("\n")

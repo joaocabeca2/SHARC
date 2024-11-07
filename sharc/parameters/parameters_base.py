@@ -1,6 +1,7 @@
 import yaml
 from dataclasses import dataclass
 
+
 @dataclass
 class ParametersBase:
     """Base class for parameter dataclassess
