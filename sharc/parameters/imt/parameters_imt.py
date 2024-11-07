@@ -129,10 +129,10 @@ class ParametersImt(ParametersBase):
                 f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
             )
 
-        if self.channel_model not in ["FSPL", "CI", "UMA", "UMI", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619"]:
+        if self.channel_model not in ["FSPL", "CI", "UMa", "UMi", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619"]:
             raise ValueError(f"ParamtersImt: \
                              Invalid value for parameter channel_model - {self.channel_model}. \
-                             Possible values are \"FSPL\",\"CI\", \"UMA\", \"UMI\", \"TVRO-URBAN\", \"TVRO-SUBURBAN\", \
+                             Possible values are \"FSPL\",\"CI\", \"UMa\", \"UMi\", \"TVRO-URBAN\", \"TVRO-SUBURBAN\", \
                              \"ABG\", \"P619\".")
 
         if self.topology.type == "NTN" and self.channel_model not in ["FSPL", "P619"]:
