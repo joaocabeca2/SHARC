@@ -22,6 +22,7 @@ from sharc.propagation.propagation_clear_air_452 import PropagationClearAir
 from sharc.propagation.propagation_tvro import PropagationTvro
 from sharc.propagation.propagation_indoor import PropagationIndoor
 from sharc.propagation.propagation_hdfss import PropagationHDFSS
+from sharc.propagation.propagation_p1411 import PropagationP1411
 
 
 class PropagationFactory(object):
@@ -108,6 +109,8 @@ class PropagationFactory(object):
                 param.imt.topology.indoor,
                 param.imt.ue.k * param.imt.ue.k_m,
             )
+        elif channel_model == "P1411":
+            return PropagationP1411(random_number_gen, "URBAN")
         else:
             sys.stderr.write("ERROR\nInvalid channel_model: " + channel_model)
             sys.exit(1)

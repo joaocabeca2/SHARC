@@ -4,6 +4,10 @@ Created on Mon Jul  3 10:29:47 2017
 
 @author: LeticiaValle_Mac
 """
+
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".."))
 import numpy as np
 from multipledispatch import dispatch
 
