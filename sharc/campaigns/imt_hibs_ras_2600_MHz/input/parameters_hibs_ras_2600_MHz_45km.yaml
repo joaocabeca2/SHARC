@@ -8,7 +8,7 @@ general:
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS,
-    system: RAS
+    system: FSS_SS
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel  : FALSE
@@ -29,7 +29,7 @@ imt:
     # Network topology. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
     # "INDOOR"
     topology:
-        type: NTN
+        type: MACROCELL
         ntn:
             ###########################################################################
             # Number of clusters in NTN topology
@@ -47,7 +47,7 @@ imt:
     interfered_with  : FALSE
     ###########################################################################
     # IMT center frequency [MHz]
-    frequency  : 2680
+    frequency  : 7000
     ###########################################################################
     # IMT bandwidth [MHz]
     bandwidth  : 20
@@ -283,7 +283,7 @@ imt:
     #                                    "TVRO-SUBURBAN"
     #                                    "ABG" (Alpha-Beta-Gamma)
     #                                    "P619"
-    channel_model  : P619
+    channel_model  : P1411
     param_p619:
         ###########################################################################
         # Parameters for the P.619 propagation model
@@ -310,7 +310,7 @@ imt:
     # Possible values: SINGLE_ELEMENT, BEAMFORMING
     adjacent_antenna_model  : SINGLE_ELEMENT
 #### System Parameters
-ras:
+fss_ss:
     ###########################################################################
     # frequency [MHz]
     frequency: 2695
@@ -352,7 +352,7 @@ ras:
     antenna:
         pattern: OMNI
         gain: 0
-    channel_model: P619
+    channel_model: P1411
 
     param_p619:
         space_station_alt_m: 20000.0

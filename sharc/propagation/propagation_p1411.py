@@ -93,6 +93,7 @@ class PropagationP1411(Propagation):
         median_basic_loss = self.calculate_median_basic_loss(
             distances_3d,
             frequency * np.ones(distances_2d.shape),
+            self.random_number_gen
         )
 
         self.alfa = self.alfa * np.ones(distances_2d.shape)

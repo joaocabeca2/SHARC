@@ -30,10 +30,10 @@ imt:
     interfered_with: FALSE
     ###########################################################################
     # IMT center frequency [MHz]
-    frequency: 24360
+    frequency: 7000
     ###########################################################################
     # IMT bandwidth [MHz]
-    bandwidth: 200.5
+    bandwidth: 20
     ###########################################################################
     # IMT resource block bandwidth [MHz]
     rb_bandwidth: 0.181
@@ -57,7 +57,7 @@ imt:
         ###########################################################################
         # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
         # "INDOOR"
-        type: INDOOR
+        type: MACROCELL
         ###########################################################################
         # Macrocell Topology parameters. Relevant when imt.topology.type == "MACROCELL"
         macrocell:
@@ -417,7 +417,8 @@ imt:
     #                                    "TVRO-SUBURBAN"
     #                                    "ABG" (Alpha-Beta-Gamma)
     #                                    "P619"
-    channel_model: UMa
+    #                                    "P1411"
+    channel_model: P1411
     season: SUMMER
     ###########################################################################
     # Adjustment factor for LoS probability in UMi path loss model.

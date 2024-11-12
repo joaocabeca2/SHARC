@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """Parameters definitions for IMT systems
 """
-from dataclasses import dataclass, field
 import typing
+from dataclasses import dataclass, field
 
-from sharc.parameters.parameters_base import ParametersBase
-from sharc.parameters.parameters_p619 import ParametersP619
 from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
 from sharc.parameters.imt.parameters_imt_topology import ParametersImtTopology
+from sharc.parameters.parameters_base import ParametersBase
+from sharc.parameters.parameters_p619 import ParametersP619
 
 
 @dataclass
@@ -129,11 +129,11 @@ class ParametersImt(ParametersBase):
                 f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
             )
 
-        if self.channel_model not in ["FSPL", "CI", "UMa", "UMi", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619"]:
+        if self.channel_model not in ["FSPL", "CI", "UMa", "UMi", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619", "P1411"]:
             raise ValueError(f"ParamtersImt: \
                              Invalid value for parameter channel_model - {self.channel_model}. \
                              Possible values are \"FSPL\",\"CI\", \"UMa\", \"UMi\", \"TVRO-URBAN\", \"TVRO-SUBURBAN\", \
-                             \"ABG\", \"P619\".")
+                             \"ABG\", \"P619\", \"P1411\".")
 
         if self.topology.type == "NTN" and self.channel_model not in ["FSPL", "P619"]:
             raise ValueError(

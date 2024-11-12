@@ -6,22 +6,25 @@ Created on Thu Jul  6 16:03:24 2017
 """
 
 import sys
+
 import numpy.random as rnd
-from sharc.parameters.parameters_base import ParametersBase
+
 from sharc.parameters.imt.parameters_imt import ParametersImt
 from sharc.parameters.parameters import Parameters
+from sharc.parameters.parameters_base import ParametersBase
 from sharc.propagation.propagation import Propagation
-from sharc.propagation.propagation_free_space import PropagationFreeSpace
-from sharc.propagation.propagation_p619 import PropagationP619
-from sharc.propagation.propagation_sat_simple import PropagationSatSimple
-from sharc.propagation.propagation_ter_simple import PropagationTerSimple
-from sharc.propagation.propagation_uma import PropagationUMa
-from sharc.propagation.propagation_umi import PropagationUMi
 from sharc.propagation.propagation_abg import PropagationABG
 from sharc.propagation.propagation_clear_air_452 import PropagationClearAir
-from sharc.propagation.propagation_tvro import PropagationTvro
-from sharc.propagation.propagation_indoor import PropagationIndoor
+from sharc.propagation.propagation_free_space import PropagationFreeSpace
 from sharc.propagation.propagation_hdfss import PropagationHDFSS
+from sharc.propagation.propagation_indoor import PropagationIndoor
+from sharc.propagation.propagation_p619 import PropagationP619
+from sharc.propagation.propagation_p1411 import PropagationP1411
+from sharc.propagation.propagation_sat_simple import PropagationSatSimple
+from sharc.propagation.propagation_ter_simple import PropagationTerSimple
+from sharc.propagation.propagation_tvro import PropagationTvro
+from sharc.propagation.propagation_uma import PropagationUMa
+from sharc.propagation.propagation_umi import PropagationUMi
 
 
 class PropagationFactory(object):
@@ -108,6 +111,8 @@ class PropagationFactory(object):
                 param.imt.topology.indoor,
                 param.imt.ue.k * param.imt.ue.k_m,
             )
+        elif channel_model == "P1411":
+            return PropagationP1411(random_number_gen, "URBAN")
         else:
             sys.stderr.write("ERROR\nInvalid channel_model: " + channel_model)
             sys.exit(1)

@@ -4,15 +4,16 @@ Created on Fri Aug 11 13:17:14 2017
 
 @author: edgar
 """
+import os
+import sys
 
-from sharc.support.logging import Logging
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+import getopt
+
 from sharc.controller import Controller
 from sharc.gui.view_cli import ViewCli
 from sharc.model import Model
-import sys
-import getopt
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from sharc.support.logging import Logging
 
 
 def main(argv):
