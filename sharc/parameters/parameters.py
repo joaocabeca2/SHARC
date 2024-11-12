@@ -49,7 +49,7 @@ class Parameters(object):
         file_name : str
             configuration file path
         """
-        self.file_name = file_name
+        self.file_name = r'C:\Users\X07339943188\Documents\python\SHARC\sharc\input\parameters.yaml'
 
     def read_params(self):
         """Read the parameters from the config file
@@ -98,7 +98,7 @@ class Parameters(object):
         #######################################################################
         # RAS station
         #######################################################################
-        self.ras.load_parameters_from_file(self.file_name)
+        #self.ras.load_parameters_from_file(self.file_name)
 
         #######################################################################
         # EESS passive

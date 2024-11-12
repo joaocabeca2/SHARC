@@ -2,7 +2,7 @@
 """
 Created on wed November  05 15:29:47 2024
 
-@author: https://github.com/joaocabeca2
+@author: joaocabeca2
 """
 import os
 import sys
@@ -36,12 +36,12 @@ class PropagationP1411(Propagation):
             self.beta = 10.2
             self.gamma = 2.36
             self.sigma = 7.60
-        elif self.environment.upper == 'SUBURBAN':
+        elif self.environment.upper() == 'SUBURBAN':
             self.alfa = 5.06
             self.beta = -4.68
             self.gamma = 2.02
             self.sigma = 9.33
-        elif self.environment == 'RESIDENTIAL':
+        elif self.environment.upper() == 'RESIDENTIAL':
             self.alfa = 3.01
             self.beta = 18.8
             self.gamma = 2.07
@@ -93,6 +93,7 @@ class PropagationP1411(Propagation):
         median_basic_loss = self.calculate_median_basic_loss(
             distances_3d,
             frequency * np.ones(distances_2d.shape),
+            self.random_number_gen
         )
 
         self.alfa = self.alfa * np.ones(distances_2d.shape)
@@ -122,7 +123,7 @@ class PropagationP1411(Propagation):
         np.array
             Median basic transmission loss in dB.
         """
-        median_loss = (10 * self.alfa * np.log10(distance_3D)) + self.beta + (10 * self.gamma * np.log10(frequency))
+        median_loss = (10 * self.alfa * np.log10(distance_3D)) + self.beta + (10 * self.gamma * np.log10(frequency/1000))
         # Add zero-mean Gaussian random variable for shadowing
         shadowing = random_number_gen.normal(0, self.sigma, distance_3D.shape)
 
@@ -181,7 +182,7 @@ if __name__ == '__main__':
     # Gerador de números aleatórios
     random_number_gen = np.random.RandomState(101)
 
-    p1411 = PropagationP1411(random_number_gen, 'URBAN')
+    p1411 = PropagationP1411(random_number_gen, 'suburban')
     free_space_prop = PropagationFreeSpace(random_number_gen)
 
     free_space_loss = free_space_prop.get_free_space_loss(frequency * 1000, distance_3D)

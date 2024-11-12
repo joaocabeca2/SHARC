@@ -20,8 +20,8 @@ class ParametersImt(ParametersBase):
 
     minimum_separation_distance_bs_ue: float = 0.0
     interfered_with: bool = False
-    frequency: float = 24350.0
-    bandwidth: float = 200.0
+    frequency: float = 7000
+    bandwidth: float = 80
     rb_bandwidth: float = 0.180
     spectral_mask: str = "IMT-2020"
     spurious_emissions: float = -13.0
@@ -90,7 +90,7 @@ class ParametersImt(ParametersBase):
     #                                    "TVRO-SUBURBAN"
     #                                    "ABG" (Alpha-Beta-Gamma)
     # TODO: check if we wanna separate the channel model definition in its own nested attributes
-    channel_model: str = "UMi"
+    channel_model: str = "P1411"
     # Parameters for the P.619 propagation model
     # For IMT NTN the model is used for calculating the coupling loss between
     # the BS space station and the UEs on Earth's surface.
@@ -129,11 +129,11 @@ class ParametersImt(ParametersBase):
                 f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
             )
 
-        if self.channel_model not in ["FSPL", "CI", "UMa", "UMi", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619"]:
+        if self.channel_model not in ["FSPL", "CI", "UMa", "UMi", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619", "P1411"]:
             raise ValueError(f"ParamtersImt: \
                              Invalid value for parameter channel_model - {self.channel_model}. \
                              Possible values are \"FSPL\",\"CI\", \"UMa\", \"UMi\", \"TVRO-URBAN\", \"TVRO-SUBURBAN\", \
-                             \"ABG\", \"P619\".")
+                             \"ABG\", \"P619\", \"P1411\".")
 
         if self.topology.type == "NTN" and self.channel_model not in ["FSPL", "P619"]:
             raise ValueError(
