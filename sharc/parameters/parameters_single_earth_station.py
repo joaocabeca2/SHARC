@@ -1,11 +1,11 @@
-from dataclasses import dataclass, field
 import typing
+from dataclasses import dataclass, field
 
-from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_antenna import ParametersAntenna
-from sharc.parameters.parameters_p619 import ParametersP619
-from sharc.parameters.parameters_p452 import ParametersP452
+from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_hdfss import ParametersHDFSS
+from sharc.parameters.parameters_p452 import ParametersP452
+from sharc.parameters.parameters_p619 import ParametersP619
 
 
 @dataclass
@@ -228,7 +228,7 @@ class ParametersSingleEarthStation(ParametersBase):
                 f"{ctx}.season needs to be either 'WINTER' or 'SUMMER'",
             )
 
-        if self.channel_model not in ["FSPL", "P619", "P452", "TerrestrialSimple", "TVRO-URBAN", "TVRO-SUBURBAN"]:
+        if self.channel_model not in ["FSPL", "P619", "P452", "TerrestrialSimple", "TVRO-URBAN", "TVRO-SUBURBAN", "P1411"]:
             raise ValueError(
                 f"{ctx}.channel_model" +
                 "needs to be in ['FSPL', 'P619', 'P452', 'TerrestrialSimple', 'TVRO-URBAN', 'TVRO-SUBURBAN']",

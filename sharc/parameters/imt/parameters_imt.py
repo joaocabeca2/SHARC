@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """Parameters definitions for IMT systems
 """
-from dataclasses import dataclass, field
 import typing
+from dataclasses import dataclass, field
 
-from sharc.parameters.parameters_base import ParametersBase
-from sharc.parameters.parameters_p619 import ParametersP619
 from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
 from sharc.parameters.imt.parameters_imt_topology import ParametersImtTopology
+from sharc.parameters.parameters_base import ParametersBase
+from sharc.parameters.parameters_p619 import ParametersP619
 
 
 @dataclass

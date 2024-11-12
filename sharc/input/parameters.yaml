@@ -417,7 +417,8 @@ imt:
     #                                    "TVRO-SUBURBAN"
     #                                    "ABG" (Alpha-Beta-Gamma)
     #                                    "P619"
-    channel_model: "P1411"
+    #                                    "P1411"
+    channel_model: P1411
     season: SUMMER
     ###########################################################################
     # Adjustment factor for LoS probability in UMi path loss model.

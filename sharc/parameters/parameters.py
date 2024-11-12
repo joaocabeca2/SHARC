@@ -5,20 +5,21 @@ Created on Wed Aug  9 19:35:52 2017
 @author: edgar
 """
 
-import sys
 import os
+import sys
 
-from sharc.parameters.parameters_general import ParametersGeneral
 from sharc.parameters.imt.parameters_imt import ParametersImt
 from sharc.parameters.parameters_eess_ss import ParametersEessSS
 from sharc.parameters.parameters_fs import ParametersFs
-from sharc.parameters.parameters_metsat_ss import ParametersMetSatSS
-from sharc.parameters.parameters_fss_ss import ParametersFssSs
 from sharc.parameters.parameters_fss_es import ParametersFssEs
+from sharc.parameters.parameters_fss_ss import ParametersFssSs
+from sharc.parameters.parameters_general import ParametersGeneral
 from sharc.parameters.parameters_haps import ParametersHaps
-from sharc.parameters.parameters_rns import ParametersRns
+from sharc.parameters.parameters_metsat_ss import ParametersMetSatSS
 from sharc.parameters.parameters_ras import ParametersRas
-from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
+from sharc.parameters.parameters_rns import ParametersRns
+from sharc.parameters.parameters_single_earth_station import \
+    ParametersSingleEarthStation
 
 
 class Parameters(object):
@@ -49,7 +50,7 @@ class Parameters(object):
         file_name : str
             configuration file path
         """
-        self.file_name = r'C:\Users\X07339943188\Documents\python\SHARC\sharc\input\parameters.yaml'
+        self.file_name = r'C:\Users\jp\Desktop\SHARC\sharc\input\parameters.yaml'
 
     def read_params(self):
         """Read the parameters from the config file
