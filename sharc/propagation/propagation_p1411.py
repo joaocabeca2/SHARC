@@ -123,7 +123,7 @@ class PropagationP1411(Propagation):
         np.array
             Median basic transmission loss in dB.
         """
-        median_loss = (10 * self.alfa * np.log10(distance_3D)) + self.beta + (10 * self.gamma * np.log10(frequency/1000))
+        median_loss = (10 * self.alfa * np.log10(distance_3D)) + self.beta + (10 * self.gamma * np.log10(frequency))
         # Add zero-mean Gaussian random variable for shadowing
         shadowing = random_number_gen.normal(0, self.sigma, distance_3D.shape)
 
@@ -175,14 +175,14 @@ if __name__ == '__main__':
     h_ue = 1.5 * np.ones(num_ue)
 
     # Configuração da distância para o cenário
-    distance_2D = np.repeat(np.linspace(5, 660, num=num_bs)[np.newaxis, :], num_ue, axis=0)
+    distance_2D = np.repeat(np.linspace(30, 250, num=num_bs)[np.newaxis, :], num_ue, axis=0)
     frequency = 7 * np.ones(num_bs)  
     distance_3D = np.sqrt(distance_2D**2 + (h_bs - h_ue[np.newaxis, :])**2)
 
     # Gerador de números aleatórios
     random_number_gen = np.random.RandomState(101)
 
-    p1411 = PropagationP1411(random_number_gen, 'suburban')
+    p1411 = PropagationP1411(random_number_gen, 'urban')
     free_space_prop = PropagationFreeSpace(random_number_gen)
 
     free_space_loss = free_space_prop.get_free_space_loss(frequency * 1000, distance_3D)
