@@ -3,6 +3,7 @@ import numpy as np
 from sharc.parameters.parameters import Parameters
 from sharc.propagation.propagation import Propagation
 from sharc.propagation.propagation_free_space import PropagationFreeSpace
+from sharc.propagation.propagation_clear_air_452 import PropagationClearAir
 from sharc.station_manager import StationManager
 
 
@@ -58,17 +59,32 @@ class PropagationEHF(Propagation):
         else:
             distances_2d = station_a.get_distance_to(station_b)
             distances_3d = station_a.get_3d_distance_to(station_b)
+        
+        distance = station_a.get_3d_distance_to(
+            station_b,
+        ) * (1e-3)  # P.452 expects Kms
+        frequency_array = frequency * \
+            np.ones(distance.shape) * (1e-3)  # P.452 expects GHz
+        indoor_stations = np.tile(
+            station_b.indoor, (station_a.num_stations, 1),
+        )
+        elevation = station_b.get_elevation(station_a)
+        if params.imt.interfered_with:
+            tx_gain = station_a_gains
+            rx_gain = station_b_gains
+        else:
+            tx_gain = station_b_gains
+            rx_gain = station_a_gains
 
-        free_space_prop = PropagationFreeSpace(self.random_number_gen)
-        free_space_loss = free_space_prop.get_free_space_loss(frequency * 1000, distances_3d)
+        free_space_loss = self.get_free_space_loss(frequency, distances_3d, elevation, tx_gain, rx_gain)
         frequency *= np.ones(distances_2d.shape)
         ref_dist = 1.0 * np.ones(distances_2d.shape)
         n = 2.0 * np.ones(distances_2d.shape)
         
-        gas_att = self.get_attenuation_geseous(gamma_o, gamma_w)
-        rain_att = self.get_rain_attenuation(gamma_o, gamma_w)
+        gas_att = self.get_attenuation_geseous(distance, frequency_array, indoor_stations)
+        rain_att = self.get_rain_attenuation() * np.ones(distances_2d.shape)
 
-        #With directional antennas, the basic transmission loss when the boresights of the antennas are aligned
+
         return self._get_loss(frequency, distances_3d, free_space_loss,
                             ref_dist, gas_att, rain_att, n)
     def _get_loss(self,
@@ -104,27 +120,62 @@ class PropagationEHF(Propagation):
             + gas_attenuation + rain_attenuation
         )
 
-    def get_rain_attenuation(self, gamma_o, gamma_w) -> np.array:
-        """
-        Calculates the total specific attenuation using a simplified linear formula.
+    def get_rain_attenuation(self) -> np.array:
+        return 0.0
 
-        Parameters:
-        - gamma_o (float): Specific attenuation due to dry air (in dB/km). 
-        - gamma_w (float): Specific attenuation due to water vapor (in dB/km). 
+    def get_gaseous_attenuation(self, distance: np.array,
+                                frequency: np.array,
+                                indoor_stations: np.array,
+                                elevation: np.array,
+                                tx_gain: np.array,
+                                rx_gain: np.array) -> np.array:
+        gaseous_att = PropagationClearAir()
+        return gaseous_att.get_loss(distance, frequency, indoor_stations, elevation, tx_gain, rx_gain)
+    
+    def get_free_space_loss(self, frequency: np.array, distance_3d: np.array) -> np.array:
+        free_space_prop = PropagationFreeSpace()
+        return free_space_prop.get_free_space_loss(frequency * 1000, distance_3d)
 
-        Returns:
-        - float: The total specific attenuation (in dB/km).
-        """
-    def get_gaseous_attenuation(self, gamma_o, gamma_w) -> np.array:
-        """
-        Calculates the total specific attenuation using a simplified linear formula.
+if __name__ == '__main__':
+    
+    import matplotlib.pyplot as plt
+    from cycler import cycler
 
-        Parameters:
-        - gamma_o (float): Specific attenuation due to dry air (in dB/km). 
-        - gamma_w (float): Specific attenuation due to water vapor (in dB/km). 
+    # Configuração de parâmetros
+    num_ue = 1
+    num_bs = 1000
+    h_bs = 6 * np.ones(num_bs)
+    h_ue = 1.5 * np.ones(num_ue)
 
-        Returns:
-        - float: The total specific attenuation (in dB/km).
-        """
+    # Configuração da distância para o cenário
+    distance_2D = np.repeat(np.linspace(5, 660, num=num_bs)[np.newaxis, :], num_ue, axis=0)
+    frequency = 7 * np.ones(num_bs)  
+    distance_3D = np.sqrt(distance_2D**2 + (h_bs - h_ue[np.newaxis, :])**2)
 
+    # Gerador de números aleatórios
+    random_number_gen = np.random.RandomState(101)
 
+    ehf = PropagationEHF()
+
+    free_space_loss = free_space_prop.get_free_space_loss(frequency * 1000, distance_3D)
+    median_basic_loss = p1411.calculate_median_basic_loss(distance_3D, frequency, random_number_gen)
+    excess_loss = p1411.calculate_excess_loss(free_space_loss, median_basic_loss, distance_3D)
+
+    # Plotando os gráficos
+    fig = plt.figure(figsize=(8, 6), facecolor='w', edgecolor='k')
+    ax = fig.gca()
+    ax.set_prop_cycle(cycler('color', ['r', 'g', 'b']))
+
+    ax.semilogx(distance_2D[0, :], median_basic_loss[0, :], label="Median basic Loss")
+    ax.semilogx(distance_2D[0, :], excess_loss[0, :], label="Excess Loss")
+    ax.semilogx(distance_2D[0, :], free_space_loss[0, :], label="Free space Loss")
+
+    plt.title(p1411.environment)
+    plt.xlabel("Distance [m]")
+    plt.ylabel("Path Loss [dB]")
+    plt.xlim((0, distance_2D[0, -1]))
+    plt.legend(loc="upper left")
+    plt.tight_layout()
+    plt.grid()
+
+    plt.show()
