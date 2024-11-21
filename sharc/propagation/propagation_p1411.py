@@ -2,7 +2,7 @@
 """
 Created on wed November  05 15:29:47 2024
 
-@author: joaocabeca2
+@author: https://github.com/joaocabeca2
 """
 import os
 import sys
@@ -123,7 +123,7 @@ class PropagationP1411(Propagation):
         np.array
             Median basic transmission loss in dB.
         """
-        median_loss = (10 * self.alfa * np.log10(distance_3D)) + self.beta + (10 * self.gamma * np.log10(frequency/1000))
+        median_loss = (10 * self.alfa * np.log10(distance_3D)) + self.beta + (10 * self.gamma * np.log10(frequency))
         # Add zero-mean Gaussian random variable for shadowing
         shadowing = random_number_gen.normal(0, self.sigma, distance_3D.shape)
 
@@ -182,7 +182,7 @@ if __name__ == '__main__':
     # Gerador de números aleatórios
     random_number_gen = np.random.RandomState(101)
 
-    p1411 = PropagationP1411(random_number_gen, 'suburban')
+    p1411 = PropagationP1411(random_number_gen, 'URBAN')
     free_space_prop = PropagationFreeSpace(random_number_gen)
 
     free_space_loss = free_space_prop.get_free_space_loss(frequency * 1000, distance_3D)

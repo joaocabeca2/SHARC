@@ -9,8 +9,8 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".."))
 import numpy as np
-from multipledispatch import dispatch
 
+from sharc.parameters.constants import SPEED_OF_LIGHT
 from sharc.parameters.parameters import Parameters
 from sharc.propagation.propagation import Propagation
 from sharc.propagation.propagation_free_space import PropagationFreeSpace
@@ -26,10 +26,10 @@ class PropagationSHF(Propagation):
 
     def __init__(self, 
                 random_number_gen: np.random.RandomState,
-                road_heigth: float
+                road_height: float
         ):
         super().__init__(random_number_gen)
-        self.road_heigth = road_heigth
+        self.road_height = road_height
   
     def get_loss(
         self,
@@ -72,12 +72,19 @@ class PropagationSHF(Propagation):
         else:
             distances_2d = station_a.get_distance_to(station_b)
             distances_3d = station_a.get_3d_distance_to(station_b)
+        
+        return self._get_loss(distance_3D,
+                            distance_2D,
+                            frequency * np.ones(distance_2D.shape),
+                            station_b.height,
+                            station_a.height,
+                            )
 
 
         
     def _get_loss(
         self, distance_3d: np.array, distance_2d: np.array, frequency: np.array,
-        bs_height: np.array, ue_height: np.array, shadowing: bool,
+        bs_height: np.array, ue_height: np.array
     ) -> np.array:
         """
         This site-general model is applicable to situations where both the transmitting and receiving stations 
@@ -95,54 +102,51 @@ class PropagationSHF(Propagation):
         np.array
             Median basic transmission loss in dB.
         """
-        wavelength = frequency / 3e8
-        self.road_heigth *= np.ones(distance_2D.shape)
-        breakpoint_dist = 4 * ((h_bs - self.road_heigth) * (h_ue - self.road_heigth) / wavelength)
+        wavelenght = SPEED_OF_LIGHT / frequency
+        self.road_height *= np.ones(distance_2D.shape)
+        #for path lengths up to about 1 km, road traffic will influence the effective road height and 
+        #will thus affect the breakpoint distance. This distance is estimated by:
+        breakpoint_dist = 4 * ((h_bs - self.road_height) * (h_ue - self.road_height)) / wavelenght
 
-        if h_ue > self.road_heigth and h_bs > self.road_heigth:
-            median_basic_loss = self.calculate_median_basic_loss(wavelength, h_bs, h_ue)
+        if (ue_height > self.road_height).all() and (bs_height > self.road_height).all():
             
-            factor = 20 if distance_3D <= breakpoint_dist else 40
-            lower_bound_loss = median_basic_loss + factor * np.log10(distance_3D / breakpoint_dist)
+            basic_loss = 20 * (np.log10(wavelenght**2 / (8 * np.pi * (h_bs - self.road_height) * (h_ue - self.road_height))))
+
+            lower_bound_loss, upper_bound_loss = self.calculate_bound_loss(basic_loss, distance_3D, breakpoint_dist)
+
+            return basic_loss, lower_bound_loss, upper_bound_loss
+        
+        else:
+            #Case breakpoint doesnt exist
+            rs = 20
+            if distance_3D < rs:
+                basic_loss = 20 * (np.log10(wavelenght**2 / (8 * np.pi * h_bs * h_ue)))
+                lower_bound_loss, upper_bound_loss = self.calculate_bound_loss(basic_loss, distance_3D, breakpoint_dist)
             
-            factor = 25 if distance_3D <= breakpoint_dist else 40
-            upper_bound_loss = median_basic_loss + 20 + (factor * np.log10(distance_3D / breakpoint_dist))
+            else:
+                basic_loss = 20 * (np.log10(wavelenght / (2 * np.pi * rs)))
+                lower_bound_loss = basic_loss + (30 * np.log10(distance_3D / rs))
+                upper_bound_loss = basic_loss + 20 + (30 * np.log10(distance_3D / rs))
+                #median_bound_loss = basic_loss + 6 + 30 * np.log10(distance_3D)
+
+            return basic_loss, lower_bound_loss, upper_bound_loss
             
     
-    def calculate_median_basic_loss(self, wavelength: float, h_bs: np.array, h_ue: np.array):
-        return 20 * np.log10(wavelength**2 /(8 * np.pi * (h_bs - self.road_heigth) * (h_ue - self.road_heigth)))
+    def calculate_bound_loss(self, basic_loss: np.array, distance_3d: np.array, breakpoint_dist: float):
+        # Apply distance-dependent factors
+        lower_bound_loss = np.where(
+            distance_3d <= breakpoint_dist,
+            basic_loss + (20 * np.log10(distance_3d / breakpoint_dist)),
+            basic_loss + (40 * np.log10(distance_3d / breakpoint_dist))
+        )
 
-    def calculate_excess_loss(self, lfs: np.array, median_basic_loss: np.array, distance_3D: np.array) -> np.array:
-        """
-        Calculates the excess basic transmission loss for NLoS scenarios.
-        
-        This method computes the excess loss with respect to the free-space basic transmission loss
-        using a Monte Carlo approach. It uses a random variable A, which is normally distributed
-        with mean μ and standard deviation σ, to account for the variability in the signal propagation
-        environment.
+        upper_bound_loss = np.where(
+            distance_3d <= breakpoint_dist,
+            basic_loss + 20 + (25 * np.log10(distance_3d / breakpoint_dist)),
+            basic_loss + 20 + (40 * np.log10(distance_3d / breakpoint_dist))
+        )
 
-        Parameters
-        ----------
-        lfs : np.array
-            Free-space basic transmission loss, LFS, in dB.
-        median_basic_loss : np.array
-            Median basic transmission loss, Lb(d, f), in dB.
-        distance_3D : np.array
-            3D direct distance between the transmitting and receiving stations (in meters).
-
-        Returns
-        -------
-        np.array
-            Excess basic transmission loss in dB.
-        """
-        # Calculate μ as the difference between the median basic loss and free-space loss
-        u = median_basic_loss - lfs
-
-        # Generate the random variable A using a normal distribution with mean μ and standard deviation σ
-        a = self.random_number_gen.normal(u, self.sigma, distance_3D.shape)
-
-        # Compute the excess loss using the specified formula
-        return 10 * np.log10(10**(0.1 * a) + 1)
+        return lower_bound_loss, upper_bound_loss
 
 
 if __name__ == '__main__':
@@ -153,34 +157,33 @@ if __name__ == '__main__':
     # Configuração de parâmetros
     num_ue = 1
     num_bs = 1000
-    h_bs = 6 * np.ones(num_bs)
-    h_ue = 1.5 * np.ones(num_ue)
+    h_bs = 4 * np.ones(num_bs)
+    h_ue = 2.7 * np.ones(num_ue)
 
     # Configuração da distância para o cenário
-    distance_2D = np.repeat(np.linspace(5, 660, num=num_bs)[np.newaxis, :], num_ue, axis=0)
+    distance_2D = np.repeat(np.linspace(1, 1000, num=num_bs)[np.newaxis, :], num_ue, axis=0)
     frequency = 7 * np.ones(num_bs)  
     distance_3D = np.sqrt(distance_2D**2 + (h_bs - h_ue[np.newaxis, :])**2)
 
     # Gerador de números aleatórios
     random_number_gen = np.random.RandomState(101)
 
-    p1411 = PropagationP1411(random_number_gen, 'URBAN')
-    free_space_prop = PropagationFreeSpace(random_number_gen)
+    shf = PropagationSHF(random_number_gen, 1.6)
+    #free_space_prop = PropagationFreeSpace(random_number_gen)
 
-    free_space_loss = free_space_prop.get_free_space_loss(frequency * 1000, distance_3D)
-    median_basic_loss = p1411.calculate_median_basic_loss(distance_3D, frequency, random_number_gen)
-    excess_loss = p1411.calculate_excess_loss(free_space_loss, median_basic_loss, distance_3D)
+    #free_space_loss = free_space_prop.get_free_space_loss(frequency * 1000, distance_3D)
+    basic_loss, lower_bound_loss, upper_bound_loss = shf._get_loss(distance_3D,distance_2D,frequency,h_bs,h_ue)
 
     # Plotando os gráficos
     fig = plt.figure(figsize=(8, 6), facecolor='w', edgecolor='k')
     ax = fig.gca()
     ax.set_prop_cycle(cycler('color', ['r', 'g', 'b']))
 
-    ax.semilogx(distance_2D[0, :], median_basic_loss[0, :], label="Median basic Loss")
-    ax.semilogx(distance_2D[0, :], excess_loss[0, :], label="Excess Loss")
-    ax.semilogx(distance_2D[0, :], free_space_loss[0, :], label="Free space Loss")
+    ax.semilogx(distance_2D[0, :], upper_bound_loss[0, :], label="Upper Bound Loss")
+    ax.semilogx(distance_2D[0, :], basic_loss[0, :], label="Basic Loss")
+    ax.semilogx(distance_2D[0, :], lower_bound_loss[0, :], label="Lower Bound Loss")
 
-    plt.title(p1411.environment)
+    plt.title("SHF - Propagation")
     plt.xlabel("Distance [m]")
     plt.ylabel("Path Loss [dB]")
     plt.xlim((0, distance_2D[0, -1]))

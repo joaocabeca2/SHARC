@@ -118,7 +118,7 @@ class StationFactory(object):
         )
 
         for i in range(num_bs):
-            imt_base_stations.antenna[i] = 
+            imt_base_stations.antenna[i] = \
                 AntennaBeamformingImt(
                     param_ant, imt_base_stations.azimuth[i],
                     imt_base_stations.elevation[i],)
