@@ -50,10 +50,18 @@ class NgsoConstellation():
         self.name = constelation_params.name
         self.orbits = List[NgsoOrbit]
         for orbit_params in constelation_params.orbits:
-            this_orbit = NgsoOrbit(orbit_params)
+            self.orbits.append(NgsoOrbit(orbit_params))
 
-        self.obrit_shells = List[NgsoOrbit]
+    def initialize(self):
+        for orbit in self.orbits:
+            orbit.initialize()
     
-    def calculate_orbits(self):
+    def calculate_orbits(self, time_step_sec=5, num_orbital_periods=4):
         # orbit predictor
+        pass
+
+    def update_orbits(self):
+        for orbit in self.orbits:
+            orbit.update_space_stations_positions(self)
+        # update orbits at each time step
 
