@@ -24,6 +24,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
+from sharc.parameters.parameters_wifi_system import ParametersWifiSystem
 from sharc.parameters.constants import EARTH_RADIUS
 from sharc.station_manager import StationManager
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
@@ -49,6 +50,8 @@ from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 from sharc.topology.topology import Topology
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
+
+from sharc.system.system_wifi import SystemWifi
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -1105,6 +1108,28 @@ class StationFactory(object):
         space_station.noise_temperature = 500
 
         return space_station
+
+    @staticmethod
+    def generate_wifi_system(param: ParametersWifiSystem) -> StationManager:
+        """Generate a wifi system and returns the appropriate StationManager object representing
+        the WiFi stations.
+
+        Parameters
+        ----------
+        param : ParametersWifiSystem
+            WiFi system paramters
+
+        Returns
+        -------
+        StationManager
+            The WiFi Stations used in the main simulation loop
+        """
+        wifi_system = SystemWifi(param=ParametersWifiSystem)
+        wifi_system.generate_stations()
+        wifi_system.connect_stations()
+        wifi_system.calculate_coupling_loss()
+        wifi_stations = wifi_system.get_stations()
+        return wifi_stations
 
     @staticmethod
     def get_random_position(num_stas: int,
