@@ -21,7 +21,7 @@ class ParametersP1411(ParametersBase):
     #distance Station 1 to street crossing (m)
     distance1: float = 0
     #distance Station 2 to street crossing (m)
-    distance2: float = 0
+    distance2: float = 2.0
     #is the corner angle (rad)
     corner_angle: float = 0
     wavelength = 3e8 / (frequency*1e9)

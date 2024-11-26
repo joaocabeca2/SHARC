@@ -104,7 +104,14 @@ class PropagationEHF(Propagation):
 
         loss = np.empty(distance_2D.shape)
 
-        if len(i_los[0]):
+        environment = self.model_params.environment 
+        wavelength = self.model_params.wavelength 
+        d_corner = self.model_params.d_corner 
+        street_width1 = self.model_params.street_width1 
+        distance1 = self.model_params.distance1 
+        distance2 = self.model_params.distance2
+
+        '''if len(i_los[0]):
             loss_los = self.get_loss_los(
                 distance_2D, distance_3D, frequency, bs_height, ue_height, h_e, shadowing_los,
             )
@@ -114,7 +121,7 @@ class PropagationEHF(Propagation):
             loss_nlos = self.get_loss_nlos(
                 distance_2D, distance_3D, frequency, bs_height, ue_height, h_e, shadowing_nlos,
             )
-            loss[i_nlos] = loss_nlos[i_nlos]
+            loss[i_nlos] = loss_nlos[i_nlos]'''
 
         return loss
     
@@ -151,25 +158,19 @@ class PropagationEHF(Propagation):
             + gas_attenuation + rain_attenuation))
         )
     
-    def get_loss_nlos(self):
+    def get_loss_nlos(self, loss_los, environment, d_corner, street_width1, distance1, distance2):
         """
         Calculate the line-of-sight (LoS) transmission loss in decibels (dB)
         for millimeter-wave propagation with directional antennas.
-        """
+        """ 
 
-        wavelength = self.model_params.wavelength
-        d_corner = self.model_params.d_corner
-        street_width1 = self.model_params.street_width1
-        distance1 = self.model_params.distance1
-        distance2 = self.model_params.distance2
-
-        l_corner = self.calculate_Lcorner(d_corner, street_width1, distance2)
+        l_corner = self.calculate_Lcorner(environment, d_corner, street_width1, distance2)
         l_att = self.calculate_Latt(d_corner, street_width1, distance2, distance1)
 
-        return 20 * np.log10(wavelength / (2 * np.pi * 20)) + l_corner + l_att
+        return loss_los + l_corner + l_att
 
 
-    def calculate_Lcorner(self, d_corner, street_width1, distance2):
+    def calculate_Lcorner(self, environment,  d_corner, street_width1, distance2):
         """
         Calculates the corner loss based on the environment.
 
@@ -177,13 +178,14 @@ class PropagationEHF(Propagation):
         - float: Corner loss in dB.
         """
 
-        L_c = 20 if self.environment == "urban" else 30  # Base corner loss depending on the environment
+        L_c = 20 if environment.lower() == "urban" else 30  # Base corner loss depending on the environment
+        L_c 
 
-        if distance2 > (street_width1 /(2 + 1 + d_corner)):
-        # Beyond the corner region, use the fixed L_c value
+        if distance2 > (street_width1 / (2 + 1 + d_corner)):  # Check if any element satisfies the condition
+            # Beyond the corner region, use the fixed L_c value
             return L_c
-        
-        elif distance2 >= (street_width1 / 3) and distance2 <= (street_width1 / (2 + 1 + d_corner)):
+
+        elif (distance2 >= (street_width1 / 3)) & (distance2 <= (street_width1 / (2 + 1 + d_corner))):
             # Within the corner region, calculate dynamically
             return (L_c / np.log10(1 + d_corner)) * np.log10(distance2 - street_width1 / 2)
         
@@ -278,6 +280,14 @@ if __name__ == '__main__':
     num_bs = 1000
     h_bs = 6 * np.ones(num_bs)
     h_ue = 1.5 * np.ones(num_ue)
+
+    model_params = ParametersP1411()
+    environment = model_params.environment 
+    wavelength = model_params.wavelength 
+    d_corner = model_params.d_corner 
+    street_width1 = model_params.street_width1 
+    distance1 = model_params.distance1 
+    distance2 = model_params.distance2
     
 
     # Configuração da distância para o cenário
@@ -295,27 +305,29 @@ if __name__ == '__main__':
     rx_gain = 0 * np.ones(distance_2D.shape)
     
     elevation = np.empty(num_bs)
-    
-    ehf = PropagationEHF(random_number_gen)
+    los_adjustment_factor = 18.0
+
+    ehf = PropagationEHF(random_number_gen, los_adjustment_factor, ParametersP1411)
     free_space_prop = PropagationFreeSpace(random_number_gen)
     free_space_loss = free_space_prop.get_loss(distance_3D, frequency * 1000)
     gas_att = ehf.get_gaseous_attenuation(np.asarray(distance_3D), np.asarray(frequency), indoor_stations, elevation, tx_gain, rx_gain)
     rain_att = 0 * np.ones(distance_2D.shape)
 
-    p1411 = PropagationP1411(random_number_gen , 'Urban')
+    p1411 = PropagationP1411(random_number_gen , environment)
     p1411_loss = p1411.calculate_median_basic_loss(distance_3D, frequency, random_number_gen)
 
-    loss = ehf.get_loss_los(frequency, distance_3D, ref_dist, free_space_loss, gas_att, rain_att, n)
-    
+    loss_los = ehf.get_loss_los(frequency, distance_3D, ref_dist, free_space_loss, gas_att, rain_att, n)
+    loss_nlos = ehf.get_loss_nlos(loss_los, environment, d_corner, street_width1, distance1, distance2)
 
     # Plotando os gráficos
     fig = plt.figure(figsize=(8, 6), facecolor='w', edgecolor='k')
     ax = fig.gca()
-    ax.set_prop_cycle(cycler('color', ['r', 'g', 'b']))
+    ax.set_prop_cycle(cycler('color', plt.cm.tab10.colors))
 
-    ax.semilogx(distance_2D[0, :], loss[0, :], label="Milimetric wave loss (LOS)")
+    ax.semilogx(distance_2D[0, :], loss_los[0, :], label="Milimetric wave loss (LOS)")
     ax.semilogx(distance_2D[0, :], p1411_loss[0, :], label="Median basic loss")
     ax.semilogx(distance_2D[0, :], free_space_loss[0, :], label="Free space loss")
+    ax.semilogx(distance_2D[0, :], loss_nlos[0, :], label="Milimetric wave loss (NLOS)")
 
     plt.title('Milimetric wave loss')
     plt.xlabel("Distance [m]")
