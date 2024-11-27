@@ -1,7 +1,8 @@
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".."))
+"""
+Created on Mon Nov 18 17:28:47 2024
 
+@author: joaocabeca2
+"""
 import numpy as np
 from sharc.parameters.parameters import Parameters
 from sharc.parameters.parameters_p1411 import ParametersP1411
@@ -94,42 +95,42 @@ class PropagationEHF(Propagation):
         i_los = np.where(los_condition == True)[:2]
         i_nlos = np.where(los_condition == False)[:2]
 
-        free_space_loss = self.get_free_space_loss(frequency, distances_3d, elevation, tx_gain, rx_gain)
         frequency *= np.ones(distances_2d.shape)
-        ref_dist = 1.0 * np.ones(distances_2d.shape)
-        n = 2.0 * np.ones(distances_2d.shape)
         
-        gas_att = self.get_attenuation_geseous(distance, frequency_array, indoor_stations)
+        gas_att = self.get_gaseous_attenuation(distance, frequency_array, indoor_stations, elevation, tx_gain, rx_gain)
         rain_att = self.get_rain_attenuation() * np.ones(distances_2d.shape)
 
         loss = np.empty(distance_2D.shape)
 
+        n = self.model_params.n
         environment = self.model_params.environment 
-        wavelength = self.model_params.wavelength 
         d_corner = self.model_params.d_corner 
         street_width1 = self.model_params.street_width1 
         distance1 = self.model_params.distance1 
         distance2 = self.model_params.distance2
+        ref_dist = self.model_params.ref_dist
 
-        '''if len(i_los[0]):
+        ref_dist = np.asarray(ref_dist * np.ones(distance_2D.shape))
+        n = np.asarray(n * np.ones(distance_2D.shape))
+
+        if len(i_los[0]):
             loss_los = self.get_loss_los(
-                distance_2D, distance_3D, frequency, bs_height, ue_height, h_e, shadowing_los,
+                 frequency, distance_3D, ref_dist, gas_att, rain_att, n
             )
             loss[i_los] = loss_los[i_los]
 
         if len(i_nlos[0]):
             loss_nlos = self.get_loss_nlos(
-                distance_2D, distance_3D, frequency, bs_height, ue_height, h_e, shadowing_nlos,
+                loss_los, environment, d_corner, street_width1, distance1, distance2
             )
-            loss[i_nlos] = loss_nlos[i_nlos]'''
+            loss[i_nlos] = loss_nlos[i_nlos]
 
         return loss
     
     def get_loss_los(self,
                 frequency:np.array,
                 distance_3d:np.array,
-                reference_distance:np.array,
-                free_space_loss:np.array,
+                ref_dist:np.array,
                 gas_attenuation:np.array,
                 rain_attenuation:np.array,
                 n:np.array):
@@ -141,7 +142,7 @@ class PropagationEHF(Propagation):
         -----------
         frequency : np.array
             The frequency of the transmitted signal in MHz.
-        reference_distance: np.array
+        ref_dist: np.array
             reference distance of 1 meter
         distance_3d : np,array
             The distance between Station 1 and Station 2 in meters.
@@ -153,15 +154,25 @@ class PropagationEHF(Propagation):
             The basic transmission loss exponent (default is 2 for free-space propagation).
         """
 
+        #calculate a free space loss at a fixed distance of 1m
+        free_space_loss = self.get_free_space_loss(frequency, ref_dist)
         return (
-            free_space_loss + (10 * n * np.log10((distance_3d / reference_distance)
+            free_space_loss + (10 * n * np.log10((distance_3d / ref_dist)
             + gas_attenuation + rain_attenuation))
         )
     
-    def get_loss_nlos(self, loss_los, environment, d_corner, street_width1, distance1, distance2):
+    def get_loss_nlos(self,
+                    loss_los: np.array, 
+                    environment: str, 
+                    d_corner: float, 
+                    street_width1: float, 
+                    distance1: float, 
+                    distance2: float):
         """
-        Calculate the line-of-sight (LoS) transmission loss in decibels (dB)
-        for millimeter-wave propagation with directional antennas.
+        Calculates path loss for the NLOS (non line-of-sight) case based 
+        on measurements at a frequency range from 2 to 38 GHz, Station 1 antenna height and Station 2 antenna height
+        less than average height of buildings and the street width 
+        at the position of the Station 2 is up to 10m (or sidewalk)
         """ 
 
         l_corner = self.calculate_Lcorner(environment, d_corner, street_width1, distance2)
@@ -170,7 +181,11 @@ class PropagationEHF(Propagation):
         return loss_los + l_corner + l_att
 
 
-    def calculate_Lcorner(self, environment,  d_corner, street_width1, distance2):
+    def calculate_Lcorner(self,
+                        environment: str,  
+                        d_corner: float, 
+                        street_width1: float, 
+                        distance2: float):
         """
         Calculates the corner loss based on the environment.
 
@@ -282,8 +297,7 @@ if __name__ == '__main__':
     h_ue = 1.5 * np.ones(num_ue)
 
     model_params = ParametersP1411()
-    environment = model_params.environment 
-    wavelength = model_params.wavelength 
+    environment = model_params.environment  
     d_corner = model_params.d_corner 
     street_width1 = model_params.street_width1 
     distance1 = model_params.distance1 
@@ -291,7 +305,7 @@ if __name__ == '__main__':
     
 
     # Configuração da distância para o cenário
-    distance_2D = np.repeat(np.linspace(5, 660, num=num_bs)[np.newaxis, :], num_ue, axis=0)
+    distance_2D = np.repeat(np.linspace(1, 1000, num=num_bs)[np.newaxis, :], num_ue, axis=0)
     frequency = 7 * np.ones(num_bs)  
     distance_3D = np.sqrt(distance_2D**2 + (h_bs - h_ue[np.newaxis, :])**2)
 
@@ -310,13 +324,14 @@ if __name__ == '__main__':
     ehf = PropagationEHF(random_number_gen, los_adjustment_factor, ParametersP1411)
     free_space_prop = PropagationFreeSpace(random_number_gen)
     free_space_loss = free_space_prop.get_loss(distance_3D, frequency * 1000)
+
     gas_att = ehf.get_gaseous_attenuation(np.asarray(distance_3D), np.asarray(frequency), indoor_stations, elevation, tx_gain, rx_gain)
     rain_att = 0 * np.ones(distance_2D.shape)
 
     p1411 = PropagationP1411(random_number_gen , environment)
     p1411_loss = p1411.calculate_median_basic_loss(distance_3D, frequency, random_number_gen)
 
-    loss_los = ehf.get_loss_los(frequency, distance_3D, ref_dist, free_space_loss, gas_att, rain_att, n)
+    loss_los = ehf.get_loss_los(frequency, distance_3D, ref_dist, gas_att, rain_att, n)
     loss_nlos = ehf.get_loss_nlos(loss_los, environment, d_corner, street_width1, distance1, distance2)
 
     # Plotando os gráficos
