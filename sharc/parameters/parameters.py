@@ -50,7 +50,7 @@ class Parameters(object):
         file_name : str
             configuration file path
         """
-        self.file_name = r'C:\Users\jp\Desktop\SHARC\sharc\input\parameters.yaml'
+        self.file_name = file_name
 
     def read_params(self):
         """Read the parameters from the config file

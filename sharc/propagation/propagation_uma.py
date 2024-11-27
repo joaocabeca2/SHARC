@@ -4,7 +4,9 @@ Created on Mon Jun  5 16:56:13 2017
 
 @author: edgar
 """
-
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".."))
 import numpy as np
 import matplotlib.pyplot as plt
 from cycler import cycler

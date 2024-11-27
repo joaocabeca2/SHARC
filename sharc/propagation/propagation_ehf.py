@@ -1,3 +1,6 @@
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".."))
 """
 Created on Mon Nov 18 17:28:47 2024
 
@@ -65,11 +68,11 @@ class PropagationEHF(Propagation):
                                     and params.imt.topology.hotspot.num_clusters == 1
 
         if wrap_around_enabled and (station_a.is_imt_station() and station_b.is_imt_station()):
-            distances_2d, distances_3d, _, _ = \
+            distance_2D, distance_3D, _, _ = \
                 station_a.get_dist_angles_wrap_around(station_b)
         else:
-            distances_2d = station_a.get_distance_to(station_b)
-            distances_3d = station_a.get_3d_distance_to(station_b)
+            distance_2D = station_a.get_distance_to(station_b)
+            distance_3D = station_a.get_3d_distance_to(station_b)
         
         distance = station_a.get_3d_distance_to(
             station_b,
@@ -95,10 +98,10 @@ class PropagationEHF(Propagation):
         i_los = np.where(los_condition == True)[:2]
         i_nlos = np.where(los_condition == False)[:2]
 
-        frequency *= np.ones(distances_2d.shape)
+        frequency *= np.ones(distance_2D.shape)
         
         gas_att = self.get_gaseous_attenuation(distance, frequency_array, indoor_stations, elevation, tx_gain, rx_gain)
-        rain_att = self.get_rain_attenuation() * np.ones(distances_2d.shape)
+        rain_att = self.get_rain_attenuation() * np.ones(distance_2D.shape)
 
         loss = np.empty(distance_2D.shape)
 

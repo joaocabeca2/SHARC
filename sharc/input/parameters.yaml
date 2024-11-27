@@ -8,10 +8,10 @@ general:
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS, SINGLE_EARTH_STATION
-    system: FSS_ES
+    system: SINGLE_EARTH_STATION
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
-    enable_cochannel: FALSE
+    enable_cochannel: TRUE
     enable_adjacent_channel: TRUE
     ###########################################################################
     # Seed for random number generator
@@ -57,7 +57,7 @@ imt:
         ###########################################################################
         # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
         # "INDOOR"
-        type: MACROCELL
+        type: SINGLE_BS
         ###########################################################################
         # Macrocell Topology parameters. Relevant when imt.topology.type == "MACROCELL"
         macrocell:
@@ -417,8 +417,8 @@ imt:
     #                                    "TVRO-SUBURBAN"
     #                                    "ABG" (Alpha-Beta-Gamma)
     #                                    "P619"
-    #                                    "P1411"
-    channel_model: P1411
+    #                                    "EHF" (Milimetric-wave)
+    channel_model: EHF
     season: SUMMER
     ###########################################################################
     # Adjustment factor for LoS probability in UMi path loss model.
@@ -1045,10 +1045,10 @@ metsat_ss:
 single_earth_station:
     ###########################################################################
     # Sensor center frequency [MHz]
-    frequency: 8250
+    frequency: 7000
     ###########################################################################
     # Sensor bandwidth [MHz]
-    bandwidth: 100
+    bandwidth: 20
     ###########################################################################
     # System receive noise temperature [K]
     noise_temperature: 300
@@ -1156,7 +1156,7 @@ single_earth_station:
     ###########################################################################
     # Selected channel model
     # Possible values are "P619", "P452", "TerrestrialSimple"
-    channel_model: "P619"
+    channel_model: "P452"
 
     ###########################################################################
     # Parameters for P619 channel model
