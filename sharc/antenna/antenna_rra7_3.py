@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 24 18:41:17 2017
-
-@author: edgar
-"""
 
 from sharc.antenna.antenna import Antenna
 from sharc.parameters.parameters_fss_es import ParametersFssEs
