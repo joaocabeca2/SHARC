@@ -28,7 +28,7 @@ class AntennaReg_RR_A7_3(Antenna):
         else:
             # From Note 1, we can estimate D_lmbda from
             # 20 log(D_lmbda) =(aprox.)= G_max - 7.7
-            D_lmbda = 10 ^ ((self.peak_gain - 7.7)/20)
+            D_lmbda = math.pow(10, ((self.peak_gain - 7.7) / 20))
 
         self.D_lmbda = D_lmbda
 
