@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from sharc.antenna.antenna import Antenna
-from sharc.parameters.parameters_fss_es import ParametersFssEs
+from sharc.parameters.parameters_antenna_with_diameter import ParametersAntennaWithDiameter
 from sharc.antenna.antenna_s465 import AntennaS465
 
 import numpy as np
@@ -14,7 +14,7 @@ class AntennaReg_RR_A7_3(Antenna):
     according to Recommendation ITU Radio Regulations Appendix 7, Annex 3
     """
 
-    def __init__(self, param: ParametersFssEs):
+    def __init__(self, param: ParametersAntennaWithDiameter):
         super().__init__()
         self.peak_gain = param.antenna_gain
         lmbda = 3e8 / (param.frequency * 1e6)
@@ -37,6 +37,12 @@ class AntennaReg_RR_A7_3(Antenna):
             raise ValueError(f"Recommendation does not define antenna pattern when D/lmbda = {D_lmbda}")
 
         self.phi_m = 20 / D_lmbda * np.sqrt(self.peak_gain - self.g1)
+
+        # if np.sqrt(self.peak_gain - self.g1) >= 5, then phi_m >= phi_r, and that may be a problem
+        # if this is erroring in your simulation, you should check with a professor how to deal with this
+        # since the document doesn't specify
+        if self.phi_m >= self.phi_r:
+            raise ValueError(f"Recommendation doesn't specify what to do when phi_m ({self.phi_m}) >= phi_r ({self.phi_r})")
 
     def calculate_gain(self, *args, **kwargs) -> np.array:
         phi = np.absolute(kwargs["off_axis_angle_vec"])
@@ -64,7 +70,7 @@ if __name__ == '__main__':
     phi = np.linspace(0.1, 100, num=100000)
 
     # initialize antenna parameters
-    param27 = ParametersFssEs()
+    param27 = ParametersAntennaWithDiameter()
     param27.antenna_pattern = "ITU-R S.465-6"
     param27.frequency = 7500
     param27.antenna_gain = 50
@@ -73,7 +79,7 @@ if __name__ == '__main__':
 
     gain27 = antenna27.calculate_gain(off_axis_angle_vec=phi)
 
-    param43 = ParametersFssEs()
+    param43 = ParametersAntennaWithDiameter()
     param43.antenna_pattern = "ITU-R S.465-6"
     param43.frequency = param27.frequency
     param43.antenna_gain = 59
