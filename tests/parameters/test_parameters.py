@@ -375,6 +375,16 @@ class ParametersTest(unittest.TestCase):
             self.parameters.single_earth_station.antenna.gain)
 
         self.assertEqual(
+            self.parameters.single_earth_station.antenna.itu_reg_rr_a7_3.diameter,
+            2.12)
+        self.assertEqual(
+            self.parameters.single_earth_station.antenna.itu_reg_rr_a7_3.frequency,
+            self.parameters.single_earth_station.frequency)
+        self.assertEqual(
+            self.parameters.single_earth_station.antenna.itu_reg_rr_a7_3.antenna_gain,
+            self.parameters.single_earth_station.antenna.gain)
+
+        self.assertEqual(
             self.parameters.single_earth_station.param_p619.earth_station_alt_m, 1200)
         self.assertEqual(
             self.parameters.single_earth_station.param_p619.space_station_alt_m,

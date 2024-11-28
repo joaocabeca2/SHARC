@@ -33,6 +33,21 @@ class AntennaReg_RR_A7_3Test(unittest.TestCase):
         self.antenna2 = AntennaReg_RR_A7_3(
             self.antenna2_params
         )
+        self.antenna3_params = ParametersAntennaWithDiameter(
+            frequency=10000,
+            antenna_gain=50
+        )
+        self.antenna3 = AntennaReg_RR_A7_3(
+            self.antenna3_params
+        )
+
+    def test_diameter_inference(self):
+        """Document specifies a diameter to assume for when no diameter is given"""
+        self.assertAlmostEqual(
+            20 * math.log10(self.antenna3.D_lmbda),
+            self.antenna3_params.antenna_gain - 7.7,
+            delta=1e-10
+        )
 
     def test_gain(self):
         self.assertEqual(self.antenna1.peak_gain, self.antenna1_params.antenna_gain)
