@@ -192,7 +192,7 @@ class Results(object):
             self.overwrite_sample_files = False
 
     @staticmethod
-    def load_many_from_dir(root_dir: str, *, only_latest=True, only_samples: list[str] = None) -> list["Results"]:
+    def load_many_from_dir(root_dir: str, *, only_latest=True, only_samples: list[str] = None, filter_fn=None) -> list["Results"]:
         output_dirs = list(glob.glob(f"{root_dir}/output_*"))
 
         if len(output_dirs) == 0:
@@ -200,6 +200,9 @@ class Results(object):
 
         if only_latest:
             output_dirs = Results.get_most_recent_outputs_for_each_prefix(output_dirs)
+
+        if filter_fn:
+            output_dirs = filter(filter_fn, output_dirs)
 
         all_res = []
         for output_dir in output_dirs:
