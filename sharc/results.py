@@ -192,7 +192,13 @@ class Results(object):
             self.overwrite_sample_files = False
 
     @staticmethod
-    def load_many_from_dir(root_dir: str, *, only_latest=True, only_samples: list[str] = None, filter_fn=None) -> list["Results"]:
+    def load_many_from_dir(
+        root_dir: str,
+        *,
+        only_latest=True,
+        only_samples: list[str] = None,
+        filter_fn=None
+    ) -> list["Results"]:
         output_dirs = list(glob.glob(f"{root_dir}/output_*"))
 
         if len(output_dirs) == 0:
