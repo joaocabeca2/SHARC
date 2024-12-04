@@ -7,4 +7,5 @@ SHARC_IMPLEMENTED_SYSTEMS = [
     "FS",
     "RAS",
     "SINGLE_EARTH_STATION",
+    "WIFI"
 ]

@@ -19,6 +19,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
+from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
 
 
 class Parameters(object):
@@ -40,6 +41,7 @@ class Parameters(object):
         self.ras = ParametersRas()
         self.single_earth_station = ParametersSingleEarthStation()
         self.metsat_ss = ParametersMetSatSS()
+        self.wifi = ParametersWifiSystem()
 
     def set_file_name(self, file_name: str):
         """sets the configuration file name
@@ -98,12 +100,18 @@ class Parameters(object):
         #######################################################################
         # RAS station
         #######################################################################
-        self.ras.load_parameters_from_file(self.file_name)
+        #self.ras.load_parameters_from_file(self.file_name)
 
         #######################################################################
         # EESS passive
         #######################################################################
         self.eess_ss.load_parameters_from_file(self.file_name)
+         #######################################################################
+        # wifi system
+        #######################################################################
+        self.wifi.load_parameters_from_file(self.file_name)
+
+        #######################################################################
 
         self.single_earth_station.load_parameters_from_file(self.file_name)
 

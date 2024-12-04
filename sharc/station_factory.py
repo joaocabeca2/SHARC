@@ -24,7 +24,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
-from sharc.parameters.parameters_wifi_system import ParametersWifiSystem
+from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
 from sharc.parameters.constants import EARTH_RADIUS
 from sharc.station_manager import StationManager
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
@@ -554,6 +554,8 @@ class StationFactory(object):
             return StationFactory.generate_haps(parameters.haps, intersite_dist, random_number_gen)
         elif parameters.general.system == "RNS":
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
+        elif parameters.general.system == "WIFI":
+            return StationFactory.generate_wifi_system(parameters.wifi)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -1124,12 +1126,37 @@ class StationFactory(object):
         StationManager
             The WiFi Stations used in the main simulation loop
         """
-        wifi_system = SystemWifi(param=ParametersWifiSystem)
+        # Criação do sistema Wi-Fi com parâmetros fornecidos
+        wifi_system = SystemWifi(param=param)
+
+        # Geração inicial das estações Wi-Fi
         wifi_system.generate_stations()
+
+        # Configuração das conexões (bidirecional: uplink e downlink)
         wifi_system.connect_stations()
-        wifi_system.calculate_coupling_loss()
+
+        # Simulação das perdas de acoplamento para uplink e downlink
+        wifi_system.calculate_downlink_coupling_loss()
+        wifi_system.calculate_uplink_coupling_loss()
+
+        # Cálculo de métricas de interferência
+        wifi_system.calculate_interference()
+
+        # Configuração adicional para integração com StationManager
         wifi_stations = wifi_system.get_stations()
-        return wifi_stations
+
+        # Integração dos objetos StationManager com topologia e conexão
+        station_manager = StationManager(len(wifi_stations))
+        for i, station in enumerate(wifi_stations):
+            station_manager.x[i] = station.x
+            station_manager.y[i] = station.y
+            station_manager.height[i] = station.height
+            station_manager.tx_power[i] = station.tx_power
+            station_manager.rx_power[i] = station.rx_power
+            station_manager.active[i] = station.active
+            station_manager.antenna[i] = station.antenna
+
+        return station_manager
 
     @staticmethod
     def get_random_position(num_stas: int,
