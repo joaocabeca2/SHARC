@@ -186,7 +186,7 @@ class Results(object):
 
     @staticmethod
     def load_many_from_dir(root_dir: str, *, only_latest=True) -> list["Results"]:
-        output_dirs = list(glob.glob(f"{root_dir}/output_*"))
+        output_dirs = [p for p in glob.glob(f"{root_dir}/output_*") if os.path.isdir(p)]
 
         if len(output_dirs) == 0:
             print("[WARNING]: Results.load_many_from_dir did not find any results")
