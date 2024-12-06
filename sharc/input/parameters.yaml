@@ -57,7 +57,7 @@ imt:
         ###########################################################################
         # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
         # "INDOOR"
-        type: INDOOR
+        type: HOTSPOT
         ###########################################################################
         # Macrocell Topology parameters. Relevant when imt.topology.type == "MACROCELL"
         macrocell:

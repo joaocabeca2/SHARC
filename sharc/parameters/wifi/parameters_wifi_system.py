@@ -2,10 +2,13 @@
 """Parameters definitions for WiFi systems
 """
 from dataclasses import dataclass, field
+import typing
 
 from sharc.parameters.parameters_base import ParametersBase
-from sharc.parameters.parameters_p452 import ParametersP452
+from sharc.parameters.parameters_p619 import ParametersP619
+from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
 from sharc.parameters.wifi.parameters_wifi_topology import ParametersWifiTopology
+
 
 @dataclass
 class ParametersWifiSystem(ParametersBase):
@@ -13,86 +16,100 @@ class ParametersWifiSystem(ParametersBase):
     """
     section_name: str = "wifi"
 
-    # type of FSS-ES location:
-    # FIXED - position must be given
-    # CELL - random within central cell
-    # NETWORK - random within whole network
-    # UNIFORM_DIST - uniform distance from cluster centre,
-    #                between min_dist_to_bs and max_dist_to_bs
-    location: str = "UNIFORM_DIST"
-    # x-y coordinates [m] (only if FIXED location is chosen)
-    x: float = 10000.0
-    y: float = 0.0
-    # minimum distance from BSs [m]
-    min_dist_to_bs: float = 10.0
-    # maximum distance from centre BSs [m] (only if UNIFORM_DIST is chosen)
-    max_dist_to_bs: float = 10.0
-    # antenna height [m]
-    height: float = 6.0
-    # Elevation angle [deg], minimum and maximum, values
-    elevation_min: float = 48.0
-    elevation_max: float = 80.0
-    # Azimuth angle [deg]
-    # either a specific angle or string 'RANDOM'
-    azimuth: str = 0.2
-    # center frequency [MHz]
-    frequency: float = 43000.0
-    # bandwidth [MHz]
-    bandwidth: float = 6.0
-    # adjacent channel selectivity (dB)
-    adjacent_ch_selectivity: float = 0.0
-    # Peak transmit power spectral density (clear sky) [dBW/Hz]
-    tx_power_density: float = -68.3
-    # System receive noise temperature [K]
-    noise_temperature: float = 950.0
-    # antenna peak gain [dBi]
-    antenna_gain: float = 0.0
-    # Antenna pattern of the FSS Earth station
-    # Possible values: "ITU-R S.1855", "ITU-R S.465", "ITU-R S.580", "OMNI",
-    #                  "Modified ITU-R S.465"
+    nested_parameters_enabled: bool = True
+
+    minimum_separation_distance_bs_ue: float = 0.0
+    interfered_with: bool = False
+    frequency: float = 7000.0
+    bandwidth: float = 80.0
+    rb_bandwidth: float = 0.180
+    spectral_mask: str = "3GPP E-UTRA"
+    spurious_emissions: float = -13.0
+    guard_band_ratio: float = 0.1
     antenna_pattern: str = "Modified ITU-R S.465"
-    # Antenna envelope gain (dBi) - only relevant for "Modified ITU-R S.465" model
-    antenna_envelope_gain: float = 0.0
-    # Diameter of the antenna [m]
-    diameter: float = 1.8
-    # Channel parameters
-    # channel model, possible values are "FSPL" (free-space path loss),
-    #                                    "TerrestrialSimple" (FSPL + clutter loss)
-    #                                    "P452"
-    #                                    "TVRO-URBAN"
-    #                                    "TVRO-SUBURBAN"
-    #                                    "HDFSS"
-    channel_model: str = "P452"
-     # P452 parameters
-    param_p452 = ParametersP452()
-    # Total air pressure in hPa
-    atmospheric_pressure: float = 935.0
-    # Temperature in Kelvin
-    air_temperature: float = 300.0
-    # Sea-level surface refractivity (use the map)
-    N0: float = 352.58
-    # Average radio-refractive (use the map)
-    delta_N: float = 43.127
-    # Percentage p. Float (0 to 100) or RANDOM
-    percentage_p: str = "0.2"
-    # Distance over land from the transmit and receive antennas to the coast (km)
-    Dct: float = 70.0
-    # Distance over land from the transmit and receive antennas to the coast (km)
-    Dcr: float = 70.0
-    # Effective height of interfering antenna (m)
-    Hte: float = 20.0
-    # Effective height of interfered-with antenna (m)
-    Hre: float = 3.0
-    # Latitude of transmitter
-    tx_lat: float = -23.55028
-    # Latitude of receiver
-    rx_lat: float = -23.17889
-    # Antenna polarization
-    polarization: str = "horizontal"
-    # Determine whether clutter loss following ITU-R P.2108 is added (TRUE/FALSE)
-    clutter_loss: bool = True
+
+    @dataclass
+    class ParametersAP(ParametersBase):
+        load_probability = 0.2
+        conducted_power = 10.0
+        height: float = 6.0
+        noise_figure: float = 10.0
+        ohmic_loss: float = 3.0
+        antenna: ParametersAntennaWifi = field(default_factory=ParametersAntennaWifi)
+
+    ap: ParametersAP = field(default_factory=ParametersAP)
 
     topology: ParametersWifiTopology = field(default_factory=ParametersWifiTopology)
+
+    @dataclass
+    class ParametersUL(ParametersBase):
+        attenuation_factor: float = 0.4
+        sinr_min: float = -10.0
+        sinr_max: float = 22.0
+    uplink: ParametersUL = field(default_factory=ParametersUL)
+
+     # Antenna model for adjacent band studies.
+    adjacent_antenna_model: typing.Literal["SINGLE_ELEMENT", "BEAMFORMING"] = "SINGLE_ELEMENT"
+
+    @dataclass
+    class ParametersSTA(ParametersBase):
+        k: int = 3
+        k_m: int = 1
+        indoor_percent: int = 5.0
+        distribution_type: str = "ANGLE_AND_DISTANCE"
+        distribution_distance: str = "RAYLEIGH"
+        distribution_azimuth: str = "NORMAL"
+        azimuth_range: tuple = (-60, 60)
+        tx_power_control: bool = True
+        p_o_pusch: float = -95.0
+        alpha: float = 1.0
+        p_cmax: float = 22.0
+        power_dynamic_range: float = 63.0
+        height: float = 1.5
+        noise_figure: float = 10.0
+        ohmic_loss: float = 3.0
+        body_loss: float = 4.0
+        antenna: ParametersAntennaWifi = field(default_factory=lambda: ParametersAntennaWifi(downtilt=0.0))
+
+    sta: ParametersSTA = field(default_factory=ParametersSTA)
+
+    @dataclass
+    class ParamatersDL(ParametersBase):
+        attenuation_factor: float = 0.6
+        sinr_min: float = -10.0
+        sinr_max: float = 30.0
+
+    downlink: ParamatersDL = field(default_factory=ParamatersDL)
+
+    noise_temperature: float = 290.0
+    # Channel parameters
+    # channel model, possible values are "FSPL" (free-space path loss),
+    #                                    "CI" (close-in FS reference distance)
+    #                                    "UMa" (Urban Macro - 3GPP)
+    #                                    "UMi" (Urban Micro - 3GPP)
+    #                                    "TVRO-URBAN"
+    #                                    "TVRO-SUBURBAN"
+    #                                    "ABG" (Alpha-Beta-Gamma)
+    # TODO: check if we wanna separate the channel model definition in its own nested attributes
+    channel_model: str = "UMi"
+    # Parameters for the P.619 propagation model
+    # For IMT NTN the model is used for calculating the coupling loss between
+    # the BS space station and the UEs on Earth's surface.
+    # For now, the NTN footprint is centered over the BS nadir point, therefore
+    # the paramters imt_lag_deg and imt_long_diff_deg SHALL be zero.
+    #    space_station_alt_m - altitude of IMT space station (meters)
+    #    earth_station_alt_m - altitude of IMT earth stations (UEs) (in meters)
+    #    earth_station_lat_deg - latitude of IMT earth stations (UEs) (in degrees)
+    #    earth_station_long_diff_deg - difference between longitudes of IMT space and earth stations
+    #      (positive if space-station is to the East of earth-station)
+    #    season - season of the year.
+    param_p619 = ParametersP619()
+    season: str = "SUMMER"
+
+    # TODO: create parameters for where this is needed
+    los_adjustment_factor: float = 18.0
+    shadowing: bool = True
+
 
     def load_parameters_from_file(self, config_file: str):
         """
@@ -108,23 +125,35 @@ class ParametersWifiSystem(ParametersBase):
         ValueError
             If a parameter is not valid.
         """
-        super().load_parameters_from_file(config_file)
-
-        if self.channel_model.upper() not in [
-            "FSPL", "TERRESTRIALSIMPLE", "P452", "P619",
-            "TVRO-URBAN", "TVRO-SUBURBAN", "HDFSS", "UMA", "UMI",
-        ]:
+        if self.spectral_mask not in ["IMT-2020", "3GPP E-UTRA"]:
             raise ValueError(
-                f"ParametersFssEs: Invalid value for parameter channel_model - {self.channel_model}",
+                f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
             )
 
-        if self.channel_model == "P452":
-            self.param_p452.load_from_paramters(self)
+        if self.channel_model not in ["FSPL", "CI", "UMa", "UMi", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619"]:
+            raise ValueError(f"ParamtersImt: \
+                             Invalid value for parameter channel_model - {self.channel_model}. \
+                             Possible values are \"FSPL\",\"CI\", \"UMa\", \"UMi\", \"TVRO-URBAN\", \"TVRO-SUBURBAN\", \
+                             \"ABG\", \"P619\".")
 
-        elif self.channel_model == "P619":
-            self.param_p619.load_from_paramters(self)
-        
 
+        if self.season not in ["SUMMER", "WINTER"]:
+            raise ValueError(f"ParamtersImt: \
+                             Invalid value for parameter season - {self.season}. \
+                             Possible values are \"SUMMER\", \"WINTER\".")
+
+
+        self.frequency = float(self.frequency)
+
+        self.ap.antenna.set_external_parameters(
+            adjacent_antenna_model=self.adjacent_antenna_model
+        )
+
+        self.sta.antenna.set_external_parameters(
+            adjacent_antenna_model=self.adjacent_antenna_model
+        )
+
+        self.validate("wifi")
     
 
     
