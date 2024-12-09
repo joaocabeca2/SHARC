@@ -1130,36 +1130,22 @@ class StationFactory(object):
         wifi = SystemWifi(param=param)
 
         # Geração inicial das estações Wi-Fi
-        aps = wifi.generate_stations(random_number_gen)
+        aps = wifi.generate_aps(random_number_gen)
+        stas = wifi.generate_stas(random_number_gen)
 
         # Configuração das conexões (bidirecional: uplink e downlink)
-        wifi.connect_stations()
+        #wifi.connect_stations()
 
         # Simulação das perdas de acoplamento para uplink e downlink
         #wifi_system.calculate_downlink_coupling_loss()
         #wifi_system.calculate_uplink_coupling_loss()
 
         # Cálculo de métricas de interferência
-        wifi.calculate_interference()
-
-        # Configuração adicional para integração com StationManager
-        wifi_stations = wifi.get_stations()
-
-        # Integração dos objetos StationManager com topologia e conexão
-        '''station_manager = StationManager(len(wifi_stations))
-        for i, station in enumerate(wifi_stations):
-            station_manager.x[i] = station.x
-            station_manager.y[i] = station.y
-            station_manager.height[i] = station.height
-            station_manager.tx_power[i] = station.tx_power
-            station_manager.rx_power[i] = station.rx_power
-            station_manager.active[i] = station.active
-            station_manager.antenna[i] = station.antenna
-
-        return station_manager'''
+        #wifi.calculate_interference()
+        return (aps, stas)
 
     @staticmethod
-    def get_random_position(num_stas: int,
+    def get_random_position(num_ue: int,
                             topology: Topology,
                             random_number_gen: np.random.RandomState,
                             min_dist_to_bs=0.,
@@ -1170,7 +1156,7 @@ class StationFactory(object):
 
         Parameters
         ----------
-        num_stas : int
+        num_ue : int
             Number of UE stations
         topology : Topology
             The IMT topology object
@@ -1195,18 +1181,18 @@ class StationFactory(object):
         bs_x = -hexagon_radius
         bs_y = 0
 
-        while len(x) < num_stas:
-            num_stas_temp = num_stas - len(x)
+        while len(x) < num_ue:
+            num_ue_temp = num_ue - len(x)
             # generate UE uniformly in a triangle
-            x_temp = random_number_gen.uniform(0, hexagon_radius * np.cos(np.pi / 6), num_stas_temp)
-            y_temp = random_number_gen.uniform(0, hexagon_radius / 2, num_stas_temp)
+            x_temp = random_number_gen.uniform(0, hexagon_radius * np.cos(np.pi / 6), num_ue_temp)
+            y_temp = random_number_gen.uniform(0, hexagon_radius / 2, num_ue_temp)
 
             invert_index = np.arctan(y_temp / x_temp) > np.pi / 6
             y_temp[invert_index] = -(hexagon_radius / 2 - y_temp[invert_index])
             x_temp[invert_index] = (hexagon_radius * np.cos(np.pi / 6) - x_temp[invert_index])
 
             # randomly choose a hextant
-            hextant = random_number_gen.random_integers(0, 5, num_stas_temp)
+            hextant = random_number_gen.random_integers(0, 5, num_ue_temp)
             hextant_angle = np.pi / 6 + np.pi / 3 * hextant
 
             old_x = x_temp
@@ -1234,15 +1220,15 @@ class StationFactory(object):
                 sys.exit(1)
 
             cell = central_cell_indices[0][random_number_gen.random_integers(0, len(central_cell_indices[0]) - 1,
-                                                                             num_stas)]
+                                                                             num_ue)]
         elif deterministic_cell:
             num_bs = topology.num_base_stations
-            stas_per_cell = num_stas / num_bs
-            cell = np.repeat(np.arange(num_bs, dtype=int), stas_per_cell)
+            ue_per_cell = num_ue / num_bs
+            cell = np.repeat(np.arange(num_bs, dtype=int), ue_per_cell)
 
         else:  # random cells
             num_bs = topology.num_base_stations
-            cell = random_number_gen.random_integers(0, num_bs - 1, num_stas)
+            cell = random_number_gen.random_integers(0, num_bs - 1, num_ue)
 
         cell_x = topology.x[cell]
         cell_y = topology.y[cell]

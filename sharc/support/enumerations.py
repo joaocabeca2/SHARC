@@ -44,4 +44,5 @@ class StationType(Enum):
     EESS_SS = 9  # EESS Space Station
     METSAT_SS = 10  # MetSat Space Station
     SINGLE_EARTH_STATION = 11
-    WIFI_SYSTEM = 12
+    WIFI_APS = 12
+    WIFI_STA = 13

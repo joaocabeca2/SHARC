@@ -91,19 +91,7 @@ class ParametersWifiSystem(ParametersBase):
     #                                    "TVRO-SUBURBAN"
     #                                    "ABG" (Alpha-Beta-Gamma)
     # TODO: check if we wanna separate the channel model definition in its own nested attributes
-    channel_model: str = "UMi"
-    # Parameters for the P.619 propagation model
-    # For IMT NTN the model is used for calculating the coupling loss between
-    # the BS space station and the UEs on Earth's surface.
-    # For now, the NTN footprint is centered over the BS nadir point, therefore
-    # the paramters imt_lag_deg and imt_long_diff_deg SHALL be zero.
-    #    space_station_alt_m - altitude of IMT space station (meters)
-    #    earth_station_alt_m - altitude of IMT earth stations (UEs) (in meters)
-    #    earth_station_lat_deg - latitude of IMT earth stations (UEs) (in degrees)
-    #    earth_station_long_diff_deg - difference between longitudes of IMT space and earth stations
-    #      (positive if space-station is to the East of earth-station)
-    #    season - season of the year.
-    param_p619 = ParametersP619()
+    channel_model: str = "FSPL"
     season: str = "SUMMER"
 
     # TODO: create parameters for where this is needed
