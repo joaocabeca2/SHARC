@@ -1,15 +1,36 @@
-from sharc.parameters.parameters_wifi_system import ParametersWifiSystem
+import os
+import sys
+
+from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
+from sharc.simulation_downlink import SimulationDownlink
 from sharc.station_manager import StationManager
+from sharc.topology.topology_hotspot import TopologyHotspot
+
 
 class SystemWifi():
     """Implements a Wifi Network compose of APs and STAs."""
     def __init__(self, param: ParametersWifiSystem) -> None:
-        # initialize the parameters of the wifi system
-        pass
+        self.parameters = param
+        self.topology = self.generate_topology(self.parameters)
+        
+    '''def initialize_simulations(self):
+        param_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'input', 'parameters.yaml')
+        simulation_dl = SimulationDownlink(self.parameters, param_file)
+        simulation_ul = SimulationUplink(self.parameters, param_file)
+        return (simulation_dl, simulation_ul)'''
 
-    def generate_topology(self):
-        # Create the positions of the Wifi stations
-        pass
+    def generate_topology(self, parameters):
+        if self.parameters.topology.type == "HOTSPOT":
+            return TopologyHotspot(
+                parameters.topology.hotspot,
+                parameters.topology.hotspot.intersite_distance,
+                parameters.topology.hotspot.num_clusters
+            )
+        sys.stderr.write(
+            "ERROR\nInvalid topology: " +
+            parameters.topology.type,
+        )
+        sys.exit(1)
 
     def generate_stations(self):
         # Generate the stations similar to the StationFactory functions. 

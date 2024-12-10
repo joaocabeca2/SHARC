@@ -5,55 +5,54 @@ Created on Thu Mar 23 16:37:32 2017
 @author: edgar
 """
 
-from warnings import warn
-import numpy as np
-import sys
 import math
+import sys
+from warnings import warn
 
-from sharc.support.enumerations import StationType
-from sharc.parameters.parameters import Parameters
-from sharc.parameters.imt.parameters_imt import ParametersImt
-from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
-from sharc.parameters.parameters_space_station import ParametersSpaceStation
-from sharc.parameters.parameters_eess_ss import ParametersEessSS
-from sharc.parameters.parameters_metsat_ss import ParametersMetSatSS
-from sharc.parameters.parameters_fs import ParametersFs
-from sharc.parameters.parameters_fss_ss import ParametersFssSs
-from sharc.parameters.parameters_fss_es import ParametersFssEs
-from sharc.parameters.parameters_haps import ParametersHaps
-from sharc.parameters.parameters_rns import ParametersRns
-from sharc.parameters.parameters_ras import ParametersRas
-from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
-from sharc.parameters.parameters_wifi_system import ParametersWifiSystem
-from sharc.parameters.constants import EARTH_RADIUS
-from sharc.station_manager import StationManager
-from sharc.mask.spectral_mask_imt import SpectralMaskImt
+import numpy as np
+
 from sharc.antenna.antenna import Antenna
-from sharc.antenna.antenna_fss_ss import AntennaFssSs
-from sharc.antenna.antenna_omni import AntennaOmni
+from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 from sharc.antenna.antenna_f699 import AntennaF699
 from sharc.antenna.antenna_f1891 import AntennaF1891
+from sharc.antenna.antenna_fss_ss import AntennaFssSs
 from sharc.antenna.antenna_m1466 import AntennaM1466
+from sharc.antenna.antenna_modified_s465 import AntennaModifiedS465
+from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.antenna.antenna_rs1813 import AntennaRS1813
 from sharc.antenna.antenna_rs1861_9a import AntennaRS1861_9A
 from sharc.antenna.antenna_rs1861_9b import AntennaRS1861_9B
 from sharc.antenna.antenna_rs1861_9c import AntennaRS1861_9C
 from sharc.antenna.antenna_rs2043 import AntennaRS2043
 from sharc.antenna.antenna_s465 import AntennaS465
-from sharc.antenna.antenna_modified_s465 import AntennaModifiedS465
 from sharc.antenna.antenna_s580 import AntennaS580
 from sharc.antenna.antenna_s672 import AntennaS672
 from sharc.antenna.antenna_s1528 import AntennaS1528
 from sharc.antenna.antenna_s1855 import AntennaS1855
 from sharc.antenna.antenna_sa509 import AntennaSA509
-from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
+from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
+from sharc.mask.spectral_mask_imt import SpectralMaskImt
+from sharc.parameters.constants import EARTH_RADIUS, SPEED_OF_LIGHT
+from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
+from sharc.parameters.imt.parameters_imt import ParametersImt
+from sharc.parameters.parameters import Parameters
+from sharc.parameters.parameters_eess_ss import ParametersEessSS
+from sharc.parameters.parameters_fs import ParametersFs
+from sharc.parameters.parameters_fss_es import ParametersFssEs
+from sharc.parameters.parameters_fss_ss import ParametersFssSs
+from sharc.parameters.parameters_haps import ParametersHaps
+from sharc.parameters.parameters_metsat_ss import ParametersMetSatSS
+from sharc.parameters.parameters_ras import ParametersRas
+from sharc.parameters.parameters_rns import ParametersRns
+from sharc.parameters.parameters_single_earth_station import \
+    ParametersSingleEarthStation
+from sharc.parameters.parameters_space_station import ParametersSpaceStation
+from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
+from sharc.station_manager import StationManager
+from sharc.support.enumerations import StationType
+from sharc.system.system_wifi import SystemWifi
 from sharc.topology.topology import Topology
 from sharc.topology.topology_macrocell import TopologyMacrocell
-from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
-
-from sharc.system.system_wifi import SystemWifi
-
-from sharc.parameters.constants import SPEED_OF_LIGHT
 
 
 class StationFactory(object):
@@ -554,6 +553,8 @@ class StationFactory(object):
             return StationFactory.generate_haps(parameters.haps, intersite_dist, random_number_gen)
         elif parameters.general.system == "RNS":
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
+        elif parameters.general.system == "WIFI":
+            return StationFactory.generate_wifi_system(parameters.wifi)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -1124,12 +1125,39 @@ class StationFactory(object):
         StationManager
             The WiFi Stations used in the main simulation loop
         """
-        wifi_system = SystemWifi(param=ParametersWifiSystem)
+        # Criação do sistema Wi-Fi com parâmetros fornecidos
+        wifi_system = SystemWifi(param=param)
+        
+        topology = wifi_system.generate_topology(param)
+        topology.calculate_coordinates()
+        # Geração inicial das estações Wi-Fi
         wifi_system.generate_stations()
+
+        # Configuração das conexões (bidirecional: uplink e downlink)
         wifi_system.connect_stations()
-        wifi_system.calculate_coupling_loss()
+
+        # Simulação das perdas de acoplamento para uplink e downlink
+        wifi_system.calculate_downlink_coupling_loss()
+        wifi_system.calculate_uplink_coupling_loss()
+
+        # Cálculo de métricas de interferência
+        wifi_system.calculate_interference()
+
+        # Configuração adicional para integração com StationManager
         wifi_stations = wifi_system.get_stations()
-        return wifi_stations
+
+        # Integração dos objetos StationManager com topologia e conexão
+        station_manager = StationManager(len(wifi_stations))
+        for i, station in enumerate(wifi_stations):
+            station_manager.x[i] = station.x
+            station_manager.y[i] = station.y
+            station_manager.height[i] = station.height
+            station_manager.tx_power[i] = station.tx_power
+            station_manager.rx_power[i] = station.rx_power
+            station_manager.active[i] = station.active
+            station_manager.antenna[i] = station.antenna
+
+        return station_manager
 
     @staticmethod
     def get_random_position(num_stas: int,
