@@ -19,6 +19,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
+from sharc.parameters.parameters_ngso import ParametersNgsoConstellation
 
 
 class Parameters(object):
@@ -40,6 +41,7 @@ class Parameters(object):
         self.ras = ParametersRas()
         self.single_earth_station = ParametersSingleEarthStation()
         self.metsat_ss = ParametersMetSatSS()
+        self.ngso = ParametersNgsoConstellation()
 
     def set_file_name(self, file_name: str):
         """sets the configuration file name
@@ -106,6 +108,13 @@ class Parameters(object):
         self.eess_ss.load_parameters_from_file(self.file_name)
 
         self.single_earth_station.load_parameters_from_file(self.file_name)
+
+       
+        #######################################################################
+        # NGSO constellation
+        #######################################################################
+        self.ngso.load_parameters_from_file(self.file_name)
+        self.
 
 
 if __name__ == "__main__":
