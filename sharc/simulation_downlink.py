@@ -54,7 +54,7 @@ class SimulationDownlink(Simulation):
             self.system.connect_aps_to_stas()
             self.system.select_sta(random_number_gen)
 
-            #coupling_loss = self.system.calculate_intra_wifi_coupling_loss()
+            coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(self.system.ap, self.system.sta)
 
         # Create IMT user equipments
         self.ue = StationFactory.generate_imt_ue(

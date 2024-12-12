@@ -426,6 +426,70 @@ class Simulation(ABC, Observable):
                         self.bs.antenna[bs].beams_list,
                     ) - 1
 
+    def calculate_intra_wifi_coupling_loss(self,
+            wifi_ap_station: StationManager,
+            wifi_sta_station: StationManager
+        
+    ) -> np.array:
+        """
+        Calculates the coupling loss (path loss + antenna gains + other losses) between
+        Wi-Fi stations (STA and AP).
+
+        Returns an numpy array with wifi_ap_station.size X wifi_sta_station.size with coupling loss
+        values.
+
+        Parameters
+        ----------
+        system_station : StationManager
+            A StationManager object representing Wi-Fi STA stations
+        wifi_station : StationManager
+            A StationManager object representing Wi-Fi AP stations
+        is_co_channel : bool, optional
+            Whether the interference analysis is co-channel or not, by default True.
+            This parameter is ignored. It's kept to maintain method interface.
+
+        Returns
+        -------
+        np.array
+            Returns an numpy array with wifi_ap_station.size X wifi_sta_station.size with coupling loss
+            values.
+        """
+        # Calculate the antenna gains
+
+        ant_gain_ap_to_sta = self.calculate_gains(
+            wifi_ap_station, wifi_sta_station
+        )
+        ant_gain_sta_to_ap = self.calculate_gains(
+            wifi_sta_station, wifi_ap_station
+        )
+
+        # Calculate the path loss between Wi-Fi stations. Primarily used for UL power control.
+
+        # Note on the array dimensions for coupling loss calculations:
+        # The function get_loss returns an array station_a x station_b
+        path_loss = self.propagation_system.get_loss(
+            self.parameters,
+            self.system.parameters.frequency,
+            self.system.sta,
+            self.system.ap,
+            ant_gain_sta_to_ap,
+            ant_gain_ap_to_sta,
+        )
+
+        # Collect Wi-Fi AP and STA antenna gain samples
+        self.path_loss_wifi = np.transpose(path_loss)
+        self.system_ap_antenna_gain = ant_gain_ap_to_sta
+        self.system_sta_antenna_gain = np.transpose(ant_gain_sta_to_ap)
+        additional_loss = self.parameters.wifi.ap.ohmic_loss \
+            + self.parameters.wifi.sta.ohmic_loss \
+            + self.parameters.wifi.sta.body_loss
+
+        # calculate coupling loss
+        coupling_loss = np.squeeze(
+            self.path_loss_wifi - self.system_ap_antenna_gain - self.system_sta_antenna_gain,
+        ) + additional_loss
+
+        return coupling_loss
     def scheduler(self):
         """
         This scheduler divides the available resource blocks among UE's for
@@ -469,7 +533,20 @@ class Simulation(ABC, Observable):
         elif (station_1.station_type is StationType.IMT_UE):
             phi, theta = station_1.get_pointing_vector_to(station_2)
             beams_idx = np.zeros(len(station_2_active), dtype=int)
-
+        
+        elif station_1.station_type  is StationType.WIFI_APS:
+            if station_2.station_type is StationType.WIFI_STA:
+                phi = self.system.ap_to_sta_phi
+                theta = self.system.ap_to_sta_theta
+                beams_idx = self.system.ap_to_sta_beam_rbs[station_2_active]
+            elif station_2 is not (StationType.WIFI_APS or StationType.WIFI_STA):
+                phi, theta = station_1.get_pointing_vector_to(station_2)
+                phi = np.repeat(phi, self.parameters.wifi.sta.k, 0)
+                theta = np.repeat(theta, self.parameters.wifi.sta.k, 0)
+                beams_idx = np.tile(
+                    np.arange(self.parameters.wifi.sta.k), self.system.num_stations,
+                )
+                
         elif not station_1.is_imt_station():
             phi, theta = station_1.get_pointing_vector_to(station_2)
             beams_idx = np.zeros(len(station_2_active), dtype=int)
@@ -491,7 +568,8 @@ class Simulation(ABC, Observable):
                         co_channel=c_channel,
                     )
 
-        elif station_1.station_type is StationType.IMT_UE and not station_2.is_imt_station():
+        elif (station_1.station_type is StationType.IMT_UE and not station_2.is_imt_station()) or \
+                station_1.station_type is StationType.WIFI_STA and station_2.is_imt_station():
             for k in station_1_active:
                 gains[k, station_2_active] = station_1.antenna[k].calculate_gain(
                     phi_vec=phi[k, station_2_active],
@@ -503,13 +581,30 @@ class Simulation(ABC, Observable):
                     co_channel=c_channel,
                 )
 
+        elif station_1.station_type is StationType.WIFI_APS and station_2.is_imt_station():
+            for k in station_1_active:
+                for b in range(k * self.parameters.system.sta.k, (k + 1) * self.parameters.system.sta.k):
+                    gains[b, station_2_active] = station_1.antenna[k].calculate_gain(
+                        phi_vec=phi[b, station_2_active],
+                        theta_vec=theta[
+                            b,
+                            station_2_active,
+                        ],
+                        beams_l=np.array(
+                            [beams_idx[b]],
+                        ),
+                        co_channel=c_channel,
+                    )
+
         elif station_1.station_type is StationType.RNS:
             gains[0, station_2_active] = station_1.antenna[0].calculate_gain(
                 phi_vec=phi[0, station_2_active],
                 theta_vec=theta[0, station_2_active],
             )
 
-        elif not station_1.is_imt_station():
+        elif not station_1.is_imt_station() and \
+                   (station_1.station_type is not StationType.WIFI_APS and \
+                    station_1.station_type is not StationType.WIFI_STA) :
 
             off_axis_angle = station_1.get_off_axis_angle(station_2)
             distance = station_1.get_distance_to(station_2)
@@ -523,7 +618,7 @@ class Simulation(ABC, Observable):
                     off_axis_angle_vec=off_axis_angle[0, station_2_active],
                     theta_vec=theta[0, station_2_active],
             )
-        else:  # for IMT <-> IMT
+        else:  # for IMT <-> IMT / WIFI <-> WIFI
             for k in station_1_active:
                 gains[k, station_2_active] = station_1.antenna[k].calculate_gain(
                     phi_vec=phi[k, station_2_active],
