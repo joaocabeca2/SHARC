@@ -261,6 +261,19 @@ imt:
             # side lobes when beamforming is assumed in adjacent channel.
             #       Original value: 12 (Rec. ITU-R M.2101)
             multiplication_factor: 12
+            ###########################################################################
+            # Subarray for IMT as defined in R23-WP5D-C-0413, Annex 4.2
+            # Single column sub array
+            subarray:
+                # NOTE: if subarray is enabled, element definition will mostly come from
+                # the above definitions
+                is_enabled: false
+                # Rows per subarray
+                n_rows: 3
+                # Sub array element spacing (d/lambda).
+                element_vert_spacing: 0.7
+                # Sub array eletrical downtilt [deg]
+                eletrical_downtilt: 3.0
 
     ###########################################################################
     # User Equipment parameters:

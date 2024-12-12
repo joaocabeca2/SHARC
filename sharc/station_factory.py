@@ -122,7 +122,8 @@ class StationFactory(object):
             imt_base_stations.antenna[i] = \
                 AntennaBeamformingImt(
                     param_ant, imt_base_stations.azimuth[i],
-                    imt_base_stations.elevation[i],)
+                    imt_base_stations.elevation[i], param_ant_bs.subarray
+                )
 
         # imt_base_stations.antenna = [AntennaOmni(0) for bs in range(num_bs)]
         imt_base_stations.bandwidth = param.bandwidth * np.ones(num_bs)
@@ -337,7 +338,7 @@ class StationFactory(object):
         for i in range(num_ue):
             imt_ue.antenna[i] = AntennaBeamformingImt(
                 par, imt_ue.azimuth[i],
-                imt_ue.elevation[i],
+                imt_ue.elevation[i], ue_param_ant.subarray
             )
 
         # imt_ue.antenna = [AntennaOmni(0) for bs in range(num_ue)]
@@ -494,7 +495,7 @@ class StationFactory(object):
         for i in range(num_ue):
             imt_ue.antenna[i] = AntennaBeamformingImt(
                 par, imt_ue.azimuth[i],
-                imt_ue.elevation[i],
+                imt_ue.elevation[i], ue_param_ant.subarray
             )
 
         # imt_ue.antenna = [AntennaOmni(0) for bs in range(num_ue)]

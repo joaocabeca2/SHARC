@@ -112,6 +112,25 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(
             self.parameters.imt.ue.antenna.multiplication_factor, 12)
 
+        """Test ParametersSubarrayImt
+        """
+        # testing default value not enabled
+        self.assertEqual(
+            self.parameters.imt.ue.antenna.subarray.is_enabled, False
+        )
+        # testing a fictitious configuration
+        self.assertEqual(
+            self.parameters.imt.bs.antenna.subarray.is_enabled, True
+        )
+        self.assertEqual(
+            self.parameters.imt.bs.antenna.subarray.eletrical_downtilt, 9
+        )
+        self.assertEqual(
+            self.parameters.imt.bs.antenna.subarray.n_rows, 10
+        )
+        self.assertEqual(
+            self.parameters.imt.bs.antenna.subarray.element_vert_spacing, 0.05
+        )
         """Test ParametersHotspot
         """
         self.assertEqual(self.parameters.imt.topology.hotspot.num_hotspots_per_cell, 1)
