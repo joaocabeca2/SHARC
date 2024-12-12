@@ -198,6 +198,8 @@ class Simulation(ABC, Observable):
             self.polarization_loss = self.param_system.polarization_loss
         else:
             self.polarization_loss = 3.0
+        
+        #se o sistema for wifi
 
     def finalize(self, *args, **kwargs):
         """

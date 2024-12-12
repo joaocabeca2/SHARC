@@ -93,6 +93,9 @@ class Model(Observable):
             + "\tpath loss model: {:s}\n".format(param_system.channel_model) \
             + "\tantenna pattern: {:s}\n".format(param_system.antenna_pattern)
 
+        if self.parameters.general.system == "WIFI":
+            description += "\ttopology: {:s}\n".format(self.parameters.wifi.topology.type)
+            
         return description
 
     def snapshot(self):

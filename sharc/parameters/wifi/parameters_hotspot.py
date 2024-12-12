@@ -11,7 +11,7 @@ class ParametersHotspot(ParametersBase):
     # Number of clusters topology
     num_clusters: int = 1
     # Number of hotspots per macro cell (sector)
-    num_hotspots_per_cell: float = 1.0
+    num_hotspots_per_cell: int = 1
     # Maximum 2D distance between hotspot and UE [m]
     # This is the hotspot radius
     max_dist_hotspot_ue: float = 100.0
