@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 
@@ -17,6 +18,45 @@ class SystemWifi():
         self.parameters = param
         self.topology = self.generate_topology()
         self.topology.calculate_coordinates()
+        num_aps = self.topology.num_base_stations
+        num_stas = num_aps * self.parameters.sta.k * self.parameters.sta.k_m
+
+        self.ap_power_gain = 10 * math.log10(
+            self.parameters.ap.antenna.n_rows *
+            self.parameters.ap.antenna.n_columns,
+        )
+        self.sta_power_gain = 10 * math.log10(
+            self.parameters.sta.antenna.n_rows *
+            self.parameters.sta.antenna.n_columns,
+        )
+        self.ap_antenna_gain = list()
+        self.sta_antenna_gain = list()
+        self.path_loss = np.empty([num_aps, num_stas])
+        self.coupling_loss = np.empty([num_aps, num_stas])
+
+        self.ap_to_sta_phi = np.empty([num_aps, num_stas])
+        self.ap_to_sta_theta = np.empty([num_aps, num_stas])
+        self.ap_to_sta_beam_rbs = -1.0 * np.ones(num_stas, dtype=int)
+
+        self.sta = np.empty(num_stas)
+        self.ap = np.empty(num_aps)
+
+        self.link = dict([(bs, list()) for bs in range(num_aps)])
+
+        self.num_rb_per_bs = math.trunc(
+            (1 - self.parameters.guard_band_ratio) *
+            self.parameters.bandwidth / self.parameters.rb_bandwidth,
+        )
+        # calculates the number of RB per STA on a given AP
+        self.num_rb_per_sta = math.trunc(
+            self.num_rb_per_bs / self.parameters.sta.k,
+        )
+
+        if hasattr(self.parameters, "polarization_loss"):
+            self.polarization_loss = self.param_system.polarization_loss
+        else:
+            self.polarization_loss = 3.0
+
 
     def generate_topology(self):
         if self.parameters.topology.type == "HOTSPOT":
@@ -40,7 +80,7 @@ class SystemWifi():
         access_points.x = self.topology.x
         access_points.y = self.topology.y
         access_points.elevation = -param_ant.downtilt * np.ones(num_aps)
-        access_points.height = self.parameters.ap.height
+        access_points.height = self.parameters.ap.height * np.ones(num_aps)
         
         access_points.azimuth = self.topology.azimuth
 
@@ -94,7 +134,7 @@ class SystemWifi():
 
         access_points.intersite_dist = self.parameters.topology.hotspot.intersite_distance
             
-        return access_points
+        self.ap = access_points
 
     def generate_stas(self, random_number_gen: np.random.RandomState) -> StationManager:
         num_ap = self.topology.num_base_stations
@@ -110,7 +150,7 @@ class SystemWifi():
         # TODO: Sanitaze the azimuth_range parameter
         azimuth_range = self.parameters.sta.azimuth_range
         if (not isinstance(azimuth_range, tuple)) or len(azimuth_range) != 2:
-            raise ValstaError("Invalid type or length for parameter azimuth_range")
+            raise ValueError("Invalid type or length for parameter azimuth_range")
 
         # Calculate STA pointing (azimuth and elevation)
         azimuth = (azimuth_range[1] - azimuth_range[0]) * random_number_gen.random_sample(num_sta) + azimuth_range[0]
@@ -126,16 +166,16 @@ class SystemWifi():
 
             if self.parameters.sta.distribution_type.upper() == "UNIFORM_IN_CELL" or \
             self.parameters.sta.distribution_type.upper() == "CELL":
-                deterministic_cell = Trsta
+                deterministic_cell = True
 
                 if self.parameters.sta.distribution_type.upper() == "CELL":
-                    central_cell = Trsta
+                    central_cell = True
 
 
             [sta_x, sta_y, theta, distance] = self.get_random_position(
                 num_sta, self.topology, random_number_gen,
                 self.parameters.minimum_separation_distance_ap_sta,
-                deterministic_cell=Trsta,
+                deterministic_cell=True,
             )
             psi = np.degrees(np.arctan((self.parameters.ap.height - self.parameters.sta.height) / distance))
 
@@ -208,7 +248,7 @@ class SystemWifi():
 
         sta.intersite_dist = self.parameters.topology.hotspot.intersite_distance
 
-        return sta
+        self.sta = sta
     
     def get_random_position(self, num_sta: int,
                             topology: TopologyHotspot,
@@ -222,13 +262,13 @@ class SystemWifi():
         Parameters
         ----------
         num_sta : int
-            Number of UE stations
+            Number of stations
         topology : Topology
-            The IMT topology object
+            The wifi topology object
         random_number_gen : np.random.RandomState
             Random number generator
         min_dist_to_ap : _type_, optional
-            Minimum distance to the BS, by default 0.
+            Minimum distance to the ap, by default 0.
         central_cell : bool, optional
             Whether the central cell in the cluster is used, by default False
         deterministic_cell : bool, optional
@@ -317,20 +357,119 @@ class SystemWifi():
 
         return x, y, theta, distance
 
-    def connect_stations(self):
-        # Create a boolean list that list which links between tx and rx are active
-        pass
+    def connect_aps_to_stas(self):
+        num_stas_per_ap = self.parameters.sta.k * self.parameters.sta.k_m
+        ap_active = np.where(self.ap.active)[0]
+        for ap in ap_active:
+            sta_list = [
+                i for i in range(
+                    ap * num_stas_per_ap, ap * num_stas_per_ap + num_stas_per_ap,
+                )
+            ]
+            self.link[ap] = sta_list
 
+    def select_sta(self, random_number_gen: np.random.RandomState):
+        """
+        Select K STAs randomly from all the STAs linked to one AP as “chosen”
+        STAs. These K “chosen” STAs will be scheduled during this snapshot.
+        """
+
+        self.ap_to_sta_d_2D = self.ap.get_distance_to(self.sta)
+        self.ap_to_sta_d_3D = self.ap.get_3d_distance_to(self.sta)
+        self.ap_to_sta_phi, self.ap_to_sta_theta = self.ap.get_pointing_vector_to(
+            self.sta,
+        )
+
+        ap_active = np.where(self.ap.active)[0]
+        for ap in ap_active:
+            # select K STAs among the ones that are connected to AP
+            random_number_gen.shuffle(self.link[ap])
+            K = self.parameters.wifi.sta.k
+            del self.link[ap][K:]
+            # Activate the selected STAs and create beams
+            if self.ap.active[ap]:
+                self.sta.active[self.link[ap]] = np.ones(K, dtype=bool)
+                for sta in self.link[ap]:
+                    # add beam to AP antennas
+                    self.ap.antenna[ap].add_beam(
+                        self.ap_to_sta_phi[ap, sta],
+                        self.ap_to_sta_theta[ap, sta],
+                    )
+                    # add beam to STA antennas
+                    self.sta.antenna[sta].add_beam(
+                        self.ap_to_sta_phi[ap, sta] - 180,
+                        180 - self.ap_to_sta_theta[ap, sta],
+                    )
+                    # set beam resource block group
+                    self.ap_to_sta_beam_rbs[sta] = len(
+                        self.ap.antenna[ap].beams
+                    )
+
+    def calculate_intra_wifi_coupling_loss(
+        self,
+    ) -> np.array:
+        """
+        Calculates the coupling loss (path loss + antenna gains + other losses) between
+        Wi-Fi stations (STA and AP).
+
+        Returns an numpy array with wifi_ap_station.size X wifi_sta_station.size with coupling loss
+        values.
+
+        Parameters
+        ----------
+        system_station : StationManager
+            A StationManager object representing Wi-Fi STA stations
+        wifi_station : StationManager
+            A StationManager object representing Wi-Fi AP stations
+        is_co_channel : bool, optional
+            Whether the interference analysis is co-channel or not, by default True.
+            This parameter is ignored. It's kept to maintain method interface.
+
+        Returns
+        -------
+        np.array
+            Returns an numpy array with wifi_ap_station.size X wifi_sta_station.size with coupling loss
+            values.
+        """
+        # Calculate the antenna gains
+
+        ant_gain_ap_to_sta = self.calculate_gains(
+            self.ap, self.sta,
+        )
+        ant_gain_sta_to_ap = self.calculate_gains(
+            self.sta, self.ap,
+        )
+
+        '''# Calculate the path loss between Wi-Fi stations. Primarily used for UL power control.
+
+        # Note on the array dimensions for coupling loss calculations:
+        # The function get_loss returns an array station_a x station_b
+        path_loss = self.propagation_wifi.get_loss(
+            self.parameters,
+            self.parameters.wifi.frequency,
+            wifi_sta_station,
+            wifi_ap_station,
+            ant_gain_sta_to_ap,
+            ant_gain_ap_to_sta,
+        )
+
+        # Collect Wi-Fi AP and STA antenna gain samples
+        self.path_loss_wifi = np.transpose(path_loss)
+        self.wifi_ap_antenna_gain = ant_gain_ap_to_sta
+        self.wifi_sta_antenna_gain = np.transpose(ant_gain_sta_to_ap)
+        additional_loss = self.parameters.wifi.ap.ohmic_loss \
+            + self.parameters.wifi.sta.ohmic_loss \
+            + self.parameters.wifi.sta.body_loss
+
+        # calculate coupling loss
+        coupling_loss = np.squeeze(
+            self.path_loss_wifi - self.wifi_ap_antenna_gain - self.wifi_sta_antenna_gain,
+        ) + additional_loss
+
+        return coupling_loss'''
     def calculate_coupling_loss(self):
         # calculate the coupling loss between stations on active links
         pass
 
     def calculate_gains(self):
-        # calculate the gains between stations on active links
-        pass
-
-
-'''# Logicamente, eles são ativados após verificar o canal
-        for ap in range(num_aps):
-            if channel_is_free(ap):  # Simulação de verificação do canal
-                access_points.active[ap] = Trsta'''
+       pass

@@ -1126,22 +1126,7 @@ class StationFactory(object):
             The WiFi Stations used in the main simulation loop
         """
         # Criação do sistema Wi-Fi com parâmetros fornecidos
-        wifi = SystemWifi(param=param)
-
-        # Geração inicial das estações Wi-Fi
-        aps = wifi.generate_aps(random_number_gen)
-        stas = wifi.generate_stas(random_number_gen)
-
-        # Configuração das conexões (bidirecional: uplink e downlink)
-        #wifi.connect_stations()
-
-        # Simulação das perdas de acoplamento para uplink e downlink
-        #wifi_system.calculate_downlink_coupling_loss()
-        #wifi_system.calculate_uplink_coupling_loss()
-
-        # Cálculo de métricas de interferência
-        #wifi.calculate_interference()
-        return (aps, stas)
+        return SystemWifi(param=param)
 
     @staticmethod
     def get_random_position(num_ue: int,
