@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 from typing import List
 from sharc.parameters.parameters_base import ParametersBase
@@ -5,6 +6,7 @@ from sharc.parameters.parameters_orbit import ParametersOrbit
 
 @dataclass
 class ParametersNgsoConstellation(ParametersBase):
+    """Define parameters for a NGSO Constellation.""""
     section_name: str = "ngso"
     name: str = "Default"
     orbits: List[ParametersOrbit] = field(default_factory=list)
@@ -64,13 +66,13 @@ if __name__ == "__main__":
     )
 
     # Testing parameter validation
-    
+
     try:
         # Load parameters from a configuration file (yaml in this case)
-        yaml_file_path = "G:\\Meu Drive\\Github\\SHARC\\sharc\\parameters\\ngso_parameters.yaml"
+        yaml_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../input/ngso_parameters.yaml")
         constellation.load_parameters_from_file(yaml_file_path)
         print("Parameters loaded successfully.")
-        
+
         # Print constellation details
         print(f"Constellation Name: {constellation.name}")
         print(f"Antenna: {constellation.antenna}")
