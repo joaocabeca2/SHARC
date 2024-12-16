@@ -87,13 +87,13 @@ def eccentric_anomaly(e, M, terms=40, mod_2pi=True):
 
     Parameters:
     ----------
-    e : float
+    e: float
         Eccentricity of the orbit (0 <= e < 1).
-    M : np.ndarray
+    M: np.ndarray
         Mean anomaly in radians; can be any shape.
-    terms : int, optional
+    terms: int, optional
         Number of terms for the Bessel series expansion (default is 40).
-    mod_2pi : bool, optional
+    mod_2pi: bool, optional
         Whether to return E modulo 2π (default is True).
 
     Returns:

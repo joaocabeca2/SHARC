@@ -3,8 +3,8 @@ from sharc.parameters.parameters_base import ParametersBase
 
 @dataclass
 class ParametersOrbit(ParametersBase):
-    n_planes: int = 8
-    sats_per_plane: int = 6
+    Np: int = 8
+    Nsp: int = 6
     phasing_deg: float = 7.5
     long_asc_deg: float = 0.0
     omega_deg: float = 0.0
