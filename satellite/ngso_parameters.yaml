@@ -3,12 +3,24 @@ simulation:
   num_snapshots: 1000
   simulaton_time_span_sec: 3600
   time_step_sec: 5
+  min_elev_angle_deg: 30  # minimum elevaation angle between earth-station and space-station for communication
+  simulation_time_start_sec: 0
+  # Optional parameters. Deal with them later
+  # simulation_time_end_sec: 3600
+  # simulation_time_step_sec: 5
+  # precession: 
+  # traffic_model: full-buffer
+  # perturbations: 
 constellations:
   - name: Acme-Star-1
     space_station:
-      antenna: Taylor1.4
-      max_gain_dbi: 30
-    orbits:
+      antenna_pattern: Taylor1.4
+      max_transmit_power_dB: 46.0
+      max_transmit_gain_dBi: 30.0
+      max_receive_gain_dBi: 30.0
+      max_num_of_beams: 19
+      cell_radius_m: 19000
+    orbit_shells:
       - n_planes: 20
         inclination_deg: 54.5
         perigee_alt_km: 525.0
@@ -31,7 +43,14 @@ constellations:
         long_asc_deg: 14.0
         phasing_deg: 7.8
   - name: Acme-Star-2
-    orbits:
+    space_station:
+      antenna_pattern: Taylor1.4
+      max_transmit_power_dB: 46.0
+      max_transmit_gain_dBi: 30.0
+      max_receive_gain_dBi: 30.0
+      max_num_of_beams: 19
+      cell_radius_m: 19000
+    orbit_shells:
       - n_planes: 20
         inclination_deg: 54.5
         perigee_alt_km: 525.0
