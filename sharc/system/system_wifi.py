@@ -76,8 +76,7 @@ class SystemWifi():
         return PropagationFactory.create_propagation(
             self.parameters.channel_model,
             self.parameters,
-            self.parameters,
-            rando
+            self.parameters
         )
     def generate_aps(self, random_number_gen: np.random.RandomState) -> StationManager:
         param_ant = self.parameters.ap.antenna
@@ -92,8 +91,9 @@ class SystemWifi():
         
         access_points.azimuth = self.topology.azimuth
 
-        # Inicializa todos os APs como inativos
-        access_points.active = np.zeros(num_aps, dtype=bool)
+        access_points.active = random_number_gen.rand(
+            num_aps,
+        ) < self.parameters.ap.load_probability
 
         access_points.tx_power = self.parameters.ap.conducted_power * np.ones(num_aps)
         access_points.rx_power = dict(

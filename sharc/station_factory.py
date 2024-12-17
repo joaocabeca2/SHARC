@@ -47,6 +47,7 @@ from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_single_earth_station import \
     ParametersSingleEarthStation
 from sharc.parameters.parameters_space_station import ParametersSpaceStation
+from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
 from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
 from sharc.station_manager import StationManager
 from sharc.support.enumerations import StationType
@@ -1244,69 +1245,23 @@ class StationFactory(object):
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
 
+    from sharc.parameters.wifi.parameters_antenna_wifi import \
+        ParametersAntennaWifi
+    from sharc.parameters.wifi.parameters_wifi_topology import \
+        ParametersHotspot
+    from sharc.topology.topology_hotspot import TopologyHotspot
+
     # plot uniform distribution in macrocell scenario
 
     factory = StationFactory()
-    topology = TopologyMacrocell(1000, 1)
-    topology.calculate_coordinates()
 
-    class ParamsAux(object):
-        def __init__(self):
-            self.spectral_mask = 'IMT-2020'
-            self.frequency = 10000
-            self.topology = 'MACROCELL'
-            self.ue_distribution_type = "UNIFORM_IN_CELL"
-            self.bs_height = 30
-            self.ue_height = 3
-            self.ue_indoor_percent = 0
-            self.ue_k = 3
-            self.ue_k_m = 1
-            self.bandwidth = np.random.rand()
-            self.ue_noise_figure = np.random.rand()
-            self.minimum_separation_distance_bs_ue = 200
-            self.spurious_emissions = -30
-            self.intersite_distance = 1000
-
-    params = ParamsAux()
-
-    bs_ant_param = ParametersAntennaImt()
-
-    bs_ant_param.adjacent_antenna_model = "SINGLE_ELEMENT"
-    bs_ant_param.element_pattern = "F1336"
-    bs_ant_param.element_max_g = 5
-    bs_ant_param.element_phi_3db = 65
-    bs_ant_param.element_theta_3db = 65
-    bs_ant_param.element_am = 30
-    bs_ant_param.element_sla_v = 30
-    bs_ant_param.n_rows = 8
-    bs_ant_param.n_columns = 8
-    bs_ant_param.element_horiz_spacing = 0.5
-    bs_ant_param.element_vert_spacing = 0.5
-    bs_ant_param.downtilt = 10
-    bs_ant_param.multiplication_factor = 12
-    bs_ant_param.minimum_array_gain = -200
-
-    ue_ant_param = ParametersAntennaImt()
-
-    ue_ant_param.element_pattern = "FIXED"
-    ue_ant_param.element_max_g = 5
-    ue_ant_param.element_phi_3db = 90
-    ue_ant_param.element_theta_3db = 90
-    ue_ant_param.element_am = 25
-    ue_ant_param.element_sla_v = 25
-    ue_ant_param.n_rows = 4
-    ue_ant_param.n_columns = 4
-    ue_ant_param.element_horiz_spacing = 0.5
-    ue_ant_param.element_vert_spacing = 0.5
-    ue_ant_param.multiplication_factor = 12
-    ue_ant_param.minimum_array_gain = -200
-
-    ue_ant_param.normalization = False
-    bs_ant_param.normalization = False
+    params = ParametersWifiSystem()
+    hotspot_param = ParametersHotspot()
 
     rnd = np.random.RandomState(1)
-
-    imt_ue = factory.generate_imt_ue(params, ue_ant_param, topology, rnd)
+    wifi = factory.generate_wifi_system(params, rnd)
+    wifi.generate_stas(rnd)
+    wifi.generate_aps(rnd)
 
     fig = plt.figure(
         figsize=(8, 8), facecolor='w',
@@ -1314,14 +1269,14 @@ if __name__ == '__main__':
     )  # create a figure object
     ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
 
-    topology.plot(ax)
+    wifi.topology.plot(ax)
 
     plt.axis('image')
-    plt.title("Macro cell topology")
+    plt.title("hotspot topology")
     plt.xlabel("x-coordinate [m]")
     plt.ylabel("y-coordinate [m]")
 
-    plt.plot(imt_ue.x, imt_ue.y, "r.")
+    plt.plot(wifi.sta.x, wifi.sta.y, "r.")
 
     plt.tight_layout()
     plt.show()
