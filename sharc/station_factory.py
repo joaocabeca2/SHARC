@@ -24,6 +24,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
+from sharc.parameters.parameters_ngso import ParametersNgsoConstellation
 from sharc.parameters.constants import EARTH_RADIUS
 from sharc.station_manager import StationManager
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
@@ -50,6 +51,7 @@ from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 from sharc.topology.topology import Topology
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
+from satellite.ngso.orbit_model import OrbitModel
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -552,6 +554,8 @@ class StationFactory(object):
             return StationFactory.generate_haps(parameters.haps, intersite_dist, random_number_gen)
         elif parameters.general.system == "RNS":
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
+        elif parameters.general.system == "NGSO":
+            return StationFactory.genereate_ngso_constellation(parameters.ngso, random_number_gen)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -1110,6 +1114,24 @@ class StationFactory(object):
         space_station.noise_temperature = 500
 
         return space_station
+
+    @staticmethod
+    def generate_ngso_constellation(param: ParametersNgsoConstellation, rng: np.random.RandomState):
+
+        for orbit in param.orbits:
+            pass
+
+        #     self.orbit_model = OrbitModel(
+        #     Nsp=orbit_params.Nsp,
+        #     Np=orbit_params.Np,
+        #     phasing=orbit_params.phasing_deg,
+        #     long_asc=orbit_params.long_asc_deg,
+        #     omega=orbit_params.omega_deg,
+        #     delta=orbit_params.inclination_deg,
+        #     hp=orbit_params.perigee_alt_km,
+        #     ha=orbit_params.apogee_alt_km,
+        #     Mo=orbit_params.initial_mean_anomaly
+        # )
 
     @staticmethod
     def get_random_position(num_stas: int,

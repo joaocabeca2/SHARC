@@ -6,7 +6,10 @@ import numpy as np
 from custom_functions import wrap2pi, eccentric_anomaly, keplerian2eci, eci2ecef, plot_ground_tracks
 from constants import EARTH_RADIUS_KM, KEPLER_CONST, EARTH_ROTATION_RATE
 
+
 class OrbitModel():
+    """Orbit Model for satellite positions."""
+
     def __init__(self,
                  Nsp: int,
                  Np: int,
@@ -17,7 +20,7 @@ class OrbitModel():
                  hp: float,
                  ha: float,
                  Mo: float):
-        """Instantiates and OrbitModel object from the Orbit parameters as specified in S.1529
+        """Instantiates and OrbitModel object from the Orbit parameters as specified in S.1529.
 
         Parameters
         ----------
@@ -70,7 +73,23 @@ class OrbitModel():
         self.Omega0 = np.radians(self.Omega_o.flatten())  # shape (Np*Nsp,)
 
     def get_satellite_positions_time_interval(self, initial_time_secs=0, interval_secs=5, n_periods=4) -> dict:
-        """Return the orbit positions vector
+        """
+        Return the orbit positions vector.
+
+        Parameters
+        ----------
+        initial_time_secs : int, optional
+            initial time instant in seconds, by default 0
+        interval_secs : int, optional
+            time interval between points, by default 5
+        n_periods : int, optional
+            number of orbital peridos, by default 4
+
+        Returns
+        -------
+        dict
+            A dictionary with satellite positions in spherical and ecef coordinates.
+                lat, lon, sx, sy, sz
         """
         t = np.arange(initial_time_secs, n_periods * self.orbital_period_sec + interval_secs, interval_secs)
         return self.__get_satellite_positions(t)
@@ -81,9 +100,23 @@ class OrbitModel():
         return self.__get_satellite_positions(t)
 
     def get_orbit_positions_random_time(self, rng: np.random.RandomState) -> dict:
+        """Returns satellite positions in a random time instant in seconds"""
         return self.__get_satellite_positions(rng.random_sample(1) * self.orbital_period_sec)
 
     def __get_satellite_positions(self, t: np.array) -> dict:
+        """Returns the Satellite positins (both lat long and ecef) for a given time vector within the orbit period.
+
+        Parameters
+        ----------
+        t : np.array
+            time instants inside the orbit period in seconds
+
+        Returns
+        -------
+        dict
+            A dictionary with satellite positions in spherical and ecef coordinates.
+                lat, lon, sx, sy, sz
+        """
         # Mean anomaly (M)
         mean_anomaly = (self._initial_mean_anomalies_flat[:, None] +
                         (2 * np.pi / self.orbital_period_sec) * t) % (2 * np.pi)
@@ -146,5 +179,6 @@ if __name__ == "__main__":
 
     # pos_vec = orbit.get_orbit_positions_vec()
     # pos_vec = orbit.get_orbit_positions_time_instant(time_instant_secs=10)
-    pos_vec = orbit.get_orbit_positions_random_time(rng=np.random.RandomState(seed=10))
-    plot_ground_tracks(pos_vec['lat'], pos_vec['lon'], planes=[1, 2, 3, 4, 5, 6, 7, 8], satellites=[1])
+    pos_vec = orbit.get_orbit_positions_random_time(rng=np.random.RandomState(seed=6))
+    # pos_vec = orbit.get_satellite_positions_time_interval()
+    plot_ground_tracks(pos_vec['lat'], pos_vec['lon'], planes=[1, 2, 3, 4, 5, 6, 7, 8], satellites=range(6))
