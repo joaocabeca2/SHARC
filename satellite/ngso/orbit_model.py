@@ -3,8 +3,9 @@
 
 import numpy as np
 
-from custom_functions import wrap2pi, eccentric_anomaly, keplerian2eci, eci2ecef, plot_ground_tracks
-from constants import EARTH_RADIUS_KM, KEPLER_CONST, EARTH_ROTATION_RATE
+from satellite.ngso.custom_functions import wrap2pi, eccentric_anomaly, keplerian2eci, eci2ecef, plot_ground_tracks
+from satellite.utils.sat_utils import ecef2lla
+from satellite.ngso.constants import EARTH_RADIUS_KM, KEPLER_CONST, EARTH_ROTATION_RATE
 
 
 class OrbitModel():
@@ -145,13 +146,18 @@ class OrbitModel():
         OmegaG = wrap2pi(OmegaG)
 
         # POSITION CALCULATION IN ECEF COORDINATES - ITU-R S.1503
-        r_eci = keplerian2eci(self.semi_major_axis, self.eccentricity, self.orbital_plane_inclination,
-                              np.degrees(self.Omega0), self.omega, np.degrees(v))
+        r_eci = keplerian2eci(self.semi_major_axis,
+                              self.eccentricity,
+                              self.delta,
+                              np.degrees(self.Omega0),
+                              self.omega,
+                              np.degrees(v))
 
         r_ecef = eci2ecef(t, r_eci)
         sx, sy, sz = r_ecef[0], r_ecef[1], r_ecef[2]
         lat = np.degrees(np.arcsin(sz / r))
         lon = np.degrees(np.arctan2(sy, sx))
+        # (lat, lon, _) = ecef2lla(sx, sy, sz)
 
         pos_vector = {
             'lat': lat,
@@ -177,8 +183,7 @@ if __name__ == "__main__":
         Mo=0
     )
 
-    # pos_vec = orbit.get_orbit_positions_vec()
     # pos_vec = orbit.get_orbit_positions_time_instant(time_instant_secs=10)
-    pos_vec = orbit.get_orbit_positions_random_time(rng=np.random.RandomState(seed=6))
-    # pos_vec = orbit.get_satellite_positions_time_interval()
-    plot_ground_tracks(pos_vec['lat'], pos_vec['lon'], planes=[1, 2, 3, 4, 5, 6, 7, 8], satellites=range(6))
+    # pos_vec = orbit.get_orbit_positions_random_time(rng=np.random.RandomState(seed=6))
+    pos_vec = orbit.get_satellite_positions_time_interval()
+    plot_ground_tracks(pos_vec['lat'], pos_vec['lon'], planes=[1, 2, 3, 4, 5, 6, 7, 8], satellites=[1])
