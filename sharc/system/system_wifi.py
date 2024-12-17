@@ -5,8 +5,8 @@ import sys
 import numpy as np
 
 from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
-from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
 from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
+from sharc.propagation.propagation_factory import PropagationFactory
 from sharc.station_manager import StationManager
 from sharc.support.enumerations import StationType
 from sharc.topology.topology_hotspot import TopologyHotspot
@@ -52,6 +52,7 @@ class SystemWifi():
             self.num_rb_per_bs / self.parameters.sta.k,
         )
 
+
         if hasattr(self.parameters, "polarization_loss"):
             self.polarization_loss = self.param_system.polarization_loss
         else:
@@ -70,7 +71,14 @@ class SystemWifi():
             self.parameters.topology.type,
         )
         sys.exit(1)
-
+    
+    def generate_propagation(self):
+        return PropagationFactory.create_propagation(
+            self.parameters.channel_model,
+            self.parameters,
+            self.parameters,
+            rando
+        )
     def generate_aps(self, random_number_gen: np.random.RandomState) -> StationManager:
         param_ant = self.parameters.ap.antenna
         num_aps = self.topology.num_base_stations
@@ -434,21 +442,21 @@ class SystemWifi():
         # Calculate the antenna gains
 
         ant_gain_ap_to_sta = self.calculate_gains(
-            self.ap, self.sta,
+            self.ap, self.sta
         )
         ant_gain_sta_to_ap = self.calculate_gains(
-            self.sta, self.ap,
+            self.sta, self.ap
         )
 
-        '''# Calculate the path loss between Wi-Fi stations. Primarily used for UL power control.
+        # Calculate the path loss between Wi-Fi stations. Primarily used for UL power control.
 
         # Note on the array dimensions for coupling loss calculations:
         # The function get_loss returns an array station_a x station_b
         path_loss = self.propagation_wifi.get_loss(
             self.parameters,
             self.parameters.wifi.frequency,
-            wifi_sta_station,
-            wifi_ap_station,
+            self.sta,
+            self.ap,
             ant_gain_sta_to_ap,
             ant_gain_ap_to_sta,
         )
@@ -466,7 +474,8 @@ class SystemWifi():
             self.path_loss_wifi - self.wifi_ap_antenna_gain - self.wifi_sta_antenna_gain,
         ) + additional_loss
 
-        return coupling_loss'''
+        return coupling_loss
+    
     def calculate_coupling_loss(self):
         # calculate the coupling loss between stations on active links
         pass

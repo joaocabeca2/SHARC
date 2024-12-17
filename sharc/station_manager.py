@@ -261,7 +261,7 @@ class StationManager(object):
 
         Parameters
         ----------
-        sta : StationManager
+        StationManager
             The station that we're testing.
 
         Returns

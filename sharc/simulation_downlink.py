@@ -5,13 +5,14 @@ Created on Wed Jan 11 19:06:41 2017
 @author: edgar
 """
 
-import numpy as np
 import math
 
-from sharc.simulation import Simulation
-from sharc.parameters.parameters import Parameters
-from sharc.station_factory import StationFactory
+import numpy as np
+
 from sharc.parameters.constants import BOLTZMANN_CONSTANT
+from sharc.parameters.parameters import Parameters
+from sharc.simulation import Simulation
+from sharc.station_factory import StationFactory
 
 
 class SimulationDownlink(Simulation):
@@ -54,7 +55,7 @@ class SimulationDownlink(Simulation):
             self.system.connect_aps_to_stas()
             self.system.select_sta(random_number_gen)
 
-            #coupling_loss = self.system.calculate_intra_wifi_coupling_loss()
+            coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(self.system.ap, self.system.sta)
 
         # Create IMT user equipments
         self.ue = StationFactory.generate_imt_ue(
@@ -219,6 +220,7 @@ class SimulationDownlink(Simulation):
             if self.co_channel:
                 if self.overlapping_bandwidth:
                     acs = 0
+                    
                     weights = self.calculate_bw_weights(
                         self.parameters.imt.bandwidth,
                         self.param_system.bandwidth,

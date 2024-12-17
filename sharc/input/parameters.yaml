@@ -8,7 +8,7 @@ general:
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS, SINGLE_EARTH_STATION
-    system: "FSS_ES"
+    system: "WIFI"
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel: FALSE
