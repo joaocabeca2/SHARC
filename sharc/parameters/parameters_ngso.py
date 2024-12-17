@@ -3,15 +3,21 @@ from dataclasses import dataclass, field
 from typing import List
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_orbit import ParametersOrbit
+from sharc.parameters.antenna.parameters_antenna_s1528 import ParametersAntennaS1528
 
 @dataclass
 class ParametersNgsoConstellation(ParametersBase):
-    """Define parameters for a NGSO Constellation.""""
+    """Define parameters for a NGSO Constellation."""
     section_name: str = "ngso"
     name: str = "Default"
     orbits: List[ParametersOrbit] = field(default_factory=list)
     antenna: str = None
-    max_gain_dbi: float = 0.0
+    max_transmit_power_dB: float = 46.0
+    max_transmit_gain_dBi: float = 30.0
+    max_receive_gain_dBi: float = 30.0
+    max_num_of_beams: int = 19
+    cell_radius_m: float = 19000.0
+    antenna: ParametersAntennaS1528 = field(default_factory=ParametersAntennaS1528)
 
     def load_parameters_from_file(self, config_file: str):
         """Load parameters from file and validate."""
@@ -23,8 +29,8 @@ class ParametersNgsoConstellation(ParametersBase):
         if self.antenna not in ["Taylor1.4", "ITU-R M.1466", "OMNI"]:
             raise ValueError(f"ParametersNgsoConstellation: Invalid antenna = {self.antenna}. \
                              Allowed values are \"Taylor1.4\", \"ITU-R M.1466\", \"OMNI\".")
-        if self.max_gain_dbi < 0:
-            raise ValueError(f"ParametersNgsoConstellation: Invalid max_gain_dbi = {self.max_gain_dbi}. \
+        if self.max_transmit_gain_dBi < 0:
+            raise ValueError(f"ParametersNgsoConstellation: Invalid max_gain_dbi = {self.max_transmit_gain_dBi}. \
                              Gain must be non-negative.")
         if not self.orbits:
             raise ValueError("ParametersNgsoConstellation: No orbits defined. \
@@ -61,7 +67,7 @@ if __name__ == "__main__":
     constellation = ParametersNgsoConstellation(
         name="Acme-Star-1",           # Name of the constellation
         antenna="Taylor1.4",          # Antenna type
-        max_gain_dbi=30.0,            # Maximum antenna ga.in in dBi
+        max_transmit_gain_dBi=30.0,            # Maximum antenna ga.in in dBi
         orbits=[orbit_1, orbit_2]     # List of orbital parameters
     )
 
@@ -76,7 +82,7 @@ if __name__ == "__main__":
         # Print constellation details
         print(f"Constellation Name: {constellation.name}")
         print(f"Antenna: {constellation.antenna}")
-        print(f"Max Gain (dBi): {constellation.max_gain_dbi}")
+        print(f"Max Gain (dBi): {constellation.max_transmit_gain_dBi}")
         print("\nLoaded Orbits:")
         for idx, orbit in enumerate(constellation.orbits, start=1):
             print(f"  Orbit {idx}:")
