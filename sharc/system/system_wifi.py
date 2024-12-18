@@ -84,47 +84,30 @@ class SystemWifi():
         access_points = StationManager(num_aps)
         access_points.station_type = StationType.WIFI_APS
 
-        access_points.x = self.topology.x
-        access_points.y = self.topology.y
+        # Gerar posições aleatórias para os APs
+        [access_points_x, access_points_y, theta, distance] = self.get_random_position(
+            num_aps, self.topology, random_number_gen,
+            self.parameters.minimum_separation_distance_ap_sta,  # Distância mínima
+            deterministic_cell=False  # Permitir células aleatórias
+        )
+
+        access_points.x = np.array(access_points_x)
+        access_points.y = np.array(access_points_y)
         access_points.elevation = -param_ant.downtilt * np.ones(num_aps)
         access_points.height = self.parameters.ap.height * np.ones(num_aps)
-        
-        access_points.azimuth = self.topology.azimuth
+        access_points.azimuth = theta  # Usar o ângulo calculado aleatoriamente
 
-        access_points.active = random_number_gen.rand(
-            num_aps,
-        ) < self.parameters.ap.load_probability
-
+        access_points.active = random_number_gen.rand(num_aps) < self.parameters.ap.load_probability
         access_points.tx_power = self.parameters.ap.conducted_power * np.ones(num_aps)
-        access_points.rx_power = dict(
-            [(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)],
-        )
-        access_points.rx_interference = dict(
-            [(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)],
-        )
-        access_points.ext_interference = dict(
-            [(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)],
-        )
-        access_points.total_interference = dict(
-            [(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)],
-        )
+        access_points.rx_power = dict([(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)])
+        access_points.rx_interference = dict([(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)])
+        access_points.ext_interference = dict([(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)])
+        access_points.total_interference = dict([(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)])
+        access_points.snr = dict([(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)])
+        access_points.sinr = dict([(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)])
+        access_points.sinr_ext = dict([(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)])
+        access_points.inr = dict([(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)])
 
-        access_points.snr = dict(
-            [(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)],
-        )
-        access_points.sinr = dict(
-            [(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)],
-        )
-        access_points.sinr_ext = dict(
-            [(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)],
-        )
-        access_points.inr = dict(
-            [(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)],
-        )
-
-        access_points.antenna = np.empty(
-            num_aps, dtype=AntennaBeamformingImt,
-        )
 
         for i in range(num_aps):
             access_points.antenna[i] = \
@@ -132,14 +115,11 @@ class SystemWifi():
                     param_ant, access_points.azimuth[i],
                     access_points.elevation[i],
                 )
-
-        # access_points.antenna = [AntennaOmni(0) for ap in range(num_aps)]
+        
         access_points.bandwidth = self.parameters.bandwidth * np.ones(num_aps)
         access_points.center_freq = self.parameters.frequency * np.ones(num_aps)
-        access_points.noise_figure = self.parameters.ap.noise_figure * \
-            np.ones(num_aps)
+        access_points.noise_figure = self.parameters.ap.noise_figure * np.ones(num_aps)
         access_points.thermal_noise = -500 * np.ones(num_aps)
-
         access_points.intersite_dist = self.parameters.topology.hotspot.intersite_distance
             
         self.ap = access_points
@@ -190,48 +170,7 @@ class SystemWifi():
             sta.azimuth = (azimuth + theta + np.pi / 2)
             sta.elevation = elevation + psi
 
-        elif self.parameters.sta.distribution_type.upper() == "ANGLE_AND_DISTANCE":
-            # Handle Rayleigh or Uniform distribution for STA distance
-            if self.parameters.sta.distribution_distance.upper() == "RAYLEIGH":
-                radius_scale = self.topology.cell_radius / 3.0345
-                radius = random_number_gen.rayleigh(radius_scale, num_sta)
-            elif self.parameters.sta.distribution_distance.upper() == "UNIFORM":
-                radius = self.topology.cell_radius * random_number_gen.random_sample(num_sta)
-            else:
-                sys.stderr.write("ERROR\nInvalid STA distance distribution: " + self.parameters.sta.distribution_distance)
-                sys.exit(1)
 
-            if self.parameters.sta.distribution_azimuth.upper() == "NORMAL":
-                N = 1.4
-                angle_scale = 30
-                angle_mean = 0
-                angle_n = random_number_gen.normal(angle_mean, angle_scale, int(N * num_sta))
-
-                angle_cutoff = np.max(azimuth_range)
-                idx = np.where((angle_n < angle_cutoff) & (angle_n > -angle_cutoff))[0][:num_sta]
-                angle = angle_n[idx]
-            elif self.parameters.sta.distribution_azimuth.upper() == "UNIFORM":
-                azimuth_range = (-60, 60)
-                angle = (azimuth_range[1] - azimuth_range[0]) * random_number_gen.random_sample(num_sta) + azimuth_range[0]
-            else:
-                sys.stderr.write("ERROR\nInvalid STA azimuth distribution: " + self.parameters.sta.distribution_distance)
-                sys.exit(1)
-
-            # Calculate STA positions and azimuth/elevation for outdoor environment
-            for ap in range(num_ap):
-                idx = [i for i in range(
-                    ap * num_sta_per_ap, ap * num_sta_per_ap + num_sta_per_ap,
-                )]
-                theta = self.topology.azimuth[ap] + angle[idx]
-                x = self.topology.x[ap] + radius[idx] * np.cos(np.radians(theta))
-                y = self.topology.y[ap] + radius[idx] * np.sin(np.radians(theta))
-                sta_x.extend(x)
-                sta_y.extend(y)
-
-                sta.azimuth[idx] = (azimuth[idx] + theta + 180) % 360
-                distance = np.sqrt((self.topology.x[ap] - x) ** 2 + (self.topology.y[ap] - y) ** 2)
-                psi = np.degrees(np.arctan((self.parameters.ap.height - self.parameters.sta.height) / distance))
-                sta.elevation[idx] = elevation[idx] + psi
         else:
             sys.stderr.write("ERROR\nInvalid STA distribution type: " + self.parameters.sta.distribution_type)
             sys.exit(1)

@@ -164,7 +164,7 @@ class StationFactory(object):
         random_number_gen: np.random.RandomState,
     ) -> StationManager:
 
-        if param.topology.type == "INDOOR":
+        if param.topology == "INDOOR":
             return StationFactory.generate_imt_ue_indoor(param, ue_param_ant, random_number_gen, topology)
         else:
             return StationFactory.generate_imt_ue_outdoor(param, ue_param_ant, random_number_gen, topology)
@@ -1253,30 +1253,32 @@ if __name__ == '__main__':
 
     # plot uniform distribution in macrocell scenario
 
-    factory = StationFactory()
-
-    params = ParametersWifiSystem()
-    hotspot_param = ParametersHotspot()
-
-    rnd = np.random.RandomState(1)
-    wifi = factory.generate_wifi_system(params, rnd)
-    wifi.generate_stas(rnd)
-    wifi.generate_aps(rnd)
-
+def show(bs, ue):
     fig = plt.figure(
         figsize=(8, 8), facecolor='w',
         edgecolor='k',
     )  # create a figure object
     ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
-
     wifi.topology.plot(ax)
-
     plt.axis('image')
     plt.title("hotspot topology")
     plt.xlabel("x-coordinate [m]")
     plt.ylabel("y-coordinate [m]")
 
-    plt.plot(wifi.sta.x, wifi.sta.y, "r.")
-
+    plt.plot(wifi.topology.x, wifi.topology.y, "r.")
+    
     plt.tight_layout()
     plt.show()
+
+rnd = np.random.RandomState(1)
+factory = StationFactory()
+params = ParametersWifiSystem()
+hotspot_param = ParametersHotspot()
+wifi = factory.generate_wifi_system(params, rnd)
+wifi.generate_stas(rnd)
+wifi.generate_aps(rnd)
+
+show(wifi.sta.x, wifi.sta.y)
+
+show(wifi.ap.x, wifi.ap.y)
+

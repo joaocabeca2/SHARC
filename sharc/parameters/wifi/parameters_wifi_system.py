@@ -18,12 +18,12 @@ class ParametersWifiSystem(ParametersBase):
 
     nested_parameters_enabled: bool = True
 
-    minimum_separation_distance_bs_ue: float = 0.0
+    minimum_separation_distance_ap_sta: float = 0.0
     interfered_with: bool = False
     frequency: float = 7000.0
     bandwidth: float = 80.0
     rb_bandwidth: float = 0.180
-    spectral_mask: str = "3GPP E-UTRA"
+    #spectral_mask: str = "3GPP E-UTRA"
     spurious_emissions: float = -13.0
     guard_band_ratio: float = 0.1
     antenna_pattern: str = "Modified ITU-R S.465"
@@ -35,6 +35,7 @@ class ParametersWifiSystem(ParametersBase):
         height: float = 6.0
         noise_figure: float = 10.0
         ohmic_loss: float = 3.0
+        distribution_type: str = "UNIFORM"
         antenna: ParametersAntennaWifi = field(default_factory=ParametersAntennaWifi)
 
     ap: ParametersAP = field(default_factory=ParametersAP)
@@ -56,10 +57,10 @@ class ParametersWifiSystem(ParametersBase):
         k: int = 3
         k_m: int = 1
         indoor_percent: int = 5.0
-        distribution_type: str = "ANGLE_AND_DISTANCE"
+        distribution_type: str = "UNIFORM"
         distribution_distance: str = "RAYLEIGH"
         distribution_azimuth: str = "NORMAL"
-        azimuth_range: tuple = (-60, 60)
+        azimuth_range: tuple = (-180, 180)
         tx_power_control: bool = True
         p_o_pusch: float = -95.0
         alpha: float = 1.0
