@@ -150,11 +150,15 @@ class Simulation(ABC, Observable):
 
         self.bs_power_gain = 10 * math.log10(
             self.parameters.imt.bs.antenna.n_rows *
-            self.parameters.imt.bs.antenna.n_columns,
+            self.parameters.imt.bs.antenna.n_columns *
+            (self.parameters.imt.bs.antenna.subarray.n_rows
+                if self.parameters.imt.bs.antenna.subarray.is_enabled else 1),
         )
         self.ue_power_gain = 10 * math.log10(
             self.parameters.imt.ue.antenna.n_rows *
-            self.parameters.imt.ue.antenna.n_columns,
+            self.parameters.imt.ue.antenna.n_columns *
+            (self.parameters.imt.ue.antenna.subarray.n_rows
+                    if self.parameters.imt.ue.antenna.subarray.is_enabled else 1),
         )
         self.imt_bs_antenna_gain = list()
         self.imt_ue_antenna_gain = list()

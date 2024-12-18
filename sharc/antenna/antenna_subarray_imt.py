@@ -92,7 +92,7 @@ class AntennaSubarrayIMT(object):
         m = np.arange(self.n_rows) + 1
 
         return 1 / np.sqrt(n_rows) * np.exp(
-            1.0j * 2 * np.pi * (m-1) * dv_sub * np.sin(np.deg2rad(-eletrical_downtilt))
+            1.0j * 2 * np.pi * (m-1) * dv_sub * np.sin(np.deg2rad(eletrical_downtilt))
         )
 
     def _calculate_single_dir_gain(self, phi: float, theta: float):
