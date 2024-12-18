@@ -1253,22 +1253,6 @@ if __name__ == '__main__':
 
     # plot uniform distribution in macrocell scenario
 
-def show(bs, ue):
-    fig = plt.figure(
-        figsize=(8, 8), facecolor='w',
-        edgecolor='k',
-    )  # create a figure object
-    ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
-    wifi.topology.plot(ax)
-    plt.axis('image')
-    plt.title("hotspot topology")
-    plt.xlabel("x-coordinate [m]")
-    plt.ylabel("y-coordinate [m]")
-
-    plt.plot(wifi.topology.x, wifi.topology.y, "r.")
-    
-    plt.tight_layout()
-    plt.show()
 
 rnd = np.random.RandomState(1)
 factory = StationFactory()
@@ -1277,8 +1261,26 @@ hotspot_param = ParametersHotspot()
 wifi = factory.generate_wifi_system(params, rnd)
 wifi.generate_stas(rnd)
 wifi.generate_aps(rnd)
+fig = plt.figure(
+    figsize=(8, 8), facecolor='w',
+    edgecolor='k',
+)  # create a figure object
+ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
+wifi.topology.plot(ax)
+plt.axis('image')
+plt.title("hotspot topology")
+# Plotar as STAs (pontos vermelhos)
+plt.scatter(wifi.sta.x, wifi.sta.y, color="red", s=20, label="STAs")
 
-show(wifi.sta.x, wifi.sta.y)
 
-show(wifi.ap.x, wifi.ap.y)
+plt.scatter(wifi.ap.x, wifi.ap.y, color="green", s=40, label="APs")
+
+plt.xlabel("x-coordinate [m]")
+plt.ylabel("y-coordinate [m]")
+
+
+plt.tight_layout()
+plt.show()
+
+
 

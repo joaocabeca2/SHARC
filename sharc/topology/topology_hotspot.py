@@ -244,19 +244,19 @@ class TopologyHotspot(Topology):
         # plot macrocells
         self.macrocell.plot(ax)
 
-        # plot hotspots
+        '''# plot hotspots
         plt.scatter(
             self.x, self.y, color='g', edgecolor="w",
             linewidth=0.5, label="Hotspot",
-        )
+        )'''
 
         # plot hotspots coverage area
-        for x, y, a in zip(self.x, self.y, self.azimuth):
+        '''for x, y, a in zip(self.x, self.y, self.azimuth):
             pa = patches.Wedge(
                 (x, y), self.cell_radius, a - 60, a + 60, fill=False,
                 edgecolor="green", linestyle='solid',
             )
-            ax.add_patch(pa)
+            ax.add_patch(pa)'''
 
 
 if __name__ == '__main__':
