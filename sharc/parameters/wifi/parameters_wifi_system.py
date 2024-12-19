@@ -114,10 +114,6 @@ class ParametersWifiSystem(ParametersBase):
         ValueError
             If a parameter is not valid.
         """
-        if self.spectral_mask not in ["IMT-2020", "3GPP E-UTRA"]:
-            raise ValueError(
-                f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
-            )
 
         if self.channel_model not in ["FSPL", "CI", "UMa", "UMi", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619"]:
             raise ValueError(f"ParamtersImt: \

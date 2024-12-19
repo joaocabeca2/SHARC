@@ -150,7 +150,7 @@ class AntennaBeamformingImt(Antenna):
             co_channel = kwargs["co_channel"]
         else:
             co_channel = True
-
+            
         # If gain has to be calculated on the adjacent channel, then check whether
         # to use beamforming or single element pattern.
         # Both options are explicitly written in order to improve readability

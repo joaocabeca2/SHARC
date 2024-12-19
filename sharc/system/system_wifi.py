@@ -4,12 +4,13 @@ import sys
 
 import numpy as np
 
-from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
+from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
 from sharc.propagation.propagation_factory import PropagationFactory
 from sharc.station_manager import StationManager
 from sharc.support.enumerations import StationType
 from sharc.topology.topology_hotspot import TopologyHotspot
+from sharc.propagation.propagation_free_space import PropagationFreeSpace
 
 
 class SystemWifi():
@@ -52,13 +53,13 @@ class SystemWifi():
             self.num_rb_per_bs / self.parameters.sta.k,
         )
 
-
         if hasattr(self.parameters, "polarization_loss"):
             self.polarization_loss = self.param_system.polarization_loss
         else:
             self.polarization_loss = 3.0
 
-
+        self.propagation_wifi = self.generate_propagation()
+    
     def generate_topology(self):
         if self.parameters.topology.type == "HOTSPOT":
             return TopologyHotspot(
@@ -73,11 +74,8 @@ class SystemWifi():
         sys.exit(1)
     
     def generate_propagation(self):
-        return PropagationFactory.create_propagation(
-            self.parameters.channel_model,
-            self.parameters,
-            self.parameters
-        )
+        return PropagationFreeSpace(np.random.RandomState(1))
+    
     def generate_aps(self, random_number_gen: np.random.RandomState) -> StationManager:
         param_ant = self.parameters.ap.antenna
         num_aps = self.topology.num_base_stations
@@ -110,11 +108,7 @@ class SystemWifi():
 
 
         for i in range(num_aps):
-            access_points.antenna[i] = \
-                AntennaBeamformingImt(
-                    param_ant, access_points.azimuth[i],
-                    access_points.elevation[i],
-                )
+            access_points.antenna[i] = AntennaOmni()
         
         access_points.bandwidth = self.parameters.bandwidth * np.ones(num_aps)
         access_points.center_freq = self.parameters.frequency * np.ones(num_aps)
@@ -187,7 +181,7 @@ class SystemWifi():
         # Antenna parameters for the STAs
         par = self.parameters.sta.antenna.get_antenna_parameters()
         for i in range(num_sta):
-            sta.antenna[i] = AntennaBeamformingImt(par, sta.azimuth[i], sta.elevation[i])
+            sta.antenna[i] = AntennaOmni()
 
         sta.bandwidth = self.parameters.bandwidth * np.ones(num_sta)
         sta.center_freq = self.parameters.frequency * np.ones(num_sta)
@@ -331,7 +325,7 @@ class SystemWifi():
         for ap in ap_active:
             # select K STAs among the ones that are connected to AP
             random_number_gen.shuffle(self.link[ap])
-            K = self.parameters.wifi.sta.k
+            K = self.parameters.sta.k
             del self.link[ap][K:]
             # Activate the selected STAs and create beams
             if self.ap.active[ap]:
@@ -349,75 +343,11 @@ class SystemWifi():
                     )
                     # set beam resource block group
                     self.ap_to_sta_beam_rbs[sta] = len(
-                        self.ap.antenna[ap].beams
-                    )
-
-    def calculate_intra_wifi_coupling_loss(
-        self,
-    ) -> np.array:
-        """
-        Calculates the coupling loss (path loss + antenna gains + other losses) between
-        Wi-Fi stations (STA and AP).
-
-        Returns an numpy array with wifi_ap_station.size X wifi_sta_station.size with coupling loss
-        values.
-
-        Parameters
-        ----------
-        system_station : StationManager
-            A StationManager object representing Wi-Fi STA stations
-        wifi_station : StationManager
-            A StationManager object representing Wi-Fi AP stations
-        is_co_channel : bool, optional
-            Whether the interference analysis is co-channel or not, by default True.
-            This parameter is ignored. It's kept to maintain method interface.
-
-        Returns
-        -------
-        np.array
-            Returns an numpy array with wifi_ap_station.size X wifi_sta_station.size with coupling loss
-            values.
-        """
-        # Calculate the antenna gains
-
-        ant_gain_ap_to_sta = self.calculate_gains(
-            self.ap, self.sta
-        )
-        ant_gain_sta_to_ap = self.calculate_gains(
-            self.sta, self.ap
-        )
-
-        # Calculate the path loss between Wi-Fi stations. Primarily used for UL power control.
-
-        # Note on the array dimensions for coupling loss calculations:
-        # The function get_loss returns an array station_a x station_b
-        path_loss = self.propagation_wifi.get_loss(
-            self.parameters,
-            self.parameters.wifi.frequency,
-            self.sta,
-            self.ap,
-            ant_gain_sta_to_ap,
-            ant_gain_ap_to_sta,
-        )
-
-        # Collect Wi-Fi AP and STA antenna gain samples
-        self.path_loss_wifi = np.transpose(path_loss)
-        self.wifi_ap_antenna_gain = ant_gain_ap_to_sta
-        self.wifi_sta_antenna_gain = np.transpose(ant_gain_sta_to_ap)
-        additional_loss = self.parameters.wifi.ap.ohmic_loss \
-            + self.parameters.wifi.sta.ohmic_loss \
-            + self.parameters.wifi.sta.body_loss
-
-        # calculate coupling loss
-        coupling_loss = np.squeeze(
-            self.path_loss_wifi - self.wifi_ap_antenna_gain - self.wifi_sta_antenna_gain,
-        ) + additional_loss
-
-        return coupling_loss
+                        self.ap.antenna[ap].beams_list,
+                    ) - 1
     
     def calculate_coupling_loss(self):
         # calculate the coupling loss between stations on active links
         pass
 
-    def calculate_gains(self):
-       pass
+    
