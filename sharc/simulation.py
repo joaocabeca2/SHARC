@@ -5,20 +5,20 @@ Created on Wed Jan 11 19:04:03 2017
 @author: edgar
 """
 
-from abc import ABC, abstractmethod
-from sharc.support.observable import Observable
-
-import numpy as np
 import math
 import sys
-import matplotlib.pyplot as plt
+from abc import ABC, abstractmethod
 
-from sharc.support.enumerations import StationType
-from sharc.topology.topology_factory import TopologyFactory
+import matplotlib.pyplot as plt
+import numpy as np
+
 from sharc.parameters.parameters import Parameters
-from sharc.station_manager import StationManager
-from sharc.results import Results
 from sharc.propagation.propagation_factory import PropagationFactory
+from sharc.results import Results
+from sharc.station_manager import StationManager
+from sharc.support.enumerations import StationType
+from sharc.support.observable import Observable
+from sharc.topology.topology_factory import TopologyFactory
 
 
 class Simulation(ABC, Observable):
@@ -618,7 +618,8 @@ class Simulation(ABC, Observable):
 
         # Calculate gains
         gains = np.zeros(phi.shape)
-        if station_1.station_type is StationType.IMT_BS and not station_2.is_imt_station():
+        if station_1.station_type is StationType.IMT_BS and not station_2.is_imt_station()\
+              and station_2.station_type not in (StationType.WIFI_APS, StationType.WIFI_STA):
             for k in station_1_active:
                 for b in range(k * self.parameters.imt.ue.k, (k + 1) * self.parameters.imt.ue.k):
                     gains[b, station_2_active] = station_1.antenna[k].calculate_gain(
@@ -683,7 +684,7 @@ class Simulation(ABC, Observable):
                     off_axis_angle_vec=off_axis_angle[0, station_2_active],
                     theta_vec=theta[0, station_2_active],
             )
-        else:  # for IMT <-> IMT / WIFI <-> WIFI
+        else:  # for IMT <-> IMT / WIFI <-> WIFI / WIFI <-> IMT
             for k in station_1_active:
                 gains[k, station_2_active] = station_1.antenna[k].calculate_gain(
                     phi_vec=phi[k, station_2_active],

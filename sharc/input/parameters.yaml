@@ -806,7 +806,7 @@ rns:
     # channel model, possible values are "FSPL" (free-space path loss),
     #                                    "SatelliteSimple" (FSPL + 4 dB + clutter loss)
     #                                    "P619"
-    channel_model: P619
+    channel_model: FSPL
     ###########################################################################
     # Parameters for the P.619 propagation model
     #    earth_station_alt_m - altitude of IMT system (in meters)
