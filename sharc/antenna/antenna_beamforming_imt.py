@@ -43,7 +43,10 @@ class AntennaBeamformingImt(Antenna):
         minimum_array_gain (float): minimum array gain for beamforming
     """
 
-    def __init__(self, par: AntennaPar, azimuth: float, elevation: float, subarray: ParametersAntennaSubarrayImt):
+    def __init__(
+         self, par: AntennaPar, azimuth: float, elevation: float,
+         subarray: ParametersAntennaSubarrayImt = ParametersAntennaSubarrayImt(is_enabled=False)
+     ):
         """
         Constructs an AntennaBeamformingImt object.
         Does not receive angles in local coordinate system.

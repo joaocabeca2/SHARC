@@ -4,6 +4,7 @@ import typing
 
 from sharc.antenna.antenna_element_imt_m2101 import AntennaElementImtM2101
 
+
 # Maybe we should consider using a single array to also make the subarrays
 # Equations are basically the same
 # To make it possible, we should probably update the Beamforming so that, when using subarray:
@@ -20,7 +21,7 @@ class AntennaSubarrayIMT(object):
     ----------
         element: Antenna element to form subarray
         eletrical: Antenna element to form subarray
-        n_rows: 
+        n_rows: How many rows subarray has
     """
 
     def __init__(
@@ -67,11 +68,11 @@ class AntennaSubarrayIMT(object):
         m = np.arange(n_rows) + 1
 
         v_n = np.exp(
-            1.0j * 2 * np.pi * (m[: np.newaxis]-1) * dv_sub * np.cos(r_theta)
+            1.0j * 2 * np.pi * (m[: np.newaxis] - 1) * dv_sub * np.cos(r_theta)
         )
 
         return v_n
-    
+
     def _weight_vector(self, eletrical_downtilt: float, n_rows: int, dv_sub: float) -> np.array:
         """
         Calculates weight/sub-array excitation.
@@ -92,7 +93,7 @@ class AntennaSubarrayIMT(object):
         m = np.arange(self.n_rows) + 1
 
         return 1 / np.sqrt(n_rows) * np.exp(
-            1.0j * 2 * np.pi * (m-1) * dv_sub * np.sin(np.deg2rad(eletrical_downtilt))
+            1.0j * 2 * np.pi * (m - 1) * dv_sub * np.sin(np.deg2rad(eletrical_downtilt))
         )
 
     def _calculate_single_dir_gain(self, phi: float, theta: float):
@@ -110,7 +111,7 @@ class AntennaSubarrayIMT(object):
         array_g = 10 * np.log10(abs(np.sum(np.multiply(v_vec, w_vec)))**2)
 
         return array_g + elem_g
-    
+
     def calculate_gain(
         self,
         phi_arr: typing.Union[np.array, float],
@@ -141,10 +142,10 @@ class AntennaSubarrayIMT(object):
 
         return gains
 
+
 if __name__ == '__main__':
     from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
     from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt, PlotAntennaPattern
-
 
     figs_dir = "figs/"
 
