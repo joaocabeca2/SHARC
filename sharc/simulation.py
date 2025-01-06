@@ -48,6 +48,8 @@ class Simulation(ABC, Observable):
             self.param_system = self.parameters.rns
         elif self.parameters.general.system == "RAS":
             self.param_system = self.parameters.ras
+        elif self.parameters.general.system == "MSS_SS":
+            self.param_system = self.parameters.mss_ss
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -243,10 +245,7 @@ class Simulation(ABC, Observable):
             # define antenna gains
             gain_sys_to_imt = self.calculate_gains(system_station, imt_station)
             gain_imt_to_sys = np.transpose(
-                self.calculate_gains(
-                    imt_station, system_station, is_co_channel,
-                ),
-            )
+                self.calculate_gains(imt_station, system_station, is_co_channel))
             additional_loss = self.parameters.imt.ue.ohmic_loss \
                 + self.parameters.imt.ue.body_loss \
                 + self.polarization_loss
@@ -295,12 +294,11 @@ class Simulation(ABC, Observable):
         self.imt_system_antenna_gain = gain_imt_to_sys
 
         # calculate coupling loss
-        coupling_loss = np.squeeze(
-            self.imt_system_path_loss - self.system_imt_antenna_gain -
-            self.imt_system_antenna_gain,
-        ) + additional_loss
+        coupling_loss = \
+            self.imt_system_path_loss - self.system_imt_antenna_gain - self.imt_system_antenna_gain + additional_loss
 
-        return coupling_loss
+        # Simulator expects imt_stations x system_stations shape
+        return np.transpose(coupling_loss)
 
     def calculate_intra_imt_coupling_loss(
         self,
@@ -509,17 +507,13 @@ class Simulation(ABC, Observable):
         elif not station_1.is_imt_station():
 
             off_axis_angle = station_1.get_off_axis_angle(station_2)
-            distance = station_1.get_distance_to(station_2)
-            theta = np.degrees(
-                np.arctan2(
-                    (station_1.height - station_2.height), distance,
-                ),
-            ) + station_1.elevation
-            gains[0, station_2_active] = \
-                station_1.antenna[0].calculate_gain(
-                    off_axis_angle_vec=off_axis_angle[0, station_2_active],
-                    theta_vec=theta[0, station_2_active],
-            )
+            _, theta = station_1.get_pointing_vector_to(station_2)
+            for k in station_1_active:
+                gains[k, station_2_active] = \
+                    station_1.antenna[k].calculate_gain(
+                        off_axis_angle_vec=off_axis_angle[k, station_2_active],
+                        theta_vec=theta[k, station_2_active],
+                )
         else:  # for IMT <-> IMT
             for k in station_1_active:
                 gains[k, station_2_active] = station_1.antenna[k].calculate_gain(

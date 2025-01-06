@@ -48,11 +48,8 @@ class TopologyNTN(Topology):
         self.num_sectors = num_sectors
 
         # Calculate the base station coordinates
-
-        self.space_station_x = self.bs_radius * \
-            np.cos(self.bs_elevation) * np.cos(self.bs_azimuth)
-        self.space_station_y = self.bs_radius * \
-            np.cos(self.bs_elevation) * np.sin(self.bs_azimuth)
+        self.space_station_x = self.bs_radius * np.cos(self.bs_elevation) * np.cos(self.bs_azimuth)
+        self.space_station_y = self.bs_radius * np.cos(self.bs_elevation) * np.sin(self.bs_azimuth)
         self.space_station_z = bs_height
 
         self.calculate_coordinates()
@@ -124,11 +121,11 @@ class TopologyNTN(Topology):
         self.x = self.x_rotated
         self.y = self.y_rotated
 
-    def plot(self, axis: matplotlib.axes.Axes):
-        r = self.cell_radius / 1000  # Convert to kilometers
+    def plot(self, axis: matplotlib.axes.Axes, scale=1000):
+        r = self.cell_radius / scale  # Convert to kilometers
 
         # Plot each sector
-        for x, y in zip(self.x / 1000, self.y / 1000):  # Convert to kilometers
+        for x, y in zip(self.x / scale, self.y / scale):  # Convert to kilometers
             hexagon = []
             for a in range(6):
                 angle_rad = math.radians(a * 60)
@@ -144,7 +141,7 @@ class TopologyNTN(Topology):
 
         # Plot base stations
         axis.scatter(
-            self.x / 1000, self.y / 1000, s=200, marker='v', c='k', edgecolor='k', linewidth=1, alpha=1,
+            self.x / scale, self.y / scale, s=200, marker='v', c='k', edgecolor='k', linewidth=1, alpha=1,
             label="Anchor Points",
         )
 
@@ -262,7 +259,7 @@ if __name__ == '__main__':
     bs_elevation = 45  # degrees
     beamwidth = 10
     cell_radius = bs_height * \
-        math.tan(np.radians(beamwidth)) / math.cos(bs_elevation)
+        math.tan(np.radians(beamwidth)) / math.cos(np.radians(bs_elevation))
     intersite_distance = cell_radius * np.sqrt(3)  # meters
     map = False
 
