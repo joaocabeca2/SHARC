@@ -81,6 +81,45 @@ class TestSatUtils(unittest.TestCase):
         npt.assert_almost_equal(sy, [0.0, 0.0, 3481390.4], 1)
         npt.assert_almost_equal(sz, [0.0, 0.0, 4426792.5], 1)
 
+    def test_calculate_elev_angle(self):
+        earth_station_coords = [
+            (0.0, 0.0),
+            (-15.0, -42.0),
+            (10.0, 20.0),
+            (-15.0, -25.0)
+        ]
+
+        space_station_coords = [
+            (0.0, 0.0),
+            (-10.0, -40.0),
+            (12.0, 25.0),
+            (0.0, -30.0)
+        ]
+
+        space_station_alts_km = [
+            1414,
+            525,
+            340,
+            35786
+        ]
+
+        expected_elevations = [
+            90.0,
+            37.48,
+            26.67,
+            71.45
+        ]
+
+        for i in range(len(expected_elevations)):
+            e = sat_utils.calc_elevation(
+                earth_station_coords[i][0],
+                space_station_coords[i][0],
+                earth_station_coords[i][1],
+                space_station_coords[i][1],
+                space_station_alts_km[i]
+            )
+            npt.assert_almost_equal(e, expected_elevations[i], 1)
+
 
 if __name__ == '__main__':
     unittest.main()

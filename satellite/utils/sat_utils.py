@@ -69,6 +69,49 @@ def lla2ecef(lat: np.ndarray, lng: np.ndarray, alt: np.ndarray) -> tuple:
     return x, y, z
 
 
+def calc_elevation(Le: np.ndarray,
+                   Ls: np.ndarray,
+                   le: np.ndarray,
+                   ls: np.ndarray,
+                   sat_height: np.ndarray) -> np.ndarray:
+    """Calculates the elevation angle from the earth station
+    to space station, given earth and space station coordinates.
+    Negative elevation angles means the space stations is not visible from Earth station.
+
+    Parameters
+    ----------
+    Le : (ndarray)
+        latitudes of the earth station
+    Ls : (ndarray)
+        latitudes of the space station
+    le : (ndarray)
+        longitudes of the earth station
+    ls : (ndarray)
+        latitudes of the space station
+    sat_height : (ndarray)
+        space station altitudes
+
+    Returns
+    -------
+    (ndarray)
+        array of elevation angles from the earth station in degrees.
+    """
+    EARTH_RADIUS_KM = 6371.0
+    Le = np.radians(Le)
+    Ls = np.radians(Ls)
+    le = np.radians(le)
+    ls = np.radians(ls)
+    gamma = np.arccos(
+        np.cos(Le) * np.cos(Ls) * np.cos(ls - le) + np.sin(Le) * np.sin(Ls)
+    )
+    rs = EARTH_RADIUS_KM + sat_height
+    slant = np.sqrt(rs**2 + EARTH_RADIUS_KM**2 - 2 * rs * EARTH_RADIUS_KM * np.cos(gamma))
+    elev_angle = np.arccos((slant**2 + EARTH_RADIUS_KM**2 - rs**2) / \
+                           (2 * slant * EARTH_RADIUS_KM)) - np.pi / 2
+
+    return np.degrees(elev_angle)
+
+
 if __name__ == "__main__":
     r1 = ecef2lla(7792.1450, 0, 0)
     print(r1)
