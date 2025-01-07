@@ -247,15 +247,34 @@ class SimulationDownlink(Simulation):
                 # otherwise ohmic loss will be included twice.
                 oob_power = self.bs.spectral_mask.power_calc(self.param_system.frequency, self.system.bandwidth) \
                     + self.parameters.imt.bs.ohmic_loss
+                
+                if self.parameters.general.system == "WIFI":
+                    print(self.coupling_loss_imt_system_adjacent.shape)
 
-                oob_interference = oob_power \
-                    - self.coupling_loss_imt_system_adjacent[active_beams[0]] \
-                    + 10 * np.log10(
-                        (self.param_system.bandwidth - self.overlapping_bandwidth) /
-                        self.param_system.bandwidth,
-                    )
+                    if len(self.coupling_loss_imt_system_adjacent.shape) == 1:
+                        self.coupling_loss_imt_system_adjacent = self.coupling_loss_imt_system_adjacent[active_beams[0]]
+                    else:
+                        self.coupling_loss_imt_system_adjacent = self.coupling_loss_imt_system_adjacent[:, active_beams[0]]
 
-                rx_interference += math.pow(10, 0.1 * oob_interference)
+                    oob_interference = oob_power \
+                        - self.coupling_loss_imt_system_adjacent \
+                        + 10 * np.log10(
+                            (self.param_system.bandwidth - self.overlapping_bandwidth) /
+                            self.param_system.bandwidth,
+                        )
+
+                    rx_interference += np.sum(np.power(10, 0.1 * oob_interference), axis=0)
+
+                else:
+                    print(self.coupling_loss_imt_system_adjacent.shape)
+                    oob_interference = oob_power \
+                        - self.coupling_loss_imt_system_adjacent[active_beams[0]] \
+                        + 10 * np.log10(
+                            (self.param_system.bandwidth - self.overlapping_bandwidth) /
+                            self.param_system.bandwidth,
+                        )
+
+                    rx_interference += math.pow(10, 0.1 * oob_interference)
 
         # Total received interference - dBW
         self.system.rx_interference = 10 * np.log10(rx_interference)

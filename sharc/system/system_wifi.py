@@ -59,6 +59,7 @@ class SystemWifi():
             self.polarization_loss = 3.0
 
         self.propagation_wifi = self.generate_propagation()
+        self.bandwidth = self.parameters.bandwidth
     
     def generate_topology(self):
         if self.parameters.topology.type == "HOTSPOT":
