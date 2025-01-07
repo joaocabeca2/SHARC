@@ -102,7 +102,7 @@ class OrbitModel():
 
     def get_orbit_positions_random_time(self, rng: np.random.RandomState) -> dict:
         """Returns satellite positions in a random time instant in seconds"""
-        return self.__get_satellite_positions(rng.random_sample(1) * self.orbital_period_sec)
+        return self.__get_satellite_positions(rng.random_sample(1) * 1000 * self.orbital_period_sec)
 
     def __get_satellite_positions(self, t: np.array) -> dict:
         """Returns the Satellite positins (both lat long and ecef) for a given time vector within the orbit period.
