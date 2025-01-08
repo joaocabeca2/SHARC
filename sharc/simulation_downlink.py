@@ -249,15 +249,8 @@ class SimulationDownlink(Simulation):
                     + self.parameters.imt.bs.ohmic_loss
                 
                 if self.parameters.general.system == "WIFI":
-                    print(self.coupling_loss_imt_system_adjacent.shape)
-
-                    if len(self.coupling_loss_imt_system_adjacent.shape) == 1:
-                        self.coupling_loss_imt_system_adjacent = self.coupling_loss_imt_system_adjacent[active_beams[0]]
-                    else:
-                        self.coupling_loss_imt_system_adjacent = self.coupling_loss_imt_system_adjacent[:, active_beams[0]]
-
                     oob_interference = oob_power \
-                        - self.coupling_loss_imt_system_adjacent \
+                        - self.coupling_loss_imt_system_adjacent[:, active_beams[0]] \
                         + 10 * np.log10(
                             (self.param_system.bandwidth - self.overlapping_bandwidth) /
                             self.param_system.bandwidth,
@@ -266,7 +259,6 @@ class SimulationDownlink(Simulation):
                     rx_interference += np.sum(np.power(10, 0.1 * oob_interference), axis=0)
 
                 else:
-                    print(self.coupling_loss_imt_system_adjacent.shape)
                     oob_interference = oob_power \
                         - self.coupling_loss_imt_system_adjacent[active_beams[0]] \
                         + 10 * np.log10(
@@ -289,13 +281,17 @@ class SimulationDownlink(Simulation):
         )
 
         # Calculate PFD at the system
-        # TODO: generalize this a bit more if needed
-        if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
-            self.system.pfd = 10 * \
-                np.log10(
-                    10**(self.system.rx_interference / 10) /
-                    self.system.antenna[0].effective_area,
-                )
+        #generalize this a bit more if needed
+
+        try:
+            if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
+                self.system.pfd = 10 * \
+                    np.log10(
+                        10**(self.system.rx_interference / 10) /
+                        self.system.antenna[0].effective_area,
+                    )
+        except AttributeError:
+            pass
 
     def collect_results(self, write_to_file: bool, snapshot_number: int):
         if not self.parameters.imt.interfered_with and np.any(self.bs.active):
@@ -304,8 +300,11 @@ class SimulationDownlink(Simulation):
                 [self.system.rx_interference],
             )
             # TODO: generalize this a bit more if needed (same conditional as above)
-            if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
-                self.results.system_pfd.extend([self.system.pfd])
+            try:
+                if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
+                    self.results.system_pfd.extend([self.system.pfd])
+            except AttributeError:
+                pass
 
         bs_active = np.where(self.bs.active)[0]
         for bs in bs_active:

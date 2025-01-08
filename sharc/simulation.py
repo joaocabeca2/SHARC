@@ -250,7 +250,24 @@ class Simulation(ABC, Observable):
                 path_loss_sta_imt, self.parameters.wifi.sta.k, 1)
         
         repeats_ap = gain_sta_to_imt.shape[0] // gain_ap_to_imt.shape[0]
-   
+
+
+        def expand_array(array, repeats):
+            return np.tile(array, (repeats, 1))
+        
+        # Ajustar a forma de coupling_loss_ap_imt para (171, 1997)
+        gain_ap_to_imt = expand_array(gain_ap_to_imt, repeats_ap)
+        gain_imt_to_ap = expand_array(gain_imt_to_ap, repeats_ap)
+        path_loss_ap_imt = expand_array(path_loss_ap_imt, repeats_ap)
+
+        self.system_imt_antenna_gain = gain_ap_to_imt + gain_sta_to_imt
+        self.imt_system_antenna_gain = gain_imt_to_ap + gain_imt_to_sta
+        path_loss = path_loss_ap_imt + path_loss_sta_imt
+        # Repeat for each BS beam
+        self.imt_system_path_loss = np.repeat(
+            path_loss, self.parameters.imt.ue.k, 1,
+        )
+
         # calculate coupling loss
         coupling_loss_ap_imt = np.squeeze(
             path_loss_ap_imt - gain_ap_to_imt -
@@ -261,9 +278,7 @@ class Simulation(ABC, Observable):
             gain_imt_to_sta,
         )
 
-        # Ajustar a forma de coupling_loss_ap_imt para (171, 1997)
-        coupling_loss_ap_imt_expanded = np.tile(coupling_loss_ap_imt, (repeats_ap, 1))
-        return (coupling_loss_ap_imt_expanded + coupling_loss_sta_imt) + additional_loss
+        return (coupling_loss_ap_imt + coupling_loss_sta_imt) + additional_loss
                 
     def calculate_coupling_loss_system_imt(
         self,

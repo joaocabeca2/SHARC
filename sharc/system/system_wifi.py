@@ -60,6 +60,7 @@ class SystemWifi():
 
         self.propagation_wifi = self.generate_propagation()
         self.bandwidth = self.parameters.bandwidth
+        self.noise_temperature = self.parameters.noise_temperature
     
     def generate_topology(self):
         if self.parameters.topology.type == "HOTSPOT":
