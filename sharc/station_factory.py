@@ -51,7 +51,7 @@ from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 from sharc.topology.topology import Topology
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
-from satellite.ngso.orbit_model import OrbitModel
+from sharc.satellite.ngso.orbit_model import OrbitModel
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -555,7 +555,7 @@ class StationFactory(object):
         elif parameters.general.system == "RNS":
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         elif parameters.general.system == "NGSO":
-            return StationFactory.genereate_ngso_constellation(parameters.ngso, random_number_gen)
+            return StationFactory.generate_ngso_constellation(parameters.ngso, random_number_gen)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -1115,23 +1115,115 @@ class StationFactory(object):
 
         return space_station
 
+
     @staticmethod
     def generate_ngso_constellation(param: ParametersNgsoConstellation, rng: np.random.RandomState):
+        """
+        Generates an NGSO constellation.
 
-        for orbit in param.orbits:
-            pass
+        Parameters
+        ----------
+        param : ParametersNgsoConstellation
+            Parameters for the NGSO constellation, including orbits and antenna configuration.
+        rng : np.random.RandomState
+            Random number generator for generating positions.
 
-        #     self.orbit_model = OrbitModel(
-        #     Nsp=orbit_params.Nsp,
-        #     Np=orbit_params.Np,
-        #     phasing=orbit_params.phasing_deg,
-        #     long_asc=orbit_params.long_asc_deg,
-        #     omega=orbit_params.omega_deg,
-        #     delta=orbit_params.inclination_deg,
-        #     hp=orbit_params.perigee_alt_km,
-        #     ha=orbit_params.apogee_alt_km,
-        #     Mo=orbit_params.initial_mean_anomaly
-        # )
+        Returns
+        -------
+        StationManager
+            A station manager object containing all satellite positions and configurations.
+        """
+        # Calculate the total number of satellites in all orbits
+        total_satellites = sum(orbit.n_planes * orbit.sats_per_plane for orbit in param.orbits)
+
+        # Initialize the StationManager for the NGSO constellation
+        station_manager = StationManager(total_satellites)
+        station_manager.station_type = StationType.NGSO
+
+        # Initialize variables to store satellite positions
+        all_latitudes = []
+        all_longitudes = []
+        all_sx = []
+        all_sy = []
+        all_sz = []
+        all_elevations = []
+        all_azimuths = []
+
+        # Iterate over the orbits in the parameters
+        satellite_index = 0
+        for orbit_param in param.orbits:
+            # Create an OrbitModel for the given orbit parameters
+            orbit_model = OrbitModel(
+                Nsp=orbit_param.sats_per_plane,
+                Np=orbit_param.n_planes,
+                phasing=orbit_param.phasing_deg,
+                long_asc=orbit_param.long_asc_deg,
+                omega=orbit_param.omega_deg,
+                delta=orbit_param.inclination_deg,
+                hp=orbit_param.perigee_alt_km,
+                ha=orbit_param.apogee_alt_km,
+                Mo=orbit_param.initial_mean_anomaly
+            )
+
+            # Get satellite positions at time instant 0 seconds
+            pos_vec = orbit_model.get_orbit_positions_time_instant(time_instant_secs=0)
+
+            # Append the positions to the global lists
+            all_latitudes.extend(pos_vec['lat'])
+            all_longitudes.extend(pos_vec['lon'])
+            all_sx.extend(pos_vec['sx'])
+            all_sy.extend(pos_vec['sy'])
+            all_sz.extend(pos_vec['sz'])
+
+            # Calculate azimuth and elevation for each satellite
+            for i in range(orbit_param.n_planes * orbit_param.sats_per_plane):
+                sx = pos_vec['sx'][i]
+                sy = pos_vec['sy'][i]
+                sz = pos_vec['sz'][i]
+                r = np.sqrt(sx**2 + sy**2 + sz**2)
+
+                elevation = np.degrees(np.arcsin(sz / r))
+                azimuth = np.degrees(np.arctan2(sy, sx))
+
+                all_elevations.append(elevation)
+                all_azimuths.append(azimuth)
+
+                # Configure satellites in the StationManager
+                station_manager.x[satellite_index] = sx
+                station_manager.y[satellite_index] = sy
+                station_manager.height[satellite_index] = sz
+                station_manager.azimuth[satellite_index] = azimuth
+                station_manager.elevation[satellite_index] = elevation
+
+                satellite_index += 1
+
+        # Set antenna configurations
+        station_manager.antenna = np.array(
+            [param.antenna] * total_satellites, dtype=object
+        )
+
+        # Add additional parameters to the StationManager
+        station_manager.active = np.ones(total_satellites, dtype=bool)
+        #station_manager.bandwidth = np.array([param.bandwidth] * total_satellites)
+        station_manager.tx_power = np.array([param.max_transmit_power_dB] * total_satellites)
+        station_manager.noise_figure = np.array([param.max_receive_gain_dBi] * total_satellites)
+
+        return station_manager
+
+
+
+        # Assign calculated properties to the StationManager
+        #ngso_manager.x = np.array(x_positions) ok
+        #ngso_manager.y = np.array(y_positions) ok
+        #ngso_manager.height = np.array(heights) ok
+        #ngso_manager.azimuth = np.array(azimuths) ok
+        #ngso_manager.elevation = np.array(elevations)ok
+        #ngso_manager.antenna = np.array(antennas)ok
+        #ngso_manager.tx_power = np.full(total_satellites, param.max_transmit_power_dB)ok
+        #ngso_manager.bandwidth = np.full(total_satellites, param.antenna.bandwidth)ok
+        #ngso_manager.active = np.ones(total_satellites, dtype=bool)ok
+
+
 
     @staticmethod
     def get_random_position(num_stas: int,
