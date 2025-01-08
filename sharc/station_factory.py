@@ -221,26 +221,24 @@ class StationFactory(object):
            param.ue.distribution_type.upper() == "CELL" or \
            param.ue.distribution_type.upper() == "UNIFORM_IN_CELL":
 
-            deterministic_cell = False
             central_cell = False
-
-            if param.ue.distribution_type.upper() == "UNIFORM_IN_CELL" or \
-               param.ue.distribution_type.upper() == "CELL":
+            deterministic_cell = False
+            if param.ue.distribution_type.upper() != "UNIFORM":
                 deterministic_cell = True
-
                 if param.ue.distribution_type.upper() == "CELL":
                     central_cell = True
-
-            if not (type(topology) is TopologyMacrocell):
-                sys.stderr.write(
-                    "ERROR\nUniform UE distribution is currently supported only with Macrocell topology",
-                )
-                sys.exit(1)
+            else:
+                if not (type(topology) is TopologyMacrocell):
+                    sys.stderr.write(
+                        "ERROR\nUniform UE distribution is currently supported only with Macrocell topology",
+                    )
+                    sys.exit(1)
 
             [ue_x, ue_y, theta, distance] = StationFactory.get_random_position(
                 num_ue, topology, random_number_gen,
                 param.minimum_separation_distance_bs_ue,
-                deterministic_cell=True,
+                central_cell=central_cell,
+                deterministic_cell=deterministic_cell,
             )
             psi = np.degrees(
                 np.arctan((param.bs.height - param.ue.height) / distance),
@@ -1141,7 +1139,7 @@ class StationFactory(object):
                                    param_mss.elevation,
                                    param_mss.num_sectors)
         ntn_topology.calculate_coordinates()
-        
+
         num_bs = ntn_topology.num_base_stations
         mss_ss = StationManager(n=num_bs)
         mss_ss.station_type = StationType.MSS_SS
@@ -1252,12 +1250,6 @@ class StationFactory(object):
             # Set active satellites using the minimum elevation angle criteria
             # Here the IMT topology holds the IMT BS positions over the Earth surface. The active satellites are the ones
             # which are visible within a minimum elevation angle.
-            # long_diff = np.degrees(imt_topology.central_longitude) - pos_vec['lon']
-            # elev_from_bs = calc_elevation(
-            #     np.degrees(imt_topology.central_latitude),
-            #     long_diff,
-            #     params.orbit.perigee_alt_km
-            # )
             elev_from_bs = calc_elevation(
                 np.degrees(imt_topology.central_latitude),
                 pos_vec['lat'],
@@ -1399,8 +1391,8 @@ if __name__ == '__main__':
     # plot uniform distribution in macrocell scenario
 
     factory = StationFactory()
-    imt_topology = TopologyMacrocell(1000, 1)
-    imt_topology.calculate_coordinates()
+    topology = TopologyMacrocell(1000, 1)
+    topology.calculate_coordinates()
 
     class ParamsAux(object):
         def __init__(self):
@@ -1458,7 +1450,7 @@ if __name__ == '__main__':
 
     rnd = np.random.RandomState(1)
 
-    imt_ue = factory.generate_imt_ue(params, ue_ant_param, imt_topology, rnd)
+    imt_ue = factory.generate_imt_ue(params, ue_ant_param, topology, rnd)
 
     fig = plt.figure(
         figsize=(8, 8), facecolor='w',
@@ -1466,7 +1458,7 @@ if __name__ == '__main__':
     )  # create a figure object
     ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
 
-    imt_topology.plot(ax)
+    topology.plot(ax)
 
     plt.axis('image')
     plt.title("Macro cell topology")
