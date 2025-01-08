@@ -25,6 +25,7 @@ from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
 from sharc.parameters.parameters_mss_ss import ParametersMssSs
+from sharc.parameters.parameters_mss_d2d import ParametersMssD2d
 from sharc.parameters.constants import EARTH_RADIUS
 from sharc.station_manager import StationManager
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
@@ -54,6 +55,7 @@ from sharc.topology.topology_ntn import TopologyNTN
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from satellite.ngso.orbit_model import OrbitModel
+from satellite.utils.sat_utils import calc_elevation
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -199,6 +201,9 @@ class StationFactory(object):
 
         ue_x = list()
         ue_y = list()
+
+        imt_ue.height = param.ue.height * np.ones(num_ue)
+
         # TODO: Sanitaze the azimuth_range parameter
         azimuth_range = param.ue.azimuth_range
         if (not isinstance(azimuth_range, tuple)) or len(azimuth_range) != 2:
@@ -319,6 +324,16 @@ class StationFactory(object):
                     np.arctan((param.bs.height - param.ue.height) / distance),
                 )
                 imt_ue.elevation[idx] = elevation[idx] + psi
+
+        elif param.topology.type == "SINGLE_BS" and param.topology.single_bs.is_spherical:
+            # This is a special case where the UE is positioned over the same lat long of the BS. This is
+            # because for single BS studies in this case the UE position relative to the BS is irrelevant w.r.t the
+            # satellite
+            vec_mag = np.sqrt(topology.x**2 + topology.y**2 + topology.height**2)
+            scale_factor = (vec_mag - param.ue.height) / vec_mag
+            ue_x = np.repeat(topology.x * scale_factor, num_ue)
+            ue_y = np.repeat(topology.x * scale_factor, num_ue)
+            imt_ue.height = np.repeat(topology.height * scale_factor, num_ue)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid UE distribution type: " + param.ue.distribution_type,
@@ -329,7 +344,6 @@ class StationFactory(object):
         imt_ue.y = np.array(ue_y)
 
         imt_ue.active = np.zeros(num_ue, dtype=bool)
-        imt_ue.height = param.ue.height * np.ones(num_ue)
         imt_ue.indoor = random_number_gen.random_sample(
             num_ue,
         ) <= (param.ue.indoor_percent / 100)
@@ -555,6 +569,8 @@ class StationFactory(object):
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         elif parameters.general.system == "MSS_SS":
             return StationFactory.generate_mss_ss(parameters.mss_ss)
+        elif parameters.general.system == "MSS_D2D":
+            return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, topology)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -1167,6 +1183,102 @@ class StationFactory(object):
 
         return mss_ss
 
+    def generate_mss_d2d(params: ParametersMssD2d, random_number_gen: np.random.RandomState, imt_topology: Topology):
+        from satellite.ngso.orbit_model import OrbitModel
+        MIN_ELEV_ANGLE_DEG = 5.0  # minimum elevation angle for satellite visibility
+        # Initialize the orbit model
+        # FIXME: That should be initialized once in the simulation
+        orbit = OrbitModel(
+            Nsp=params.orbit.Nsp,
+            Np=params.orbit.Np,
+            phasing=params.orbit.phasing_deg,
+            long_asc=params.orbit.long_asc_deg,
+            omega=params.orbit.omega_deg,
+            delta=params.orbit.inclination_deg,
+            hp=params.orbit.perigee_alt_km,
+            ha=params.orbit.apogee_alt_km,
+            Mo=params.orbit.initial_mean_anomaly
+        )
+
+        # Initialize the StationManger object representing the MSS_D2D system
+        num_satellites = orbit.Np * orbit.Nsp
+        mss_d2d = StationManager(n=num_satellites)
+        mss_d2d.station_type = StationType.MSS_D2D
+        mss_d2d.is_space_station = True
+
+        # Initialize satellites antennas
+        mss_d2d.antenna = np.empty(num_satellites, dtype=AntennaS1528Leo)
+        for i in range(num_satellites):
+            if params.antenna_pattern == "ITU-R-S.1528-LEO":
+                mss_d2d.antenna[i] = AntennaS1528Leo(params.antenna_s1528)
+            elif params.antenna_pattern == "ITU-R-S.1528-Section1.2":
+                mss_d2d.antenna[i] = AntennaS1528(params.antenna_s1528)
+            elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
+                mss_d2d.antenna[i] = AntennaS1528Taylor(params.antenna_s1528)
+            else:
+                raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
+
+        if params.spectral_mask == "IMT-2020":
+            mss_d2d.spectral_mask = SpectralMaskImt(StationType.IMT_BS,
+                                                    params.frequency,
+                                                    params.bandwidth,
+                                                    params.spurious_emissions,
+                                                    scenario="OUTDOOR")
+        elif params.spectral_mask == "3GPP E-UTRA":
+            mss_d2d.spectral_mask = SpectralMask3Gpp(StationType.IMT_BS,
+                                                     params.frequency,
+                                                     params.bandwidth,
+                                                     params.spurious_emissions,
+                                                     scenario="OUTDOOR")
+        else:
+            raise ValueError(f"Invalid or not implemented spectral mask - {params.spectral_mask}")
+        mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 10e6))
+
+        active_sat_idxs = np.empty(0)
+        MAX_ITER = 100
+        i = 0
+        while len(active_sat_idxs) == 0:
+            # Get random positions for the satellites
+            pos_vec = orbit.get_orbit_positions_random_time(rng=random_number_gen)
+            mss_d2d.x = pos_vec['sx'].flatten() * 1e3
+            mss_d2d.y = pos_vec['sy'].flatten() * 1e3
+            mss_d2d.height = pos_vec['sz'].flatten() * 1e3
+
+            # Point antennas to the origin (Earth center)
+            dist_xy = np.sqrt(mss_d2d.x**2 + mss_d2d.y**2)
+            mss_d2d.elevation = np.arctan2(-mss_d2d.height, dist_xy)
+            mss_d2d.azimuth = np.arctan2(mss_d2d.x, mss_d2d.y)
+
+            # Set active satellites using the minimum elevation angle criteria
+            # Here the IMT topology holds the IMT BS positions over the Earth surface. The active satellites are the ones
+            # which are visible within a minimum elevation angle.
+            # long_diff = np.degrees(imt_topology.central_longitude) - pos_vec['lon']
+            # elev_from_bs = calc_elevation(
+            #     np.degrees(imt_topology.central_latitude),
+            #     long_diff,
+            #     params.orbit.perigee_alt_km
+            # )
+            elev_from_bs = calc_elevation(
+                np.degrees(imt_topology.central_latitude),
+                pos_vec['lat'],
+                np.degrees(imt_topology.central_longitude),
+                pos_vec['lon'],
+                params.orbit.perigee_alt_km
+            )
+
+            active_sat_idxs = np.unique(np.where(elev_from_bs >= MIN_ELEV_ANGLE_DEG)[0])
+            mss_d2d.active = np.zeros(num_satellites, dtype=bool)
+            mss_d2d.active[active_sat_idxs] = True
+            mss_d2d.tx_power = params.tx_power_density + 10 * np.log10(params.bandwidth * 10**6)
+            i = i + 1
+            if i >= MAX_ITER:
+                raise RuntimeError(
+                    "Maximum itereations reached and no satellite was selected within the minimum elevation criteria."
+                )
+
+        return mss_d2d
+
+
     @staticmethod
     def get_random_position(num_stas: int,
                             topology: Topology,
@@ -1287,8 +1399,8 @@ if __name__ == '__main__':
     # plot uniform distribution in macrocell scenario
 
     factory = StationFactory()
-    topology = TopologyMacrocell(1000, 1)
-    topology.calculate_coordinates()
+    imt_topology = TopologyMacrocell(1000, 1)
+    imt_topology.calculate_coordinates()
 
     class ParamsAux(object):
         def __init__(self):
@@ -1346,7 +1458,7 @@ if __name__ == '__main__':
 
     rnd = np.random.RandomState(1)
 
-    imt_ue = factory.generate_imt_ue(params, ue_ant_param, topology, rnd)
+    imt_ue = factory.generate_imt_ue(params, ue_ant_param, imt_topology, rnd)
 
     fig = plt.figure(
         figsize=(8, 8), facecolor='w',
@@ -1354,7 +1466,7 @@ if __name__ == '__main__':
     )  # create a figure object
     ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
 
-    topology.plot(ax)
+    imt_topology.plot(ax)
 
     plt.axis('image')
     plt.title("Macro cell topology")

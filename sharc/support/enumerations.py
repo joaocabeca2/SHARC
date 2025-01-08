@@ -43,5 +43,6 @@ class StationType(Enum):
     RAS = 8  # Radio Astronomy Service
     EESS_SS = 9  # EESS Space Station
     METSAT_SS = 10  # MetSat Space Station
-    SINGLE_EARTH_STATION = 11
-    MSS_SS = 12 # Mobile Satellite Service - Space Station
+    SINGLE_EARTH_STATION = 11  # Generic Earth Station implementation
+    MSS_D2D = 12  # Mobile Satellite Service - Direct to Device system
+    MSS_SS = 13  # Mobile Satellite Service - Space Station

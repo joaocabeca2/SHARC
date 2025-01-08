@@ -6,8 +6,7 @@ from sharc.parameters.parameters_base import ParametersBase
 
 @dataclass
 class ParametersAntennaS1528(ParametersBase):
-    """Dataclass containing the Fixed Satellite Services - Space Station
-    parameters for the simulator
+    """Dataclass containing the Antenna Pattern S.1528 parameters for the simulator.
     """
     section_name: str = "S1528"
     # satellite center frequency [MHz]

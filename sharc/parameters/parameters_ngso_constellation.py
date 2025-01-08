@@ -39,6 +39,8 @@ class ParametersNgsoConstellation(ParametersBase):
             if not isinstance(orbit, ParametersOrbit):
                 raise ValueError("ParametersNgsoConstellation: Invalid orbit configuration. \
                                  All orbits must be instances of ParametersOrbit.")
+
+
 # Test block
 if __name__ == "__main__":
     # Creating orbital parameters for the first orbit
@@ -63,17 +65,18 @@ if __name__ == "__main__":
         apogee_alt_km=580.0           # Apogee altitude in kilometers
     )
 
-    # Creating an NGSO constellation and adding the defined orbits
-    constellation = ParametersNgsoConstellation(
-        name="Acme-Star-1",           # Name of the constellation
-        antenna="Taylor1.4",          # Antenna type
-        max_transmit_gain_dBi=30.0,            # Maximum antenna ga.in in dBi
-        orbits=[orbit_1, orbit_2]     # List of orbital parameters
-    )
+    # # Creating an NGSO constellation and adding the defined orbits
+    # constellation = ParametersNgsoConstellation(
+    #     name="Acme-Star-1",           # Name of the constellation
+    #     antenna="Taylor1.4",          # Antenna type
+    #     max_transmit_gain_dBi=30.0,            # Maximum antenna ga.in in dBi
+    #     orbits=[orbit_1, orbit_2]     # List of orbital parameters
+    # )
 
     # Testing parameter validation
 
     try:
+        constellation = ParametersNgsoConstellation()
         # Load parameters from a configuration file (yaml in this case)
         yaml_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../input/ngso_parameters.yaml")
         constellation.load_parameters_from_file(yaml_file_path)

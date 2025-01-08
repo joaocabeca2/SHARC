@@ -8,4 +8,5 @@ SHARC_IMPLEMENTED_SYSTEMS = [
     "RAS",
     "MSS_SS",
     "SINGLE_EARTH_STATION",
+    "MSS_D2D"
 ]

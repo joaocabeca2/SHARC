@@ -5,9 +5,13 @@ from sharc.parameters.parameters_base import ParametersBase
 
 @dataclass
 class ParametersSingleBS(ParametersBase):
+    section_name: str = "single_bs"
     intersite_distance: int = None
     cell_radius: int = None
     num_clusters: int = 1
+    is_spherical: bool = False  # whether we set the BS over a sphere (Earth) surface
+    central_latitude: float = -15.7801  # Brasília
+    central_longitude: float = -47.9292  # Brasília
 
     def load_subparameters(self, ctx: str, params: dict, quiet=True):
         super().load_subparameters(ctx, params, quiet)
@@ -27,3 +31,15 @@ class ParametersSingleBS(ParametersBase):
 
         if self.num_clusters not in [1, 2]:
             raise ValueError(f"{ctx}.num_clusters should either be 1 or 2")
+
+
+if __name__ == "__main__":
+    # Run validation for input parameters
+    import os
+    import pprint
+
+    # Load default simulator parameters
+    yaml_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../input/parameters.yaml")
+    params = ParametersSingleBS()
+    params.load_parameters_from_file(yaml_file_path, quiet=False)
+    pprint.pprint(params)
