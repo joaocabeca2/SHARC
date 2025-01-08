@@ -356,32 +356,32 @@ class SimulationDownlink(Simulation):
                 self.results.imt_dl_inr.extend(self.ue.inr[ue].tolist())
 
                 self.results.system_imt_antenna_gain.extend(
-                    self.system_imt_antenna_gain[sys_active, ue],
+                    self.system_imt_antenna_gain[sys_active[:, np.newaxis], ue].flatten(),
                 )
                 self.results.imt_system_antenna_gain.extend(
-                    self.imt_system_antenna_gain[sys_active, ue],
+                    self.imt_system_antenna_gain[sys_active[:, np.newaxis], ue].flatten(),
                 )
                 self.results.imt_system_path_loss.extend(
-                    self.imt_system_path_loss[sys_active, ue],
+                    self.imt_system_path_loss[sys_active[:, np.newaxis], ue].flatten(),
                 )
                 if self.param_system.channel_model == "HDFSS":
                     self.results.imt_system_build_entry_loss.extend(
-                        self.imt_system_build_entry_loss[sys_active, ue],
+                        self.imt_system_build_entry_loss[sys_active[:, np.newaxis], ue].flatten(),
                     )
                     self.results.imt_system_diffraction_loss.extend(
-                        self.imt_system_diffraction_loss[sys_active, ue],
+                        self.imt_system_diffraction_loss[sys_active[:, np.newaxis], ue].flatten(),
                     )
                 self.results.sys_to_imt_coupling_loss.extend(
-                    self.coupling_loss_imt_system[ue, sys_active])
+                    self.coupling_loss_imt_system[np.array(ue)[:, np.newaxis], sys_active].flatten())
             else:  # IMT is the interferer
                 self.results.system_imt_antenna_gain.extend(
-                    self.system_imt_antenna_gain[sys_active, ue],
+                    self.system_imt_antenna_gain[sys_active[:, np.newaxis], ue].flatten(),
                 )
                 self.results.imt_system_antenna_gain.extend(
-                    self.imt_system_antenna_gain[sys_active, ue],
+                    self.imt_system_antenna_gain[sys_active[:, np.newaxis], ue].flatten(),
                 )
                 self.results.imt_system_path_loss.extend(
-                    self.imt_system_path_loss[sys_active, ue],
+                    self.imt_system_path_loss[sys_active[:, np.newaxis], ue].flatten(),
                 )
                 if self.param_system.channel_model == "HDFSS":
                     self.results.imt_system_build_entry_loss.extend(
