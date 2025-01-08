@@ -361,9 +361,7 @@ class Simulation(ABC, Observable):
             + self.parameters.imt.ue.body_loss
 
         # calculate coupling loss
-        coupling_loss = np.squeeze(
-            self.path_loss_imt - self.imt_bs_antenna_gain - self.imt_ue_antenna_gain,
-        ) + additional_loss
+        coupling_loss = self.path_loss_imt - self.imt_bs_antenna_gain - self.imt_ue_antenna_gain + additional_loss
 
         return coupling_loss
 
