@@ -3,9 +3,9 @@
 
 import numpy as np
 
-from satellite.ngso.custom_functions import wrap2pi, eccentric_anomaly, keplerian2eci, eci2ecef, plot_ground_tracks
-from satellite.utils.sat_utils import ecef2lla
-from satellite.ngso.constants import EARTH_RADIUS_KM, KEPLER_CONST, EARTH_ROTATION_RATE
+from sharc.satellite.ngso.custom_functions import wrap2pi, eccentric_anomaly, keplerian2eci, eci2ecef, plot_ground_tracks
+from sharc.satellite.utils.sat_utils import ecef2lla
+from sharc.satellite.ngso.constants import EARTH_RADIUS_KM, KEPLER_CONST, EARTH_ROTATION_RATE
 
 
 class OrbitModel():
@@ -186,4 +186,5 @@ if __name__ == "__main__":
     # pos_vec = orbit.get_orbit_positions_time_instant(time_instant_secs=10)
     # pos_vec = orbit.get_orbit_positions_random_time(rng=np.random.RandomState(seed=6))
     pos_vec = orbit.get_satellite_positions_time_interval()
+    
     plot_ground_tracks(pos_vec['lat'], pos_vec['lon'], planes=[1, 2, 3, 4, 5, 6, 7, 8], satellites=[1])
