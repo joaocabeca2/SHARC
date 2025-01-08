@@ -44,3 +44,4 @@ class StationType(Enum):
     EESS_SS = 9  # EESS Space Station
     METSAT_SS = 10  # MetSat Space Station
     SINGLE_EARTH_STATION = 11
+    NGSO = 12  # Non-Geostationary Satellite Orbit
