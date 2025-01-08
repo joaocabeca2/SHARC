@@ -107,14 +107,16 @@ class Parameters(object):
         #######################################################################
         self.eess_ss.load_parameters_from_file(self.file_name)
 
+        #######################################################################
+        # Single Earth Station
+        #######################################################################
         self.single_earth_station.load_parameters_from_file(self.file_name)
-
        
         #######################################################################
         # NGSO constellation
         #######################################################################
         self.ngso.load_parameters_from_file(self.file_name)
-        self.
+        
 
 
 if __name__ == "__main__":
