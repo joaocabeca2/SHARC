@@ -109,6 +109,10 @@ class Parameters(object):
         # EESS passive
         #######################################################################
         self.eess_ss.load_parameters_from_file(self.file_name)
+
+        #######################################################################
+        # Single Earth Station
+        #######################################################################
         self.single_earth_station.load_parameters_from_file(self.file_name)
 
         #######################################################################

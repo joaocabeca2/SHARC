@@ -58,6 +58,6 @@ if __name__ == "__main__":
                               sats_per_plane=30,
                               long_asc_deg=14,
                               phasing_deg=7.8)
-    param_ngso = ParamtersNgsoConstellation("ACME-Constellation", [shell_1, shell_2, shell_3])
+    param_ngso = ParametersNgsoConstellation("ACME-Constellation", [shell_1, shell_2, shell_3])
     print(param_ngso)
     print(param_ngso.get_num_of_shells())
