@@ -1,4 +1,4 @@
-from sharc.parameters.parameters_ngso import ParametersOrbit, ParametersNgsoConstellation
+from sharc.parameters.parameters_ngso_constellation import ParametersOrbit, ParametersNgsoConstellation
 from sharc.station_manager import StationManager
 from sharc.support.enumerations import StationType
 from sharc.station_factory import StationFactory

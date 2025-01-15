@@ -25,7 +25,7 @@ from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
 from sharc.parameters.parameters_mss_ss import ParametersMssSs
-from sharc.parameters.parameters_mss_d2d import ParametersMssD2d
+#from sharc.parameters.parameters_mss_d2d import ParametersMssD2d
 from sharc.parameters.parameters_ngso_constellation import ParametersNgsoConstellation
 from sharc.parameters.constants import EARTH_RADIUS
 from sharc.station_manager import StationManager
@@ -568,8 +568,8 @@ class StationFactory(object):
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         elif parameters.general.system == "MSS_SS":
             return StationFactory.generate_mss_ss(parameters.mss_ss)
-        elif parameters.general.system == "MSS_D2D":
-            return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, topology)
+        #elif parameters.general.system == "MSS_D2D":
+        #    return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, topology)
         elif parameters.general.system == "NGSO":
             return StationFactory.generate_ngso_constellation(parameters.ngso, random_number_gen)
         else:
@@ -1274,111 +1274,95 @@ class StationFactory(object):
         return mss_d2d
 
 
-    def generate_ngso_constellation(param: ParametersNgsoConstellation, rng: np.random.RandomState):
+    def generate_mss_d2d_multiple_orbits(params: ParametersNgsoConstellation, random_number_gen: np.random.RandomState, imt_topology: Topology):
         """
-        Generates an NGSO constellation.
+        Generate the MSS D2D constellation with support for multiple orbits and base station visibility.
 
         Parameters
         ----------
-        param : ParametersNgsoConstellation
-            Parameters for the NGSO constellation, including orbits and antenna configuration.
-        rng : np.random.RandomState
-            Random number generator for generating positions.
+        params : ParametersNgsoConstellation
+            Parameters for the MSS D2D system, including orbits and antenna configuration.
+        random_number_gen : np.random.RandomState
+            Random number generator for generating satellite positions.
+        imt_topology : Topology
+            The IMT topology containing base station locations.
 
         Returns
         -------
         StationManager
-            A station manager object containing all satellite positions and configurations.
+            A StationManager object containing satellite configurations and positions.
         """
-        # Calculate the total number of satellites in all orbits
-        total_satellites = sum(orbit.n_planes * orbit.sats_per_plane for orbit in param.orbits)
+        MIN_ELEV_ANGLE_DEG = 5.0  # Minimum elevation angle for satellite visibility
+        MAX_ITER = 100
 
-        # Initialize the StationManager for the NGSO constellation
-        station_manager = StationManager(total_satellites)
-        station_manager.station_type = StationType.NGSO
+        # Initialize the StationManager for the MSS D2D system
+        total_satellites = sum(orbit.Np * orbit.Nsp for orbit in params.orbits)
+        mss_d2d = StationManager(n=total_satellites)
+        mss_d2d.station_type = StationType.MSS_D2D
+        mss_d2d.is_space_station = True
 
-        # Initialize variables to store satellite positions
-        all_latitudes = []
-        all_longitudes = []
-        all_sx = []
-        all_sy = []
-        all_sz = []
+        # Initialize arrays to store data
+        all_positions = {"lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
         all_elevations = []
         all_azimuths = []
 
-        # Iterate over the orbits in the parameters
-        satellite_index = 0
-        for orbit_param in param.orbits:
-            # Create an OrbitModel for the given orbit parameters
-            orbit_model = OrbitModel(
-                Nsp=orbit_param.sats_per_plane,
-                Np=orbit_param.n_planes,
-                phasing=orbit_param.phasing_deg,
-                long_asc=orbit_param.long_asc_deg,
-                omega=orbit_param.omega_deg,
-                delta=orbit_param.inclination_deg,
-                hp=orbit_param.perigee_alt_km,
-                ha=orbit_param.apogee_alt_km,
-                Mo=orbit_param.initial_mean_anomaly
-            )
+        active_satellite_idxs = []
+        current_sat_idx = 0
 
-            # Get satellite positions at time instant 0 seconds
-            pos_vec = orbit_model.get_orbit_positions_time_instant(time_instant_secs=0)
+        i = 0
+        while len(active_satellite_idxs) == 0:
+            for orbit in params.orbits:
+                # Generate random positions for the satellites
+                pos_vec = orbit.get_orbit_positions_random_time(rng=random_number_gen)
 
-            # Append the positions to the global lists
-            all_latitudes.extend(pos_vec['lat'])
-            all_longitudes.extend(pos_vec['lon'])
-            all_sx.extend(pos_vec['sx'])
-            all_sy.extend(pos_vec['sy'])
-            all_sz.extend(pos_vec['sz'])
-
-            # Calculate azimuth and elevation for each satellite
-            for i in range(orbit_param.n_planes * orbit_param.sats_per_plane):
-                sx = pos_vec['sx'][i]
-                sy = pos_vec['sy'][i]
-                sz = pos_vec['sz'][i]
+                # Process positions
+                sx, sy, sz = pos_vec['sx'], pos_vec['sy'], pos_vec['sz']
                 r = np.sqrt(sx**2 + sy**2 + sz**2)
+                elevations = np.degrees(np.arcsin(sz / r))
+                azimuths = np.degrees(np.arctan2(sy, sx))
 
-                elevation = np.degrees(np.arcsin(sz / r))
-                azimuth = np.degrees(np.arctan2(sy, sx))
+                # Append positions and angles
+                all_positions['lat'].extend(pos_vec['lat'])
+                all_positions['lon'].extend(pos_vec['lon'])
+                all_positions['sx'].extend(sx)
+                all_positions['sy'].extend(sy)
+                all_positions['sz'].extend(sz)
+                all_elevations.extend(elevations)
+                all_azimuths.extend(azimuths)
 
-                all_elevations.append(elevation)
-                all_azimuths.append(azimuth)
+                # Calculate elevation relative to base stations
+                elev_from_bs = calc_elevation(
+                    np.degrees(imt_topology.central_latitude),
+                    pos_vec['lat'],
+                    np.degrees(imt_topology.central_longitude),
+                    pos_vec['lon'],
+                    orbit.perigee_alt_km
+                )
 
-                # Configure satellites in the StationManager
-                station_manager.x[satellite_index] = sx
-                station_manager.y[satellite_index] = sy
-                station_manager.height[satellite_index] = sz
-                station_manager.azimuth[satellite_index] = azimuth
-                station_manager.elevation[satellite_index] = elevation
+                # Apply elevation criteria
+                visible_sat_idxs = [
+                    current_sat_idx + i for i, elevation in enumerate(elev_from_bs) if elevation >= MIN_ELEV_ANGLE_DEG
+                ]
+                active_satellite_idxs.extend(visible_sat_idxs)
+                current_sat_idx += len(sx)
 
-                satellite_index += 1
+            i += 1
+            if i >= MAX_ITER:
+                raise RuntimeError(
+                    "Maximum iterations reached, and no satellite was selected within the minimum elevation criteria."
+                )
 
-        # Set antenna configurations
-        station_manager.antenna = np.array(
-            [param.antenna] * total_satellites, dtype=object
-        )
+        # Configure satellites in the StationManager
+        mss_d2d.x = np.array(all_positions['sx']) * 1e3  # Convert to meters
+        mss_d2d.y = np.array(all_positions['sy']) * 1e3  # Convert to meters
+        mss_d2d.height = np.array(all_positions['sz']) * 1e3  # Convert to meters
+        mss_d2d.elevation = np.array(all_elevations)
+        mss_d2d.azimuth = np.array(all_azimuths)
+        mss_d2d.active = np.zeros(total_satellites, dtype=bool)
+        mss_d2d.active[active_satellite_idxs] = True
 
-        # Add additional parameters to the StationManager
-        station_manager.active = np.ones(total_satellites, dtype=bool)
-        #station_manager.bandwidth = np.array([param.bandwidth] * total_satellites)
-        station_manager.tx_power = np.array([param.max_transmit_power_dB] * total_satellites)
-        station_manager.noise_figure = np.array([param.max_receive_gain_dBi] * total_satellites)
+        return mss_d2d
 
-        return station_manager
-
-
-
-        # Assign calculated properties to the StationManager
-        #ngso_manager.x = np.array(x_positions) ok
-        #ngso_manager.y = np.array(y_positions) ok
-        #ngso_manager.height = np.array(heights) ok
-        #ngso_manager.azimuth = np.array(azimuths) ok
-        #ngso_manager.elevation = np.array(elevations)ok
-        #ngso_manager.antenna = np.array(antennas)ok
-        #ngso_manager.tx_power = np.full(total_satellites, param.max_transmit_power_dB)ok
-        #ngso_manager.bandwidth = np.full(total_satellites, param.antenna.bandwidth)ok
-        #ngso_manager.active = np.ones(total_satellites, dtype=bool)ok
 
     @staticmethod
     def get_random_position(num_stas: int,
