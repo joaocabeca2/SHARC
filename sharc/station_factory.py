@@ -25,8 +25,8 @@ from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
 from sharc.parameters.parameters_mss_ss import ParametersMssSs
-#from sharc.parameters.parameters_mss_d2d import ParametersMssD2d
-from sharc.parameters.parameters_ngso_constellation import ParametersNgsoConstellation
+from sharc.parameters.parameters_mss_d2d import ParametersMssD2d
+#from sharc.parameters.parameters_ngso_constellation import ParametersNgsoConstellation
 from sharc.parameters.constants import EARTH_RADIUS
 from sharc.station_manager import StationManager
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
@@ -1190,15 +1190,15 @@ class StationFactory(object):
         # Initialize the orbit model
         # FIXME: That should be initialized once in the simulation
         orbit = OrbitModel(
-            Nsp=params.orbit.Nsp,
-            Np=params.orbit.Np,
-            phasing=params.orbit.phasing_deg,
-            long_asc=params.orbit.long_asc_deg,
-            omega=params.orbit.omega_deg,
-            delta=params.orbit.inclination_deg,
-            hp=params.orbit.perigee_alt_km,
-            ha=params.orbit.apogee_alt_km,
-            Mo=params.orbit.initial_mean_anomaly
+            Nsp=params.orbits.Nsp,
+            Np=params.orbits.Np,
+            phasing=params.orbits.phasing_deg,
+            long_asc=params.orbits.long_asc_deg,
+            omega=params.orbits.omega_deg,
+            delta=params.orbits.inclination_deg,
+            hp=params.orbits.perigee_alt_km,
+            ha=params.orbits.apogee_alt_km,
+            Mo=params.orbits.initial_mean_anomaly
         )
 
         # Initialize the StationManger object representing the MSS_D2D system
@@ -1274,13 +1274,13 @@ class StationFactory(object):
         return mss_d2d
 
 
-    def generate_mss_d2d_multiple_orbits(params: ParametersNgsoConstellation, random_number_gen: np.random.RandomState, imt_topology: Topology):
+    def generate_mss_d2d_multiple_orbits(params: ParametersMssD2d, random_number_gen: np.random.RandomState, imt_topology: Topology):
         """
         Generate the MSS D2D constellation with support for multiple orbits and base station visibility.
 
         Parameters
         ----------
-        params : ParametersNgsoConstellation
+        params : ParametersMssD2d
             Parameters for the MSS D2D system, including orbits and antenna configuration.
         random_number_gen : np.random.RandomState
             Random number generator for generating satellite positions.
@@ -1293,75 +1293,96 @@ class StationFactory(object):
             A StationManager object containing satellite configurations and positions.
         """
         MIN_ELEV_ANGLE_DEG = 5.0  # Minimum elevation angle for satellite visibility
-        MAX_ITER = 100
+        MAX_ITER = 100  # Maximum iterations to find at least one visible satellite
+
+        # Calculate the total number of satellites across all orbits
+        total_satellites = sum(orbit.Np * orbit.Nsp for orbit in params.orbits)
 
         # Initialize the StationManager for the MSS D2D system
-        total_satellites = sum(orbit.Np * orbit.Nsp for orbit in params.orbits)
         mss_d2d = StationManager(n=total_satellites)
-        mss_d2d.station_type = StationType.MSS_D2D
-        mss_d2d.is_space_station = True
+        mss_d2d.station_type = StationType.MSS_D2D  # Set the station type to MSS D2D
+        mss_d2d.is_space_station = True  # Indicate that the station is in space
 
-        # Initialize arrays to store data
+        # Initialize arrays to store satellite positions and angles
         all_positions = {"lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
-        all_elevations = []
-        all_azimuths = []
+        all_elevations = []  # Store satellite elevations
+        all_azimuths = []  # Store satellite azimuths
 
+        # List to store indices of active satellites
         active_satellite_idxs = []
-        current_sat_idx = 0
+        current_sat_idx = 0  # Index tracker for satellites across all orbits
 
-        i = 0
+        i = 0  # Iteration counter for ensuring satellite visibility
         while len(active_satellite_idxs) == 0:
-            for orbit in params.orbits:
-                # Generate random positions for the satellites
-                pos_vec = orbit.get_orbit_positions_random_time(rng=random_number_gen)
-
-                # Process positions
-                sx, sy, sz = pos_vec['sx'], pos_vec['sy'], pos_vec['sz']
-                r = np.sqrt(sx**2 + sy**2 + sz**2)
-                elevations = np.degrees(np.arcsin(sz / r))
-                azimuths = np.degrees(np.arctan2(sy, sx))
-
-                # Append positions and angles
-                all_positions['lat'].extend(pos_vec['lat'])
-                all_positions['lon'].extend(pos_vec['lon'])
-                all_positions['sx'].extend(sx)
-                all_positions['sy'].extend(sy)
-                all_positions['sz'].extend(sz)
-                all_elevations.extend(elevations)
-                all_azimuths.extend(azimuths)
-
-                # Calculate elevation relative to base stations
-                elev_from_bs = calc_elevation(
-                    np.degrees(imt_topology.central_latitude),
-                    pos_vec['lat'],
-                    np.degrees(imt_topology.central_longitude),
-                    pos_vec['lon'],
-                    orbit.perigee_alt_km
+            # Iterate through each orbit defined in the parameters
+            for param in params.orbits:
+                # Instantiate an OrbitModel for the current orbit
+                orbit = OrbitModel(
+                    Nsp=param.Nsp,  # Satellites per plane
+                    Np=param.Np,  # Number of orbital planes
+                    phasing=param.phasing_deg,  # Phasing angle in degrees
+                    long_asc=param.long_asc_deg,  # Longitude of ascending node in degrees
+                    omega=param.omega_deg,  # Argument of perigee in degrees
+                    delta=param.inclination_deg,  # Orbital inclination in degrees
+                    hp=param.perigee_alt_km,  # Perigee altitude in kilometers
+                    ha=param.apogee_alt_km,  # Apogee altitude in kilometers
+                    Mo=param.initial_mean_anomaly  # Initial mean anomaly in degrees
                 )
 
-                # Apply elevation criteria
+                # Generate random positions for satellites in this orbit
+                pos_vec = orbit.get_orbit_positions_random_time(rng=random_number_gen)
+
+                # Extract satellite positions and calculate distances
+                sx, sy, sz = pos_vec['sx'], pos_vec['sy'], pos_vec['sz']
+                r = np.sqrt(sx**2 + sy**2 + sz**2)  # Distance from Earth's center
+                elevations = np.degrees(np.arcsin(sz / r))  # Calculate elevation angles
+                azimuths = np.degrees(np.arctan2(sy, sx))  # Calculate azimuth angles
+
+                # Append satellite positions and angles to global lists
+                all_positions['lat'].extend(pos_vec['lat'])  # Latitudes
+                all_positions['lon'].extend(pos_vec['lon'])  # Longitudes
+                all_positions['sx'].extend(sx)  # X-coordinates
+                all_positions['sy'].extend(sy)  # Y-coordinates
+                all_positions['sz'].extend(sz)  # Z-coordinates
+                all_elevations.extend(elevations)  # Elevation angles
+                all_azimuths.extend(azimuths)  # Azimuth angles
+
+                # Calculate satellite visibility from base stations
+                elev_from_bs = calc_elevation(
+                    np.degrees(imt_topology.central_latitude),  # Latitude of base station
+                    pos_vec['lat'],  # Latitude of satellites
+                    np.degrees(imt_topology.central_longitude),  # Longitude of base station
+                    pos_vec['lon'],  # Longitude of satellites
+                    orbit.perigee_alt_km  # Perigee altitude in kilometers
+                )
+
+                # Determine visible satellites based on minimum elevation angle
                 visible_sat_idxs = [
-                    current_sat_idx + i for i, elevation in enumerate(elev_from_bs) if elevation >= MIN_ELEV_ANGLE_DEG
+                    current_sat_idx + idx for idx, elevation in enumerate(elev_from_bs) if elevation >= MIN_ELEV_ANGLE_DEG
                 ]
                 active_satellite_idxs.extend(visible_sat_idxs)
+
+                # Update the index tracker for the next orbit
                 current_sat_idx += len(sx)
 
-            i += 1
-            if i >= MAX_ITER:
+            i += 1  # Increment iteration counter
+            if i >= MAX_ITER:  # Check if maximum iterations reached
                 raise RuntimeError(
                     "Maximum iterations reached, and no satellite was selected within the minimum elevation criteria."
                 )
 
-        # Configure satellites in the StationManager
-        mss_d2d.x = np.array(all_positions['sx']) * 1e3  # Convert to meters
-        mss_d2d.y = np.array(all_positions['sy']) * 1e3  # Convert to meters
-        mss_d2d.height = np.array(all_positions['sz']) * 1e3  # Convert to meters
-        mss_d2d.elevation = np.array(all_elevations)
-        mss_d2d.azimuth = np.array(all_azimuths)
-        mss_d2d.active = np.zeros(total_satellites, dtype=bool)
-        mss_d2d.active[active_satellite_idxs] = True
+        # Configure satellite positions in the StationManager
+        mss_d2d.x = np.array(all_positions['sx']) * 1e3  # Convert X-coordinates to meters
+        mss_d2d.y = np.array(all_positions['sy']) * 1e3  # Convert Y-coordinates to meters
+        mss_d2d.height = np.array(all_positions['sz']) * 1e3  # Convert Z-coordinates to meters
+        mss_d2d.elevation = np.array(all_elevations)  # Elevation angles
+        mss_d2d.azimuth = np.array(all_azimuths)  # Azimuth angles
 
-        return mss_d2d
+        # Set active satellite flags
+        mss_d2d.active = np.zeros(total_satellites, dtype=bool)  # Initialize all satellites as inactive
+        mss_d2d.active[active_satellite_idxs] = True  # Mark visible satellites as active
+
+        return mss_d2d  # Return the configured StationManager
 
 
     @staticmethod

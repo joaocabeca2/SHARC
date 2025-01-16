@@ -2,7 +2,7 @@ import numpy as np
 from dataclasses import dataclass, field, asdict
 from sharc.parameters.parameters_base import ParametersBase
 from satellite.parameters.parameters_orbit import ParametersOrbit
-from satellite.parameters.parameters_ngso_constellation import ParametersNgsoConstellation
+#from satellite.parameters.parameters_ngso_constellation import ParametersNgsoConstellation
 from sharc.parameters.parameters_p619 import ParametersP619
 from sharc.parameters.antenna.parameters_antenna_s1528 import ParametersAntennaS1528
 
@@ -17,7 +17,7 @@ class ParametersMssD2d(ParametersBase):
     name: str = "Default"
 
     # Orbit parameters
-    orbit: ParametersOrbit = field(default_factory=ParametersOrbit)
+    orbits: ParametersOrbit = field(default_factory=ParametersOrbit)
 
     # MSS_D2D system center frequency in MHz
     frequency: float = 2110.0
