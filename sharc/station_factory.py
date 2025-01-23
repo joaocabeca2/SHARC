@@ -56,7 +56,7 @@ from sharc.topology.topology_ntn import TopologyNTN
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.satellite.ngso.orbit_model import OrbitModel
-from satellite.utils.sat_utils import calc_elevation
+from sharc.satellite.utils.sat_utils import calc_elevation
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -568,10 +568,10 @@ class StationFactory(object):
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         elif parameters.general.system == "MSS_SS":
             return StationFactory.generate_mss_ss(parameters.mss_ss)
-        #elif parameters.general.system == "MSS_D2D":
-        #    return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, topology)
-        elif parameters.general.system == "NGSO":
-            return StationFactory.generate_ngso_constellation(parameters.ngso, random_number_gen)
+        elif parameters.general.system == "MSS_D2D":
+            return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, topology)
+        #elif parameters.general.system == "NGSO":
+        #    return StationFactory.generate_ngso_constellation(parameters.ngso, random_number_gen)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -1296,7 +1296,7 @@ class StationFactory(object):
         MAX_ITER = 100  # Maximum iterations to find at least one visible satellite
 
         # Calculate the total number of satellites across all orbits
-        total_satellites = sum(orbit.Np * orbit.Nsp for orbit in params.orbits)
+        total_satellites = sum(orbit.n_planes * orbit.sats_per_plane for orbit in params.orbits)
 
         # Initialize the StationManager for the MSS D2D system
         mss_d2d = StationManager(n=total_satellites)
@@ -1318,8 +1318,8 @@ class StationFactory(object):
             for param in params.orbits:
                 # Instantiate an OrbitModel for the current orbit
                 orbit = OrbitModel(
-                    Nsp=param.Nsp,  # Satellites per plane
-                    Np=param.Np,  # Number of orbital planes
+                    Nsp=param.sats_per_plane,  # Satellites per plane
+                    Np=param.n_planes,  # Number of orbital planes
                     phasing=param.phasing_deg,  # Phasing angle in degrees
                     long_asc=param.long_asc_deg,  # Longitude of ascending node in degrees
                     omega=param.omega_deg,  # Argument of perigee in degrees

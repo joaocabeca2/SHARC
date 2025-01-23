@@ -37,7 +37,7 @@ class OrbitModel():
             argument of perigee, in degrees
         delta : float
             orbital plane inclination, in degrees
-        hp : float
+        perigee_alt_km : float
             altitude of perigee in km
         ha : float
             altitude of apogee in km
@@ -50,8 +50,8 @@ class OrbitModel():
         self.long_asc = long_asc
         self.omega = omega
         self.delta = delta
-        self.hp = hp
-        self.ha = ha
+        self.perigee_alt_km = hp
+        self.apogee_alt_km = ha
         self.Mo = Mo
 
         # Derive other orbit parameters
