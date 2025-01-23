@@ -37,14 +37,14 @@ param = ParametersMssD2d(
 )
 
 # Creating an IMT topology
-imt_topology = TopologySingleBaseStationSpherical(cell_radius=500,num_clusters=2,central_latitude=-15.7801,central_longitude=-47.9292)
+imt_topology = TopologySingleBaseStationSpherical(cell_radius=500 , num_clusters=2 , central_latitude = -15.7801, central_longitude = -47.9292)
 
 
 # Criar gerador de números aleatórios
 rng = np.random.RandomState(seed=42)
 
 
-ngso_manager = StationFactory.generate_mss_d2d_multiple_orbits(param, rng,imt_topology)
+ngso_manager = StationFactory.generate_mss_d2d(param, rng , imt_topology)
 
 # Exibir informações da constelação
 print("Tipo de estação:", ngso_manager.station_type)
