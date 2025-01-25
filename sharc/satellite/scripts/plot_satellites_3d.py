@@ -87,7 +87,7 @@ def plot_globe_with_borders():
 
 if __name__ == "__main__":
 
-     # Plot Global Star orbit using OrbitModel object
+    # Plot Global Star orbit using OrbitModel object
     orbit = OrbitModel(
         Nsp=6,
         Np=8,

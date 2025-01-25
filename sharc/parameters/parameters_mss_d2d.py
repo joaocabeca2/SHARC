@@ -96,12 +96,10 @@ class ParametersMssD2d(ParametersBase):
 
         # Now do the sanity check for some parameters
         if self.num_sectors not in [1, 7, 19]:
-            raise ValueError(f"ParametersMssD2d: Invalid number of sectors {
-                             self.num_sectors}")
+            raise ValueError(f"ParametersMssD2d: Invalid number of sectors {self.num_sectors}")
 
         if self.cell_radius <= 0:
-            raise ValueError(f"ParametersMssD2d: cell_radius must be greater than 0, but is {
-                             self.cell_radius}")
+            raise ValueError(f"ParametersMssD2d: cell_radius must be greater than 0, but is {self.cell_radius}")
         else:
             self.intersite_distance = np.sqrt(3) * self.cell_radius
 
@@ -122,7 +120,7 @@ class ParametersMssD2d(ParametersBase):
 
         if self.channel_model == "P619":
             self.param_p619.set_external_parameters(
-                space_station_alt_m=self.orbit.perigee_alt_km * 1e3,
+                space_station_alt_m=self.orbits.perigee_alt_km * 1e3,
                 earth_station_alt_m=self.earth_station_alt_m,
                 earth_station_lat_deg=self.earth_station_lat_deg,
                 earth_station_long_diff_deg=self.earth_station_long_diff_deg,
@@ -140,3 +138,4 @@ if __name__ == "__main__":
     mss_d2d_params = ParametersMssD2d()
     mss_d2d_params.load_parameters_from_file(yaml_file_path)
     pprint.pprint(asdict(mss_d2d_params), sort_dicts=False)
+    
