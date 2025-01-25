@@ -1302,6 +1302,7 @@ class StationFactory(object):
         mss_d2d = StationManager(n=total_satellites)
         mss_d2d.station_type = StationType.MSS_D2D  # Set the station type to MSS D2D
         mss_d2d.is_space_station = True  # Indicate that the station is in space
+        mss_d2d.idx_orbit = np.zeros(total_satellites, dtype=int)  # Add orbit index array
 
         # Initialize arrays to store satellite positions and angles
         all_positions = {"lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
@@ -1315,7 +1316,7 @@ class StationFactory(object):
         i = 0  # Iteration counter for ensuring satellite visibility
         while len(active_satellite_idxs) == 0:
             # Iterate through each orbit defined in the parameters
-            for param in params.orbits:
+            for orbit_idx, param in enumerate(params.orbits):
                 # Instantiate an OrbitModel for the current orbit
                 orbit = OrbitModel(
                     Nsp=param.sats_per_plane,  # Satellites per plane
@@ -1331,6 +1332,12 @@ class StationFactory(object):
 
                 # Generate random positions for satellites in this orbit
                 pos_vec = orbit.get_orbit_positions_random_time(rng=random_number_gen)
+
+                # Determine the number of satellites in this orbit
+                num_satellites = len(pos_vec["sx"])
+
+                # Assign orbit index to satellites
+                mss_d2d.idx_orbit[current_sat_idx:current_sat_idx + num_satellites] = orbit_idx
 
                 # Extract satellite positions and calculate distances
                 sx, sy, sz = pos_vec['sx'], pos_vec['sy'], pos_vec['sz']

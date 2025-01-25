@@ -26,6 +26,7 @@ class StationManager(object):
         self.azimuth = np.empty(n)
         self.elevation = np.empty(n)
         self.height = np.empty(n)
+        self.idx_orbit = np.empty(n)
         self.indoor = np.zeros(n, dtype=bool)
         self.active = np.ones(n, dtype=bool)
         self.tx_power = np.empty(n)
