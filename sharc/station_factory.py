@@ -1185,96 +1185,6 @@ class StationFactory(object):
         return mss_ss
 
     def generate_mss_d2d(params: ParametersMssD2d, random_number_gen: np.random.RandomState, imt_topology: Topology):
-        from satellite.ngso.orbit_model import OrbitModel
-        MIN_ELEV_ANGLE_DEG = 5.0  # minimum elevation angle for satellite visibility
-        # Initialize the orbit model
-        # FIXME: That should be initialized once in the simulation
-        orbit = OrbitModel(
-            Nsp=params.orbits.Nsp,
-            Np=params.orbits.Np,
-            phasing=params.orbits.phasing_deg,
-            long_asc=params.orbits.long_asc_deg,
-            omega=params.orbits.omega_deg,
-            delta=params.orbits.inclination_deg,
-            hp=params.orbits.perigee_alt_km,
-            ha=params.orbits.apogee_alt_km,
-            Mo=params.orbits.initial_mean_anomaly
-        )
-
-        # Initialize the StationManger object representing the MSS_D2D system
-        num_satellites = orbit.Np * orbit.Nsp
-        mss_d2d = StationManager(n=num_satellites)
-        mss_d2d.station_type = StationType.MSS_D2D
-        mss_d2d.is_space_station = True
-
-        # Initialize satellites antennas
-        mss_d2d.antenna = np.empty(num_satellites, dtype=AntennaS1528Leo)
-        for i in range(num_satellites):
-            if params.antenna_pattern == "ITU-R-S.1528-LEO":
-                mss_d2d.antenna[i] = AntennaS1528Leo(params.antenna_s1528)
-            elif params.antenna_pattern == "ITU-R-S.1528-Section1.2":
-                mss_d2d.antenna[i] = AntennaS1528(params.antenna_s1528)
-            elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
-                mss_d2d.antenna[i] = AntennaS1528Taylor(params.antenna_s1528)
-            else:
-                raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
-
-        if params.spectral_mask == "IMT-2020":
-            mss_d2d.spectral_mask = SpectralMaskImt(StationType.IMT_BS,
-                                                    params.frequency,
-                                                    params.bandwidth,
-                                                    params.spurious_emissions,
-                                                    scenario="OUTDOOR")
-        elif params.spectral_mask == "3GPP E-UTRA":
-            mss_d2d.spectral_mask = SpectralMask3Gpp(StationType.IMT_BS,
-                                                     params.frequency,
-                                                     params.bandwidth,
-                                                     params.spurious_emissions,
-                                                     scenario="OUTDOOR")
-        else:
-            raise ValueError(f"Invalid or not implemented spectral mask - {params.spectral_mask}")
-        mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 10e6))
-
-        active_sat_idxs = np.empty(0)
-        MAX_ITER = 100
-        i = 0
-        while len(active_sat_idxs) == 0:
-            # Get random positions for the satellites
-            pos_vec = orbit.get_orbit_positions_random_time(rng=random_number_gen)
-            mss_d2d.x = pos_vec['sx'].flatten() * 1e3
-            mss_d2d.y = pos_vec['sy'].flatten() * 1e3
-            mss_d2d.height = pos_vec['sz'].flatten() * 1e3
-
-            # Point antennas to the origin (Earth center)
-            dist_xy = np.sqrt(mss_d2d.x**2 + mss_d2d.y**2)
-            mss_d2d.elevation = np.arctan2(-mss_d2d.height, dist_xy)
-            mss_d2d.azimuth = np.arctan2(mss_d2d.x, mss_d2d.y)
-
-            # Set active satellites using the minimum elevation angle criteria
-            # Here the IMT topology holds the IMT BS positions over the Earth surface. The active satellites are the ones
-            # which are visible within a minimum elevation angle.
-            elev_from_bs = calc_elevation(
-                np.degrees(imt_topology.central_latitude),
-                pos_vec['lat'],
-                np.degrees(imt_topology.central_longitude),
-                pos_vec['lon'],
-                params.orbit.perigee_alt_km
-            )
-
-            active_sat_idxs = np.unique(np.where(elev_from_bs >= MIN_ELEV_ANGLE_DEG)[0])
-            mss_d2d.active = np.zeros(num_satellites, dtype=bool)
-            mss_d2d.active[active_sat_idxs] = True
-            mss_d2d.tx_power = params.tx_power_density + 10 * np.log10(params.bandwidth * 10**6)
-            i = i + 1
-            if i >= MAX_ITER:
-                raise RuntimeError(
-                    "Maximum itereations reached and no satellite was selected within the minimum elevation criteria."
-                )
-
-        return mss_d2d
-
-
-    def generate_mss_d2d_multiple_orbits(params: ParametersMssD2d, random_number_gen: np.random.RandomState, imt_topology: Topology):
         """
         Generate the MSS D2D constellation with support for multiple orbits and base station visibility.
 
@@ -1303,6 +1213,34 @@ class StationFactory(object):
         mss_d2d.station_type = StationType.MSS_D2D  # Set the station type to MSS D2D
         mss_d2d.is_space_station = True  # Indicate that the station is in space
         mss_d2d.idx_orbit = np.zeros(total_satellites, dtype=int)  # Add orbit index array
+
+        # Initialize satellites antennas
+        mss_d2d.antenna = np.empty(total_satellites, dtype=AntennaS1528Leo)
+        for i in range(total_satellites):
+            if params.antenna_pattern == "ITU-R-S.1528-LEO":
+                mss_d2d.antenna[i] = AntennaS1528Leo(params.antenna_s1528)
+            elif params.antenna_pattern == "ITU-R-S.1528-Section1.2":
+                mss_d2d.antenna[i] = AntennaS1528(params.antenna_s1528)
+            elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
+                mss_d2d.antenna[i] = AntennaS1528Taylor(params.antenna_s1528)
+            else:
+                raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
+
+        if params.spectral_mask == "IMT-2020":
+            mss_d2d.spectral_mask = SpectralMaskImt(StationType.IMT_BS,
+                                                    params.frequency,
+                                                    params.bandwidth,
+                                                    params.spurious_emissions,
+                                                    scenario="OUTDOOR")
+        elif params.spectral_mask == "3GPP E-UTRA":
+            mss_d2d.spectral_mask = SpectralMask3Gpp(StationType.IMT_BS,
+                                                     params.frequency,
+                                                     params.bandwidth,
+                                                     params.spurious_emissions,
+                                                     scenario="OUTDOOR")
+        else:
+            raise ValueError(f"Invalid or not implemented spectral mask - {params.spectral_mask}")
+        mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 10e6))
 
         # Initialize arrays to store satellite positions and angles
         all_positions = {"lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
@@ -1379,18 +1317,17 @@ class StationFactory(object):
                 )
 
         # Configure satellite positions in the StationManager
-        mss_d2d.x = np.array(all_positions['sx']) * 1e3  # Convert X-coordinates to meters
-        mss_d2d.y = np.array(all_positions['sy']) * 1e3  # Convert Y-coordinates to meters
-        mss_d2d.height = np.array(all_positions['sz']) * 1e3  # Convert Z-coordinates to meters
-        mss_d2d.elevation = np.array(all_elevations)  # Elevation angles
-        mss_d2d.azimuth = np.array(all_azimuths)  # Azimuth angles
+        mss_d2d.x = np.squeeze(np.array(all_positions['sx'])) * 1e3  # Convert X-coordinates to meters
+        mss_d2d.y = np.squeeze(np.array(all_positions['sy'])) * 1e3  # Convert Y-coordinates to meters
+        mss_d2d.height = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
+        mss_d2d.elevation = np.squeeze(np.array(all_elevations))  # Elevation angles
+        mss_d2d.azimuth = np.squeeze(np.array(all_azimuths))  # Azimuth angles
 
         # Set active satellite flags
         mss_d2d.active = np.zeros(total_satellites, dtype=bool)  # Initialize all satellites as inactive
         mss_d2d.active[active_satellite_idxs] = True  # Mark visible satellites as active
 
         return mss_d2d  # Return the configured StationManager
-
 
     @staticmethod
     def get_random_position(num_stas: int,

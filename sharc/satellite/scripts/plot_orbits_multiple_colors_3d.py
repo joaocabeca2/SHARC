@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     for _ in range(NUM_DROPS):
         # Generate satellite positions using the StationFactory
-        mss_d2d_manager = StationFactory.generate_mss_d2d_multiple_orbits(params, rng, imt_topology)
+        mss_d2d_manager = StationFactory.generate_mss_d2d(params, rng, imt_topology)
 
         # Extract satellite positions and orbit indices
         x_vec = mss_d2d_manager.x / 1e3  # (Km)
