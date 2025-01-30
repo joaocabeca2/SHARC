@@ -1,4 +1,7 @@
 import numpy as np
+from sharc.parameters.constants import EARTH_RADIUS
+
+EARTH_RADIUS_KM = EARTH_RADIUS / 1000
 
 # WGS84 Ellipsoid constants
 class WGS84Defs:
@@ -96,7 +99,6 @@ def calc_elevation(Le: np.ndarray,
     (ndarray)
         array of elevation angles from the earth station in degrees.
     """
-    EARTH_RADIUS_KM = 6371.0
     Le = np.radians(Le)
     Ls = np.radians(Ls)
     le = np.radians(le)

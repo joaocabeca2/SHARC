@@ -55,17 +55,10 @@ class StationFactoryNgsoTest(unittest.TestCase):
     def test_ngso_manager(self):
         self.assertEqual(self.ngso_manager.station_type, StationType.MSS_D2D)
         self.assertEqual(self.ngso_manager.num_stations, 20 * 32 + 12 * 20)
-        self.assertEqual(self.ngso_manager.x.shape, (20 * 32 + 12 * 20, 1))
-        self.assertEqual(self.ngso_manager.y.shape, (20 * 32 + 12 * 20, 1))
-        self.assertEqual(self.ngso_manager.height.shape, (20 * 32 + 12 * 20, 1))
+        self.assertEqual(self.ngso_manager.x.shape, (20 * 32 + 12 * 20,))
+        self.assertEqual(self.ngso_manager.y.shape, (20 * 32 + 12 * 20,))
+        self.assertEqual(self.ngso_manager.height.shape, (20 * 32 + 12 * 20,))
 
-        # Exibir informações da constelação
-        print("Tipo de estação:", self.ngso_manager.station_type)
-        print("Número de satélites:", self.ngso_manager.num_stations)
-        print("Primeiras coordenadas dos satélites:")
-        print("X:", self.ngso_manager.x[:5])
-        print("Y:", self.ngso_manager.y[:5])
-        print("Altura:", self.ngso_manager.height[:5])
 
 if __name__ == '__main__':
     unittest.main()

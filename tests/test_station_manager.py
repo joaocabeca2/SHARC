@@ -61,6 +61,7 @@ class StationManagerTest(unittest.TestCase):
         self.station_manager = StationManager(3)
         self.station_manager.x = np.array([10, 20, 30])
         self.station_manager.y = np.array([15, 25, 35])
+        self.station_manager.z = np.array([1, 2, 3])
         self.station_manager.height = np.array([1, 2, 3])
         self.station_manager.intersite_dist = 100.0
         # this is for downlink
@@ -74,6 +75,7 @@ class StationManagerTest(unittest.TestCase):
         self.station_manager2 = StationManager(2)
         self.station_manager2.x = np.array([100, 200])
         self.station_manager2.y = np.array([105, 250])
+        self.station_manager2.z = np.array([4, 5])
         self.station_manager2.height = np.array([4, 5])
         self.station_manager2.intersite_dist = 100.0
         # this is for downlink
@@ -87,6 +89,7 @@ class StationManagerTest(unittest.TestCase):
         self.station_manager3 = StationManager(1)
         self.station_manager3.x = np.array([300])
         self.station_manager3.y = np.array([400])
+        self.station_manager3.z = np.array([2])
         self.station_manager3.height = np.array([2])
         self.station_manager3.intersite_dist = 100.0
         # this is for uplink
@@ -306,12 +309,14 @@ class StationManagerTest(unittest.TestCase):
         self.station_manager = StationManager(2)
         self.station_manager.x = np.array([0, 150])
         self.station_manager.y = np.array([0, -32])
+        self.station_manager.z = np.array([4, 5])
         self.station_manager.height = np.array([4, 5])
         self.station_manager.intersite_dist = 100.0
 
         self.station_manager2 = StationManager(3)
         self.station_manager2.x = np.array([10, 200, 30])
         self.station_manager2.y = np.array([15, 250, -350])
+        self.station_manager2.z = np.array([1, 2, 3])
         self.station_manager2.height = np.array([1, 2, 3])
 
         # 2D Distance
@@ -371,6 +376,7 @@ class StationManagerTest(unittest.TestCase):
         sm1 = StationManager(1)
         sm1.x = np.array([0])
         sm1.y = np.array([0])
+        sm1.z = np.array([0])
         sm1.height = np.array([0])
         sm1.azimuth = np.array([0])
         sm1.elevation = np.array([0])
@@ -378,6 +384,7 @@ class StationManagerTest(unittest.TestCase):
         sm2 = StationManager(6)
         sm2.x = np.array([100, 100, 0, 100, 100, 100])
         sm2.y = np.array([0, 0, 100, 100, 100, 100])
+        sm2.z = np.array([0, 100, 0, 0, 100, 100])
         sm2.height = np.array([0, 100, 0, 0, 100, 100])
         sm2.azimuth = np.array([180, 180, 180, 180, 180, 225])
         sm2.elevation = np.array([0, 0, 0, 0, 0, 0])
@@ -389,6 +396,7 @@ class StationManagerTest(unittest.TestCase):
         sm3 = StationManager(1)
         sm3.x = np.array([0])
         sm3.y = np.array([0])
+        sm3.z = np.array([0])
         sm3.height = np.array([0])
         sm3.azimuth = np.array([45])
         sm3.elevation = np.array([0])
@@ -396,6 +404,7 @@ class StationManagerTest(unittest.TestCase):
         sm4 = StationManager(2)
         sm4.x = np.array([100, 60])
         sm4.y = np.array([100, 80])
+        sm4.z = np.array([100, 100])
         sm4.height = np.array([100, 100])
         sm4.azimuth = np.array([180, 180])
         sm4.elevation = np.array([0, 0])
@@ -407,6 +416,7 @@ class StationManagerTest(unittest.TestCase):
         sm5 = StationManager(1)
         sm5.x = np.array([0])
         sm5.y = np.array([0])
+        sm5.z = np.array([0])
         sm5.height = np.array([0])
         sm5.azimuth = np.array([0])
         sm5.elevation = np.array([45])
@@ -414,6 +424,7 @@ class StationManagerTest(unittest.TestCase):
         sm6 = StationManager(2)
         sm6.x = np.array([100, 100])
         sm6.y = np.array([0, 0])
+        sm6.z = np.array([100, 100])
         sm6.height = np.array([100, 100])
         sm6.azimuth = np.array([180, 180])
         sm6.elevation = np.array([0, 0])
@@ -425,6 +436,7 @@ class StationManagerTest(unittest.TestCase):
         sm6 = StationManager(1)
         sm6.x = np.array([0])
         sm6.y = np.array([0])
+        sm6.z = np.array([100])
         sm6.height = np.array([100])
         sm6.azimuth = np.array([0])
         sm6.elevation = np.array([270])
@@ -432,6 +444,7 @@ class StationManagerTest(unittest.TestCase):
         sm7 = StationManager(2)
         sm7.x = np.array([0, 100])
         sm7.y = np.array([0, 0])
+        sm7.z = np.array([0, 0])
         sm7.height = np.array([0, 0])
         sm7.azimuth = np.array([180, 180])
         sm7.elevation = np.array([0, 0])
@@ -443,11 +456,13 @@ class StationManagerTest(unittest.TestCase):
         sm1 = StationManager(1)
         sm1.x = np.array([0])
         sm1.y = np.array([0])
+        sm1.z = np.array([10])
         sm1.height = np.array([10])
 
         sm2 = StationManager(6)
         sm2.x = np.array([10, 10, 0, 0, 30, 20])
         sm2.y = np.array([0, 0, 5, 10, 30, 20])
+        sm2.z = np.array([10, 20, 5, 0, 20, 20])
         sm2.height = np.array([10, 20, 5, 0, 20, 20])
 
         elevation_ref = np.array([[0, 45, -45, -45, 13.26, 19.47]])
@@ -457,11 +472,13 @@ class StationManagerTest(unittest.TestCase):
         sm3 = StationManager(2)
         sm3.x = np.array([0, 30])
         sm3.y = np.array([0, 0])
+        sm3.z = np.array([10, 10])
         sm3.height = np.array([10, 10])
 
         sm4 = StationManager(2)
         sm4.x = np.array([10, 10])
         sm4.y = np.array([0, 0])
+        sm4.z = np.array([10, 20])
         sm4.height = np.array([10, 20])
 
         elevation_ref = np.array([[0, 45], [0, 26.56]])

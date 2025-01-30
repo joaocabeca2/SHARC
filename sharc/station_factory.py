@@ -57,6 +57,7 @@ from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.satellite.ngso.orbit_model import OrbitModel
 from sharc.satellite.utils.sat_utils import calc_elevation
+from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -77,13 +78,23 @@ class StationFactory(object):
         if param.topology.type == "NTN":
             imt_base_stations.x = topology.space_station_x * np.ones(num_bs)
             imt_base_stations.y = topology.space_station_y * np.ones(num_bs)
-            imt_base_stations.height = topology.space_station_z * \
-                np.ones(num_bs)
+            imt_base_stations.z = topology.space_station_z * np.ones(num_bs)
+            imt_base_stations.height = imt_base_stations.z
             imt_base_stations.elevation = topology.elevation
             imt_base_stations.is_space_station = True
+        elif param.topology.type == "SINGLE_BS" and param.topology.single_bs.is_spherical:
+            # Add the BS height to the radius of the Earth
+            bs_loc_polar = cartesian_to_polar(topology.x_sphere, topology.y_sphere, topology.z_sphere)
+            bs_loc_cart = polar_to_cartesian(bs_loc_polar[0] + param.bs.height, bs_loc_polar[1], bs_loc_polar[2])
+            imt_base_stations.x = bs_loc_cart[0]
+            imt_base_stations.y = bs_loc_cart[1]
+            imt_base_stations.z = bs_loc_cart[2]
+            imt_base_stations.height = param.bs.height * np.ones(num_bs)
+            imt_base_stations.azimuth = topology.azimuth
         else:
             imt_base_stations.x = topology.x
             imt_base_stations.y = topology.y
+            imt_base_stations.z = topology.z + param.bs.height
             imt_base_stations.elevation = -param_ant.downtilt * np.ones(num_bs)
             if param.topology.type == 'INDOOR':
                 imt_base_stations.height = topology.height
@@ -202,6 +213,7 @@ class StationFactory(object):
 
         ue_x = list()
         ue_y = list()
+        ue_z = list()
 
         imt_ue.height = param.ue.height * np.ones(num_ue)
 
@@ -218,9 +230,23 @@ class StationFactory(object):
         elevation = (elevation_range[1] - elevation_range[0]) * random_number_gen.random_sample(num_ue) + \
             elevation_range[0]
 
+        # if param.topology.type == "SINGLE_BS" and param.topology.single_bs.is_spherical:
+        #     # This is a special case where the UE is positioned over the same lat long of the BS. This is
+        #     # because for single BS studies in this case the UE position relative to the BS is irrelevant w.r.t the
+        #     # satellite position.
+        #     ue_height = []
+        #     for i in range(num_bs):
+        #         ue_x += [topology.x[i] + 10 * i] * num_ue_per_bs
+        #         ue_y += [topology.y[i] + 10 * i] * num_ue_per_bs
+        #         ue_height += [param.ue.height] * num_ue_per_bs
+        #     imt_ue.height = np.array(ue_height)
+        #     # ue_x = topology.x
+        #     # ue_y = topology.y
+        # else:
+
         if param.ue.distribution_type.upper() == "UNIFORM" or \
-           param.ue.distribution_type.upper() == "CELL" or \
-           param.ue.distribution_type.upper() == "UNIFORM_IN_CELL":
+            param.ue.distribution_type.upper() == "CELL" or \
+            param.ue.distribution_type.upper() == "UNIFORM_IN_CELL":
 
             central_cell = False
             deterministic_cell = False
@@ -235,7 +261,7 @@ class StationFactory(object):
                     )
                     sys.exit(1)
 
-            [ue_x, ue_y, theta, distance] = StationFactory.get_random_position(
+            [ue_x, ue_y, ue_z, theta, distance] = StationFactory.get_random_position(
                 num_ue, topology, random_number_gen,
                 param.minimum_separation_distance_bs_ue,
                 central_cell=central_cell,
@@ -308,8 +334,10 @@ class StationFactory(object):
                 # calculate UE position in x-y coordinates
                 x = topology.x[bs] + radius[idx] * np.cos(np.radians(theta))
                 y = topology.y[bs] + radius[idx] * np.sin(np.radians(theta))
+                z = topology.z[bs]
                 ue_x.extend(x)
                 ue_y.extend(y)
+                ue_z.extend(z)
 
                 # calculate UE azimuth wrt serving BS
                 imt_ue.azimuth[idx] = (azimuth[idx] + theta + 180) % 360
@@ -324,15 +352,6 @@ class StationFactory(object):
                 )
                 imt_ue.elevation[idx] = elevation[idx] + psi
 
-        elif param.topology.type == "SINGLE_BS" and param.topology.single_bs.is_spherical:
-            # This is a special case where the UE is positioned over the same lat long of the BS. This is
-            # because for single BS studies in this case the UE position relative to the BS is irrelevant w.r.t the
-            # satellite
-            vec_mag = np.sqrt(topology.x**2 + topology.y**2 + topology.height**2)
-            scale_factor = (vec_mag - param.ue.height) / vec_mag
-            ue_x = np.repeat(topology.x * scale_factor, num_ue)
-            ue_y = np.repeat(topology.x * scale_factor, num_ue)
-            imt_ue.height = np.repeat(topology.height * scale_factor, num_ue)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid UE distribution type: " + param.ue.distribution_type,
@@ -341,6 +360,7 @@ class StationFactory(object):
 
         imt_ue.x = np.array(ue_x)
         imt_ue.y = np.array(ue_y)
+        imt_ue.z = np.array(ue_z) + param.ue.height
 
         imt_ue.active = np.zeros(num_ue, dtype=bool)
         imt_ue.indoor = random_number_gen.random_sample(
@@ -1357,12 +1377,13 @@ class StationFactory(object):
         Returns
         -------
         tuple
-            x, y, azimuth and elevation angles.
+            x, y, z, azimuth and elevation angles.
         """
         hexagon_radius = topology.intersite_distance * 2 / 3
 
         x = np.array([])
         y = np.array([])
+        z = np.array([])
         bs_x = -hexagon_radius
         bs_y = 0
 
@@ -1417,6 +1438,7 @@ class StationFactory(object):
 
         cell_x = topology.x[cell]
         cell_y = topology.y[cell]
+        cell_z = topology.z[cell]
 
         # x = x + cell_x + hexagon_radius * np.cos(topology.azimuth[cell] * np.pi / 180)
         # y = y + cell_y + hexagon_radius * np.sin(topology.azimuth[cell] * np.pi / 180)
@@ -1425,9 +1447,11 @@ class StationFactory(object):
         y = old_x * np.sin(np.radians(topology.azimuth[cell])) + y * np.cos(np.radians(topology.azimuth[cell]))
         x = x + cell_x
         y = y + cell_y
+        z = cell_z
 
         x = list(x)
         y = list(y)
+        z = list(z)
 
         # calculate UE azimuth wrt serving BS
         if topology.is_space_station is False:
@@ -1440,7 +1464,7 @@ class StationFactory(object):
             theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
             distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs.height)**2)
 
-        return x, y, theta, distance
+        return x, y, z, theta, distance
 
 
 if __name__ == '__main__':

@@ -138,6 +138,7 @@ class TopologyHotspot(Topology):
 
         self.x = x
         self.y = y
+        self.z = np.zeros(self.num_base_stations)
         self.azimuth = azimuth
         # In the end, we have to update the number of base stations
         self.num_base_stations = len(self.x)
