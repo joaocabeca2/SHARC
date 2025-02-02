@@ -1,9 +1,8 @@
 import math
-import os
 import sys
 
 import numpy as np
-
+from scipy.stats.sampling import DiscreteAliasUrn
 from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
 from sharc.propagation.propagation_factory import PropagationFactory
@@ -21,6 +20,11 @@ class SystemWifi():
         self.topology.calculate_coordinates()
         num_aps = self.topology.num_base_stations
         num_stas = num_aps * self.parameters.sta.k * self.parameters.sta.k_m
+
+        # Floor probability distribution
+        self.pv = [0.2466, 0.2036, 0.1405, 0.1127, 0.0919,
+                   0.0752, 0.0556, 0.0388, 0.0241, 0.0110]
+        self.floor_height = 3.0  # meters per floor
 
         self.ap_power_gain = 10 * math.log10(
             self.parameters.ap.antenna.n_rows *
@@ -62,6 +66,24 @@ class SystemWifi():
         self.bandwidth = self.parameters.bandwidth
         self.noise_temperature = self.parameters.noise_temperature
     
+    def generate_heights(self, random_state=None, is_ap=False):
+        num_aps = self.topology.num_base_stations
+        num_stas = num_aps * self.parameters.sta.k * self.parameters.sta.k_m
+        # Usar o random_state diretamente para gerar uma seed
+        if isinstance(random_state, np.random.RandomState):
+            seed = random_state.randint(0, 2**32 - 1)
+        else:
+            seed = random_state
+            
+        urng = np.random.default_rng(seed)   
+        rng_floor = DiscreteAliasUrn(self.pv, random_state=urng)
+        if not is_ap:
+            floors = rng_floor.rvs(size=num_stas)
+        else:
+            floors = rng_floor.rvs(size=num_aps)
+        # Convert floor numbers to actual heights
+        return floors * self.floor_height
+    
     def generate_topology(self):
         if self.parameters.topology.type == "HOTSPOT":
             return TopologyHotspot(
@@ -85,16 +107,15 @@ class SystemWifi():
         access_points.station_type = StationType.WIFI_APS
 
         # Gerar posições aleatórias para os APs
-        [access_points_x, access_points_y, theta, distance] = self.get_random_position(
+        [access_points_x, access_points_y, access_points.z, theta, distance] = self.get_random_position(
             num_aps, self.topology, random_number_gen,
             self.parameters.minimum_separation_distance_ap_sta,  # Distância mínima
-            deterministic_cell=False  # Permitir células aleatórias
-        )
+            deterministic_cell=False, is_ap=True)
 
         access_points.x = np.array(access_points_x)
         access_points.y = np.array(access_points_y)
+        access_points.height = np.array(access_points.z)
         access_points.elevation = -param_ant.downtilt * np.ones(num_aps)
-        access_points.height = self.parameters.ap.height * np.ones(num_aps)
         access_points.azimuth = theta  # Usar o ângulo calculado aleatoriamente
 
         access_points.active = random_number_gen.rand(num_aps) < self.parameters.ap.load_probability
@@ -156,7 +177,7 @@ class SystemWifi():
                     central_cell = True
 
 
-            [sta_x, sta_y, theta, distance] = self.get_random_position(
+            [sta_x, sta_y, sta.z, theta, distance] = self.get_random_position(
                 num_sta, self.topology, random_number_gen,
                 self.parameters.minimum_separation_distance_ap_sta,
                 deterministic_cell=True,
@@ -173,9 +194,9 @@ class SystemWifi():
 
         sta.x = np.array(sta_x)
         sta.y = np.array(sta_y)
-
+        sta.height = np.array(sta.z)
         sta.active = np.zeros(num_sta, dtype=bool)
-        sta.height = self.parameters.sta.height * np.ones(num_sta)
+        
         sta.indoor = random_number_gen.random_sample(num_sta) <= (self.parameters.sta.indoor_percent / 100)
         sta.rx_interference = -500 * np.ones(num_sta)
         sta.ext_interference = -500 * np.ones(num_sta)
@@ -198,7 +219,9 @@ class SystemWifi():
                             random_number_gen: np.random.RandomState,
                             min_dist_to_ap=0.,
                             central_cell=False,
-                            deterministic_cell=False):
+                            deterministic_cell=False,
+                            is_ap=False
+                            ):
         """
         Generate sta random-possitions inside the topolgy area.
 
@@ -226,6 +249,8 @@ class SystemWifi():
 
         x = np.array([])
         y = np.array([])
+        z = np.array([])
+
         ap_x = -hexagon_radius
         ap_y = 0
 
@@ -287,9 +312,12 @@ class SystemWifi():
         x_old = x
         x = cell_x + x * np.cos(azimuth_rad[cell]) - y * np.sin(azimuth_rad[cell])
         y = cell_y + x_old * np.sin(azimuth_rad[cell]) + y * np.cos(azimuth_rad[cell])
+        
+        z = self.generate_heights(random_number_gen, is_ap)
 
         x = list(x)
         y = list(y)
+        z = list(z)
 
        
         theta = np.arctan2(y - cell_y, x - cell_x)
@@ -298,7 +326,7 @@ class SystemWifi():
         # psi is the vertical angle of the UE wrt the serving BS
         distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2)
 
-        return x, y, theta, distance
+        return x, y, z, theta, distance
 
     def connect_aps_to_stas(self):
         num_stas_per_ap = self.parameters.sta.k * self.parameters.sta.k_m

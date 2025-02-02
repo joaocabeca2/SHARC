@@ -4,7 +4,6 @@ Created on Thu Mar 23 16:37:32 2017
 
 @author: edgar
 """
-
 import math
 import sys
 from warnings import warn
@@ -1244,7 +1243,8 @@ class StationFactory(object):
 
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
-
+    import matplotlib
+    matplotlib.use('TkAgg')
     from sharc.parameters.wifi.parameters_antenna_wifi import \
         ParametersAntennaWifi
     from sharc.parameters.wifi.parameters_wifi_topology import \
@@ -1269,18 +1269,47 @@ if __name__ == '__main__':
     wifi.topology.plot(ax)
     plt.axis('image')
     plt.title("hotspot topology")
-    # Plotar as STAs (pontos vermelhos)
-    plt.scatter(wifi.sta.x, wifi.sta.y, color="red", s=20, label="STAs")
+    
+    # For 2D scatter plot with height represented by marker size
+    plt.scatter(wifi.sta.x, wifi.sta.y, s=20, c=wifi.sta.height, cmap='viridis', label="STAs")
+    plt.scatter(wifi.ap.x, wifi.ap.y, s=40, c=wifi.ap.height, cmap='viridis', label="APs")
 
-
-    plt.scatter(wifi.ap.x, wifi.ap.y, color="green", s=40, label="APs")
-
+    # Remove the zlabel since this is a 2D plot
     plt.xlabel("x-coordinate [m]")
     plt.ylabel("y-coordinate [m]")
+    plt.ylabel("z-coordinate [m]")
+
+    # Add a colorbar to show height values
+    plt.colorbar(label="Height [m]")
 
 
     plt.tight_layout()
     plt.show()
+
+    '''# Criar figura 3D
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    # Plotar STAs em vermelho
+    ax.scatter(wifi.sta.x, wifi.sta.y, wifi.sta.height, 
+              c='red', marker='o', s=20, label='STAs')
+    
+    # Plotar APs em azul
+    ax.scatter(wifi.ap.x, wifi.ap.y, wifi.ap.height, 
+              c='blue', marker='^', s=40, label='APs')
+    
+    # Configurar rótulos e título
+    ax.set_xlabel('X [m]')
+    ax.set_ylabel('Y [m]')
+    ax.set_zlabel('Z [m]')
+    ax.set_title('Distribuição 3D de STAs e APs')
+    
+    # Adicionar legenda
+    ax.legend()
+    
+    # Ajustar visualização
+    plt.tight_layout()
+    plt.show()'''
 
 
 
