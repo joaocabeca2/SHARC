@@ -1339,6 +1339,7 @@ class StationFactory(object):
         # Configure satellite positions in the StationManager
         mss_d2d.x = np.squeeze(np.array(all_positions['sx'])) * 1e3  # Convert X-coordinates to meters
         mss_d2d.y = np.squeeze(np.array(all_positions['sy'])) * 1e3  # Convert Y-coordinates to meters
+        mss_d2d.z = np.squeeze(np.array(all_positions['sy'])) * 1e3  # Convert Z-coordinates to meters
         mss_d2d.height = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
         mss_d2d.elevation = np.squeeze(np.array(all_elevations))  # Elevation angles
         mss_d2d.azimuth = np.squeeze(np.array(all_azimuths))  # Azimuth angles
