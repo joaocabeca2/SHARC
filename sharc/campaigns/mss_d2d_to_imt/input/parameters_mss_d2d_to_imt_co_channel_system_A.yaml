@@ -293,7 +293,7 @@ imt:
         k_m: 1
         ###########################################################################
         # Percentage of indoor UE's [%]
-        indoor_percent: 70
+        indoor_percent: 0.0
         ###########################################################################
         # Regarding the distribution of active UE's over the cell area, this
         # parameter states how the UEs will be distributed
@@ -304,7 +304,7 @@ imt:
         #                                   given distributions for angle and
         #                                   distance. In this case, these must be
         #                                   defined later.
-        distribution_type: CELL
+        distribution_type: UNIFORM_IN_CELL
         ###########################################################################
         # Regarding the distribution of active UE's over the cell area, this
         # parameter models the distance between UE's and BS.
