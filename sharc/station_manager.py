@@ -298,3 +298,49 @@ class StationManager(object):
             return True
         else:
             return False
+
+
+def copy_active_stations(stations: StationManager) -> StationManager:
+    """Copy only the active stations from a StationManager object
+
+    Parameters
+    ----------
+    stations : StationManager
+        StationManager object to copy
+
+    Returns
+    -------
+    StationManager
+        A new StationManager object with only the active stations
+    """
+    act_sta = StationManager(np.sum(stations.active))
+    for idx, active_idx in enumerate(np.where(stations.active)[0]):
+        act_sta.x[idx] = stations.x[active_idx]
+        act_sta.y[idx] = stations.y[active_idx]
+        act_sta.z[idx] = stations.z[active_idx]
+        act_sta.azimuth[idx] = stations.azimuth[active_idx]
+        act_sta.elevation[idx] = stations.elevation[active_idx]
+        act_sta.height[idx] = stations.height[active_idx]
+        act_sta.indoor[idx] = stations.indoor[active_idx]
+        act_sta.active[idx] = stations.active[active_idx]
+        act_sta.tx_power[idx] = stations.tx_power[active_idx]
+        act_sta.rx_power[idx] = stations.rx_power[active_idx]
+        act_sta.rx_interference[idx] = stations.rx_interference[active_idx]
+        act_sta.ext_interference[idx] = stations.ext_interference[active_idx]
+        act_sta.antenna[idx] = stations.antenna[active_idx]
+        act_sta.bandwidth[idx] = stations.bandwidth[active_idx]
+        act_sta.noise_figure[idx] = stations.noise_figure[active_idx]
+        act_sta.noise_temperature[idx] = stations.noise_temperature[active_idx]
+        act_sta.thermal_noise[idx] = stations.thermal_noise[active_idx]
+        act_sta.total_interference[idx] = stations.total_interference[active_idx]
+        act_sta.snr[idx] = stations.snr[active_idx]
+        act_sta.sinr[idx] = stations.sinr[active_idx]
+        act_sta.sinr_ext[idx] = stations.sinr_ext[active_idx]
+        act_sta.inr[idx] = stations.inr[active_idx]
+        act_sta.pfd[idx] = stations.pfd[active_idx]
+        act_sta.spectral_mask = stations.spectral_mask
+        act_sta.center_freq[idx] = stations.center_freq[active_idx]
+        act_sta.station_type = stations.station_type
+        act_sta.is_space_station = stations.is_space_station
+        act_sta.intersite_dist = stations.intersite_dist
+    return act_sta
