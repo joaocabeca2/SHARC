@@ -1,9 +1,13 @@
 import unittest
 from sharc.parameters.parameters_mss_d2d import ParametersOrbit, ParametersMssD2d
+from sharc.parameters.imt.parameters_imt import ParametersImt
 from sharc.topology.topology_single_base_station_spherical import TopologySingleBaseStationSpherical
 from sharc.support.enumerations import StationType
 from sharc.station_factory import StationFactory
+from sharc.station_manager import StationManager
+
 import numpy as np
+import numpy.testing as npt
 
 
 class StationFactoryNgsoTest(unittest.TestCase):
@@ -58,6 +62,39 @@ class StationFactoryNgsoTest(unittest.TestCase):
         self.assertEqual(self.ngso_manager.x.shape, (20 * 32 + 12 * 20,))
         self.assertEqual(self.ngso_manager.y.shape, (20 * 32 + 12 * 20,))
         self.assertEqual(self.ngso_manager.height.shape, (20 * 32 + 12 * 20,))
+
+    def test_satellite_antenna_pointing(self):
+        # by default, satellites should always point to nadir (earth center)
+
+        # Test: check if azimuth is pointing towards correct direction
+        # y > 0 <=> azimuth < 0
+        # y < 0 <=> azimuth > 0
+        npt.assert_array_equal(np.sign(self.ngso_manager.azimuth), -np.sign(self.ngso_manager.y))
+
+        # Test: check if elevation is pointing towards correct direction
+        # z > 0 <=> elevation < 0
+        # z < 0 <=> elevation > 0
+        npt.assert_array_equal(np.sign(self.ngso_manager.elevation), -np.sign(self.ngso_manager.z))
+
+        # Test: check if center of earth is 0deg off axis, and that its distance to satellite is correct
+        earth_center = StationManager(1)
+        earth_center.x = np.array([0.])
+        earth_center.y = np.array([0.])
+        earth_center.z = np.array([0.])
+
+        off_axis_angle = self.ngso_manager.get_off_axis_angle(earth_center)
+        distance_to_center_of_earth = self.ngso_manager.get_3d_distance_to(earth_center)
+        distance_to_center_of_earth_should_eq = np.sqrt(
+            self.ngso_manager.x ** 2 + self.ngso_manager.y ** 2 + self.ngso_manager.z ** 2
+        )
+
+        npt.assert_allclose(off_axis_angle, 0.0, atol=1e-05)
+
+        npt.assert_allclose(
+            distance_to_center_of_earth.flatten(),
+            distance_to_center_of_earth_should_eq,
+            atol=1e-05
+        )
 
 
 if __name__ == '__main__':

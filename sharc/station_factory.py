@@ -1300,8 +1300,12 @@ class StationFactory(object):
                 # Extract satellite positions and calculate distances
                 sx, sy, sz = pos_vec['sx'], pos_vec['sy'], pos_vec['sz']
                 r = np.sqrt(sx**2 + sy**2 + sz**2)  # Distance from Earth's center
-                elevations = np.degrees(np.arcsin(sz / r))  # Calculate elevation angles
-                azimuths = np.degrees(np.arctan2(sy, sx))  # Calculate azimuth angles
+
+                # When getting azimuth and elevation, we need to consider sx, sy and sz points
+                # from the center of earth to the satellite, and we need to point the satellite
+                # towards the center of earth
+                elevations = np.degrees(np.arcsin(-sz / r))  # Calculate elevation angles
+                azimuths = np.degrees(np.arctan2(-sy, -sx))  # Calculate azimuth angles
 
                 # Append satellite positions and angles to global lists
                 all_positions['lat'].extend(pos_vec['lat'])  # Latitudes
@@ -1339,7 +1343,7 @@ class StationFactory(object):
         # Configure satellite positions in the StationManager
         mss_d2d.x = np.squeeze(np.array(all_positions['sx'])) * 1e3  # Convert X-coordinates to meters
         mss_d2d.y = np.squeeze(np.array(all_positions['sy'])) * 1e3  # Convert Y-coordinates to meters
-        mss_d2d.z = np.squeeze(np.array(all_positions['sy'])) * 1e3  # Convert Z-coordinates to meters
+        mss_d2d.z = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
         mss_d2d.height = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
         mss_d2d.elevation = np.squeeze(np.array(all_elevations))  # Elevation angles
         mss_d2d.azimuth = np.squeeze(np.array(all_azimuths))  # Azimuth angles

@@ -273,9 +273,11 @@ class StationManager(object):
         a = 90 - self.elevation[:, np.newaxis]
         C = Az0[:, np.newaxis] - Az
 
+        cos_phi = np.cos(np.radians(a)) * np.cos(np.radians(b)) \
+                    + np.sin(np.radians(a)) * np.sin(np.radians(b)) * np.cos(np.radians(C))
         phi = np.arccos(
-            np.cos(np.radians(a)) * np.cos(np.radians(b)) +
-            np.sin(np.radians(a)) * np.sin(np.radians(b)) * np.cos(np.radians(C)),
+            # imprecision may accumulate enough for numbers to be slightly out of arccos range
+            np.clip(cos_phi, -1., 1.)
         )
         phi_deg = np.degrees(phi)
 
