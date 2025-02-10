@@ -160,6 +160,7 @@ class SimulationIndoorTest(unittest.TestCase):
 #        self.simulation.plot_scenario()
         self.simulation.ue.x = np.array([0.0, 45.0, 75.0, 120.0])
         self.simulation.ue.y = np.array([0.0, 50.0, 0.0, 50.0])
+        self.simulation.ue.z = np.ones_like(self.simulation.ue.x) * self.param.imt.ue.height
 #        print("Forced position:")
 #        self.simulation.plot_scenario()
 

@@ -334,7 +334,7 @@ class StationFactory(object):
                 # calculate UE position in x-y coordinates
                 x = topology.x[bs] + radius[idx] * np.cos(np.radians(theta))
                 y = topology.y[bs] + radius[idx] * np.sin(np.radians(theta))
-                z = topology.z[bs]
+                z = topology.z[bs] * np.ones_like(x)
                 ue_x.extend(x)
                 ue_y.extend(y)
                 ue_z.extend(z)
@@ -635,6 +635,7 @@ class StationFactory(object):
                 dist_imt_centre_earth_km
             ) * 1000,
         ])
+        fss_space_station.z = fss_space_station.height
 
         fss_space_station.azimuth = np.array([param.azimuth])
         fss_space_station.elevation = np.array([param.elevation])
@@ -741,6 +742,7 @@ class StationFactory(object):
             )
             sys.exit(1)
 
+        fss_earth_station.z = np.array([param.height])
         fss_earth_station.height = np.array([param.height])
 
         if param.azimuth.upper() == "RANDOM":
@@ -856,6 +858,7 @@ class StationFactory(object):
                 )
                 sys.exit(1)
 
+        single_earth_station.z = np.array([param.geometry.height])
         single_earth_station.height = np.array([param.geometry.height])
 
         if param.geometry.azimuth.type == "UNIFORM_DIST":
@@ -958,6 +961,7 @@ class StationFactory(object):
 
         fs_station.x = np.array([param.x])
         fs_station.y = np.array([param.y])
+        fs_station.z = np.array([param.height])
         fs_station.height = np.array([param.height])
 
         fs_station.azimuth = np.array([param.azimuth])
@@ -998,8 +1002,9 @@ class StationFactory(object):
 #        haps.y = np.array([0, 9*h, 15*h, 6*h, -9*h, -15*h, -6*h])
         haps.x = np.array([0])
         haps.y = np.array([0])
+        haps.z = param.altitude * np.ones(num_haps)
 
-        haps.height = param.altitude * np.ones(num_haps)
+        haps.height = haps.z
 
         elev_max = 68.19  # corresponds to 50 km radius and 20 km altitude
         haps.azimuth = 360 * random_number_gen.random_sample(num_haps)
@@ -1036,6 +1041,7 @@ class StationFactory(object):
 
         rns.x = np.array([param.x])
         rns.y = np.array([param.y])
+        rns.z = np.array([param.altitude])
         rns.height = np.array([param.altitude])
 
         # minimum and maximum values for azimuth and elevation
@@ -1115,6 +1121,7 @@ class StationFactory(object):
         space_station.height = np.array(
             [distance * math.sin(math.radians(theta_grd_elev))],
         )
+        space_station.z = space_station.height
 
         # Elevation and azimuth at sensor wrt centre of the footprint
         # It is assumed the sensor is at y-axis, hence azimuth is 270 deg
@@ -1168,6 +1175,7 @@ class StationFactory(object):
         mss_ss.station_type = StationType.MSS_SS
         mss_ss.x = ntn_topology.space_station_x * np.ones(num_bs) + param_mss.x
         mss_ss.y = ntn_topology.space_station_y * np.ones(num_bs) + param_mss.y
+        mss_ss.z = ntn_topology.space_station_z * np.ones(num_bs)
         mss_ss.height = ntn_topology.space_station_z * np.ones(num_bs)
         mss_ss.elevation = ntn_topology.elevation
         mss_ss.is_space_station = True
