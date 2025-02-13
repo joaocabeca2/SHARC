@@ -26,6 +26,7 @@ class Topology(object):
         # is equivalent to a sector (hexagon) in the macrocell topology
         self.x = np.empty(0)
         self.y = np.empty(0)
+        self.z = np.empty(0)
         self.azimuth = np.empty(0)
         self.indoor = np.empty(0)
         self.is_space_station = False

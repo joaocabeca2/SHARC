@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from sharc.parameters.parameters_base import ParametersBase
 
 @dataclass
@@ -9,10 +9,9 @@ class ParametersOrbit(ParametersBase):
     long_asc_deg: float = 0.0
     omega_deg: float = 0.0
     inclination_deg: float = 52.0
-    perigee_alt_km: float = 1414.0 
+    perigee_alt_km: float = 1414.0
     apogee_alt_km: float = 1414.0
     initial_mean_anomaly: float = 0.0
-   
 
     def load_parameters_from_file(self, config_file: str):
         """Load parameters from file and validate."""

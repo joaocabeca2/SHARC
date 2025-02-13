@@ -6,10 +6,13 @@ from sharc.parameters.parameters_orbit import ParametersOrbit
 from sharc.parameters.parameters_p619 import ParametersP619
 from sharc.parameters.antenna.parameters_antenna_s1528 import ParametersAntennaS1528
 
+
 @dataclass
 class ParametersMssD2d(ParametersBase):
     """Define parameters for a MSS-D2D - NGSO Constellation."""
     section_name: str = "mss_d2d"
+
+    nested_parameters_enabled: bool = True
 
     is_space_to_earth: bool = True
 
@@ -17,7 +20,7 @@ class ParametersMssD2d(ParametersBase):
     name: str = "Default"
 
     # Orbit parameters
-    orbits: ParametersOrbit = field(default_factory=ParametersOrbit)
+    orbits: list[ParametersOrbit] = field(default_factory=lambda: [ParametersOrbit()])
 
     # MSS_D2D system center frequency in MHz
     frequency: float = 2110.0
@@ -96,12 +99,10 @@ class ParametersMssD2d(ParametersBase):
 
         # Now do the sanity check for some parameters
         if self.num_sectors not in [1, 7, 19]:
-            raise ValueError(f"ParametersMssD2d: Invalid number of sectors {
-                             self.num_sectors}")
+            raise ValueError(f"ParametersMssD2d: Invalid number of sectors {self.num_sectors}")
 
         if self.cell_radius <= 0:
-            raise ValueError(f"ParametersMssD2d: cell_radius must be greater than 0, but is {
-                             self.cell_radius}")
+            raise ValueError(f"ParametersMssD2d: cell_radius must be greater than 0, but is {self.cell_radius}")
         else:
             self.intersite_distance = np.sqrt(3) * self.cell_radius
 
@@ -121,8 +122,14 @@ class ParametersMssD2d(ParametersBase):
             raise ValueError(f"Invalid channel model name {self.channel_model}")
 
         if self.channel_model == "P619":
+            # mean station altitude in meters
+            m_alt = 0
+            for orbit in self.orbits:
+                m_alt += orbit.perigee_alt_km * 1e3
+            m_alt /= len(self.orbits)
+
             self.param_p619.set_external_parameters(
-                space_station_alt_m=self.orbit.perigee_alt_km * 1e3,
+                space_station_alt_m=m_alt,
                 earth_station_alt_m=self.earth_station_alt_m,
                 earth_station_lat_deg=self.earth_station_lat_deg,
                 earth_station_long_diff_deg=self.earth_station_long_diff_deg,
@@ -140,3 +147,4 @@ if __name__ == "__main__":
     mss_d2d_params = ParametersMssD2d()
     mss_d2d_params.load_parameters_from_file(yaml_file_path)
     pprint.pprint(asdict(mss_d2d_params), sort_dicts=False)
+    

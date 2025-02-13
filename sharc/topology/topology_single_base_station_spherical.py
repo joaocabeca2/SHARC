@@ -64,6 +64,10 @@ class TopologySingleBaseStationSpherical(TopologySingleBaseStation):
         self.y_sphere = points[:, 1]
         self.z_sphere = points[:, 2]
 
+        self.x = self.x_sphere
+        self.y = self.y_sphere
+        self.z = self.z_sphere
+
     def plot_3d(self, ax=None):
         if ax is None:
             fig = plt.figure(figsize=(12, 12))

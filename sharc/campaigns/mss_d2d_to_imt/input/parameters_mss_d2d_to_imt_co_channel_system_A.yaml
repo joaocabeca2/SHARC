@@ -83,12 +83,12 @@ imt:
             # Inter-site distance or Cell Radius in single Base Station network topology [m]
             # You can either provide 'cell_radius' or 'intersite_distance' for this topology
             # The relationship used is cell_radius = intersite_distance * 2 / 3
-            cell_radius: 500
+            cell_radius: 100
             # intersite_distance: 1
             ###########################################################################
             # Number of clusters in single base station topology
             # You can simulate 1 or 2 BS's with this topology
-            num_clusters: 2
+            num_clusters: 1
             ###########################################################################
             # Whether the BS is positioned over a sphere (Earth) surface
             is_spherical: true
@@ -293,7 +293,7 @@ imt:
         k_m: 1
         ###########################################################################
         # Percentage of indoor UE's [%]
-        indoor_percent: 70
+        indoor_percent: 0.0
         ###########################################################################
         # Regarding the distribution of active UE's over the cell area, this
         # parameter states how the UEs will be distributed
@@ -304,7 +304,7 @@ imt:
         #                                   given distributions for angle and
         #                                   distance. In this case, these must be
         #                                   defined later.
-        distribution_type: CELL
+        distribution_type: UNIFORM_IN_CELL
         ###########################################################################
         # Regarding the distribution of active UE's over the cell area, this
         # parameter models the distance between UE's and BS.
@@ -508,11 +508,10 @@ mss_d2d:
         ###########################################################################
         # year season: SUMMER of WINTER
         season: SUMMER
-
     # Orbit parameters
-    orbit:
+    orbits:
         # Number of planes
-        n_planes: 20
+      - n_planes: 20
         # Inclination in degrees
         inclination_deg: 54.5
         # Perigee in km

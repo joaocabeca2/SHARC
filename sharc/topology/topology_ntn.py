@@ -92,7 +92,7 @@ class TopologyNTN(Topology):
         self.y = np.array(self.y)
 
         # Assuming all points are at ground level
-        self.z = np.zeros(len(self.x))
+        self.z = np.zeros_like(self.x)
 
         # Rotate the anchor points by 30 degrees
         theta = np.radians(30)

@@ -21,11 +21,13 @@ class StationManager(object):
 
     def __init__(self, n):
         self.num_stations = n
-        self.x = np.empty(n)
-        self.y = np.empty(n)
+        self.x = np.empty(n)  # x coordinate
+        self.y = np.empty(n)  # y coordinate
+        self.z = np.empty(n)  # z coordinate (includes height above ground)
         self.azimuth = np.empty(n)
         self.elevation = np.empty(n)
-        self.height = np.empty(n)
+        self.height = np.empty(n)  # station height above ground
+        self.idx_orbit = np.empty(n)
         self.indoor = np.zeros(n, dtype=bool)
         self.active = np.ones(n, dtype=bool)
         self.tx_power = np.empty(n)
@@ -41,8 +43,8 @@ class StationManager(object):
         self.snr = np.empty(n)
         self.sinr = np.empty(n)
         self.sinr_ext = np.empty(n)
-        self.inr = np.empty(n) # INR in dBm/MHz
-        self.pfd = np.empty(n) # Powerflux density in dBm/m^2
+        self.inr = np.empty(n)  # INR in dBm/MHz
+        self.pfd = np.empty(n)  # Powerflux density in dBm/m^2
         self.spectral_mask = np.empty(n, dtype=SpectralMask)
         self.center_freq = np.empty(n)
         self.station_type = StationType.NONE
@@ -62,6 +64,7 @@ class StationManager(object):
         station.id = id
         station.x = self.x[id]
         station.y = self.y[id]
+        station.z = self.z[id]
         station.azimuth = self.azimuth[id]
         station.elevation = self.elevation[id]
         station.height = self.height[id]
@@ -85,6 +88,18 @@ class StationManager(object):
         return station
 
     def get_distance_to(self, station) -> np.array:
+        """Calculates the 2D distance between stations
+
+        Parameters
+        ----------
+        station : StationManger
+            Station to which calculate the distance
+
+        Returns
+        -------
+        np.array
+            Distance between stations
+        """
         distance = np.empty([self.num_stations, station.num_stations])
         for i in range(self.num_stations):
             distance[i] = np.sqrt(
@@ -94,12 +109,24 @@ class StationManager(object):
         return distance
 
     def get_3d_distance_to(self, station) -> np.array:
+        """Calculates the 3D distance between stations
+
+        Parameters
+        ----------
+        station : StationManager
+            Station to which calculate the distance
+
+        Returns
+        -------
+        np.array
+            3D Distance between stations
+        """
         distance = np.empty([self.num_stations, station.num_stations])
         for i in range(self.num_stations):
             distance[i] = np.sqrt(
                 np.power(self.x[i] - station.x, 2) +
                 np.power(self.y[i] - station.y, 2) +
-                np.power(self.height[i] - station.height, 2),
+                np.power(self.z[i] - station.z, 2)
             )
         return distance
 
@@ -199,7 +226,7 @@ class StationManager(object):
                 np.power(self.x[i] - station.x, 2) +
                 np.power(self.y[i] - station.y, 2),
             )
-            rel_z = station.height - self.height[i]
+            rel_z = station.z - self.z[i]
             elevation[i] = np.degrees(np.arctan2(rel_z, distance))
 
         return elevation
@@ -221,7 +248,7 @@ class StationManager(object):
 
         point_vec_x = station.x - self.x[:, np.newaxis]
         point_vec_y = station.y - self.y[:, np.newaxis]
-        point_vec_z = station.height - self.height[:, np.newaxis]
+        point_vec_z = station.z - self.z[:, np.newaxis]
 
         dist = self.get_3d_distance_to(station)
 
@@ -246,9 +273,11 @@ class StationManager(object):
         a = 90 - self.elevation[:, np.newaxis]
         C = Az0[:, np.newaxis] - Az
 
+        cos_phi = np.cos(np.radians(a)) * np.cos(np.radians(b)) \
+                    + np.sin(np.radians(a)) * np.sin(np.radians(b)) * np.cos(np.radians(C))
         phi = np.arccos(
-            np.cos(np.radians(a)) * np.cos(np.radians(b)) +
-            np.sin(np.radians(a)) * np.sin(np.radians(b)) * np.cos(np.radians(C)),
+            # imprecision may accumulate enough for numbers to be slightly out of arccos range
+            np.clip(cos_phi, -1., 1.)
         )
         phi_deg = np.degrees(phi)
 

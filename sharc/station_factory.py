@@ -57,6 +57,7 @@ from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.satellite.ngso.orbit_model import OrbitModel
 from sharc.satellite.utils.sat_utils import calc_elevation
+from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -77,13 +78,23 @@ class StationFactory(object):
         if param.topology.type == "NTN":
             imt_base_stations.x = topology.space_station_x * np.ones(num_bs)
             imt_base_stations.y = topology.space_station_y * np.ones(num_bs)
-            imt_base_stations.height = topology.space_station_z * \
-                np.ones(num_bs)
+            imt_base_stations.z = topology.space_station_z * np.ones(num_bs)
+            imt_base_stations.height = imt_base_stations.z
             imt_base_stations.elevation = topology.elevation
             imt_base_stations.is_space_station = True
+        elif param.topology.type == "SINGLE_BS" and param.topology.single_bs.is_spherical:
+            # Add the BS height to the radius of the Earth
+            bs_loc_polar = cartesian_to_polar(topology.x_sphere, topology.y_sphere, topology.z_sphere)
+            bs_loc_cart = polar_to_cartesian(bs_loc_polar[0] + param.bs.height, bs_loc_polar[1], bs_loc_polar[2])
+            imt_base_stations.x = bs_loc_cart[0]
+            imt_base_stations.y = bs_loc_cart[1]
+            imt_base_stations.z = bs_loc_cart[2]
+            imt_base_stations.height = param.bs.height * np.ones(num_bs)
+            imt_base_stations.azimuth = topology.azimuth
         else:
             imt_base_stations.x = topology.x
             imt_base_stations.y = topology.y
+            imt_base_stations.z = topology.z + param.bs.height
             imt_base_stations.elevation = -param_ant.downtilt * np.ones(num_bs)
             if param.topology.type == 'INDOOR':
                 imt_base_stations.height = topology.height
@@ -202,6 +213,7 @@ class StationFactory(object):
 
         ue_x = list()
         ue_y = list()
+        ue_z = list()
 
         imt_ue.height = param.ue.height * np.ones(num_ue)
 
@@ -218,9 +230,23 @@ class StationFactory(object):
         elevation = (elevation_range[1] - elevation_range[0]) * random_number_gen.random_sample(num_ue) + \
             elevation_range[0]
 
+        # if param.topology.type == "SINGLE_BS" and param.topology.single_bs.is_spherical:
+        #     # This is a special case where the UE is positioned over the same lat long of the BS. This is
+        #     # because for single BS studies in this case the UE position relative to the BS is irrelevant w.r.t the
+        #     # satellite position.
+        #     ue_height = []
+        #     for i in range(num_bs):
+        #         ue_x += [topology.x[i] + 10 * i] * num_ue_per_bs
+        #         ue_y += [topology.y[i] + 10 * i] * num_ue_per_bs
+        #         ue_height += [param.ue.height] * num_ue_per_bs
+        #     imt_ue.height = np.array(ue_height)
+        #     # ue_x = topology.x
+        #     # ue_y = topology.y
+        # else:
+
         if param.ue.distribution_type.upper() == "UNIFORM" or \
-           param.ue.distribution_type.upper() == "CELL" or \
-           param.ue.distribution_type.upper() == "UNIFORM_IN_CELL":
+            param.ue.distribution_type.upper() == "CELL" or \
+            param.ue.distribution_type.upper() == "UNIFORM_IN_CELL":
 
             central_cell = False
             deterministic_cell = False
@@ -235,7 +261,7 @@ class StationFactory(object):
                     )
                     sys.exit(1)
 
-            [ue_x, ue_y, theta, distance] = StationFactory.get_random_position(
+            [ue_x, ue_y, ue_z, theta, distance] = StationFactory.get_random_position(
                 num_ue, topology, random_number_gen,
                 param.minimum_separation_distance_bs_ue,
                 central_cell=central_cell,
@@ -308,8 +334,10 @@ class StationFactory(object):
                 # calculate UE position in x-y coordinates
                 x = topology.x[bs] + radius[idx] * np.cos(np.radians(theta))
                 y = topology.y[bs] + radius[idx] * np.sin(np.radians(theta))
+                z = topology.z[bs] * np.ones_like(x)
                 ue_x.extend(x)
                 ue_y.extend(y)
+                ue_z.extend(z)
 
                 # calculate UE azimuth wrt serving BS
                 imt_ue.azimuth[idx] = (azimuth[idx] + theta + 180) % 360
@@ -324,15 +352,6 @@ class StationFactory(object):
                 )
                 imt_ue.elevation[idx] = elevation[idx] + psi
 
-        elif param.topology.type == "SINGLE_BS" and param.topology.single_bs.is_spherical:
-            # This is a special case where the UE is positioned over the same lat long of the BS. This is
-            # because for single BS studies in this case the UE position relative to the BS is irrelevant w.r.t the
-            # satellite
-            vec_mag = np.sqrt(topology.x**2 + topology.y**2 + topology.height**2)
-            scale_factor = (vec_mag - param.ue.height) / vec_mag
-            ue_x = np.repeat(topology.x * scale_factor, num_ue)
-            ue_y = np.repeat(topology.x * scale_factor, num_ue)
-            imt_ue.height = np.repeat(topology.height * scale_factor, num_ue)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid UE distribution type: " + param.ue.distribution_type,
@@ -341,6 +360,7 @@ class StationFactory(object):
 
         imt_ue.x = np.array(ue_x)
         imt_ue.y = np.array(ue_y)
+        imt_ue.z = np.array(ue_z) + param.ue.height
 
         imt_ue.active = np.zeros(num_ue, dtype=bool)
         imt_ue.indoor = random_number_gen.random_sample(
@@ -615,6 +635,7 @@ class StationFactory(object):
                 dist_imt_centre_earth_km
             ) * 1000,
         ])
+        fss_space_station.z = fss_space_station.height
 
         fss_space_station.azimuth = np.array([param.azimuth])
         fss_space_station.elevation = np.array([param.elevation])
@@ -721,6 +742,7 @@ class StationFactory(object):
             )
             sys.exit(1)
 
+        fss_earth_station.z = np.array([param.height])
         fss_earth_station.height = np.array([param.height])
 
         if param.azimuth.upper() == "RANDOM":
@@ -836,6 +858,7 @@ class StationFactory(object):
                 )
                 sys.exit(1)
 
+        single_earth_station.z = np.array([param.geometry.height])
         single_earth_station.height = np.array([param.geometry.height])
 
         if param.geometry.azimuth.type == "UNIFORM_DIST":
@@ -938,6 +961,7 @@ class StationFactory(object):
 
         fs_station.x = np.array([param.x])
         fs_station.y = np.array([param.y])
+        fs_station.z = np.array([param.height])
         fs_station.height = np.array([param.height])
 
         fs_station.azimuth = np.array([param.azimuth])
@@ -978,8 +1002,9 @@ class StationFactory(object):
 #        haps.y = np.array([0, 9*h, 15*h, 6*h, -9*h, -15*h, -6*h])
         haps.x = np.array([0])
         haps.y = np.array([0])
+        haps.z = param.altitude * np.ones(num_haps)
 
-        haps.height = param.altitude * np.ones(num_haps)
+        haps.height = haps.z
 
         elev_max = 68.19  # corresponds to 50 km radius and 20 km altitude
         haps.azimuth = 360 * random_number_gen.random_sample(num_haps)
@@ -1016,6 +1041,7 @@ class StationFactory(object):
 
         rns.x = np.array([param.x])
         rns.y = np.array([param.y])
+        rns.z = np.array([param.altitude])
         rns.height = np.array([param.altitude])
 
         # minimum and maximum values for azimuth and elevation
@@ -1095,6 +1121,7 @@ class StationFactory(object):
         space_station.height = np.array(
             [distance * math.sin(math.radians(theta_grd_elev))],
         )
+        space_station.z = space_station.height
 
         # Elevation and azimuth at sensor wrt centre of the footprint
         # It is assumed the sensor is at y-axis, hence azimuth is 270 deg
@@ -1148,6 +1175,7 @@ class StationFactory(object):
         mss_ss.station_type = StationType.MSS_SS
         mss_ss.x = ntn_topology.space_station_x * np.ones(num_bs) + param_mss.x
         mss_ss.y = ntn_topology.space_station_y * np.ones(num_bs) + param_mss.y
+        mss_ss.z = ntn_topology.space_station_z * np.ones(num_bs)
         mss_ss.height = ntn_topology.space_station_z * np.ones(num_bs)
         mss_ss.elevation = ntn_topology.elevation
         mss_ss.is_space_station = True
@@ -1214,6 +1242,35 @@ class StationFactory(object):
         mss_d2d = StationManager(n=total_satellites)
         mss_d2d.station_type = StationType.MSS_D2D  # Set the station type to MSS D2D
         mss_d2d.is_space_station = True  # Indicate that the station is in space
+        mss_d2d.idx_orbit = np.zeros(total_satellites, dtype=int)  # Add orbit index array
+
+        # Initialize satellites antennas
+        mss_d2d.antenna = np.empty(total_satellites, dtype=AntennaS1528Leo)
+        for i in range(total_satellites):
+            if params.antenna_pattern == "ITU-R-S.1528-LEO":
+                mss_d2d.antenna[i] = AntennaS1528Leo(params.antenna_s1528)
+            elif params.antenna_pattern == "ITU-R-S.1528-Section1.2":
+                mss_d2d.antenna[i] = AntennaS1528(params.antenna_s1528)
+            elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
+                mss_d2d.antenna[i] = AntennaS1528Taylor(params.antenna_s1528)
+            else:
+                raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
+
+        if params.spectral_mask == "IMT-2020":
+            mss_d2d.spectral_mask = SpectralMaskImt(StationType.IMT_BS,
+                                                    params.frequency,
+                                                    params.bandwidth,
+                                                    params.spurious_emissions,
+                                                    scenario="OUTDOOR")
+        elif params.spectral_mask == "3GPP E-UTRA":
+            mss_d2d.spectral_mask = SpectralMask3Gpp(StationType.IMT_BS,
+                                                     params.frequency,
+                                                     params.bandwidth,
+                                                     params.spurious_emissions,
+                                                     scenario="OUTDOOR")
+        else:
+            raise ValueError(f"Invalid or not implemented spectral mask - {params.spectral_mask}")
+        mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 10e6))
 
         # Initialize arrays to store satellite positions and angles
         all_positions = {"lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
@@ -1227,7 +1284,7 @@ class StationFactory(object):
         i = 0  # Iteration counter for ensuring satellite visibility
         while len(active_satellite_idxs) == 0:
             # Iterate through each orbit defined in the parameters
-            for param in params.orbits:
+            for orbit_idx, param in enumerate(params.orbits):
                 # Instantiate an OrbitModel for the current orbit
                 orbit = OrbitModel(
                     Nsp=param.sats_per_plane,  # Satellites per plane
@@ -1244,11 +1301,21 @@ class StationFactory(object):
                 # Generate random positions for satellites in this orbit
                 pos_vec = orbit.get_orbit_positions_random_time(rng=random_number_gen)
 
+                # Determine the number of satellites in this orbit
+                num_satellites = len(pos_vec["sx"])
+
+                # Assign orbit index to satellites
+                mss_d2d.idx_orbit[current_sat_idx:current_sat_idx + num_satellites] = orbit_idx
+
                 # Extract satellite positions and calculate distances
                 sx, sy, sz = pos_vec['sx'], pos_vec['sy'], pos_vec['sz']
                 r = np.sqrt(sx**2 + sy**2 + sz**2)  # Distance from Earth's center
-                elevations = np.degrees(np.arcsin(sz / r))  # Calculate elevation angles
-                azimuths = np.degrees(np.arctan2(sy, sx))  # Calculate azimuth angles
+
+                # When getting azimuth and elevation, we need to consider sx, sy and sz points
+                # from the center of earth to the satellite, and we need to point the satellite
+                # towards the center of earth
+                elevations = np.degrees(np.arcsin(-sz / r))  # Calculate elevation angles
+                azimuths = np.degrees(np.arctan2(-sy, -sx))  # Calculate azimuth angles
 
                 # Append satellite positions and angles to global lists
                 all_positions['lat'].extend(pos_vec['lat'])  # Latitudes
@@ -1284,18 +1351,18 @@ class StationFactory(object):
                 )
 
         # Configure satellite positions in the StationManager
-        mss_d2d.x = np.array(all_positions['sx']) * 1e3  # Convert X-coordinates to meters
-        mss_d2d.y = np.array(all_positions['sy']) * 1e3  # Convert Y-coordinates to meters
-        mss_d2d.height = np.array(all_positions['sz']) * 1e3  # Convert Z-coordinates to meters
-        mss_d2d.elevation = np.array(all_elevations)  # Elevation angles
-        mss_d2d.azimuth = np.array(all_azimuths)  # Azimuth angles
+        mss_d2d.x = np.squeeze(np.array(all_positions['sx'])) * 1e3  # Convert X-coordinates to meters
+        mss_d2d.y = np.squeeze(np.array(all_positions['sy'])) * 1e3  # Convert Y-coordinates to meters
+        mss_d2d.z = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
+        mss_d2d.height = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
+        mss_d2d.elevation = np.squeeze(np.array(all_elevations))  # Elevation angles
+        mss_d2d.azimuth = np.squeeze(np.array(all_azimuths))  # Azimuth angles
 
         # Set active satellite flags
         mss_d2d.active = np.zeros(total_satellites, dtype=bool)  # Initialize all satellites as inactive
         mss_d2d.active[active_satellite_idxs] = True  # Mark visible satellites as active
 
         return mss_d2d  # Return the configured StationManager
-
 
     @staticmethod
     def get_random_position(num_stas: int,
@@ -1325,12 +1392,13 @@ class StationFactory(object):
         Returns
         -------
         tuple
-            x, y, azimuth and elevation angles.
+            x, y, z, azimuth and elevation angles.
         """
         hexagon_radius = topology.intersite_distance * 2 / 3
 
         x = np.array([])
         y = np.array([])
+        z = np.array([])
         bs_x = -hexagon_radius
         bs_y = 0
 
@@ -1385,6 +1453,7 @@ class StationFactory(object):
 
         cell_x = topology.x[cell]
         cell_y = topology.y[cell]
+        cell_z = topology.z[cell]
 
         # x = x + cell_x + hexagon_radius * np.cos(topology.azimuth[cell] * np.pi / 180)
         # y = y + cell_y + hexagon_radius * np.sin(topology.azimuth[cell] * np.pi / 180)
@@ -1393,9 +1462,11 @@ class StationFactory(object):
         y = old_x * np.sin(np.radians(topology.azimuth[cell])) + y * np.cos(np.radians(topology.azimuth[cell]))
         x = x + cell_x
         y = y + cell_y
+        z = cell_z
 
         x = list(x)
         y = list(y)
+        z = list(z)
 
         # calculate UE azimuth wrt serving BS
         if topology.is_space_station is False:
@@ -1408,7 +1479,7 @@ class StationFactory(object):
             theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
             distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs.height)**2)
 
-        return x, y, theta, distance
+        return x, y, z, theta, distance
 
 
 if __name__ == '__main__':

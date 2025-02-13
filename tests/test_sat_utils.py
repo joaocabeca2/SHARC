@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import numpy.testing as npt
-import satellite.utils.sat_utils as sat_utils
+import sharc.satellite.utils.sat_utils as sat_utils
 
 
 class TestSatUtils(unittest.TestCase):

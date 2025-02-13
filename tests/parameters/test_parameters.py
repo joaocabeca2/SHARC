@@ -460,6 +460,64 @@ class ParametersTest(unittest.TestCase):
             'azimuth.uniform_dist.max' in str(
                 err_context.exception))
 
+    def test_parametes_mss_d2d(self):
+        """Test ParametersRas
+        """
+        self.assertEqual(self.parameters.mss_d2d.name, 'SystemA')
+        self.assertEqual(self.parameters.mss_d2d.frequency, 2170.0)
+        self.assertEqual(self.parameters.mss_d2d.bandwidth, 5.0)
+        self.assertEqual(self.parameters.mss_d2d.cell_radius, 19000)
+        self.assertEqual(self.parameters.mss_d2d.tx_power_density, -30)
+        self.assertEqual(self.parameters.mss_d2d.antenna_gain, 30.0)
+        self.assertEqual(self.parameters.mss_d2d.num_sectors, 19)
+        self.assertEqual(self.parameters.mss_d2d.antenna_pattern, 'ITU-R-S.1528-Taylor')
+        self.assertEqual(self.parameters.mss_d2d.antenna_diamter, 1.0)
+        self.assertEqual(self.parameters.mss_d2d.antenna_l_s, -6.75)
+        self.assertEqual(self.parameters.mss_d2d.antenna_3_dB_bw, 4.4127)
+        self.assertEqual(self.parameters.mss_d2d.channel_model, 'P619')
+        self.assertEqual(self.parameters.mss_d2d.param_p619.earth_station_alt_m, 0.0)
+        self.assertEqual(self.parameters.mss_d2d.param_p619.earth_station_lat_deg, 0.0)
+        self.assertEqual(self.parameters.mss_d2d.param_p619.earth_station_long_diff_deg, 0.0)
+        self.assertEqual(self.parameters.mss_d2d.param_p619.season, 'SUMMER')
+        self.assertTrue(isinstance(self.parameters.mss_d2d.orbits, list))
+        expected_orbit_params = [
+            {
+                'n_planes': 20,
+                'inclination_deg': 54.5,
+                'perigee_alt_km': 525.0,
+                'apogee_alt_km': 525.0,
+                'sats_per_plane': 32,
+                'long_asc_deg': 18.0,
+                'phasing_deg': 3.9
+            },
+            {
+                'n_planes': 12,
+                'inclination_deg': 26.0,
+                'perigee_alt_km': 580.0,
+                'apogee_alt_km': 580.0,
+                'sats_per_plane': 20,
+                'long_asc_deg': 30.0,
+                'phasing_deg': 2.0
+            },
+            {
+                'n_planes': 26,
+                'inclination_deg': 97.77,
+                'perigee_alt_km': 595.0,
+                'apogee_alt_km': 595.0,
+                'sats_per_plane': 30,
+                'long_asc_deg': 14.0,
+                'phasing_deg': 7.8
+            }
+        ]
+        for i, orbit_params in enumerate(self.parameters.mss_d2d.orbits):
+            self.assertEqual(orbit_params.n_planes, expected_orbit_params[i]['n_planes'])
+            self.assertEqual(orbit_params.inclination_deg, expected_orbit_params[i]['inclination_deg'])
+            self.assertEqual(orbit_params.perigee_alt_km, expected_orbit_params[i]['perigee_alt_km'])
+            self.assertEqual(orbit_params.apogee_alt_km, expected_orbit_params[i]['apogee_alt_km'])
+            self.assertEqual(orbit_params.sats_per_plane, expected_orbit_params[i]['sats_per_plane'])
+            self.assertEqual(orbit_params.long_asc_deg, expected_orbit_params[i]['long_asc_deg'])
+            self.assertEqual(orbit_params.phasing_deg, expected_orbit_params[i]['phasing_deg'])
+
 
 if __name__ == '__main__':
     unittest.main()

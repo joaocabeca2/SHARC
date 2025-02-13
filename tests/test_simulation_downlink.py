@@ -294,6 +294,7 @@ class SimulationDownlinkTest(unittest.TestCase):
             self.param.fss_ss)
         self.simulation.system.x = np.array([0.01])  # avoids zero-division
         self.simulation.system.y = np.array([0])
+        self.simulation.system.z = np.array([self.param.fss_ss.altitude])
         self.simulation.system.height = np.array([self.param.fss_ss.altitude])
 
         # test the method that calculates interference from IMT UE to FSS space

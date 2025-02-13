@@ -1,6 +1,6 @@
 import yaml
 from dataclasses import dataclass
-
+from copy import deepcopy
 
 # Register a tuple constructor with PyYAML
 def tuple_constructor(loader, node):
@@ -143,6 +143,24 @@ class ParametersBase:
                     attr_val.load_subparameters(
                         f"{self.section_name}.{attr_name}", config[self.section_name][attr_name],
                     )
+                elif isinstance(attr_val, list):
+                    if not self.nested_parameters_enabled:
+                        continue
+                    if not isinstance(config[self.section_name][attr_name], list):
+                        raise ValueError(
+                            f"ERROR: Cannot parse section {self.section_name}.{attr_name}, is \
+                                {config[self.section_name][attr_name]} instead of a list",
+                        )
+                    loaded_attr_vals = list()
+                    default_item = attr_val[0]
+                    for params in config[self.section_name][attr_name]:
+                        new_item = deepcopy(default_item)
+                        new_item.load_subparameters(
+                            f"{self.section_name}.{attr_name}", params,
+                        )
+                        loaded_attr_vals.append(new_item)
+                    setattr(self, attr_name, loaded_attr_vals)
+
                 else:
                     setattr(
                         self, attr_name,
