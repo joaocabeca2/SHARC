@@ -99,6 +99,9 @@ class AntennaS1528Taylor(Antenna):
 
         # Replace undefined values with -inf (or other desired value)
         gain = np.nan_to_num(gain, nan=-np.inf)
+        # Replace values that were substituded specifically
+        # because u == 0 with Lim (gain)_(u -> 0) = peak_gain
+        gain[u == 0] = self.peak_gain
 
         return gain
 
