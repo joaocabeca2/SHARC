@@ -51,13 +51,14 @@ from sharc.antenna.antenna_s1855 import AntennaS1855
 from sharc.antenna.antenna_sa509 import AntennaSA509
 from sharc.antenna.antenna_s1528 import AntennaS1528, AntennaS1528Leo, AntennaS1528Taylor
 from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
+from sharc.antenna.antenna_multiple_transceiver import AntennaMultipleTransceiver
 from sharc.topology.topology import Topology
 from sharc.topology.topology_ntn import TopologyNTN
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.satellite.ngso.orbit_model import OrbitModel
-from sharc.satellite.utils.sat_utils import calc_elevation
-from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian
+from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
+from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian, rotate_angles_based_on_new_nadir
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -1244,18 +1245,6 @@ class StationFactory(object):
         mss_d2d.is_space_station = True  # Indicate that the station is in space
         mss_d2d.idx_orbit = np.zeros(total_satellites, dtype=int)  # Add orbit index array
 
-        # Initialize satellites antennas
-        mss_d2d.antenna = np.empty(total_satellites, dtype=AntennaS1528Leo)
-        for i in range(total_satellites):
-            if params.antenna_pattern == "ITU-R-S.1528-LEO":
-                mss_d2d.antenna[i] = AntennaS1528Leo(params.antenna_s1528)
-            elif params.antenna_pattern == "ITU-R-S.1528-Section1.2":
-                mss_d2d.antenna[i] = AntennaS1528(params.antenna_s1528)
-            elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
-                mss_d2d.antenna[i] = AntennaS1528Taylor(params.antenna_s1528)
-            else:
-                raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
-
         if params.spectral_mask == "IMT-2020":
             mss_d2d.spectral_mask = SpectralMaskImt(StationType.IMT_BS,
                                                     params.frequency,
@@ -1272,8 +1261,8 @@ class StationFactory(object):
             raise ValueError(f"Invalid or not implemented spectral mask - {params.spectral_mask}")
         mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 10e6))
 
-        # Initialize arrays to store satellite positions and angles
-        all_positions = {"lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
+        # Initialize arrays to store satellite positions, angles and distance from center of earth
+        all_positions = {"R": [], "lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
         all_elevations = []  # Store satellite elevations
         all_azimuths = []  # Store satellite azimuths
 
@@ -1323,6 +1312,7 @@ class StationFactory(object):
                 all_positions['sx'].extend(sx)  # X-coordinates
                 all_positions['sy'].extend(sy)  # Y-coordinates
                 all_positions['sz'].extend(sz)  # Z-coordinates
+                all_positions["R"].extend(r)
                 all_elevations.extend(elevations)  # Elevation angles
                 all_azimuths.extend(azimuths)  # Azimuth angles
 
@@ -1361,6 +1351,96 @@ class StationFactory(object):
         # Set active satellite flags
         mss_d2d.active = np.zeros(total_satellites, dtype=bool)  # Initialize all satellites as inactive
         mss_d2d.active[active_satellite_idxs] = True  # Mark visible satellites as active
+
+        rx, ry, rz = lla2ecef(
+            np.squeeze(np.array(all_positions['lat'])),
+            np.squeeze(np.array(all_positions['lon'])),
+            0
+        )
+
+        earth_radius = np.sqrt(rx*rx + ry*ry + rz*rz)
+        all_r = np.squeeze(np.array(all_positions['R'])) * 1e3
+
+        sat_altitude = np.mean(np.array(
+             all_r - earth_radius
+        )[active_satellite_idxs])
+        
+        # Initialize satellites antennas
+        mss_d2d.antenna = np.empty(total_satellites, dtype=AntennaS1528Leo)
+        for i in range(total_satellites):
+            if params.antenna_pattern == "ITU-R-S.1528-LEO":
+                mss_d2d.antenna[i] = AntennaS1528Leo(params.antenna_s1528)
+            elif params.antenna_pattern == "ITU-R-S.1528-Section1.2":
+                mss_d2d.antenna[i] = AntennaS1528(params.antenna_s1528)
+            elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
+                mss_d2d.antenna[i] = AntennaS1528Taylor(params.antenna_s1528)
+            else:
+                raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
+
+        if params.num_sectors > 1:
+            sx, sy = TopologyNTN.get_sectors_xy(
+                intersite_distance=params.intersite_distance,
+                num_sectors=params.num_sectors
+            )
+
+            beams_2d_azim = np.rad2deg(np.arctan2(sy, sx))
+            beams_2d_elev = np.rad2deg(np.arctan2(np.sqrt(sy*sy + sx*sx), sat_altitude)) - 90
+            
+            beams_2d_azim = np.resize(
+                beams_2d_azim,
+                total_satellites * params.num_sectors
+            ).reshape(
+                (total_satellites, params.num_sectors)
+            )
+
+            beams_2d_elev = np.resize(
+                beams_2d_elev,
+                total_satellites * params.num_sectors
+            ).reshape(
+                (total_satellites, params.num_sectors)
+            )
+
+            for i in range(total_satellites):
+                if not mss_d2d.active[i]: # we don't really care about these
+                    continue
+
+                beams_3d_elev, beams_3d_azim = rotate_angles_based_on_new_nadir(
+                    beams_2d_elev[i],
+                    beams_2d_azim[i],
+                    mss_d2d.elevation[i],
+                    mss_d2d.azimuth[i]
+                )
+
+                # print("beams_2d_elev[i]", beams_2d_elev[i])
+                # print("beams_2d_azim[i]", beams_2d_azim[i])
+                # print("mss_d2d.azimuth[i]", mss_d2d.azimuth[i])
+                # print("mss_d2d.elevation[i]", mss_d2d.elevation[i])
+
+                # print("beams_3d_azim", beams_3d_azim)
+                # print("beams_3d_elev", beams_3d_elev)
+
+                # # testing if off axis angle is still correct
+                # Az, b = beams_3d_azim, 90 - beams_3d_elev
+                # Az0 = mss_d2d.azimuth[i]
+
+                # a = 90 - mss_d2d.elevation[i]
+                # C = Az0 - Az
+
+                # cos_phi = np.cos(np.radians(a)) * np.cos(np.radians(b)) \
+                #             + np.sin(np.radians(a)) * np.sin(np.radians(b)) * np.cos(np.radians(C))
+                # phi = np.arccos(
+                #     np.clip(cos_phi, -1., 1.)
+                # )
+                # phi_deg = np.degrees(phi)
+                # print("phi_deg", phi_deg)
+
+
+                mss_d2d.antenna[i] = AntennaMultipleTransceiver(
+                    num_beams=params.num_sectors,
+                    transceiver_radiation_pattern=mss_d2d.antenna[i],
+                    azimuths=beams_3d_azim,
+                    elevations=beams_3d_elev,
+                )
 
         return mss_d2d  # Return the configured StationManager
 
