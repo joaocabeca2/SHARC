@@ -55,8 +55,8 @@ class ParametersImt(ParametersBase):
         k: int = 3
         k_m: int = 1
         indoor_percent: int = 5.0
-        distribution_type: str = "ANGLE_AND_DISTANCE"
-        distribution_distance: str = "RAYLEIGH"
+        distribution_type: str = "UNIFORM_IN_CELL"
+        distribution_distance: str = "UNIFORM"
         distribution_azimuth: str = "NORMAL"
         azimuth_range: tuple = (-60, 60)
         tx_power_control: bool = True

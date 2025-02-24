@@ -57,7 +57,7 @@ imt:
         ###########################################################################
         # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
         # "INDOOR"
-        type: HOTSPOT
+        type: MACROCELL
         ###########################################################################
         # Macrocell Topology parameters. Relevant when imt.topology.type == "MACROCELL"
         macrocell:
@@ -288,7 +288,7 @@ imt:
         #                                   given distributions for angle and
         #                                   distance. In this case, these must be
         #                                   defined later.
-        distribution_type: ANGLE_AND_DISTANCE
+        distribution_type: UNIFORM
         ###########################################################################
         # Regarding the distribution of active UE's over the cell area, this
         # parameter models the distance between UE's and BS.
@@ -528,7 +528,7 @@ fss_es:
     # NETWORK - random within whole network
     # UNIFORM_DIST - uniform distance from cluster centre,
     #                between min_dist_to_bs and max_dist_to_bs
-    location: UNIFORM_DIST
+    location: CELL
     ###########################################################################
     # x-y coordinates [m] (only if FIXED location is chosen)
     x: 10000
@@ -1314,7 +1314,7 @@ wifi:
         hotspot:
             ###########################################################################
             # Inter-site distance in hotspot network topology [m]
-            intersite_distance: 321
+            intersite_distance: 500
             ###########################################################################
             # Enable wrap around.
             wrap_around: true

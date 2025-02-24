@@ -118,6 +118,8 @@ class SystemWifi():
         access_points.elevation = -param_ant.downtilt * np.ones(num_aps)
         access_points.azimuth = theta  # Usar o ângulo calculado aleatoriamente
 
+=======
+>>>>>>> 1e2bbc1 (algumas configurações para um cenario simples do wifi)
         access_points.active = random_number_gen.rand(num_aps) < self.parameters.ap.load_probability
         access_points.tx_power = self.parameters.ap.conducted_power * np.ones(num_aps)
         access_points.rx_power = dict([(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)])
@@ -142,7 +144,8 @@ class SystemWifi():
         self.ap = access_points
 
     def generate_stas(self, random_number_gen: np.random.RandomState) -> StationManager:
-        num_ap = self.topology.num_base_stations
+        #num_ap = self.topology.num_base_stations
+        num_ap = 1
         num_sta_per_ap = self.parameters.sta.k * self.parameters.sta.k_m
         num_sta = num_ap * num_sta_per_ap
 
@@ -179,8 +182,8 @@ class SystemWifi():
 
             [sta_x, sta_y, sta.z, theta, distance] = self.get_random_position(
                 num_sta, self.topology, random_number_gen,
-                self.parameters.minimum_separation_distance_ap_sta,
-                deterministic_cell=True,
+                self.parameters.minimum_separation_distance_ap_sta, central_cell,
+                deterministic_cell,
             )
             psi = np.degrees(np.arctan((self.parameters.ap.height - self.parameters.sta.height) / distance))
 
@@ -286,7 +289,7 @@ class SystemWifi():
 
         # choose cells
         if central_cell:
-            central_cell_indices = np.where((topology.x == 0) & (topology.y == 0))
+            central_cell_indices = np.where((topology.macrocell.x == 0) & (topology.macrocell.y == 0))
 
             if not len(central_cell_indices[0]):
                 sys.stderr.write("ERROR\nTopology does not have a central cell")

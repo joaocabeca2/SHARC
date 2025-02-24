@@ -53,6 +53,9 @@ from sharc.support.enumerations import StationType
 from sharc.system.system_wifi import SystemWifi
 from sharc.topology.topology import Topology
 from sharc.topology.topology_macrocell import TopologyMacrocell
+from sharc.topology.topology_hotspot import TopologyHotspot
+from sharc.parameters.imt.parameters_hotspot import ParametersHotspot
+from sharc.parameters.imt.parameters_imt import ParametersImt
 
 
 class StationFactory(object):

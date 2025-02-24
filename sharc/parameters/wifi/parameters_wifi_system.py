@@ -35,7 +35,7 @@ class ParametersWifiSystem(ParametersBase):
         height: float = 6.0
         noise_figure: float = 10.0
         ohmic_loss: float = 3.0
-        distribution_type: str = "UNIFORM"
+        distribution_type: str = "CELL"
         antenna: ParametersAntennaWifi = field(default_factory=ParametersAntennaWifi)
 
     ap: ParametersAP = field(default_factory=ParametersAP)
@@ -56,9 +56,9 @@ class ParametersWifiSystem(ParametersBase):
     class ParametersSTA(ParametersBase):
         k: int = 3
         k_m: int = 1
-        indoor_percent: int = 5.0
-        distribution_type: str = "UNIFORM"
-        distribution_distance: str = "RAYLEIGH"
+        indoor_percent: int = 0.0
+        distribution_type: str = "CELL"
+        distribution_distance: str = "CELL"
         distribution_azimuth: str = "NORMAL"
         azimuth_range: tuple = (-180, 180)
         tx_power_control: bool = True
