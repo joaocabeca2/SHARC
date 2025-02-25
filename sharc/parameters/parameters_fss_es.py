@@ -20,7 +20,7 @@ class ParametersFssEs(ParametersBase):
     # NETWORK - random within whole network
     # UNIFORM_DIST - uniform distance from cluster centre,
     #                between min_dist_to_bs and max_dist_to_bs
-    location: str = "UNIFORM_DIST"
+    location: str = "CELL"
     # x-y coordinates [m] (only if FIXED location is chosen)
     x: float = 10000.0
     y: float = 0.0

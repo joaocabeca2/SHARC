@@ -10,7 +10,7 @@ from sharc.station_manager import StationManager
 from sharc.support.enumerations import StationType
 from sharc.topology.topology_hotspot import TopologyHotspot
 from sharc.propagation.propagation_free_space import PropagationFreeSpace
-
+from sharc.topology.topology_macrocell import TopologyMacrocell
 
 class SystemWifi():
     """Implements a Wifi Network compose of APs and STAs."""
@@ -19,6 +19,7 @@ class SystemWifi():
         self.topology = self.generate_topology()
         self.topology.calculate_coordinates()
         num_aps = self.topology.num_base_stations
+        #num_aps = 1
         num_stas = num_aps * self.parameters.sta.k * self.parameters.sta.k_m
 
         # Floor probability distribution
@@ -68,10 +69,11 @@ class SystemWifi():
     
     def generate_heights(self, random_state=None, is_ap=False):
         num_aps = self.topology.num_base_stations
+        #num_aps = 1
         num_stas = num_aps * self.parameters.sta.k * self.parameters.sta.k_m
         # Usar o random_state diretamente para gerar uma seed
         if isinstance(random_state, np.random.RandomState):
-            seed = random_state.randint(0, 2**32 - 1)
+            seed = random_state.randint(0, 2**31 - 1)
         else:
             seed = random_state
             
@@ -86,8 +88,7 @@ class SystemWifi():
     
     def generate_topology(self):
         if self.parameters.topology.type == "HOTSPOT":
-            return TopologyHotspot(
-                self.parameters.topology.hotspot,
+            return TopologyMacrocell(
                 self.parameters.topology.hotspot.intersite_distance,
                 self.parameters.topology.hotspot.num_clusters
             )
@@ -103,6 +104,7 @@ class SystemWifi():
     def generate_aps(self, random_number_gen: np.random.RandomState) -> StationManager:
         param_ant = self.parameters.ap.antenna
         num_aps = self.topology.num_base_stations
+        #num_aps = 1
         access_points = StationManager(num_aps)
         access_points.station_type = StationType.WIFI_APS
 
@@ -118,8 +120,6 @@ class SystemWifi():
         access_points.elevation = -param_ant.downtilt * np.ones(num_aps)
         access_points.azimuth = theta  # Usar o ângulo calculado aleatoriamente
 
-=======
->>>>>>> 1e2bbc1 (algumas configurações para um cenario simples do wifi)
         access_points.active = random_number_gen.rand(num_aps) < self.parameters.ap.load_probability
         access_points.tx_power = self.parameters.ap.conducted_power * np.ones(num_aps)
         access_points.rx_power = dict([(ap, -500 * np.ones(self.parameters.sta.k)) for ap in range(num_aps)])
@@ -144,8 +144,8 @@ class SystemWifi():
         self.ap = access_points
 
     def generate_stas(self, random_number_gen: np.random.RandomState) -> StationManager:
-        #num_ap = self.topology.num_base_stations
-        num_ap = 1
+        num_ap = self.topology.num_base_stations
+        #num_ap = 1
         num_sta_per_ap = self.parameters.sta.k * self.parameters.sta.k_m
         num_sta = num_ap * num_sta_per_ap
 
@@ -289,7 +289,7 @@ class SystemWifi():
 
         # choose cells
         if central_cell:
-            central_cell_indices = np.where((topology.macrocell.x == 0) & (topology.macrocell.y == 0))
+            central_cell_indices = np.where((topology.x == 0) & (topology.y == 0))
 
             if not len(central_cell_indices[0]):
                 sys.stderr.write("ERROR\nTopology does not have a central cell")

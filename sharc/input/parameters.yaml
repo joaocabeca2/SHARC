@@ -8,7 +8,7 @@ general:
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS, SINGLE_EARTH_STATION
-    system: "WIFI"
+    system: "FSS_ES"
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel: FALSE
@@ -63,13 +63,13 @@ imt:
         macrocell:
             ###########################################################################
             # Inter-site distance in macrocell network topology [m]
-            intersite_distance: 543
+            intersite_distance: 500
             ###########################################################################
             # Enable wrap around.
             wrap_around: true
             ###########################################################################
             # Number of clusters in macro cell topology
-            num_clusters: 7
+            num_clusters: 1
         ###########################################################################
         # Single Base Station Topology parameters. Relevant when imt.topology.type == "SINGLE_BS"
         single_bs:
@@ -288,17 +288,17 @@ imt:
         #                                   given distributions for angle and
         #                                   distance. In this case, these must be
         #                                   defined later.
-        distribution_type: UNIFORM
+        distribution_type: CELL
         ###########################################################################
         # Regarding the distribution of active UE's over the cell area, this
         # parameter models the distance between UE's and BS.
         # Possible values: RAYLEIGH, UNIFORM
-        distribution_distance: UNIFORM
+        distribution_distance: RAYLEIGH
         ###########################################################################
         # Regarding the distribution of active UE's over the cell area, this
         # parameter models the azimuth between UE and BS (within ±60° range).
         # Possible values: NORMAL, UNIFORM
-        distribution_azimuth: NORMAL
+        distribution_azimuth: UNIFORM
         ###########################################################################
         # Power control algorithm
         # tx_power_control = "ON",power control On
@@ -538,7 +538,7 @@ fss_es:
     min_dist_to_bs: 10
     ###########################################################################
     # maximum distance from centre BSs [m] (only if UNIFORM_DIST is chosen)
-    max_dist_to_bs: 600
+    max_dist_to_bs: 80
     ###########################################################################
     # antenna height [m]
     height: 6

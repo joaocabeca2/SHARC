@@ -1253,15 +1253,54 @@ if __name__ == '__main__':
     from sharc.parameters.wifi.parameters_wifi_topology import \
         ParametersHotspot
     from sharc.topology.topology_hotspot import TopologyHotspot
-
-    # plot uniform distribution in macrocell scenario
-
+    from sharc.parameters.parameters_fss_es import ParametersFssEs
+    from sharc.parameters.imt.parameters_imt import ParametersImt
+    from sharc.parameters.parameters import Parameters
+    from sharc.parameters.parameters_base import ParametersBase
+    from sharc.parameters.imt.parameters_hotspot import ParametersHotspot
+    import os
 
     rnd = np.random.RandomState(1)
     factory = StationFactory()
-    params = ParametersWifiSystem()
-    hotspot_param = ParametersHotspot()
-    wifi = factory.generate_wifi_system(params, rnd)
+    params = Parameters()
+    params.set_file_name(os.path.join(os.path.dirname(os.path.abspath(__file__)), "input", "parameters.yaml"))
+    params.read_params()
+    '''
+    hots = ParametersHotspot()
+    #plot centrall singles_es
+    topology = TopologyHotspot(hots, 1000, 1)
+    topology.calculate_coordinates()
+    bs_ant_param = ParametersAntennaImt()
+    ue_ant_param = ParametersAntennaImt()
+    
+    #params = ParametersFssEs()
+    #hotspot_param = ParametersHotspot()
+
+    
+    imt_ue = factory.generate_imt_ue(params.imt, ue_ant_param, topology, rnd)
+    fss_es = factory.generate_single_earth_station(params.single_earth_station, rnd, topology=topology)
+
+    fig = plt.figure(
+        figsize=(8, 8), facecolor='w',
+        edgecolor='k',
+    )  # create a figure object
+    ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
+
+    topology.plot(ax)
+
+    plt.axis('image')
+    plt.title("Macro cell topology")
+    plt.xlabel("x-coordinate [m]")
+    plt.ylabel("y-coordinate [m]")
+
+    plt.plot(imt_ue.x, imt_ue.y, "r.")
+    plt.plot(fss_es.x, fss_es.y, "b.")
+
+    plt.tight_layout()
+    plt.show()'''
+
+ 
+    wifi = factory.generate_wifi_system(params.wifi, rnd)
     wifi.generate_stas(rnd)
     wifi.generate_aps(rnd)
     fig = plt.figure(
@@ -1271,31 +1310,28 @@ if __name__ == '__main__':
     ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
     wifi.topology.plot(ax)
     plt.axis('image')
-    plt.title("hotspot topology")
+    plt.title("topology")
     
     # For 2D scatter plot with height represented by marker size
-    plt.scatter(wifi.sta.x, wifi.sta.y, s=20, c=wifi.sta.height, cmap='viridis', label="STAs")
-    plt.scatter(wifi.ap.x, wifi.ap.y, s=40, c=wifi.ap.height, cmap='viridis', label="APs")
+    plt.scatter(wifi.sta.x, wifi.sta.y, s=20,  cmap='viridis', label="STAs")
+    plt.scatter(wifi.ap.x, wifi.ap.y, s=40, cmap='viridis', label="APs")
 
     # Remove the zlabel since this is a 2D plot
     plt.xlabel("x-coordinate [m]")
     plt.ylabel("y-coordinate [m]")
-    plt.ylabel("z-coordinate [m]")
-
-    # Add a colorbar to show height values
-    plt.colorbar(label="Height [m]")
 
 
     plt.tight_layout()
     plt.show()
 
-    '''# Criar figura 3D
+
+    # Criar figura 3D
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111, projection='3d')
     
     # Plotar STAs em vermelho
     ax.scatter(wifi.sta.x, wifi.sta.y, wifi.sta.height, 
-              c='red', marker='o', s=20, label='STAs')
+              c='red', marker='o', s=40, label='STAs')
     
     # Plotar APs em azul
     ax.scatter(wifi.ap.x, wifi.ap.y, wifi.ap.height, 
@@ -1312,7 +1348,7 @@ if __name__ == '__main__':
     
     # Ajustar visualização
     plt.tight_layout()
-    plt.show()'''
+    plt.show()
 
 
 
