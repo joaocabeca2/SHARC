@@ -139,7 +139,7 @@ def rotate_angles_based_on_new_nadir(elev, azim, nadir_elev, nadir_azim):
     return res_elev, rotated_phi
 
 
-class GeometryReference(metaclass=Singleton):
+class GeometryConverter(metaclass=Singleton):
     """
     This is a Singleton. set_reference should be called once per simulation/snapshot.
 
@@ -316,7 +316,7 @@ if __name__ == "__main__":
 
     # print(get_rotation_matrix_between_vecs(np.array([0,1,0]), np.array([0,0,1])))
 
-    geoconv = GeometryReference()
+    geoconv = GeometryConverter()
 
     sys_lat = 89
     sys_long = 0

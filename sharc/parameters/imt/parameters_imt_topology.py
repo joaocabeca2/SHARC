@@ -11,11 +11,6 @@ from sharc.parameters.imt.parameters_single_bs import ParametersSingleBS
 
 @dataclass
 class ParametersImtTopology(ParametersBase):
-    is_spherical: bool = False  # whether we set the BS over a sphere (Earth) surface
-    central_latitude: float = None
-    central_longitude: float = None
-    central_altitude: float = None
-
     type: typing.Literal[
         "MACROCELL", "HOTSPOT", "INDOOR", "SINGLE_BS", "NTN"
     ] = "MACROCELL"
@@ -27,14 +22,6 @@ class ParametersImtTopology(ParametersBase):
     ntn: ParametersNTN = field(default_factory=ParametersNTN)
 
     def validate(self, ctx):
-        if self.is_spherical:
-            if None in [self.central_altitude, self.central_latitude, self.central_longitude]:
-                raise ValueError(
-                    "When imt topology should be considered spherical, you need to pass" +
-                    "central_altitude, central_latitude and central_longitude" +
-                    f"on {ctx}"
-                )
-
         match self.type:
             case "MACROCELL":
                 self.macrocell.validate(f"{ctx}.macrocell")
