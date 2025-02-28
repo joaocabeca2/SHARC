@@ -58,7 +58,7 @@ from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.satellite.ngso.orbit_model import OrbitModel
 from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
-from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian, rotate_angles_based_on_new_nadir
+from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian, rotate_angles_based_on_new_nadir, GeometryConverter
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -83,15 +83,6 @@ class StationFactory(object):
             imt_base_stations.height = imt_base_stations.z
             imt_base_stations.elevation = topology.elevation
             imt_base_stations.is_space_station = True
-        elif param.topology.type == "SINGLE_BS" and param.topology.single_bs.is_spherical:
-            # Add the BS height to the radius of the Earth
-            bs_loc_polar = cartesian_to_polar(topology.x_sphere, topology.y_sphere, topology.z_sphere)
-            bs_loc_cart = polar_to_cartesian(bs_loc_polar[0] + param.bs.height, bs_loc_polar[1], bs_loc_polar[2])
-            imt_base_stations.x = bs_loc_cart[0]
-            imt_base_stations.y = bs_loc_cart[1]
-            imt_base_stations.z = bs_loc_cart[2]
-            imt_base_stations.height = param.bs.height * np.ones(num_bs)
-            imt_base_stations.azimuth = topology.azimuth
         else:
             imt_base_stations.x = topology.x
             imt_base_stations.y = topology.y
@@ -1364,7 +1355,11 @@ class StationFactory(object):
         sat_altitude = np.mean(np.array(
              all_r - earth_radius
         )[active_satellite_idxs])
-        
+
+        GeometryConverter().convert_station_3d_to_2d(
+            mss_d2d
+        )
+
         # Initialize satellites antennas
         mss_d2d.antenna = np.empty(total_satellites, dtype=AntennaS1528Leo)
         for i in range(total_satellites):
@@ -1377,6 +1372,7 @@ class StationFactory(object):
             else:
                 raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
 
+        # if more than one sector, has multiple transceivers
         if params.num_sectors > 1:
             sx, sy = TopologyNTN.get_sectors_xy(
                 intersite_distance=params.intersite_distance,

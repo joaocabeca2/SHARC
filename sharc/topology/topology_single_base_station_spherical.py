@@ -64,9 +64,9 @@ class TopologySingleBaseStationSpherical(TopologySingleBaseStation):
         self.y_sphere = points[:, 1]
         self.z_sphere = points[:, 2]
 
-        self.x = self.x_sphere
-        self.y = self.y_sphere
-        self.z = self.z_sphere
+        self.x = self.planar_x
+        self.y = self.planar_y
+        self.z = np.zeros_like(self.y)
 
     def plot_3d(self, ax=None):
         if ax is None:

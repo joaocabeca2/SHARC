@@ -5,6 +5,18 @@ import geopandas as gpd
 import numpy as np
 import plotly.graph_objects as go
 
+from sharc.support.sharc_geom import GeometryConverter
+from sharc.station_manager import StationManager
+geoconv = GeometryConverter()
+
+sys_lat = -14.5
+sys_long = -45
+sys_alt = 1200
+
+geoconv.set_reference(
+    sys_lat, sys_long, sys_alt
+)
+
 from sharc.satellite.ngso.orbit_model import OrbitModel
 from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
 from sharc.satellite.ngso.constants import EARTH_RADIUS_KM
@@ -15,32 +27,66 @@ from sharc.station_factory import StationFactory
 def plot_back(fig):
     """back half of sphere"""
     clor = 'rgb(220, 220, 220)'
-    R = np.sqrt(EARTH_RADIUS_KM)
-    u_angle = np.linspace(0, np.pi, 25)
-    v_angle = np.linspace(0, np.pi, 25)
-    x_dir = np.outer(R * np.cos(u_angle), R * np.sin(v_angle))
-    y_dir = np.outer(R * np.sin(u_angle), R * np.sin(v_angle))
-    z_dir = np.outer(R * np.ones(u_angle.shape[0]), R * np.cos(v_angle))
-    fig.add_surface(z=z_dir, x=x_dir, y=y_dir, colorscale=[[0, clor], [1, clor]],
-                    opacity=1.0, showlegend=False, lighting=dict(
-                    # opacity=fig.sphere_alpha, colorscale=[[0, fig.sphere_color], [1, fig.sphere_color]])
-                    diffuse=0.1))
+    # Create a mesh grid for latitude and longitude.
+    # For the "front" half, we can use longitudes from -180 to 0 degrees.
+    lat_vals = np.linspace(-90, 90, 50)       # 50 latitude points from -90 to 90 degrees.
+    lon_vals = np.linspace(0, 180, 50)         # 50 longitude points for the front half.
+    lon, lat = np.meshgrid(lon_vals, lat_vals)  # lon and lat will be 2D arrays.
+
+    # Flatten the mesh to pass to the converter function.
+    lat_flat = lat.flatten()
+    lon_flat = lon.flatten()
+
+    # Convert the lat/lon grid to transformed Cartesian coordinates.
+    # Ensure your converter function can handle vectorized (numpy array) inputs.
+    x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
+
+    # Reshape the converted coordinates back to the 2D grid shape.
+    x = x_flat.reshape(lat.shape)
+    y = y_flat.reshape(lat.shape)
+    z = z_flat.reshape(lat.shape)
+
+    # Add the surface to the Plotly figure.
+    fig.add_surface(
+        x=x/1e3, y=y/1e3, z=z/1e3,
+        colorscale=[[0, clor], [1, clor]],  # Uniform color scale for a solid color.
+        opacity=1.0,
+        showlegend=False,
+        lighting=dict(diffuse=0.1)
+    )
 
 
 def plot_front(fig):
     """front half of sphere"""
     clor = 'rgb(220, 220, 220)'
-    R = np.sqrt(EARTH_RADIUS_KM)
-    u_angle = np.linspace(-np.pi, 0, 25)
-    v_angle = np.linspace(0, np.pi, 25)
-    x_dir = np.outer(R * np.cos(u_angle), R * np.sin(v_angle))
-    y_dir = np.outer(R * np.sin(u_angle), R * np.sin(v_angle))
-    z_dir = np.outer(R * np.ones(u_angle.shape[0]), R * np.cos(v_angle))
-    fig.add_surface(z=z_dir, x=x_dir, y=y_dir, colorscale=[[0, clor], [1, clor]], opacity=1.0, showlegend=False,
-                    lighting=dict(
-                        # opacity=fig.sphere_alpha, colorscale=[[0, fig.sphere_color], [1, fig.sphere_color]])
-                        diffuse=0.1))
 
+    # Create a mesh grid for latitude and longitude.
+    # For the "front" half, we can use longitudes from -180 to 0 degrees.
+    lat_vals = np.linspace(-90, 90, 50)       # 50 latitude points from -90 to 90 degrees.
+    lon_vals = np.linspace(-180, 0, 50)         # 50 longitude points for the front half.
+    lon, lat = np.meshgrid(lon_vals, lat_vals)  # lon and lat will be 2D arrays.
+
+    # Flatten the mesh to pass to the converter function.
+    lat_flat = lat.flatten()
+    lon_flat = lon.flatten()
+
+    # Convert the lat/lon grid to transformed Cartesian coordinates.
+    # Ensure your converter function can handle vectorized (numpy array) inputs.
+    x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
+
+    # Reshape the converted coordinates back to the 2D grid shape.
+    x = x_flat.reshape(lat.shape)
+    y = y_flat.reshape(lat.shape)
+    z = z_flat.reshape(lat.shape)
+
+    # Add the surface to the Plotly figure.
+    fig.add_surface(
+        x=x/1e3, y=y/1e3, z=z/1e3,
+        colorscale=[[0, clor], [1, clor]],  # Uniform color scale for a solid color.
+        opacity=1.0,
+        showlegend=False,
+        lighting=dict(diffuse=0.1)
+    )
 
 def plot_polygon(poly):
 
@@ -48,13 +94,11 @@ def plot_polygon(poly):
     lon = np.array(xy_coords[0])
     lat = np.array(xy_coords[1])
 
-    lon = lon * np.pi / 180
-    lat = lat * np.pi / 180
+    # lon = lon * np.pi / 180
+    # lat = lat * np.pi / 180
 
-    R = EARTH_RADIUS_KM
-    x = R * np.cos(lat) * np.cos(lon)
-    y = R * np.cos(lat) * np.sin(lon)
-    z = R * np.sin(lat)
+    # R = EARTH_RADIUS_KM
+    x, y, z = geoconv.convert_lla_to_transformed_cartesian(lat, lon, 0)
 
     return x, y, z
 
@@ -65,8 +109,19 @@ def plot_globe_with_borders():
                                               "../data/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp")
     gdf = gpd.read_file(countries_borders_shp_file)
     fig = go.Figure()
+    fig.update_layout(
+        scene=dict(
+            aspectmode="data",
+            xaxis=dict(showbackground=False),
+            yaxis=dict(showbackground=False),
+            zaxis=dict(showbackground=False)
+        ),
+        margin=dict(l=0, r=0, b=0, t=0)
+    )
+    # return fig
     plot_front(fig)
     plot_back(fig)
+    x_all, y_all, z_all = [], [], []
 
     for i in gdf.index:
         # print(gdf.loc[i].NAME)            # Call a specific attribute
@@ -75,15 +130,27 @@ def plot_globe_with_borders():
 
         if polys.geom_type == 'Polygon':
             x, y, z = plot_polygon(polys)
-            fig.add_trace(go.Scatter3d(x=x, y=y, z=z, mode='lines',
-                                       line=dict(color='rgb(0, 0,0)'), showlegend=False))
+            x_all.extend(x/1e3)
+            x_all.extend([None])  # None separates different polygons
+            y_all.extend(y/1e3)
+            y_all.extend([None])
+            z_all.extend(z/1e3)
+            z_all.extend([None])
 
         elif polys.geom_type == 'MultiPolygon':
 
             for poly in polys.geoms:
                 x, y, z = plot_polygon(poly)
-                fig.add_trace(go.Scatter3d(x=x, y=y, z=z, mode='lines',
-                                           line=dict(color='rgb(0, 0,0)'), showlegend=False))
+                x_all.extend(x/1e3)
+                x_all.extend([None])  # None separates different polygons
+                y_all.extend(y/1e3)
+                y_all.extend([None])
+                z_all.extend(z/1e3)
+                z_all.extend([None])
+
+    fig.add_trace(go.Scatter3d(x=x_all, y=y_all, z=z_all, mode='lines',
+                               line=dict(color='rgb(0, 0, 0)'), showlegend=False))
+
     return fig
 
 
@@ -110,7 +177,7 @@ if __name__ == "__main__":
     # Create a topology with a single base station
     from sharc.topology.topology_single_base_station_spherical import TopologySingleBaseStationSpherical
     imt_topology = TopologySingleBaseStationSpherical(
-        cell_radius=500, num_clusters=1, central_latitude=-15.7801, central_longitude=-47.9292
+        cell_radius=500, num_clusters=1, central_latitude=sys_lat, central_longitude=sys_long
     )
 
     # Create a random number generator
@@ -124,11 +191,19 @@ if __name__ == "__main__":
     visible_positions = {'x': [], 'y': [], 'z': []}
 
     # Plot the ground station (blue marker)
-    ground_sta_pos = lla2ecef(-15.7801, -42.9292, 0.0)
+    # ground_sta_pos = lla2ecef(sys_lat, sys_long, sys_alt)
+    ground_sta_pos = geoconv.convert_lla_to_transformed_cartesian(sys_lat, sys_long, 1200.0)
 
+    center_of_earth = StationManager(1)
+    # rotated and then translated center of earth
+    center_of_earth.x = np.array([0.0])
+    center_of_earth.y = np.array([0.0])
+    center_of_earth.z = np.array([-geoconv.get_translation()])
+
+    vis_elevation = []
     for _ in range(NUM_DROPS):
         # Generate satellite positions using the StationFactory
-        mss_d2d_manager = StationFactory.generate_mss_d2d_multiple_orbits(params, rng, imt_topology)
+        mss_d2d_manager = StationFactory.generate_mss_d2d(params, rng, imt_topology)
 
         # Extract satellite positions
         x_vec = mss_d2d_manager.x /1e3 #(Km)
@@ -141,23 +216,34 @@ if __name__ == "__main__":
 
         # Identify visible satellites
         vis_sat_idxs = np.where(mss_d2d_manager.active)[0]
+
+        # should be pointing at nadir
+        off_axis = mss_d2d_manager.get_off_axis_angle(center_of_earth)
+        if len(np.where(off_axis > 0.01)[0]):
+            print("AOPA, off axis parece estar errado")
+            print("onde?: ", np.where(off_axis > 0.01))
+
         visible_positions['x'].extend(x_vec[vis_sat_idxs])
         visible_positions['y'].extend(y_vec[vis_sat_idxs])
         visible_positions['z'].extend(z_vec[vis_sat_idxs])
+        vis_elevation.extend(mss_d2d_manager.elevation[vis_sat_idxs])
+        
 
     # Flatten arrays
-    all_positions['x'] = np.concatenate(all_positions['x'])
-    all_positions['y'] = np.concatenate(all_positions['y'])
-    all_positions['z'] = np.concatenate(all_positions['z'])
+    # print(all_positions['x'])
+    all_positions['x'] = np.concatenate([all_positions['x']])
+    all_positions['y'] = np.concatenate([all_positions['y']])
+    all_positions['z'] = np.concatenate([all_positions['z']])
 
-    visible_positions['x'] = np.concatenate(visible_positions['x'])
-    visible_positions['y'] = np.concatenate(visible_positions['y'])
-    visible_positions['z'] = np.concatenate(visible_positions['z'])
+    visible_positions['x'] = np.concatenate([visible_positions['x']])
+    visible_positions['y'] = np.concatenate([visible_positions['y']])
+    visible_positions['z'] = np.concatenate([visible_positions['z']])
     
     # Plot the globe with satellite positions
     fig = plot_globe_with_borders()
 
     # Plot all satellites (red markers)
+    print("adding sats")
     fig.add_trace(go.Scatter3d(
         x=all_positions['x'],
         y=all_positions['y'],
@@ -168,6 +254,8 @@ if __name__ == "__main__":
     ))
 
     # Plot visible satellites (green markers)
+    # print(visible_positions['x'][visible_positions['x'] > 0])
+    # print("vis_elevation", vis_elevation)
     fig.add_trace(go.Scatter3d(
         x=visible_positions['x'],
         y=visible_positions['y'],
@@ -187,6 +275,16 @@ if __name__ == "__main__":
         showlegend=False
     ))
 
+    # fig.add_trace(go.Scatter3d(
+    #     x=center_of_earth.x / 1e3,
+    #     y=center_of_earth.y / 1e3,
+    #     z=center_of_earth.z / 1e3,
+    #     mode='markers',
+    #     marker=dict(size=5, color='black', opacity=1.0),
+    #     showlegend=False
+    # ))
+
     # Display the plot
+    print(len(fig.data))
     fig.show()
 

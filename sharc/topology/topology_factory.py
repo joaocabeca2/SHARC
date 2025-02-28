@@ -14,6 +14,7 @@ from sharc.topology.topology_ntn import TopologyNTN
 from sharc.topology.topology_single_base_station import TopologySingleBaseStation
 from sharc.topology.topology_single_base_station_spherical import TopologySingleBaseStationSpherical
 from sharc.parameters.parameters import Parameters
+from sharc.support.sharc_geom import GeometryConverter
 
 
 class TopologyFactory(object):
@@ -22,6 +23,12 @@ class TopologyFactory(object):
     def createTopology(parameters: Parameters) -> Topology:
         if parameters.imt.topology.type == "SINGLE_BS":
             if parameters.imt.topology.single_bs.is_spherical:
+                GeometryConverter().set_reference(
+                    parameters.imt.topology.single_bs.central_latitude,
+                    parameters.imt.topology.single_bs.central_longitude,
+                    parameters.imt.topology.single_bs.central_altitude,
+                )
+
                 return TopologySingleBaseStationSpherical(
                     parameters.imt.topology.single_bs.cell_radius,
                     parameters.imt.topology.single_bs.num_clusters,

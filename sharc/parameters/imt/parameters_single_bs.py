@@ -12,6 +12,7 @@ class ParametersSingleBS(ParametersBase):
     is_spherical: bool = False  # whether we set the BS over a sphere (Earth) surface
     central_latitude: float = -15.7801  # Brasília
     central_longitude: float = -47.9292  # Brasília
+    central_altitude: float = 1200.0 # Brasilia
 
     def load_subparameters(self, ctx: str, params: dict, quiet=True):
         super().load_subparameters(ctx, params, quiet)
