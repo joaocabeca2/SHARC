@@ -6,7 +6,7 @@ import numpy as np
 from sharc.satellite.ngso.custom_functions import wrap2pi, eccentric_anomaly, keplerian2eci, eci2ecef, plot_ground_tracks
 from sharc.satellite.utils.sat_utils import ecef2lla
 from sharc.satellite.ngso.constants import EARTH_RADIUS_KM, KEPLER_CONST, EARTH_ROTATION_RATE
-import plotly.graph_objects as go
+
 
 class OrbitModel():
     """Orbit Model for satellite positions."""
@@ -142,7 +142,8 @@ class OrbitModel():
         # phiS = np.arccos(np.cos(gamma) / np.cos(theta)) * np.sign(gamma)
 
         # Longitudes of the ascending node (OmegaG)
-        OmegaG = wrap2pi(self.Omega0[:, None] + EARTH_ROTATION_RATE * t)  # shape (Np*Nsp, len(t))
+        OmegaG = (self.Omega0[:, None] + EARTH_ROTATION_RATE * t)  # shape (Np*Nsp, len(t))
+        OmegaG = wrap2pi(OmegaG)
 
         # POSITION CALCULATION IN ECEF COORDINATES - ITU-R S.1503
         r_eci = keplerian2eci(self.semi_major_axis,
@@ -154,9 +155,8 @@ class OrbitModel():
 
         r_ecef = eci2ecef(t, r_eci)
         sx, sy, sz = r_ecef[0], r_ecef[1], r_ecef[2]
-        
-        lat = np.degrees(np.arcsin(np.sin(v) * np.sin(np.radians(self.delta))))
-        lon = np.degrees(OmegaG + np.arctan2(np.sin(v), np.cos(v)))
+        lat = np.degrees(np.arcsin(sz / r))
+        lon = np.degrees(np.arctan2(sy, sx))
         # (lat, lon, _) = ecef2lla(sx, sy, sz)
 
         pos_vector = {
@@ -183,29 +183,8 @@ if __name__ == "__main__":
         Mo=0
     )
 
-     # Get satellite positions at t=0
-    positions = orbit.get_orbit_positions_random_time(rng=np.random.RandomState(seed=6))
-
-    # Reshape into (Np, Nsp) for analysis
-    longitudes = positions['lon'].reshape(orbit.Np, orbit.Nsp)
-
-    # Compute intra-plane spacing (differences within each plane)
-    intra_plane_spacing = np.diff(np.sort(longitudes, axis=1), axis=1)
-
-    # Compute inter-plane phasing (difference between first satellite in each plane)
-    first_sat_longitudes = longitudes[:, 0]
-    inter_plane_phasing = np.diff(first_sat_longitudes)
-
-    # Ensure angles are wrapped correctly
-    inter_plane_phasing = (inter_plane_phasing + 180) % 360 - 180
-
-    # Print results
-    print("\n--- Satellite Spacing in Orbital Plane ---")
-    print(f"Expected: {360/orbit.Nsp:.2f}°")
-    print(f"Computed: {intra_plane_spacing}")
-
-    print("\n--- Phasing Between Orbital Planes ---")
-    print(f"Expected: {orbit.phasing}°")
-    print(f"Computed: {inter_plane_phasing}")
-
-   
+    # pos_vec = orbit.get_orbit_positions_time_instant(time_instant_secs=10)
+    # pos_vec = orbit.get_orbit_positions_random_time(rng=np.random.RandomState(seed=6))
+    pos_vec = orbit.get_satellite_positions_time_interval()
+    
+    plot_ground_tracks(pos_vec['lat'], pos_vec['lon'], planes=[1, 2, 3, 4, 5, 6, 7, 8], satellites=[1])
