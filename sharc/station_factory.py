@@ -58,7 +58,7 @@ from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.satellite.ngso.orbit_model import OrbitModel
 from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
-from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian, rotate_angles_based_on_new_nadir, GeometryConverter
+from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian, rotate_angles_based_on_new_nadir, GeometryReference
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -554,6 +554,14 @@ class StationFactory(object):
 
     @staticmethod
     def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState):
+        geometry_reference = GeometryReference()
+        if parameters.imt.topology.is_spherical:
+            geometry_reference.set_reference(
+                parameters.imt.topology.central_latitude,
+                parameters.imt.topology.central_longitude,
+                parameters.imt.topology.central_altitude,
+            )
+
         if parameters.imt.topology.type == 'MACROCELL':
             intersite_dist = parameters.imt.topology.macrocell.intersite_distance
         elif parameters.imt.topology.type == 'HOTSPOT':
@@ -581,7 +589,7 @@ class StationFactory(object):
         elif parameters.general.system == "MSS_SS":
             return StationFactory.generate_mss_ss(parameters.mss_ss)
         elif parameters.general.system == "MSS_D2D":
-            return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, topology)
+            return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, geometry_reference)
         #elif parameters.general.system == "NGSO":
         #    return StationFactory.generate_ngso_constellation(parameters.ngso, random_number_gen)
         else:
@@ -1206,7 +1214,7 @@ class StationFactory(object):
 
 
 
-    def generate_mss_d2d(params: ParametersMssD2d, random_number_gen: np.random.RandomState, imt_topology: Topology):
+    def generate_mss_d2d(params: ParametersMssD2d, random_number_gen: np.random.RandomState, geometry_reference: GeometryReference):
         """
         Generate the MSS D2D constellation with support for multiple orbits and base station visibility.
 
@@ -1309,9 +1317,9 @@ class StationFactory(object):
 
                 # Calculate satellite visibility from base stations
                 elev_from_bs = calc_elevation(
-                    np.degrees(imt_topology.central_latitude),  # Latitude of base station
+                    np.degrees(geometry_reference.ref_lat),  # Latitude of base station
                     pos_vec['lat'],  # Latitude of satellites
-                    np.degrees(imt_topology.central_longitude),  # Longitude of base station
+                    np.degrees(geometry_reference.ref_long),  # Longitude of base station
                     pos_vec['lon'],  # Longitude of satellites
                     orbit.perigee_alt_km  # Perigee altitude in kilometers
                 )
@@ -1356,7 +1364,7 @@ class StationFactory(object):
              all_r - earth_radius
         )[active_satellite_idxs])
 
-        GeometryConverter().convert_station_3d_to_2d(
+        geometry_reference.convert_station_3d_to_2d(
             mss_d2d
         )
 

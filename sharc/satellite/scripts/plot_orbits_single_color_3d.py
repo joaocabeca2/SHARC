@@ -5,9 +5,9 @@ import geopandas as gpd
 import numpy as np
 import plotly.graph_objects as go
 
-from sharc.support.sharc_geom import GeometryConverter
+from sharc.support.sharc_geom import GeometryReference
 from sharc.station_manager import StationManager
-geoconv = GeometryConverter()
+geoconv = GeometryReference()
 
 sys_lat = -14.5
 sys_long = -45
@@ -244,14 +244,14 @@ if __name__ == "__main__":
 
     # Plot all satellites (red markers)
     print("adding sats")
-    fig.add_trace(go.Scatter3d(
-        x=all_positions['x'],
-        y=all_positions['y'],
-        z=all_positions['z'],
-        mode='markers',
-        marker=dict(size=2, color='red', opacity=0.5),
-        showlegend=False
-    ))
+    # fig.add_trace(go.Scatter3d(
+    #     x=all_positions['x'],
+    #     y=all_positions['y'],
+    #     z=all_positions['z'],
+    #     mode='markers',
+    #     marker=dict(size=2, color='red', opacity=0.5),
+    #     showlegend=False
+    # ))
 
     # Plot visible satellites (green markers)
     # print(visible_positions['x'][visible_positions['x'] > 0])
