@@ -62,16 +62,22 @@ class OrbitModel():
         self.orbital_plane_inclination = 360 / self.Np  # angle between plane intersections with the equatorial plane (degrees)
 
         # Initial mean anomalies for all the satellites
-        # shape (Np, Nsp)
-        self.initial_mean_anomalies = (Mo + np.arange(Nsp) * self.sat_sep_angle_deg + np.arange(self.Np)[:, None] *
-                                       self.phasing) % 360
-        self._initial_mean_anomalies_flat = np.radians(self.initial_mean_anomalies.flatten())  # shape (Np*Nsp,)
+        initial_mean_anomalies_deg = (Mo + np.arange(Nsp) * self.sat_sep_angle_deg + np.arange(self.Np)[:, np.newaxis] *
+                                      self.phasing) % 360
+        self.initial_mean_anomalies_rad = np.radians(initial_mean_anomalies_deg.flatten())
 
         # Initial longitudes of ascending node for all the planes
-        # shape (Np, Nsp)
-        self.Omega_o = (self.long_asc + np.arange(self.Nsp) * 0 + np.arange(self.Np)[:, None] *
-                        self.orbital_plane_inclination) % 360
-        self.Omega0 = np.radians(self.Omega_o.flatten())  # shape (Np*Nsp,)
+        inital_raan = (self.long_asc * np.ones(self.Nsp) + np.arange(self.Np)[:, np.newaxis] *
+                       self.orbital_plane_inclination) % 360
+        self.inital_raan_rad = np.radians(inital_raan.flatten())
+
+        # Calculated variables
+        self.mean_anomaly = None  # computed mean anomalies
+        self.raan_rad = None  # computed longitudes of the ascending node
+        self.eccentric_anomaly = None  # computed eccentric anomalies
+        self.true_anomaly = None  # computed true anomalies
+        self.distance = None  # computed distance to Earth's center
+        self.true_anomaly_rel_line_nodes = None  # computed true anomaly relative to the line of nodes
 
     def get_satellite_positions_time_interval(self, initial_time_secs=0, interval_secs=5, n_periods=4) -> dict:
         """
@@ -101,7 +107,7 @@ class OrbitModel():
         return self.__get_satellite_positions(t)
 
     def get_orbit_positions_random_time(self, rng: np.random.RandomState) -> dict:
-        """Returns satellite positions in a random time instant in seconds"""
+        """Returns satellite positions in a random time instant in seconds."""
         return self.__get_satellite_positions(rng.random_sample(1) * 1000 * self.orbital_period_sec)
 
     def __get_satellite_positions(self, t: np.array) -> dict:
@@ -119,21 +125,22 @@ class OrbitModel():
                 lat, lon, sx, sy, sz
         """
         # Mean anomaly (M)
-        mean_anomaly = (self._initial_mean_anomalies_flat[:, None] +
-                        (2 * np.pi / self.orbital_period_sec) * t) % (2 * np.pi)
+        self.mean_anomaly = (self.initial_mean_anomalies_rad[:, None] +
+                             (2 * np.pi / self.orbital_period_sec) * t) % (2 * np.pi)
 
         # Eccentric anomaly (E)
-        eccentric_anom = eccentric_anomaly(self.eccentricity, mean_anomaly)
+        self.eccentric_anom = eccentric_anomaly(self.eccentricity, self.mean_anomaly)
 
         # True anomaly (v)
-        v = 2 * np.arctan(np.sqrt((1 + self.eccentricity) / (1 - self.eccentricity)) * np.tan(eccentric_anom / 2))
-        v = np.mod(v, 2 * np.pi)
+        self.true_anomaly = 2 * np.arctan(np.sqrt((1 + self.eccentricity) / (1 - self.eccentricity)) * 
+                                          np.tan(self.eccentric_anom / 2))
+        self.true_anomaly = np.mod(self.true_anomaly, 2 * np.pi)
 
         # Distance of the satellite to Earth's center (r)
-        r = self.semi_major_axis * (1 - self.eccentricity ** 2) / (1 + self.eccentricity * np.cos(v))
+        r = self.semi_major_axis * (1 - self.eccentricity ** 2) / (1 + self.eccentricity * np.cos(self.true_anomaly))
 
         # True anomaly relative to the line of nodes (gamma)
-        # gamma = wrap2pi(v + np.radians(self.omega))  # gamma in the interval [-pi, pi]
+        self.true_anomaly_rel_line_nodes = wrap2pi(self.true_anomaly + np.radians(self.omega))  # gamma in the interval [-pi, pi]
 
         # Latitudes of the satellites, in radians (theta)
         # theta = np.arcsin(np.sin(gamma) * np.sin(np.radians(self.delta)))
@@ -142,16 +149,16 @@ class OrbitModel():
         # phiS = np.arccos(np.cos(gamma) / np.cos(theta)) * np.sign(gamma)
 
         # Longitudes of the ascending node (OmegaG)
-        OmegaG = (self.Omega0[:, None] + EARTH_ROTATION_RATE * t)  # shape (Np*Nsp, len(t))
-        OmegaG = wrap2pi(OmegaG)
+        raan_rad = (self.inital_raan_rad[:, None] + EARTH_ROTATION_RATE * t)  # shape (Np*Nsp, len(t))
+        raan_rad = wrap2pi(raan_rad)
 
         # POSITION CALCULATION IN ECEF COORDINATES - ITU-R S.1503
         r_eci = keplerian2eci(self.semi_major_axis,
                               self.eccentricity,
                               self.delta,
-                              np.degrees(self.Omega0),
+                              np.degrees(self.inital_raan_rad),
                               self.omega,
-                              np.degrees(v))
+                              np.degrees(self.true_anomaly))
 
         r_ecef = eci2ecef(t, r_eci)
         sx, sy, sz = r_ecef[0], r_ecef[1], r_ecef[2]
@@ -167,24 +174,3 @@ class OrbitModel():
             'sz': sz
         }
         return pos_vector
-
-
-if __name__ == "__main__":
-    # Plot Global Star orbit using OrbitModel object
-    orbit = OrbitModel(
-        Nsp=6,
-        Np=8,
-        phasing=7.5,
-        long_asc=0,
-        omega=0,
-        delta=52,
-        hp=1414,
-        ha=1414,
-        Mo=0
-    )
-
-    # pos_vec = orbit.get_orbit_positions_time_instant(time_instant_secs=10)
-    # pos_vec = orbit.get_orbit_positions_random_time(rng=np.random.RandomState(seed=6))
-    pos_vec = orbit.get_satellite_positions_time_interval()
-    
-    plot_ground_tracks(pos_vec['lat'], pos_vec['lon'], planes=[1, 2, 3, 4, 5, 6, 7, 8], satellites=[1])
