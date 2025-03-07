@@ -5,6 +5,7 @@ from sharc.topology.topology_single_base_station_spherical import TopologySingle
 from sharc.support.enumerations import StationType
 from sharc.station_factory import StationFactory
 from sharc.station_manager import StationManager
+from sharc.support.sharc_geom import GeometryConverter, lla2ecef
 
 import numpy as np
 import numpy.testing as npt
@@ -36,6 +37,15 @@ class StationFactoryNgsoTest(unittest.TestCase):
         )
 
         # Creating an NGSO constellation and adding the defined orbits
+        self.lat = -15.7801
+        self.long = -47.9292
+        self.alt = 1200
+
+        GeometryConverter().set_reference(
+            -15.7801,
+            -47.9292,
+            1200
+        )
         param = ParametersMssD2d(
             name="Acme-Star-1",                         # Name of the constellation
             antenna_pattern="ITU-R-S.1528-Taylor",     # Antenna type
@@ -71,21 +81,25 @@ class StationFactoryNgsoTest(unittest.TestCase):
         # y < 0 <=> azimuth > 0
         npt.assert_array_equal(np.sign(self.ngso_manager.azimuth), -np.sign(self.ngso_manager.y))
 
-        # Test: check if elevation is pointing towards correct direction
-        # z > 0 <=> elevation < 0
-        # z < 0 <=> elevation > 0
-        npt.assert_array_equal(np.sign(self.ngso_manager.elevation), -np.sign(self.ngso_manager.z))
-
         # Test: check if center of earth is 0deg off axis, and that its distance to satellite is correct
         earth_center = StationManager(1)
         earth_center.x = np.array([0.])
         earth_center.y = np.array([0.])
-        earth_center.z = np.array([0.])
+        x, y, z = lla2ecef(self.lat, self.long, self.alt)
+        earth_center.z = np.array([-np.sqrt(
+                                      x*x + y*y + z*z
+                                  )])
 
         off_axis_angle = self.ngso_manager.get_off_axis_angle(earth_center)
         distance_to_center_of_earth = self.ngso_manager.get_3d_distance_to(earth_center)
         distance_to_center_of_earth_should_eq = np.sqrt(
-            self.ngso_manager.x ** 2 + self.ngso_manager.y ** 2 + self.ngso_manager.z ** 2
+            self.ngso_manager.x ** 2 +
+                self.ngso_manager.y ** 2 +
+                (
+                    np.sqrt(
+                        x*x + y*y + z*z
+                    ) + self.ngso_manager.z
+                ) ** 2
         )
 
         npt.assert_allclose(off_axis_angle, 0.0, atol=1e-05)
