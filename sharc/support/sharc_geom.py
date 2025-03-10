@@ -1,7 +1,6 @@
 import numpy as np
 from sharc.satellite.utils.sat_utils import lla2ecef, ecef2lla
 from sharc.station_manager import StationManager
-from sharc.support.singleton import Singleton
 
 def cartesian_to_polar(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
     """
@@ -139,7 +138,7 @@ def rotate_angles_based_on_new_nadir(elev, azim, nadir_elev, nadir_azim):
     return res_elev, rotated_phi
 
 
-class GeometryConverter(metaclass=Singleton):
+class GeometryConverter():
     """
     This is a Singleton. set_reference should be called once per simulation/snapshot.
 
@@ -167,6 +166,10 @@ class GeometryConverter(metaclass=Singleton):
     def get_translation(self):
         return self.ref_r
 
+    def validate(self):
+        if None in [self.ref_elev, self.ref_azim, self.ref_r]:
+            raise ValueError("You need to set a reference for coordinate transformation before using it")
+
     def set_reference(self, ref_lat: float, ref_long: float, ref_alt: float):
         self.ref_lat = ref_lat
         self.ref_long = ref_long
@@ -192,8 +195,7 @@ class GeometryConverter(metaclass=Singleton):
         ref_azim = self.ref_azim
         ref_r = self.ref_r
 
-        if None in [ref_elev, ref_azim, ref_r]:
-            raise ValueError("You need to set a reference for coordinate transformation before using it")
+        self.validate()
 
         # calculate distances to the centre of the Earth
         dist_sat_centre_earth_km, azim, elev = cartesian_to_polar(x, y, z)

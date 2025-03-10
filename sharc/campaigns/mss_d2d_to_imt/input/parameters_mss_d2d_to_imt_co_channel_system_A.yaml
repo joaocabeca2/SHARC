@@ -61,6 +61,14 @@ imt:
     # Network topology parameters.
     topology:
         ###########################################################################
+        # The latitude position is is_spherical is set to true
+        central_latitude: -15.7801  # Brasília
+        ###########################################################################
+        # The longitude position is is_spherical is set to true
+        central_longitude: -47.9292  # Brasília
+        ##########################
+        central_altitude: 1200
+        ###########################################################################
         # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
         # "INDOOR"
         type: SINGLE_BS
@@ -92,12 +100,6 @@ imt:
             ###########################################################################
             # Whether the BS is positioned over a sphere (Earth) surface
             is_spherical: true
-            ###########################################################################
-            # The latitude position is is_spherical is set to true
-            central_latitude: -15.7801  # Brasília
-            ###########################################################################
-            # The longitude position is is_spherical is set to true
-            central_longitude: -47.9292  # Brasília
             # central_longitude: 0.0
         ###########################################################################
         # Hotspot Topology parameters. Relevant when imt.topology.type == "HOTSPOT"

@@ -175,9 +175,9 @@ if __name__ == "__main__":
     )
 
     # Create a topology with a single base station
-    from sharc.topology.topology_single_base_station_spherical import TopologySingleBaseStationSpherical
-    imt_topology = TopologySingleBaseStationSpherical(
-        cell_radius=500, num_clusters=1, central_latitude=sys_lat, central_longitude=sys_long
+    from sharc.topology.topology_single_base_station import TopologySingleBaseStation
+    imt_topology = TopologySingleBaseStation(
+        cell_radius=500, num_clusters=1
     )
 
     # Create a random number generator
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     vis_elevation = []
     for _ in range(NUM_DROPS):
         # Generate satellite positions using the StationFactory
-        mss_d2d_manager = StationFactory.generate_mss_d2d(params, rng, imt_topology)
+        mss_d2d_manager = StationFactory.generate_mss_d2d(params, rng, geoconv)
 
         # Extract satellite positions
         x_vec = mss_d2d_manager.x /1e3 #(Km)

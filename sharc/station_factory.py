@@ -554,6 +554,15 @@ class StationFactory(object):
 
     @staticmethod
     def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState):
+        geometry_converter = GeometryConverter()
+
+        geometry_converter.set_reference(
+            # there should be no default values for them
+            parameters.imt.topology.central_latitude,
+            parameters.imt.topology.central_longitude,
+            parameters.imt.topology.central_altitude,
+        )
+
         if parameters.imt.topology.type == 'MACROCELL':
             intersite_dist = parameters.imt.topology.macrocell.intersite_distance
         elif parameters.imt.topology.type == 'HOTSPOT':
@@ -581,7 +590,7 @@ class StationFactory(object):
         elif parameters.general.system == "MSS_SS":
             return StationFactory.generate_mss_ss(parameters.mss_ss)
         elif parameters.general.system == "MSS_D2D":
-            return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, topology)
+            return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, geometry_converter)
         #elif parameters.general.system == "NGSO":
         #    return StationFactory.generate_ngso_constellation(parameters.ngso, random_number_gen)
         else:
@@ -1206,7 +1215,11 @@ class StationFactory(object):
 
 
 
-    def generate_mss_d2d(params: ParametersMssD2d, random_number_gen: np.random.RandomState, imt_topology: Topology):
+    def generate_mss_d2d(
+        params: ParametersMssD2d,
+        random_number_gen: np.random.RandomState,
+        geometry_converter: GeometryConverter
+    ):
         """
         Generate the MSS D2D constellation with support for multiple orbits and base station visibility.
 
@@ -1216,14 +1229,16 @@ class StationFactory(object):
             Parameters for the MSS D2D system, including orbits and antenna configuration.
         random_number_gen : np.random.RandomState
             Random number generator for generating satellite positions.
-        imt_topology : Topology
-            The IMT topology containing base station locations.
+        geometry_converter : GeometryConverter
+            A converter that has already set a reference for coordinates transformation
 
         Returns
         -------
         StationManager
             A StationManager object containing satellite configurations and positions.
         """
+        geometry_converter.validate()
+
         MIN_ELEV_ANGLE_DEG = 5.0  # Minimum elevation angle for satellite visibility
         MAX_ITER = 100  # Maximum iterations to find at least one visible satellite
 
@@ -1309,9 +1324,9 @@ class StationFactory(object):
 
                 # Calculate satellite visibility from base stations
                 elev_from_bs = calc_elevation(
-                    np.degrees(imt_topology.central_latitude),  # Latitude of base station
+                    geometry_converter.ref_lat,  # Latitude of base station
                     pos_vec['lat'],  # Latitude of satellites
-                    np.degrees(imt_topology.central_longitude),  # Longitude of base station
+                    geometry_converter.ref_long,  # Longitude of base station
                     pos_vec['lon'],  # Longitude of satellites
                     orbit.perigee_alt_km  # Perigee altitude in kilometers
                 )
@@ -1356,11 +1371,13 @@ class StationFactory(object):
              all_r - earth_radius
         )[active_satellite_idxs])
 
-        GeometryConverter().convert_station_3d_to_2d(
+        geometry_converter.convert_station_3d_to_2d(
             mss_d2d
         )
 
         # Initialize satellites antennas
+        # we need to initialize them after coordinates transformation because of
+        # repeated state (elevation and azimuth) inside multiple transceiver implementation
         mss_d2d.antenna = np.empty(total_satellites, dtype=AntennaS1528Leo)
         for i in range(total_satellites):
             if params.antenna_pattern == "ITU-R-S.1528-LEO":

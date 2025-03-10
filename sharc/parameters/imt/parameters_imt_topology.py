@@ -15,6 +15,12 @@ class ParametersImtTopology(ParametersBase):
         "MACROCELL", "HOTSPOT", "INDOOR", "SINGLE_BS", "NTN"
     ] = "MACROCELL"
 
+    # these parameters are needed in case the other system requires coordinate
+    # transformation
+    central_latitude: float = None
+    central_longitude: float = None
+    central_altitude: float = None
+
     macrocell: ParametersMacrocell = field(default_factory=ParametersMacrocell)
     hotspot: ParametersHotspot = field(default_factory=ParametersHotspot)
     indoor: ParametersIndoor = field(default_factory=ParametersIndoor)

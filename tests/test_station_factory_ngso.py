@@ -1,7 +1,7 @@
 import unittest
 from sharc.parameters.parameters_mss_d2d import ParametersOrbit, ParametersMssD2d
 from sharc.parameters.imt.parameters_imt import ParametersImt
-from sharc.topology.topology_single_base_station_spherical import TopologySingleBaseStationSpherical
+from sharc.topology.topology_single_base_station import TopologySingleBaseStation
 from sharc.support.enumerations import StationType
 from sharc.station_factory import StationFactory
 from sharc.station_manager import StationManager
@@ -41,7 +41,8 @@ class StationFactoryNgsoTest(unittest.TestCase):
         self.long = -47.9292
         self.alt = 1200
 
-        GeometryConverter().set_reference(
+        geoconvert = GeometryConverter()
+        geoconvert.set_reference(
             -15.7801,
             -47.9292,
             1200
@@ -54,17 +55,15 @@ class StationFactoryNgsoTest(unittest.TestCase):
         )
 
         # Creating an IMT topology
-        imt_topology = TopologySingleBaseStationSpherical(
+        imt_topology = TopologySingleBaseStation(
             cell_radius=500,
             num_clusters=2,
-            central_latitude=-15.7801,
-            central_longitude=-47.9292
         )
 
         # random number generator
         rng = np.random.RandomState(seed=42)
 
-        self.ngso_manager = StationFactory.generate_mss_d2d(param, rng, imt_topology)
+        self.ngso_manager = StationFactory.generate_mss_d2d(param, rng, geoconvert)
 
     def test_ngso_manager(self):
         self.assertEqual(self.ngso_manager.station_type, StationType.MSS_D2D)
