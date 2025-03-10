@@ -232,6 +232,49 @@ class GeometryConverter():
 
         return (x2, y2, z2)
 
+    def revert_transformed_cartesian_to_cartesian(
+        self, x2, y2, z2, *, translate=None
+    ):
+        """
+        Reverses transformed points by the same transformation required to bring reference to (0,0,0)
+        You can only rotate by specifying translate=0. You need to use the same 'translate' value used
+        in transformation if you wish to reverse the transformation correctly
+        """
+        ref_elev = self.ref_elev
+        ref_azim = self.ref_azim
+        ref_r = self.ref_r
+
+        self.validate()
+
+        # rotate axis and calculate coordinates with origin at IMT system
+        imt_lat_rad = np.deg2rad(ref_elev)
+
+        dist_imt_centre_earth = translate
+        if translate is None:
+            dist_imt_centre_earth = ref_r
+
+        # transposed transformation matrix
+        z2 = z2 + dist_imt_centre_earth
+        y1 = y2
+        x1 = x2 * np.sin(imt_lat_rad) + z2 * np.cos(imt_lat_rad)
+        z1 = z2 * np.sin(imt_lat_rad) - x2 * np.cos(imt_lat_rad)
+
+        dist_sat_centre_earth_km = np.sqrt(x1 * x1 + z1 * z1 + y1 * y1)
+        sat_lat_rad = np.arcsin(z1 / dist_sat_centre_earth_km)
+
+        imt_long_diff_rad = np.arctan2(
+            y1, x1
+        )
+
+        # calculate distances to the centre of the Earth
+        x, y, z = polar_to_cartesian(
+            dist_sat_centre_earth_km,
+            np.rad2deg(imt_long_diff_rad) + ref_azim,
+            np.rad2deg(sat_lat_rad)
+        )
+
+        return (x, y, z)
+
     def convert_lla_to_transformed_cartesian(
         self, lat: np.array, long: np.array, alt: np.array
     ):
@@ -284,16 +327,69 @@ class GeometryConverter():
             station.height = nz
             station.z = station.height
 
-            station.azimuth = np.rad2deg(np.arctan2(pointing_vec_y, pointing_vec_x))
-            station.elevation = np.rad2deg(np.arcsin(pointing_vec_z))
+            _, station.azimuth, station.elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
         else:
             station.x[idx] = nx
             station.y[idx] = ny
             station.height[idx] = nz
             station.z = station.height
 
-            station.azimuth[idx] = np.rad2deg(np.arctan2(pointing_vec_y, pointing_vec_x))
-            station.elevation[idx] = np.rad2deg(np.arcsin(pointing_vec_z / r))
+            _, azimuth, elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
+
+            station.azimuth[idx] = azimuth
+            station.elevation[idx] = elevation
+
+
+    def revert_station_2d_to_3d(
+        self, station: StationManager, idx=None
+    ) -> None:
+        """
+        In place rotate and translate all coordinates so that reference parameters end up in (0,0,0)
+        and stations end up in same relative position according to each other,
+        adapting their angles to the rotation.
+
+        if idx is specified, only stations[idx] will be converted
+        """
+        # transform positions
+        # print("(station.x, station.y, station.z)", (station.x[idx], station.y[idx], station.z[idx]))
+        if idx is None:
+            nx, ny, nz = self.revert_transformed_cartesian_to_cartesian(station.x, station.y, station.z)
+        else:
+            nx, ny, nz = self.revert_transformed_cartesian_to_cartesian(station.x[idx], station.y[idx], station.z[idx])
+
+        if idx is None:
+            azim = station.azimuth
+            elev = station.elevation
+        else:
+            azim = station.azimuth[idx]
+            elev = station.elevation[idx]
+
+        r = 1
+        # then get pointing vec
+        pointing_vec_x, pointing_vec_y, pointing_vec_z = polar_to_cartesian(r, azim, elev)
+
+        # transform pointing vectors, without considering geodesical earth coord system
+        pointing_vec_x, pointing_vec_y, pointing_vec_z = self.revert_transformed_cartesian_to_cartesian(
+            pointing_vec_x, pointing_vec_y, pointing_vec_z, translate=0
+        )
+
+        if idx is None:
+            station.x = nx
+            station.y = ny
+            station.height = nz
+            station.z = station.height
+
+            _, station.azimuth, station.elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
+        else:
+            station.x[idx] = nx
+            station.y[idx] = ny
+            station.height[idx] = nz
+            station.z = station.height
+
+            _, azimuth, elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
+
+            station.azimuth[idx] = azimuth
+            station.elevation[idx] = elevation
 
 
 if __name__ == "__main__":
