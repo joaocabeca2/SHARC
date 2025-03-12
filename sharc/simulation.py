@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from sharc.support.enumerations import StationType
 from sharc.topology.topology_factory import TopologyFactory
 from sharc.parameters.parameters import Parameters
-from sharc.station_manager import StationManager
+from sharc.station_manager import StationManager, copy_active_stations
 from sharc.results import Results
 from sharc.propagation.propagation_factory import PropagationFactory
 
@@ -269,15 +269,19 @@ class Simulation(ABC, Observable):
             # should never reach this line
             return ValueError(f"Invalid IMT StationType! {imt_station.station_type}")
 
-        # Calculate the path loss based on the propagation model
-        path_loss = self.propagation_system.get_loss(
+        # Calculate the path loss based on the propagation model only for active stations
+        actv_sys = copy_active_stations(system_station)
+        actv_imt = copy_active_stations(imt_station)
+        path_loss = np.zeros((system_station.num_stations, imt_station.num_stations))
+        actv_path_loss = self.propagation_system.get_loss(
             self.parameters,
             freq,
-            system_station,
-            imt_station,
+            actv_sys,
+            actv_imt,
             gain_sys_to_imt,
             gain_imt_to_sys,
         )
+        path_loss[np.ix_(system_station.active, imt_station.active)] = actv_path_loss
         # Store antenna gains and path loss samples
         if self.param_system.channel_model == "HDFSS":
             self.imt_system_build_entry_loss = path_loss[1]
