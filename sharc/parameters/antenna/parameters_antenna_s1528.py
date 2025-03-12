@@ -39,6 +39,10 @@ class ParametersAntennaS1528(ParametersBase):
     # Number of secondary lobes considered in the diagram (coincide with the roots of the Bessel function)
     n_side_lobes: int = 4
 
+    # Radial (l_r) and transverse (l_t) sizes of the effective radiating area of the satellite transmitt antenna (m)
+    l_r: float = 1.6
+    l_t: float = 1.6
+
     # beam roll-off (difference between the maximum gain and the gain at the edge of the illuminated beam)
     # Possible values are 0, 3, 5 and 7. The value 0 (zero) means that the first J1 root of the bessel function 
     # sits at the edge of the beam
