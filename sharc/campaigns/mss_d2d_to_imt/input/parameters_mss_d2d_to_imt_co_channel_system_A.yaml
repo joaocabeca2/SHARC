@@ -202,7 +202,7 @@ imt:
         # The load probability (or activity factor) models the statistical
         # variation of the network load by defining the number of fully loaded
         # base stations that are simultaneously transmitting
-        load_probability: .5
+        load_probability: 1.0
         ###########################################################################
         # Conducted power per antenna element [dBm/bandwidth]
         conducted_power: 28.0
@@ -473,7 +473,7 @@ mss_d2d:
     # MSS_D2d system bandwidth in MHz
     bandwidth: 5.0
     # MSS_D2D cell radius in network topology [m]
-    cell_radius: 19000
+    cell_radius: 36516.0
     # Satellite power density in dBW/Hz
     tx_power_density: -30
     # Number of sectors
@@ -495,20 +495,20 @@ mss_d2d:
     # channel model, possible values are "FSPL" (free-space path loss),
     #                                    "SatelliteSimple" (FSPL + 4 + clutter loss)
     #                                    "P619"
-    channel_model: FSPL
+    channel_model: SatelliteSimple
     ###########################################################################
     # P619 parameters
     param_p619:
         ###########################################################################
         # altitude of ES system [m]
-        earth_station_alt_m: 0
+        earth_station_alt_m: 1200
         ###########################################################################
         # latitude of ES system [m]
-        earth_station_lat_deg: 0
+        earth_station_lat_deg: -15.7801
         ###########################################################################
         # difference between longitudes of IMT-NTN station and FSS-ES system [deg]
         #   (positive if space-station is to the East of earth-station)
-        earth_station_long_diff_deg: 0.75
+        earth_station_long_diff_deg: 0.0
         ###########################################################################
         # year season: SUMMER of WINTER
         season: SUMMER
