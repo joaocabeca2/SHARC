@@ -136,7 +136,7 @@ if __name__ == "__main__":
     # Show visible satellites from ground-station
     GROUND_STA_LAT = -15.7801
     GROUND_STA_LON = -42.9292
-    MIN_ELEV_ANGLE_DEG = 30.0
+    MIN_ELEV_ANGLE_DEG = 5.0
     fig = plot_globe_with_borders()
     pos_vec = orbit.get_satellite_positions_time_interval()
     num_of_visible_sats_per_drop = []
