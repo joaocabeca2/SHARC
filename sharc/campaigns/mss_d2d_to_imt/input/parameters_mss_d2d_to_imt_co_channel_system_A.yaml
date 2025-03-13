@@ -61,6 +61,14 @@ imt:
     # Network topology parameters.
     topology:
         ###########################################################################
+        # The latitude position is is_spherical is set to true
+        central_latitude: -15.7801  # Brasília
+        ###########################################################################
+        # The longitude position is is_spherical is set to true
+        central_longitude: -47.9292  # Brasília
+        ##########################
+        central_altitude: 1200
+        ###########################################################################
         # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
         # "INDOOR"
         type: SINGLE_BS
@@ -92,12 +100,6 @@ imt:
             ###########################################################################
             # Whether the BS is positioned over a sphere (Earth) surface
             is_spherical: true
-            ###########################################################################
-            # The latitude position is is_spherical is set to true
-            central_latitude: -15.7801  # Brasília
-            ###########################################################################
-            # The longitude position is is_spherical is set to true
-            central_longitude: -47.9292  # Brasília
             # central_longitude: 0.0
         ###########################################################################
         # Hotspot Topology parameters. Relevant when imt.topology.type == "HOTSPOT"
@@ -200,7 +202,7 @@ imt:
         # The load probability (or activity factor) models the statistical
         # variation of the network load by defining the number of fully loaded
         # base stations that are simultaneously transmitting
-        load_probability: .5
+        load_probability: 1.0
         ###########################################################################
         # Conducted power per antenna element [dBm/bandwidth]
         conducted_power: 28.0
@@ -471,40 +473,42 @@ mss_d2d:
     # MSS_D2d system bandwidth in MHz
     bandwidth: 5.0
     # MSS_D2D cell radius in network topology [m]
-    cell_radius: 19000
+    cell_radius: 36516.0
     # Satellite power density in dBW/Hz
     tx_power_density: -30
-    # Satellite Tx max Gain in dBi
-    antenna_gain: 30.0
     # Number of sectors
     num_sectors: 19
     # Satellite antenna pattern
     # Antenna pattern from ITU-R S.1528
     # Possible values: "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO"
     antenna_pattern: ITU-R-S.1528-Taylor
-    # Radius of the antenna's circular aperture in meters
-    antenna_diamter: 1.0
-    # The required near-in-side-lobe level (dB) relative to peak gain
-    antenna_l_s: -6.75
-    # 3 dB beamwidth angle (3 dB below maximum gain) [degrees]
-    antenna_3_dB_bw: 4.4127
+    antenna_s1528:
+        ### The following parameters are used for S.1528-Taylor antenna pattern
+        # SLR is the side-lobe ratio of the pattern (dB), the difference in gain between the maximum
+        # gain and the gain at the peak of the first side lobe.
+        slr: 20.0
+        # Number of secondary lobes considered in the diagram (coincide with the roots of the Bessel function)
+        n_side_lobes: 2
+        # Radial (l_r) and transverse (l_t) sizes of the effective radiating area of the satellite transmitt antenna (m)
+        l_r: 1.6
+        l_t: 1.6
     # channel model, possible values are "FSPL" (free-space path loss),
     #                                    "SatelliteSimple" (FSPL + 4 + clutter loss)
     #                                    "P619"
-    channel_model: FSPL
+    channel_model: SatelliteSimple
     ###########################################################################
     # P619 parameters
     param_p619:
         ###########################################################################
         # altitude of ES system [m]
-        earth_station_alt_m: 0
+        earth_station_alt_m: 1200
         ###########################################################################
         # latitude of ES system [m]
-        earth_station_lat_deg: 0
+        earth_station_lat_deg: -15.7801
         ###########################################################################
         # difference between longitudes of IMT-NTN station and FSS-ES system [deg]
         #   (positive if space-station is to the East of earth-station)
-        earth_station_long_diff_deg: 0.75
+        earth_station_long_diff_deg: 0.0
         ###########################################################################
         # year season: SUMMER of WINTER
         season: SUMMER

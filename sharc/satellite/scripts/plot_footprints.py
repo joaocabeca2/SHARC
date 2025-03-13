@@ -6,6 +6,7 @@ import numpy as np
 import plotly.graph_objects as go
 
 from sharc.support.sharc_geom import GeometryConverter
+from sharc.satellite.utils.sat_utils import ecef2lla
 from sharc.station_manager import StationManager
 geoconv = GeometryConverter()
 
@@ -22,7 +23,6 @@ from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
 from sharc.satellite.ngso.constants import EARTH_RADIUS_KM
 from sharc.parameters.parameters_mss_d2d import ParametersOrbit, ParametersMssD2d
 from sharc.station_factory import StationFactory
-
 
 def plot_back(fig):
     """back half of sphere"""
@@ -47,13 +47,6 @@ def plot_back(fig):
     z = z_flat.reshape(lat.shape)
 
     # Add the surface to the Plotly figure.
-    fig.add_surface(
-        x=x/1e3, y=y/1e3, z=z/1e3,
-        colorscale=[[0, clor], [1, clor]],  # Uniform color scale for a solid color.
-        opacity=1.0,
-        showlegend=False,
-        lighting=dict(diffuse=0.1)
-    )
 
 
 def plot_front(fig):
@@ -170,6 +163,8 @@ if __name__ == "__main__":
     params = ParametersMssD2d(
         name="Example-MSS-D2D",
         antenna_pattern="ITU-R-S.1528-Taylor",
+        num_sectors=19,
+        # num_sectors=7,
         antenna_gain=30.0,
         orbits=[orbit_1, orbit_2]
     )
@@ -184,7 +179,7 @@ if __name__ == "__main__":
     rng = np.random.RandomState(seed=42)
 
     # Number of iterations (drops)
-    NUM_DROPS = 100
+    NUM_DROPS = 128
 
     # Lists to store satellite positions (all and visible)
     all_positions = {'x': [], 'y': [], 'z': []}
@@ -201,9 +196,12 @@ if __name__ == "__main__":
     center_of_earth.z = np.array([-geoconv.get_translation()])
 
     vis_elevation = []
-    for _ in range(NUM_DROPS):
+    managers = []
+    options = []
+    for drop in range(NUM_DROPS):
         # Generate satellite positions using the StationFactory
         mss_d2d_manager = StationFactory.generate_mss_d2d(params, rng, geoconv)
+        managers.append(mss_d2d_manager)
 
         # Extract satellite positions
         x_vec = mss_d2d_manager.x /1e3 #(Km)
@@ -217,6 +215,8 @@ if __name__ == "__main__":
         # Identify visible satellites
         vis_sat_idxs = np.where(mss_d2d_manager.active)[0]
 
+        options.extend([(drop, i, len(visible_positions['x'])+i) for i, idx in enumerate(vis_sat_idxs)])
+
         # should be pointing at nadir
         off_axis = mss_d2d_manager.get_off_axis_angle(center_of_earth)
         if len(np.where(off_axis > 0.01)[0]):
@@ -227,7 +227,13 @@ if __name__ == "__main__":
         visible_positions['y'].extend(y_vec[vis_sat_idxs])
         visible_positions['z'].extend(z_vec[vis_sat_idxs])
         vis_elevation.extend(mss_d2d_manager.elevation[vis_sat_idxs])
-        
+    print("options", options)
+    print("len(options)", len(options))
+    select_i = 656
+    station_1 = managers[options[select_i][0]]
+    mss_active = np.where(station_1.active)[0]
+    # consider satellite footprint
+    mss_to_consider = mss_active[options[select_i][1]]
 
     # Flatten arrays
     # print(all_positions['x'])
@@ -239,8 +245,105 @@ if __name__ == "__main__":
     visible_positions['y'] = np.concatenate([visible_positions['y']])
     visible_positions['z'] = np.concatenate([visible_positions['z']])
     
+    orx, ory, orz = geoconv.revert_transformed_cartesian_to_cartesian(
+        station_1.x[mss_to_consider],
+        station_1.y[mss_to_consider],
+        station_1.z[mss_to_consider],
+    )
+    sat_lat, sat_long, sat_alt = ecef2lla(orx, ory, orz)
     # Plot the globe with satellite positions
     fig = plot_globe_with_borders()
+
+    scale = 0.5 / np.sqrt(visible_positions['x'][options[select_i][2]]**2 +
+                        visible_positions['y'][options[select_i][2]]**2 + 
+                        visible_positions['z'][options[select_i][2]]**2)
+    eye = dict(
+        # x=0,
+        # y=0,
+        # z=0
+        x=visible_positions['x'][options[select_i][2]] * scale,
+        y=visible_positions['y'][options[select_i][2]] * scale,
+        z=visible_positions['z'][options[select_i][2]] * scale
+    )
+    print("eye", eye)
+
+    # Set the camera position in Plotly
+    # print(center_of_earth.z[0])
+    # fig.update_layout(
+    #     scene=dict(
+    #         zaxis=dict(
+    #             range=(-1400, 10000-1400)
+    #         ),
+    #         yaxis=dict(
+    #             range=(-5000, 5000)
+    #         ),
+    #         xaxis=dict(
+    #             range=(-5000, 5000)
+    #         ),
+    #         camera=dict(
+    #             eye=eye,   # Camera position
+    #             center=dict(x=0, y=0, z=center_of_earth.z[0]/1e3/10000),  # Look at Earth's center
+    #             # center=dict(x=0, y=0, z=0),  # Look at Earth's center
+    #             # up=dict(x=0, y=0, z=1)  # Ensure the up direction is correct
+    #         )
+    #     )
+    # )
+
+    lat_vals = np.linspace(sat_lat-0.8, sat_lat+0.8, 50)       # 50 latitude points from -90 to 90 degrees.
+    lon_vals = np.linspace(sat_long-0.8, sat_long+0.8, 50)         # 50 longitude points for the front half.
+    lon, lat = np.meshgrid(lon_vals, lat_vals)  # lon and lat will be 2D arrays.
+
+    # Flatten the mesh to pass to the converter function.
+    lat_flat = lat.flatten()
+    lon_flat = lon.flatten()
+
+    # Convert the lat/lon grid to transformed Cartesian coordinates.
+    # Ensure your converter function can handle vectorized (numpy array) inputs.
+    x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
+    # x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
+    surf_manager = StationManager(len(x_flat))
+    surf_manager.x = x_flat
+    surf_manager.y = y_flat
+    surf_manager.z = z_flat
+    surf_manager.height = z_flat
+
+    station_2 = surf_manager
+    station_2_active = np.where(station_2.active)[0]
+
+    phi, theta = station_1.get_pointing_vector_to(station_2)
+    gains = np.zeros(phi.shape)
+    off_axis_angle = station_1.get_off_axis_angle(station_2)
+    phi, theta = station_1.get_pointing_vector_to(station_2)
+    for k in mss_active:
+        gains[k, station_2_active] = \
+            station_1.antenna[k].calculate_gain(
+                off_axis_angle_vec=off_axis_angle[k, station_2_active],
+                theta_vec=theta[k, station_2_active],
+                phi_vec=phi[k, station_2_active],
+        )
+    lin_gains = 10 ** (gains/10)
+    lin_gains = np.sum(lin_gains, axis=0)
+    # lin_gains = gains
+    print("lin_gains")
+    print(lin_gains)
+    print(mss_active)
+    print("considering ", mss_to_consider)
+    print("considering z", station_1.z[mss_to_consider])
+
+    # Reshape the converted coordinates back to the 2D grid shape.
+    world_surf_x = x_flat.reshape(lat.shape)
+    world_surf_y = y_flat.reshape(lat.shape)
+    world_surf_z = z_flat.reshape(lat.shape)
+    reshaped_gain = (lin_gains).reshape(lat.shape)
+    clor = 'rgb(220, 220, 220)'
+    fig.add_surface(
+        x=world_surf_x/1e3, y=world_surf_y/1e3, z=world_surf_z/1e3,
+        surfacecolor=reshaped_gain,
+        colorscale=[[0, clor], [0.1, "blue"], [1, "red"]],  # Uniform color scale for a solid color.
+        opacity=1.0,
+        showlegend=False,
+        lighting=dict(diffuse=0.1)
+    )
 
     # Plot all satellites (red markers)
     print("adding sats")
@@ -287,4 +390,5 @@ if __name__ == "__main__":
     # Display the plot
     print(len(fig.data))
     fig.show()
+
 

@@ -9,9 +9,6 @@ class ParametersSingleBS(ParametersBase):
     intersite_distance: int = None
     cell_radius: int = None
     num_clusters: int = 1
-    is_spherical: bool = False  # whether we set the BS over a sphere (Earth) surface
-    central_latitude: float = -15.7801  # Brasília
-    central_longitude: float = -47.9292  # Brasília
 
     def load_subparameters(self, ctx: str, params: dict, quiet=True):
         super().load_subparameters(ctx, params, quiet)

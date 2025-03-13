@@ -44,28 +44,34 @@ class AntennaS1528Taylor(Antenna):
         # half-transverse axis distance of the illuminated beam (degrees) (subtended at the satellite)
         self.b_deg = param.b_deg
 
+        # Radial (l_r) and transverse (l_t) sizes of the effective radiating area of the satellite transmitt antenna (m)
+        self.l_r = param.l_r
+        self.l_t = param.l_t
+
         # Beam roll-off (difference between the maximum gain and the gain at the edge of the illuminated beam)
         # Possible values are 0, 3, 5 and 7.
         # The value 0 (zero) means that the first J1 root of the bessel function
         # sits at the edge of the beam.
         self.roll_off = param.roll_off
-        if int(self.roll_off) not in [0, 3, 5, 7]:
-            raise ValueError(
-                f"AntennaS1528Taylor: Invalid value for roll_off factor {self.roll_off}")
-        self.roll_off = int(self.roll_off)
+        if param.roll_off is not None:
+            if int(param.roll_off) not in [0, 3, 5, 7]:
+                raise ValueError(
+                    f"AntennaS1528Taylor: Invalid value for roll_off factor {self.roll_off}")
+            self.roll_off = int(param.roll_off)
 
         # Radial (l_r) and transverse (l_t) sizes of the effective radiating area of the satellite transmitt antenna (m)
-        # Lr and Lt calculation based on Table 2.
-        if self.roll_off == 0:
-            k = 1.2
-        elif self.roll_off == 3:
-            k = 0.51
-        elif self.roll_off == 5:
-            k = 0.64
-        elif self.roll_off == 7:
-            k = 0.74
-        self.l_r = self.lamb * k / np.sin(np.radians(self.a_deg))
-        self.l_t = self.lamb * k / np.sin(np.radians(self.b_deg))
+        # Lr and Lt can be derived from S.1528 Table 2 if a and b are given. Otherwise, they must be given.
+        if self.roll_off is not None:
+            if self.roll_off == 0:
+                k = 1.2
+            elif self.roll_off == 3:
+                k = 0.51
+            elif self.roll_off == 5:
+                k = 0.64
+            elif self.roll_off == 7:
+                k = 0.74
+            self.l_r = self.lamb * k / np.sin(np.radians(self.a_deg))
+            self.l_t = self.lamb * k / np.sin(np.radians(self.b_deg))
 
         # Intermediary variables
         self.A = (1 / np.pi) * np.arccosh(10 ** (self.slr / 20))
@@ -99,6 +105,9 @@ class AntennaS1528Taylor(Antenna):
 
         # Replace undefined values with -inf (or other desired value)
         gain = np.nan_to_num(gain, nan=-np.inf)
+        # Replace values that were substituded specifically
+        # because u == 0 with Lim (gain)_(u -> 0) = peak_gain
+        gain[u == 0] = self.peak_gain
 
         return gain
 

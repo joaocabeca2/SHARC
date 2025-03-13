@@ -8,6 +8,7 @@ from sharc.satellite.utils.sat_utils import ecef2lla
 from sharc.satellite.ngso.constants import EARTH_RADIUS_KM, KEPLER_CONST, EARTH_ROTATION_RATE
 
 
+
 class OrbitModel():
     """Orbit Model for satellite positions."""
 

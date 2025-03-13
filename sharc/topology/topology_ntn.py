@@ -54,42 +54,46 @@ class TopologyNTN(Topology):
 
         self.calculate_coordinates()
 
+    @staticmethod
+    def get_sectors_xy(*, num_sectors, intersite_distance) -> (np.array, np.array):
+        d = intersite_distance
+        x = [0]
+        y = [0]
+        # First ring (6 points)
+        if num_sectors == 7 or num_sectors == 19:
+
+            for k in range(6):
+                angle = k * 60
+                x.append(d * np.cos(np.radians(angle)))
+                y.append(d * np.sin(np.radians(angle)))
+
+        if num_sectors == 19:
+            # Coordinates with 19 sectors
+            # Second ring (12 points)
+            for k in range(6):
+                angle = k * 60
+                x.append(2 * d * np.cos(np.radians(angle)))
+                y.append(2 * d * np.sin(np.radians(angle)))
+                x.append(
+                    d * np.cos(np.radians(angle)) +
+                    d * np.cos(np.radians(angle + 60)),
+                )
+                y.append(
+                    d * np.sin(np.radians(angle)) +
+                    d * np.sin(np.radians(angle + 60)),
+                )
+
+        return (np.array(x), np.array(y))
+
     def calculate_coordinates(self, random_number_gen=np.random.RandomState()):
         """
         Computes the coordinates of each site. This is where the actual layout calculation would be implemented.
         """
 
-        d = self.intersite_distance
-
-        self.x = [0]
-        self.y = [0]
-
-        # First ring (6 points)
-        if self.num_sectors == 7 or self.num_sectors == 19:
-
-            for k in range(6):
-                angle = k * 60
-                self.x.append(d * np.cos(np.radians(angle)))
-                self.y.append(d * np.sin(np.radians(angle)))
-
-        if self.num_sectors == 19:
-            # Coordinates with 19 sectors
-            # Second ring (12 points)
-            for k in range(6):
-                angle = k * 60
-                self.x.append(2 * d * np.cos(np.radians(angle)))
-                self.y.append(2 * d * np.sin(np.radians(angle)))
-                self.x.append(
-                    d * np.cos(np.radians(angle)) +
-                    d * np.cos(np.radians(angle + 60)),
-                )
-                self.y.append(
-                    d * np.sin(np.radians(angle)) +
-                    d * np.sin(np.radians(angle + 60)),
-                )
-
-        self.x = np.array(self.x)
-        self.y = np.array(self.y)
+        self.x, self.y = self.get_sectors_xy(
+            num_sectors=self.num_sectors,
+            intersite_distance=self.intersite_distance
+        )
 
         # Assuming all points are at ground level
         self.z = np.zeros_like(self.x)

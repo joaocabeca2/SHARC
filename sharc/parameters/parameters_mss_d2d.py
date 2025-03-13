@@ -147,4 +147,3 @@ if __name__ == "__main__":
     mss_d2d_params = ParametersMssD2d()
     mss_d2d_params.load_parameters_from_file(yaml_file_path)
     pprint.pprint(asdict(mss_d2d_params), sort_dicts=False)
-    

@@ -51,13 +51,14 @@ from sharc.antenna.antenna_s1855 import AntennaS1855
 from sharc.antenna.antenna_sa509 import AntennaSA509
 from sharc.antenna.antenna_s1528 import AntennaS1528, AntennaS1528Leo, AntennaS1528Taylor
 from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
+from sharc.antenna.antenna_multiple_transceiver import AntennaMultipleTransceiver
 from sharc.topology.topology import Topology
 from sharc.topology.topology_ntn import TopologyNTN
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.satellite.ngso.orbit_model import OrbitModel
-from sharc.satellite.utils.sat_utils import calc_elevation
-from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian
+from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
+from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian, rotate_angles_based_on_new_nadir, GeometryConverter
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -82,15 +83,6 @@ class StationFactory(object):
             imt_base_stations.height = imt_base_stations.z
             imt_base_stations.elevation = topology.elevation
             imt_base_stations.is_space_station = True
-        elif param.topology.type == "SINGLE_BS" and param.topology.single_bs.is_spherical:
-            # Add the BS height to the radius of the Earth
-            bs_loc_polar = cartesian_to_polar(topology.x_sphere, topology.y_sphere, topology.z_sphere)
-            bs_loc_cart = polar_to_cartesian(bs_loc_polar[0] + param.bs.height, bs_loc_polar[1], bs_loc_polar[2])
-            imt_base_stations.x = bs_loc_cart[0]
-            imt_base_stations.y = bs_loc_cart[1]
-            imt_base_stations.z = bs_loc_cart[2]
-            imt_base_stations.height = param.bs.height * np.ones(num_bs)
-            imt_base_stations.azimuth = topology.azimuth
         else:
             imt_base_stations.x = topology.x
             imt_base_stations.y = topology.y
@@ -229,20 +221,6 @@ class StationFactory(object):
         elevation_range = (-90, 90)
         elevation = (elevation_range[1] - elevation_range[0]) * random_number_gen.random_sample(num_ue) + \
             elevation_range[0]
-
-        # if param.topology.type == "SINGLE_BS" and param.topology.single_bs.is_spherical:
-        #     # This is a special case where the UE is positioned over the same lat long of the BS. This is
-        #     # because for single BS studies in this case the UE position relative to the BS is irrelevant w.r.t the
-        #     # satellite position.
-        #     ue_height = []
-        #     for i in range(num_bs):
-        #         ue_x += [topology.x[i] + 10 * i] * num_ue_per_bs
-        #         ue_y += [topology.y[i] + 10 * i] * num_ue_per_bs
-        #         ue_height += [param.ue.height] * num_ue_per_bs
-        #     imt_ue.height = np.array(ue_height)
-        #     # ue_x = topology.x
-        #     # ue_y = topology.y
-        # else:
 
         if param.ue.distribution_type.upper() == "UNIFORM" or \
             param.ue.distribution_type.upper() == "CELL" or \
@@ -562,6 +540,16 @@ class StationFactory(object):
 
     @staticmethod
     def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState):
+        geometry_converter = GeometryConverter()
+
+        if parameters.imt.topology.central_altitude is not None:
+            geometry_converter.set_reference(
+                # there should be no default values for them
+                parameters.imt.topology.central_latitude,
+                parameters.imt.topology.central_longitude,
+                parameters.imt.topology.central_altitude,
+            )
+
         if parameters.imt.topology.type == 'MACROCELL':
             intersite_dist = parameters.imt.topology.macrocell.intersite_distance
         elif parameters.imt.topology.type == 'HOTSPOT':
@@ -589,9 +577,7 @@ class StationFactory(object):
         elif parameters.general.system == "MSS_SS":
             return StationFactory.generate_mss_ss(parameters.mss_ss)
         elif parameters.general.system == "MSS_D2D":
-            return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, topology)
-        #elif parameters.general.system == "NGSO":
-        #    return StationFactory.generate_ngso_constellation(parameters.ngso, random_number_gen)
+            return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, geometry_converter)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -1181,7 +1167,7 @@ class StationFactory(object):
         mss_ss.is_space_station = True
         mss_ss.azimuth = ntn_topology.azimuth
         mss_ss.active = np.ones(num_bs, dtype=int)
-        mss_ss.tx_power = param_mss.tx_power_density + 10 * np.log10(param_mss.bandwidth * 10**6)
+        mss_ss.tx_power = np.ones(num_bs, dtype=int) * param_mss.tx_power_density + 10 * np.log10(param_mss.bandwidth * 10**6)
         mss_ss.antenna = np.empty(num_bs, dtype=AntennaS1528Leo)
 
         for i in range(num_bs):
@@ -1214,7 +1200,11 @@ class StationFactory(object):
 
 
 
-    def generate_mss_d2d(params: ParametersMssD2d, random_number_gen: np.random.RandomState, imt_topology: Topology):
+    def generate_mss_d2d(
+        params: ParametersMssD2d,
+        random_number_gen: np.random.RandomState,
+        geometry_converter: GeometryConverter
+    ):
         """
         Generate the MSS D2D constellation with support for multiple orbits and base station visibility.
 
@@ -1224,14 +1214,16 @@ class StationFactory(object):
             Parameters for the MSS D2D system, including orbits and antenna configuration.
         random_number_gen : np.random.RandomState
             Random number generator for generating satellite positions.
-        imt_topology : Topology
-            The IMT topology containing base station locations.
+        geometry_converter : GeometryConverter
+            A converter that has already set a reference for coordinates transformation
 
         Returns
         -------
         StationManager
             A StationManager object containing satellite configurations and positions.
         """
+        geometry_converter.validate()
+
         MIN_ELEV_ANGLE_DEG = 5.0  # Minimum elevation angle for satellite visibility
         MAX_ITER = 100  # Maximum iterations to find at least one visible satellite
 
@@ -1243,18 +1235,6 @@ class StationFactory(object):
         mss_d2d.station_type = StationType.MSS_D2D  # Set the station type to MSS D2D
         mss_d2d.is_space_station = True  # Indicate that the station is in space
         mss_d2d.idx_orbit = np.zeros(total_satellites, dtype=int)  # Add orbit index array
-
-        # Initialize satellites antennas
-        mss_d2d.antenna = np.empty(total_satellites, dtype=AntennaS1528Leo)
-        for i in range(total_satellites):
-            if params.antenna_pattern == "ITU-R-S.1528-LEO":
-                mss_d2d.antenna[i] = AntennaS1528Leo(params.antenna_s1528)
-            elif params.antenna_pattern == "ITU-R-S.1528-Section1.2":
-                mss_d2d.antenna[i] = AntennaS1528(params.antenna_s1528)
-            elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
-                mss_d2d.antenna[i] = AntennaS1528Taylor(params.antenna_s1528)
-            else:
-                raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
 
         if params.spectral_mask == "IMT-2020":
             mss_d2d.spectral_mask = SpectralMaskImt(StationType.IMT_BS,
@@ -1272,8 +1252,8 @@ class StationFactory(object):
             raise ValueError(f"Invalid or not implemented spectral mask - {params.spectral_mask}")
         mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 10e6))
 
-        # Initialize arrays to store satellite positions and angles
-        all_positions = {"lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
+        # Initialize arrays to store satellite positions, angles and distance from center of earth
+        all_positions = {"R": [], "lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
         all_elevations = []  # Store satellite elevations
         all_azimuths = []  # Store satellite azimuths
 
@@ -1323,14 +1303,15 @@ class StationFactory(object):
                 all_positions['sx'].extend(sx)  # X-coordinates
                 all_positions['sy'].extend(sy)  # Y-coordinates
                 all_positions['sz'].extend(sz)  # Z-coordinates
+                all_positions["R"].extend(r)
                 all_elevations.extend(elevations)  # Elevation angles
                 all_azimuths.extend(azimuths)  # Azimuth angles
 
                 # Calculate satellite visibility from base stations
                 elev_from_bs = calc_elevation(
-                    np.degrees(imt_topology.central_latitude),  # Latitude of base station
+                    geometry_converter.ref_lat,  # Latitude of base station
                     pos_vec['lat'],  # Latitude of satellites
-                    np.degrees(imt_topology.central_longitude),  # Longitude of base station
+                    geometry_converter.ref_long,  # Longitude of base station
                     pos_vec['lon'],  # Longitude of satellites
                     orbit.perigee_alt_km  # Perigee altitude in kilometers
                 )
@@ -1354,13 +1335,88 @@ class StationFactory(object):
         mss_d2d.x = np.squeeze(np.array(all_positions['sx'])) * 1e3  # Convert X-coordinates to meters
         mss_d2d.y = np.squeeze(np.array(all_positions['sy'])) * 1e3  # Convert Y-coordinates to meters
         mss_d2d.z = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
-        mss_d2d.height = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
         mss_d2d.elevation = np.squeeze(np.array(all_elevations))  # Elevation angles
         mss_d2d.azimuth = np.squeeze(np.array(all_azimuths))  # Azimuth angles
+
+        # Set the height of the satellites based on its orbit index
+        # The height is set to the perigee altitude of the orbit (relative to Earth's surface)
+        for orbit_idx, param in enumerate(params.orbits):
+            idxs = np.where(mss_d2d.idx_orbit == orbit_idx)
+            mss_d2d.height[idxs] = param.perigee_alt_km * 1e3
 
         # Set active satellite flags
         mss_d2d.active = np.zeros(total_satellites, dtype=bool)  # Initialize all satellites as inactive
         mss_d2d.active[active_satellite_idxs] = True  # Mark visible satellites as active
+
+        rx, ry, rz = lla2ecef(
+            np.squeeze(np.array(all_positions['lat'])),
+            np.squeeze(np.array(all_positions['lon'])),
+            0
+        )
+
+        earth_radius = np.sqrt(rx*rx + ry*ry + rz*rz)
+        all_r = np.squeeze(np.array(all_positions['R'])) * 1e3
+
+        sat_altitude = np.mean(np.array(
+             all_r - earth_radius
+        )[active_satellite_idxs])
+
+        geometry_converter.convert_station_3d_to_2d(
+            mss_d2d
+        )
+
+        # Initialize satellites antennas
+        # we need to initialize them after coordinates transformation because of
+        # repeated state (elevation and azimuth) inside multiple transceiver implementation
+        mss_d2d.antenna = np.empty(total_satellites, dtype=AntennaS1528Leo)
+        if params.antenna_pattern == "ITU-R-S.1528-LEO":
+            antenna_pattern = AntennaS1528Leo(params.antenna_s1528)
+        elif params.antenna_pattern == "ITU-R-S.1528-Section1.2":
+            antenna_pattern = AntennaS1528(params.antenna_s1528)
+        elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
+            antenna_pattern = AntennaS1528Taylor(params.antenna_s1528)
+        else:
+            raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
+
+        sx, sy = TopologyNTN.get_sectors_xy(
+            intersite_distance=params.intersite_distance,
+            num_sectors=params.num_sectors
+        )
+
+        beams_2d_azim = np.rad2deg(np.arctan2(sy, sx))
+        beams_2d_elev = np.rad2deg(np.arctan2(np.sqrt(sy*sy + sx*sx), sat_altitude)) - 90
+        
+        beams_2d_azim = np.resize(
+            beams_2d_azim,
+            total_satellites * params.num_sectors
+        ).reshape(
+            (total_satellites, params.num_sectors)
+        )
+
+        beams_2d_elev = np.resize(
+            beams_2d_elev,
+            total_satellites * params.num_sectors
+        ).reshape(
+            (total_satellites, params.num_sectors)
+        )
+
+        for i in range(total_satellites):
+            if not mss_d2d.active[i]:  # we don't really care about these
+                continue
+
+            beams_3d_elev, beams_3d_azim = rotate_angles_based_on_new_nadir(
+                beams_2d_elev[i],
+                beams_2d_azim[i],
+                mss_d2d.elevation[i],
+                mss_d2d.azimuth[i]
+            )
+
+            mss_d2d.antenna[i] = AntennaMultipleTransceiver(
+                num_beams=params.num_sectors,
+                transceiver_radiation_pattern=antenna_pattern,
+                azimuths=beams_3d_azim,
+                elevations=beams_3d_elev,
+            )
 
         return mss_d2d  # Return the configured StationManager
 
