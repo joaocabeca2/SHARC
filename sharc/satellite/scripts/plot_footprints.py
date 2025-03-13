@@ -206,7 +206,7 @@ if __name__ == "__main__":
         # Extract satellite positions
         x_vec = mss_d2d_manager.x /1e3 #(Km)
         y_vec = mss_d2d_manager.y /1e3 #(Km)
-        z_vec = mss_d2d_manager.height /1e3 #(Km) 
+        z_vec = mss_d2d_manager.z /1e3 #(Km) 
         # Store all positions
         all_positions['x'].extend(x_vec)
         all_positions['y'].extend(y_vec)
