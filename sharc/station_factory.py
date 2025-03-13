@@ -1369,81 +1369,54 @@ class StationFactory(object):
         # we need to initialize them after coordinates transformation because of
         # repeated state (elevation and azimuth) inside multiple transceiver implementation
         mss_d2d.antenna = np.empty(total_satellites, dtype=AntennaS1528Leo)
+        if params.antenna_pattern == "ITU-R-S.1528-LEO":
+            antenna_pattern = AntennaS1528Leo(params.antenna_s1528)
+        elif params.antenna_pattern == "ITU-R-S.1528-Section1.2":
+            antenna_pattern = AntennaS1528(params.antenna_s1528)
+        elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
+            antenna_pattern = AntennaS1528Taylor(params.antenna_s1528)
+        else:
+            raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
+
+        sx, sy = TopologyNTN.get_sectors_xy(
+            intersite_distance=params.intersite_distance,
+            num_sectors=params.num_sectors
+        )
+
+        beams_2d_azim = np.rad2deg(np.arctan2(sy, sx))
+        beams_2d_elev = np.rad2deg(np.arctan2(np.sqrt(sy*sy + sx*sx), sat_altitude)) - 90
+        
+        beams_2d_azim = np.resize(
+            beams_2d_azim,
+            total_satellites * params.num_sectors
+        ).reshape(
+            (total_satellites, params.num_sectors)
+        )
+
+        beams_2d_elev = np.resize(
+            beams_2d_elev,
+            total_satellites * params.num_sectors
+        ).reshape(
+            (total_satellites, params.num_sectors)
+        )
+
         for i in range(total_satellites):
-            if params.antenna_pattern == "ITU-R-S.1528-LEO":
-                mss_d2d.antenna[i] = AntennaS1528Leo(params.antenna_s1528)
-            elif params.antenna_pattern == "ITU-R-S.1528-Section1.2":
-                mss_d2d.antenna[i] = AntennaS1528(params.antenna_s1528)
-            elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
-                mss_d2d.antenna[i] = AntennaS1528Taylor(params.antenna_s1528)
-            else:
-                raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
+            if not mss_d2d.active[i]:  # we don't really care about these
+                continue
 
-        # if more than one sector, has multiple transceivers
-        if params.num_sectors > 1:
-            sx, sy = TopologyNTN.get_sectors_xy(
-                intersite_distance=params.intersite_distance,
-                num_sectors=params.num_sectors
+            beams_3d_elev, beams_3d_azim = rotate_angles_based_on_new_nadir(
+                beams_2d_elev[i],
+                beams_2d_azim[i],
+                mss_d2d.elevation[i],
+                mss_d2d.azimuth[i]
             )
 
-            beams_2d_azim = np.rad2deg(np.arctan2(sy, sx))
-            beams_2d_elev = np.rad2deg(np.arctan2(np.sqrt(sy*sy + sx*sx), sat_altitude)) - 90
-            
-            beams_2d_azim = np.resize(
-                beams_2d_azim,
-                total_satellites * params.num_sectors
-            ).reshape(
-                (total_satellites, params.num_sectors)
+            mss_d2d.antenna[i] = AntennaMultipleTransceiver(
+                num_beams=params.num_sectors,
+                transceiver_radiation_pattern=antenna_pattern,
+                azimuths=beams_3d_azim,
+                elevations=beams_3d_elev,
             )
-
-            beams_2d_elev = np.resize(
-                beams_2d_elev,
-                total_satellites * params.num_sectors
-            ).reshape(
-                (total_satellites, params.num_sectors)
-            )
-
-            for i in range(total_satellites):
-                if not mss_d2d.active[i]: # we don't really care about these
-                    continue
-
-                beams_3d_elev, beams_3d_azim = rotate_angles_based_on_new_nadir(
-                    beams_2d_elev[i],
-                    beams_2d_azim[i],
-                    mss_d2d.elevation[i],
-                    mss_d2d.azimuth[i]
-                )
-
-                # print("beams_2d_elev[i]", beams_2d_elev[i])
-                # print("beams_2d_azim[i]", beams_2d_azim[i])
-                # print("mss_d2d.azimuth[i]", mss_d2d.azimuth[i])
-                # print("mss_d2d.elevation[i]", mss_d2d.elevation[i])
-
-                # print("beams_3d_azim", beams_3d_azim)
-                # print("beams_3d_elev", beams_3d_elev)
-
-                # # testing if off axis angle is still correct
-                # Az, b = beams_3d_azim, 90 - beams_3d_elev
-                # Az0 = mss_d2d.azimuth[i]
-
-                # a = 90 - mss_d2d.elevation[i]
-                # C = Az0 - Az
-
-                # cos_phi = np.cos(np.radians(a)) * np.cos(np.radians(b)) \
-                #             + np.sin(np.radians(a)) * np.sin(np.radians(b)) * np.cos(np.radians(C))
-                # phi = np.arccos(
-                #     np.clip(cos_phi, -1., 1.)
-                # )
-                # phi_deg = np.degrees(phi)
-                # print("phi_deg", phi_deg)
-
-
-                mss_d2d.antenna[i] = AntennaMultipleTransceiver(
-                    num_beams=params.num_sectors,
-                    transceiver_radiation_pattern=mss_d2d.antenna[i],
-                    azimuths=beams_3d_azim,
-                    elevations=beams_3d_elev,
-                )
 
         return mss_d2d  # Return the configured StationManager
 
