@@ -222,20 +222,6 @@ class StationFactory(object):
         elevation = (elevation_range[1] - elevation_range[0]) * random_number_gen.random_sample(num_ue) + \
             elevation_range[0]
 
-        # if param.topology.type == "SINGLE_BS" and param.topology.single_bs.is_spherical:
-        #     # This is a special case where the UE is positioned over the same lat long of the BS. This is
-        #     # because for single BS studies in this case the UE position relative to the BS is irrelevant w.r.t the
-        #     # satellite position.
-        #     ue_height = []
-        #     for i in range(num_bs):
-        #         ue_x += [topology.x[i] + 10 * i] * num_ue_per_bs
-        #         ue_y += [topology.y[i] + 10 * i] * num_ue_per_bs
-        #         ue_height += [param.ue.height] * num_ue_per_bs
-        #     imt_ue.height = np.array(ue_height)
-        #     # ue_x = topology.x
-        #     # ue_y = topology.y
-        # else:
-
         if param.ue.distribution_type.upper() == "UNIFORM" or \
             param.ue.distribution_type.upper() == "CELL" or \
             param.ue.distribution_type.upper() == "UNIFORM_IN_CELL":
@@ -556,12 +542,13 @@ class StationFactory(object):
     def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState):
         geometry_converter = GeometryConverter()
 
-        geometry_converter.set_reference(
-            # there should be no default values for them
-            parameters.imt.topology.central_latitude,
-            parameters.imt.topology.central_longitude,
-            parameters.imt.topology.central_altitude,
-        )
+        if parameters.imt.topology.central_altitude is not None:
+            geometry_converter.set_reference(
+                # there should be no default values for them
+                parameters.imt.topology.central_latitude,
+                parameters.imt.topology.central_longitude,
+                parameters.imt.topology.central_altitude,
+            )
 
         if parameters.imt.topology.type == 'MACROCELL':
             intersite_dist = parameters.imt.topology.macrocell.intersite_distance
@@ -591,8 +578,6 @@ class StationFactory(object):
             return StationFactory.generate_mss_ss(parameters.mss_ss)
         elif parameters.general.system == "MSS_D2D":
             return StationFactory.generate_mss_d2d(parameters.mss_d2d, random_number_gen, geometry_converter)
-        #elif parameters.general.system == "NGSO":
-        #    return StationFactory.generate_ngso_constellation(parameters.ngso, random_number_gen)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -1182,7 +1167,7 @@ class StationFactory(object):
         mss_ss.is_space_station = True
         mss_ss.azimuth = ntn_topology.azimuth
         mss_ss.active = np.ones(num_bs, dtype=int)
-        mss_ss.tx_power = param_mss.tx_power_density + 10 * np.log10(param_mss.bandwidth * 10**6)
+        mss_ss.tx_power = np.ones(num_bs, dtype=int) * param_mss.tx_power_density + 10 * np.log10(param_mss.bandwidth * 10**6)
         mss_ss.antenna = np.empty(num_bs, dtype=AntennaS1528Leo)
 
         for i in range(num_bs):
@@ -1350,9 +1335,14 @@ class StationFactory(object):
         mss_d2d.x = np.squeeze(np.array(all_positions['sx'])) * 1e3  # Convert X-coordinates to meters
         mss_d2d.y = np.squeeze(np.array(all_positions['sy'])) * 1e3  # Convert Y-coordinates to meters
         mss_d2d.z = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
-        mss_d2d.height = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
         mss_d2d.elevation = np.squeeze(np.array(all_elevations))  # Elevation angles
         mss_d2d.azimuth = np.squeeze(np.array(all_azimuths))  # Azimuth angles
+
+        # Set the height of the satellites based on its orbit index
+        # The height is set to the perigee altitude of the orbit (relative to Earth's surface)
+        for orbit_idx, param in enumerate(params.orbits):
+            idxs = np.where(mss_d2d.idx_orbit == orbit_idx)
+            mss_d2d.height[idxs] = param.perigee_alt_km * 1e3
 
         # Set active satellite flags
         mss_d2d.active = np.zeros(total_satellites, dtype=bool)  # Initialize all satellites as inactive
