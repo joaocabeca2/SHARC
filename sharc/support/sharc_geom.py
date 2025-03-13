@@ -324,15 +324,13 @@ class GeometryConverter():
         if idx is None:
             station.x = nx
             station.y = ny
-            station.height = nz
-            station.z = station.height
+            station.z = nz
 
             _, station.azimuth, station.elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
         else:
             station.x[idx] = nx
             station.y[idx] = ny
-            station.height[idx] = nz
-            station.z = station.height
+            station.z[idx] = nz
 
             _, azimuth, elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
 
@@ -376,15 +374,13 @@ class GeometryConverter():
         if idx is None:
             station.x = nx
             station.y = ny
-            station.height = nz
-            station.z = station.height
+            station.z = nz
 
             _, station.azimuth, station.elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
         else:
             station.x[idx] = nx
             station.y[idx] = ny
-            station.height[idx] = nz
-            station.z = station.height
+            station.z[idx] = nz
 
             _, azimuth, elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
 
