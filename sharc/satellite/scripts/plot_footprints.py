@@ -5,9 +5,14 @@ import geopandas as gpd
 import numpy as np
 import plotly.graph_objects as go
 
+from sharc.station_factory import StationFactory
+from sharc.parameters.parameters_mss_d2d import ParametersOrbit, ParametersMssD2d
 from sharc.support.sharc_geom import GeometryConverter
 from sharc.satellite.utils.sat_utils import ecef2lla
 from sharc.station_manager import StationManager
+from sharc.parameters.antenna.parameters_antenna_s1528 import ParametersAntennaS1528
+
+
 geoconv = GeometryConverter()
 
 sys_lat = -14.5
@@ -18,20 +23,18 @@ geoconv.set_reference(
     sys_lat, sys_long, sys_alt
 )
 
-from sharc.satellite.ngso.orbit_model import OrbitModel
-from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
-from sharc.satellite.ngso.constants import EARTH_RADIUS_KM
-from sharc.parameters.parameters_mss_d2d import ParametersOrbit, ParametersMssD2d
-from sharc.station_factory import StationFactory
 
 def plot_back(fig):
     """back half of sphere"""
     clor = 'rgb(220, 220, 220)'
     # Create a mesh grid for latitude and longitude.
     # For the "front" half, we can use longitudes from -180 to 0 degrees.
-    lat_vals = np.linspace(-90, 90, 50)       # 50 latitude points from -90 to 90 degrees.
-    lon_vals = np.linspace(0, 180, 50)         # 50 longitude points for the front half.
-    lon, lat = np.meshgrid(lon_vals, lat_vals)  # lon and lat will be 2D arrays.
+    # 50 latitude points from -90 to 90 degrees.
+    lat_vals = np.linspace(-90, 90, 50)
+    # 50 longitude points for the front half.
+    lon_vals = np.linspace(0, 180, 50)
+    # lon and lat will be 2D arrays.
+    lon, lat = np.meshgrid(lon_vals, lat_vals)
 
     # Flatten the mesh to pass to the converter function.
     lat_flat = lat.flatten()
@@ -39,33 +42,8 @@ def plot_back(fig):
 
     # Convert the lat/lon grid to transformed Cartesian coordinates.
     # Ensure your converter function can handle vectorized (numpy array) inputs.
-    x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
-
-    # Reshape the converted coordinates back to the 2D grid shape.
-    x = x_flat.reshape(lat.shape)
-    y = y_flat.reshape(lat.shape)
-    z = z_flat.reshape(lat.shape)
-
-    # Add the surface to the Plotly figure.
-
-
-def plot_front(fig):
-    """front half of sphere"""
-    clor = 'rgb(220, 220, 220)'
-
-    # Create a mesh grid for latitude and longitude.
-    # For the "front" half, we can use longitudes from -180 to 0 degrees.
-    lat_vals = np.linspace(-90, 90, 50)       # 50 latitude points from -90 to 90 degrees.
-    lon_vals = np.linspace(-180, 0, 50)         # 50 longitude points for the front half.
-    lon, lat = np.meshgrid(lon_vals, lat_vals)  # lon and lat will be 2D arrays.
-
-    # Flatten the mesh to pass to the converter function.
-    lat_flat = lat.flatten()
-    lon_flat = lon.flatten()
-
-    # Convert the lat/lon grid to transformed Cartesian coordinates.
-    # Ensure your converter function can handle vectorized (numpy array) inputs.
-    x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
+    x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(
+        lat_flat, lon_flat, 0)
 
     # Reshape the converted coordinates back to the 2D grid shape.
     x = x_flat.reshape(lat.shape)
@@ -74,12 +52,52 @@ def plot_front(fig):
 
     # Add the surface to the Plotly figure.
     fig.add_surface(
-        x=x/1e3, y=y/1e3, z=z/1e3,
-        colorscale=[[0, clor], [1, clor]],  # Uniform color scale for a solid color.
+        x=x / 1e3, y=y / 1e3, z=z / 1e3,
+        # Uniform color scale for a solid color.
+        colorscale=[[0, clor], [1, clor]],
         opacity=1.0,
         showlegend=False,
         lighting=dict(diffuse=0.1)
     )
+
+
+def plot_front(fig):
+    """front half of sphere"""
+    clor = 'rgb(220, 220, 220)'
+
+    # Create a mesh grid for latitude and longitude.
+    # For the "front" half, we can use longitudes from -180 to 0 degrees.
+    # 50 latitude points from -90 to 90 degrees.
+    lat_vals = np.linspace(-90, 90, 50)
+    # 50 longitude points for the front half.
+    lon_vals = np.linspace(-180, 0, 50)
+    # lon and lat will be 2D arrays.
+    lon, lat = np.meshgrid(lon_vals, lat_vals)
+
+    # Flatten the mesh to pass to the converter function.
+    lat_flat = lat.flatten()
+    lon_flat = lon.flatten()
+
+    # Convert the lat/lon grid to transformed Cartesian coordinates.
+    # Ensure your converter function can handle vectorized (numpy array) inputs.
+    x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(
+        lat_flat, lon_flat, 0)
+
+    # Reshape the converted coordinates back to the 2D grid shape.
+    x = x_flat.reshape(lat.shape)
+    y = y_flat.reshape(lat.shape)
+    z = z_flat.reshape(lat.shape)
+
+    # Add the surface to the Plotly figure.
+    fig.add_surface(
+        x=x / 1e3, y=y / 1e3, z=z / 1e3,
+        # Uniform color scale for a solid color.
+        colorscale=[[0, clor], [1, clor]],
+        opacity=1.0,
+        showlegend=False,
+        lighting=dict(diffuse=0.1)
+    )
+
 
 def plot_polygon(poly):
 
@@ -159,13 +177,34 @@ if __name__ == "__main__":
         inclination_deg=60, perigee_alt_km=1200, apogee_alt_km=1200
     )
 
+    # Antenna parameters
+    g_max = 34.1  # dBi
+    l_r = l_t = 1.6  # meters
+    slr = 20  # dB
+    n_side_lobes = 2  # number of side lobes
+    freq = 2e3  # MHz
+
+    antenna_params = ParametersAntennaS1528(
+        antenna_gain=g_max,
+        frequency=freq,  # in MHz
+        bandwidth=5,  # in MHz
+        slr=slr,
+        n_side_lobes=n_side_lobes,
+        l_r=l_r,
+        l_t=l_t,
+        roll_off=None
+    )
+
+    spotbeam_radius = 98.12 * 1e3  # meters
+
     # Configure the MSS D2D system parameters
     params = ParametersMssD2d(
         name="Example-MSS-D2D",
         antenna_pattern="ITU-R-S.1528-Taylor",
         num_sectors=19,
-        # num_sectors=7,
-        antenna_gain=30.0,
+        antenna_gain=g_max,
+        antenna_s1528=antenna_params,
+        intersite_distance=np.sqrt(3) * spotbeam_radius,
         orbits=[orbit_1, orbit_2]
     )
 
@@ -187,7 +226,8 @@ if __name__ == "__main__":
 
     # Plot the ground station (blue marker)
     # ground_sta_pos = lla2ecef(sys_lat, sys_long, sys_alt)
-    ground_sta_pos = geoconv.convert_lla_to_transformed_cartesian(sys_lat, sys_long, 1200.0)
+    ground_sta_pos = geoconv.convert_lla_to_transformed_cartesian(
+        sys_lat, sys_long, 1200.0)
 
     center_of_earth = StationManager(1)
     # rotated and then translated center of earth
@@ -204,9 +244,9 @@ if __name__ == "__main__":
         managers.append(mss_d2d_manager)
 
         # Extract satellite positions
-        x_vec = mss_d2d_manager.x /1e3 #(Km)
-        y_vec = mss_d2d_manager.y /1e3 #(Km)
-        z_vec = mss_d2d_manager.z /1e3 #(Km) 
+        x_vec = mss_d2d_manager.x / 1e3  # (Km)
+        y_vec = mss_d2d_manager.y / 1e3  # (Km)
+        z_vec = mss_d2d_manager.z / 1e3  # (Km)
         # Store all positions
         all_positions['x'].extend(x_vec)
         all_positions['y'].extend(y_vec)
@@ -215,7 +255,8 @@ if __name__ == "__main__":
         # Identify visible satellites
         vis_sat_idxs = np.where(mss_d2d_manager.active)[0]
 
-        options.extend([(drop, i, len(visible_positions['x'])+i) for i, idx in enumerate(vis_sat_idxs)])
+        options.extend([(drop, i, len(visible_positions['x'])+i)
+                       for i, idx in enumerate(vis_sat_idxs)])
 
         # should be pointing at nadir
         off_axis = mss_d2d_manager.get_off_axis_angle(center_of_earth)
@@ -244,7 +285,7 @@ if __name__ == "__main__":
     visible_positions['x'] = np.concatenate([visible_positions['x']])
     visible_positions['y'] = np.concatenate([visible_positions['y']])
     visible_positions['z'] = np.concatenate([visible_positions['z']])
-    
+
     orx, ory, orz = geoconv.revert_transformed_cartesian_to_cartesian(
         station_1.x[mss_to_consider],
         station_1.y[mss_to_consider],
@@ -255,8 +296,8 @@ if __name__ == "__main__":
     fig = plot_globe_with_borders()
 
     scale = 0.5 / np.sqrt(visible_positions['x'][options[select_i][2]]**2 +
-                        visible_positions['y'][options[select_i][2]]**2 + 
-                        visible_positions['z'][options[select_i][2]]**2)
+                          visible_positions['y'][options[select_i][2]]**2 +
+                          visible_positions['z'][options[select_i][2]]**2)
     eye = dict(
         # x=0,
         # y=0,
@@ -289,9 +330,12 @@ if __name__ == "__main__":
     #     )
     # )
 
-    lat_vals = np.linspace(sat_lat-0.8, sat_lat+0.8, 50)       # 50 latitude points from -90 to 90 degrees.
-    lon_vals = np.linspace(sat_long-0.8, sat_long+0.8, 50)         # 50 longitude points for the front half.
-    lon, lat = np.meshgrid(lon_vals, lat_vals)  # lon and lat will be 2D arrays.
+    # 50 latitude points from -90 to 90 degrees.
+    lat_vals = np.linspace(sat_lat - 5.0, sat_lat + 5.0, 50)
+    # 50 longitude points for the front half.
+    lon_vals = np.linspace(sat_long - 5.0, sat_long + 5.0, 50)
+    # lon and lat will be 2D arrays.
+    lon, lat = np.meshgrid(lon_vals, lat_vals)
 
     # Flatten the mesh to pass to the converter function.
     lat_flat = lat.flatten()
@@ -299,7 +343,8 @@ if __name__ == "__main__":
 
     # Convert the lat/lon grid to transformed Cartesian coordinates.
     # Ensure your converter function can handle vectorized (numpy array) inputs.
-    x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
+    x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(
+        lat_flat, lon_flat, 0)
     # x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
     surf_manager = StationManager(len(x_flat))
     surf_manager.x = x_flat
@@ -321,7 +366,7 @@ if __name__ == "__main__":
                 theta_vec=theta[k, station_2_active],
                 phi_vec=phi[k, station_2_active],
         )
-    lin_gains = 10 ** (gains/10)
+    lin_gains = 10 ** (gains / 10)
     lin_gains = np.sum(lin_gains, axis=0)
     # lin_gains = gains
     print("lin_gains")
@@ -337,9 +382,10 @@ if __name__ == "__main__":
     reshaped_gain = (lin_gains).reshape(lat.shape)
     clor = 'rgb(220, 220, 220)'
     fig.add_surface(
-        x=world_surf_x/1e3, y=world_surf_y/1e3, z=world_surf_z/1e3,
+        x=world_surf_x / 1e3, y=world_surf_y / 1e3, z=world_surf_z / 1e3,
         surfacecolor=reshaped_gain,
-        colorscale=[[0, clor], [0.1, "blue"], [1, "red"]],  # Uniform color scale for a solid color.
+        # Uniform color scale for a solid color.
+        colorscale=[[0, clor], [0.1, "blue"], [1, "red"]],
         opacity=1.0,
         showlegend=False,
         lighting=dict(diffuse=0.1)
@@ -368,7 +414,6 @@ if __name__ == "__main__":
         showlegend=False
     ))
 
-    
     fig.add_trace(go.Scatter3d(
         x=[ground_sta_pos[0] / 1e3],
         y=[ground_sta_pos[1] / 1e3],
@@ -390,5 +435,3 @@ if __name__ == "__main__":
     # Display the plot
     print(len(fig.data))
     fig.show()
-
-
