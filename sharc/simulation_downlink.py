@@ -163,12 +163,13 @@ class SimulationDownlink(Simulation):
 
             # Get the weight factor for the system overlaping bandwidth in each UE band.
             weights = self.calculate_bw_weights(
-                self.parameters.imt.bandwidth,
-                self.overlapping_bandwidth,
-                self.parameters.imt.ue.k
+                self.ue.bandwidth,
+                self.ue.center_freq,
+                float(self.param_system.bandwidth),
+                float(self.param_system.frequency),
             )
 
-            in_band_interf_power = np.resize(-500, len(ue))
+            in_band_interf_power = np.resize(-500., len(ue))
             if self.co_channel:
                 # Inteferer transmit power in dBm over the overlapping band (MHz) with UEs.
                 if self.overlapping_bandwidth > 0:
@@ -179,19 +180,16 @@ class SimulationDownlink(Simulation):
                             self.ue.bandwidth[ue, np.newaxis] * 1e6
                         ) + 10 * np.log10(weights)[:, np.newaxis] - self.coupling_loss_imt_system[ue, :][:, active_sys]
 
-            oob_power = np.resize(-500, len(ue))
+            oob_power = np.resize(-500., len(ue))
             if self.adjacent_channel:
-                # adj_weights is the factor of how much of the rx bw doesn't overlap with tx bw
-                adj_weights = 1. - weights
-
                 # emissions outside of tx bandwidth and inside of rx bw
                 # due to oob emissions on tx side
-                tx_oob = np.resize(-500, len(ue))
+                tx_oob = np.resize(-500., len(ue))
 
                 # emissions outside of rx bw and inside of tx bw
                 # due to non ideal filtering on rx side
                 # will be the same for all UE's, only considering
-                rx_oob = np.resize(-500, len(ue))
+                rx_oob = np.resize(-500., len(ue))
 
                 # TODO: M.2101 states that:
                 # "The ACIR value should be calculated based on per UE allocated number of resource blocks"
@@ -206,7 +204,6 @@ class SimulationDownlink(Simulation):
                 # should interfer ^        less than this ^
 
                 # Unless we never use ACS..?
-
                 if self.parameters.imt.adjacent_ch_reception == "ACS":
                     if self.overlapping_bandwidth > 0:
                         if not hasattr(self, "ALREADY_WARNED_ABOUT_ACS_WHEN_OVERLAPPING_BAND"):
@@ -327,9 +324,10 @@ class SimulationDownlink(Simulation):
                 if self.overlapping_bandwidth:
                     acs = 0
                     weights = self.calculate_bw_weights(
-                        self.parameters.imt.bandwidth,
+                        self.ue.bandwidth,
+                        self.ue.center_freq,
                         self.param_system.bandwidth,
-                        self.parameters.imt.ue.k,
+                        self.param_system.frequency,
                     )
                 else:
                     acs = self.param_system.adjacent_ch_selectivity

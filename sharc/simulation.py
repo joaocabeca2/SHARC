@@ -559,7 +559,7 @@ class Simulation(ABC, Observable):
 
         return tput
 
-    def calculate_bw_weights(self, bw_imt: float, bw_sys: float, ue_k: int) -> np.array:
+    def calculate_bw_weights(self, bw_ue: np.array, fc_ue: np.array, bw_sys: float, fc_sys: float) -> np.array:
         """
         Calculates the weight that each resource block group of IMT base stations
         will have when estimating the interference to other systems based on
@@ -576,26 +576,26 @@ class Simulation(ABC, Observable):
         -------
             K-dimentional array of weights
         """
+        ue_min_f = fc_ue - bw_ue/2
+        ue_max_f = fc_ue + bw_ue/2
 
-        if bw_imt <= bw_sys:
-            weights = np.ones(ue_k)
+        sys_min_f = fc_sys - bw_sys/2
+        sys_max_f = fc_sys + bw_sys/2
 
-        elif bw_imt > bw_sys:
-            weights = np.zeros(ue_k)
+        # print("ue_min_f", ue_min_f)
+        # print("ue_max_f", ue_max_f)
+        # print("sys_min_f", sys_min_f)
+        # print("sys_max_f", sys_max_f)
 
-            bw_per_rbg = bw_imt / ue_k
+        overlap = np.maximum(
+            0,
+            np.minimum(ue_max_f, sys_max_f) - np.maximum(ue_min_f, sys_min_f)
+        ) / bw_ue
+        # print("fc_ue", fc_ue)
+        # print("overlap", overlap)
+        # exit()
 
-            # number of resource block groups that will have weight equal to 1
-            rb_ones = math.floor(bw_sys / bw_per_rbg)
-
-            # weight of the rbg that will generate partial interference
-            rb_partial = np.mod(bw_sys, bw_per_rbg) / bw_per_rbg
-
-            # assign value to weight array
-            weights[:rb_ones] = 1
-            weights[rb_ones] = rb_partial
-
-        return weights
+        return overlap
 
     def plot_scenario(self):
         fig = plt.figure(figsize=(8, 8), facecolor='w', edgecolor='k')
