@@ -33,7 +33,7 @@ class ParametersMssD2d(ParametersBase):
     adjacent_ch_emissions: str = "OFF"
 
     # Transmitter spectral mask
-    spectral_mask: str = "3GPP E-UTRA"
+    spectral_mask: str = "MSS"
 
     # Out-of-band spurious emissions in dB/MHz
     spurious_emissions: float = -13.0
@@ -113,7 +113,7 @@ class ParametersMssD2d(ParametersBase):
         if self.adjacent_ch_emissions not in ["SPECTRAL_MASK", "ACLR", "OFF"]:
             raise ValueError(f"""ParametersMssD2d: Invalid adjacent channel emissions {self.adjacent_ch_emissions}""")
 
-        if self.spectral_mask.upper() not in ["IMT-2020", "3GPP E-UTRA"]:
+        if self.spectral_mask.upper() not in ["IMT-2020", "3GPP E-UTRA", "MSS"]:
             raise ValueError(f"""ParametersMssD2d: Inavlid Spectral Mask Name {self.spectral_mask}""")
 
         self.antenna_s1528.set_external_parameters(antenna_pattern=self.antenna_pattern,
