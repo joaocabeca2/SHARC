@@ -141,7 +141,7 @@ if __name__ == "__main__":
     pos_vec = orbit.get_satellite_positions_time_interval()
     num_of_visible_sats_per_drop = []
     elevation_angles_per_drop = []
-    NUM_DROPS = 10000
+    NUM_DROPS = 1000
     rng = np.random.RandomState(seed=6)
     acc_pos = {'x': list(), 'y': list(), 'z': list(), 'lat': list(), 'lon': list()}
     for i in range(NUM_DROPS):

@@ -11,8 +11,8 @@ general:
     system: MSS_D2D
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
-    enable_cochannel: TRUE
-    enable_adjacent_channel: TRUE
+    enable_cochannel: true
+    enable_adjacent_channel: true
     ###########################################################################
     # Seed for random number generator
     seed: 101
@@ -197,7 +197,7 @@ imt:
     # Defines the antenna model to be used in compatibility studies between
     # IMT and other services in adjacent band
     # Possible values: SINGLE_ELEMENT, BEAMFORMING
-    adjacent_antenna_model: BEAMFORMING
+    adjacent_antenna_model: SINGLE_ELEMENT
     # Base station parameters
     bs:
         ###########################################################################
@@ -480,15 +480,15 @@ mss_d2d:
     # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
     adjacent_ch_emissions: SPECTRAL_MASK
     # chosen spectral Mask
-    spectral_mask: MSS
+    spectral_mask: 3GPP E-UTRA
     # MSS_D2D system center frequency in MHz
-    frequency: 2170.0
+    frequency: 2167.5
     # MSS_D2d system bandwidth in MHz
     bandwidth: 5.0
     # MSS_D2D cell radius in network topology [m]
     cell_radius: 36516.0
     # Satellite power density in dBW/Hz
-    tx_power_density: -30
+    tx_power_density: -54.2
     # Number of sectors
     num_sectors: 19
     # Satellite antenna pattern
