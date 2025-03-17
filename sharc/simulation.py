@@ -437,6 +437,11 @@ class Simulation(ABC, Observable):
                 self.parameters.imt.rb_bandwidth
             self.ue.bandwidth[ue] = self.num_rb_per_ue * \
                 self.parameters.imt.rb_bandwidth
+            self.ue.center_freq[ue] = np.array([
+                    self.parameters.imt.frequency
+                    + self.num_rb_per_ue * self.parameters.imt.rb_bandwidth * (i - (len(ue) - 1)/2)
+                    for i in range(len(ue))
+                ])
 
     def calculate_gains(
         self,

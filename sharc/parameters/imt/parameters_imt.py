@@ -26,10 +26,8 @@ class ParametersImt(ParametersBase):
     spectral_mask: str = "IMT-2020"
     spurious_emissions: float = -13.0
     guard_band_ratio: float = 0.1
-    # Adjacent Interference model used when IMT is victim. Possible values are ACIR or SPECTRAL_MASK.
-    # When using ACIR the interfence power from the other system is calculted by using the ACLR and ACS.
-    # Whith the SPECTRAL_MASK the the interference power from the other system is calculated from it's spectral mask.
-    adjacent_interf_model: str = "ACIR"
+    # Adjacent Interference filter reception used when IMT is victim. Possible values is ACS and OFF
+    adjacent_ch_reception: str = "OFF"
     @dataclass
     class ParametersBS(ParametersBase):
         load_probability = 0.2
@@ -131,6 +129,10 @@ class ParametersImt(ParametersBase):
         if self.spectral_mask not in ["IMT-2020", "3GPP E-UTRA"]:
             raise ValueError(
                 f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
+            )
+        if self.adjacent_ch_reception not in ["ACS"]:
+            raise ValueError(
+                f"""ParametersImt: Invalid Adjacent Channel Reception model {self.adjacent_ch_reception}""",
             )
 
         if self.channel_model not in ["FSPL", "CI", "UMa", "UMi", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619"]:

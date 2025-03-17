@@ -28,6 +28,10 @@ class ParametersMssD2d(ParametersBase):
     # MSS_D2d system bandwidth in MHz
     bandwidth: float = 5.0
 
+    # Adjacent channel emissions type
+    # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
+    adjacent_ch_emissions: str = "OFF"
+
     # Transmitter spectral mask
     spectral_mask: str = "3GPP E-UTRA"
 
@@ -105,6 +109,9 @@ class ParametersMssD2d(ParametersBase):
             raise ValueError(f"ParametersMssD2d: cell_radius must be greater than 0, but is {self.cell_radius}")
         else:
             self.intersite_distance = np.sqrt(3) * self.cell_radius
+
+        if self.adjacent_ch_emissions not in ["SPECTRAL_MASK", "ACLR", "OFF"]:
+            raise ValueError(f"""ParametersMssD2d: Invalid adjacent channel emissions {self.adjacent_ch_emissions}""")
 
         if self.spectral_mask.upper() not in ["IMT-2020", "3GPP E-UTRA"]:
             raise ValueError(f"""ParametersMssD2d: Inavlid Spectral Mask Name {self.spectral_mask}""")
