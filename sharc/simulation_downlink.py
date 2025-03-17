@@ -266,6 +266,14 @@ class SimulationDownlink(Simulation):
                 # could use different coupling loss if
                 # different antenna pattern is to be considered on adj channel
                 oob_power -= self.coupling_loss_imt_system[ue, :][:, active_sys]
+            else:
+                oob_power = np.tile(
+                    np.reshape(
+                        oob_power,
+                        (-1, 1)
+                    ),
+                    (1, len(active_sys))
+                )
 
             # Total external interference into the UE in dBm
             ue_ext_int = 10 * np.log10(np.power(10, 0.1 * in_band_interf_power) + np.power(10, 0.1 * oob_power))
