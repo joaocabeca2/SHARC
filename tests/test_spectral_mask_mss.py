@@ -13,62 +13,16 @@ from sharc.mask.spectral_mask_mss import SpectralMaskMSS
 
 
 class SpectalMaskMSSTest(unittest.TestCase):
-
-    # def setUp(self):
-    #     # Initialize variables for 40 GHz
-    #     p_tx = 25.1
-    #     freq = 43000
-    #     band = 200
-    #     spurious = -13
-
-    #     # Create mask for 40 GHz
-    #     self.mask_bs_40GHz = SpectralMaskMSS(freq, band, spurious)
-    #     self.mask_bs_40GHz.set_mask(p_tx)
-
-    #     # Initialize variables for 40 GHz
-    #     p_tx = 28.1
-    #     freq = 24350
-    #     band = 200
-
-    #     # Create mask for BS at 26 GHz
-    #     self.mask_bs_26GHz = SpectralMaskMSS(freq, band, spurious)
-    #     self.mask_bs_26GHz.set_mask(p_tx)
-
-    #     # Create mask for UE at 26 GHz
-    #     self.mask_ue_26GHz = SpectralMaskMSS(freq, band, spurious)
-    #     self.mask_ue_26GHz.set_mask(p_tx)
-
-    #     # Initialize variables for 9GHz -13dBm/MHz
-    #     p_tx = 28.1
-    #     freq = 9000
-    #     band = 200
-
-    #     # Create mask for BS at 9 GHz
-    #     self.mask_bs_9GHz = SpectralMaskMSS(freq, band, -13)
-    #     self.mask_bs_9GHz.set_mask(p_tx)
-
-    #     # Initialize variables for 9GHz -30dBm/MHz
-    #     p_tx = 28.1
-    #     freq = 9000
-    #     band = 200
-
-    #     # Create mask for BS at 9 GHz and spurious emission at -30dBm/MHz
-    #     self.mask_bs_9GHz_30_spurious = SpectralMaskMSS(
-    #         freq, band, -30)
-    #     self.mask_bs_9GHz_30_spurious.set_mask(p_tx)
-
     def test_power_calc(self):
-        #######################################################################
-        # Testing mask for 40 GHz
-        #######################################################################
-
         # Test 1
         p_tx_density = -30 # dBW / Hz
         freq = 2190
         band = 1
         p_tx = p_tx_density + 10 * np.log10(band * 1e6)
+
         # reference bw is 4khz below 15GHz center freq
         p_tx_over_4khz = p_tx_density + 10 * np.log10(4e3)
+
         # dBm/MHz
         spurious_emissions = -30
 

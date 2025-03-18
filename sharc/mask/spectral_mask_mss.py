@@ -84,8 +84,6 @@ class SpectralMaskMSS(SpectralMask):
         # this should work for the document's dBsd definition
         # when we have a uniform PSD in assigned band
         self.p_tx = p_tx - 10 * np.log10(self.band_mhz) + 30
-        # print("self.p_tx", self.p_tx)
-        # print("10 * np.log10(0.1 * self.p_tx)", 10 ** ((p_tx - 10 * np.log10(self.band_mhz * 1e6)) / 10))
 
         # attenuation mask
         mask_dbsd = 40 * np.log10(
@@ -93,7 +91,6 @@ class SpectralMaskMSS(SpectralMask):
             100 * (self.delta_f_lim[:-1] / self.band_mhz) / 50 + 1
             # 100 * ((self.delta_f_lim[:-1] + self.reference_bandwidth/2) / self.band_mhz) / 50 + 1
         )
-        # print("mask_dbsd", mask_dbsd)
 
         # functionally same as 0, but won't be ignored at spectral mask calculation
         # TODO: something better than this...
@@ -103,22 +100,17 @@ class SpectralMaskMSS(SpectralMask):
 
         mask_dbm = np.concatenate((mask_dbm, [self.spurious_emissions]))
 
-        # we should set the center p_tx as zero only so that we consider
-        # co-channel separate from adjacent channel on simulation
         self.mask_dbm = np.concatenate((
             mask_dbm[::-1],
             np.array([self.p_tx]),
             mask_dbm,
         ))
 
-        # print("self.mask_dbm", self.mask_dbm)
-        # print("self.freq_lim", self.freq_lim)
-
 
 if __name__ == '__main__':
     # Initialize variables
     p_tx = 34.061799739838875
-    freq = 9000
+    freq = 2100
     band = 5
     spurious_emissions_dbm_mhz = -30
 

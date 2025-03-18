@@ -169,7 +169,7 @@ class SimulationDownlink(Simulation):
                 float(self.param_system.frequency),
             )
 
-            in_band_interf_power = np.resize(-500., len(ue))
+            in_band_interf_power = -500.
             if self.co_channel:
                 # Inteferer transmit power in dBm over the overlapping band (MHz) with UEs.
                 if self.overlapping_bandwidth > 0:
@@ -179,16 +179,8 @@ class SimulationDownlink(Simulation):
                         self.param_system.tx_power_density + 10 * np.log10(
                             self.ue.bandwidth[ue, np.newaxis] * 1e6
                         ) + 10 * np.log10(weights)[:, np.newaxis] - self.coupling_loss_imt_system[ue, :][:, active_sys]
-            else:
-                in_band_interf_power = np.tile(
-                    np.reshape(
-                        in_band_interf_power,
-                        (-1, 1)
-                    ),
-                    (1, len(active_sys))
-                )
 
-            oob_power = np.resize(-500., len(ue))
+            oob_power = -500.
             if self.adjacent_channel:
                 # emissions outside of tx bandwidth and inside of rx bw
                 # due to oob emissions on tx side
@@ -213,7 +205,7 @@ class SimulationDownlink(Simulation):
 
                 # Unless we never use ACS..?
                 if self.parameters.imt.adjacent_ch_reception == "ACS":
-                    if self.overlapping_bandwidth > 0:
+                    if self.overlapping_bandwidth:
                         if not hasattr(self, "ALREADY_WARNED_ABOUT_ACS_WHEN_OVERLAPPING_BAND"):
                             print(
                                 "[WARNING]: You're trying to use ACS on a partially overlapping band"
@@ -246,10 +238,13 @@ class SimulationDownlink(Simulation):
                             bw
                         )
                 elif self.param_system.adjacent_ch_emissions == "ACLR":
-                    if self.param_system.bandwidth > self.overlapping_bandwidth:
-                        tx_oob[::] = self.param_system.tx_power_density + \
-                            10 * np.log10(self.param_system.bandwidth * 1e6) -  \
-                            self.param_system.adjacent_ch_leak_ratio
+                    # consider ACLR only over non co-channel RBs
+                    # This should diminish some of the ACLR interference
+                    # in a way that make sense
+                    tx_oob[::] = self.param_system.tx_power_density + \
+                        10 * np.log10(self.param_system.bandwidth * 1e6) -  \
+                        self.param_system.adjacent_ch_leak_ratio + \
+                        10 * np.log10(1. - weights)
                 elif self.param_system.adjacent_ch_emissions ==  "OFF":
                     pass
                 else:
@@ -274,14 +269,6 @@ class SimulationDownlink(Simulation):
                 # could use different coupling loss if
                 # different antenna pattern is to be considered on adj channel
                 oob_power -= self.coupling_loss_imt_system[ue, :][:, active_sys]
-            else:
-                oob_power = np.tile(
-                    np.reshape(
-                        oob_power,
-                        (-1, 1)
-                    ),
-                    (1, len(active_sys))
-                )
 
             # Total external interference into the UE in dBm
             ue_ext_int = 10 * np.log10(np.power(10, 0.1 * in_band_interf_power) + np.power(10, 0.1 * oob_power))
