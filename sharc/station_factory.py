@@ -56,6 +56,7 @@ from sharc.topology.topology import Topology
 from sharc.topology.topology_ntn import TopologyNTN
 from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
+from sharc.mask.spectral_mask_mss import SpectralMaskMSS
 from sharc.satellite.ngso.orbit_model import OrbitModel
 from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
 from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian, rotate_angles_based_on_new_nadir, GeometryConverter
@@ -1192,9 +1193,13 @@ class StationFactory(object):
                                                     param_mss.bandwidth,
                                                     param_mss.spurious_emissions,
                                                     scenario="OUTDOOR")
+        elif params.spectral_mask == "MSS":
+            mss_d2d.spectral_mask = SpectralMaskMSS(params.frequency,
+                                                     params.bandwidth,
+                                                     params.spurious_emissions)
         else:
             raise ValueError(f"Invalid or not implemented spectral mask - {param_mss.spectral_mask}")
-        mss_ss.spectral_mask.set_mask(param_mss.tx_power_density + 10 * np.log10(param_mss.bandwidth * 10e6))
+        mss_ss.spectral_mask.set_mask(param_mss.tx_power_density + 10 * np.log10(param_mss.bandwidth * 1e6))
 
         return mss_ss
 
@@ -1248,9 +1253,13 @@ class StationFactory(object):
                                                      params.bandwidth,
                                                      params.spurious_emissions,
                                                      scenario="OUTDOOR")
+        elif params.spectral_mask == "MSS":
+            mss_d2d.spectral_mask = SpectralMaskMSS(params.frequency,
+                                                     params.bandwidth,
+                                                     params.spurious_emissions)
         else:
             raise ValueError(f"Invalid or not implemented spectral mask - {params.spectral_mask}")
-        mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 10e6))
+        mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 1e6))
 
         # Initialize arrays to store satellite positions, angles and distance from center of earth
         all_positions = {"R": [], "lat": [], "lon": [], "sx": [], "sy": [], "sz": []}

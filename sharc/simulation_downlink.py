@@ -160,39 +160,115 @@ class SimulationDownlink(Simulation):
         bs_active = np.where(self.bs.active)[0]
         for bs in bs_active:
             ue = self.link[bs]
-            in_band_interf_power = -500
+
+            # Get the weight factor for the system overlaping bandwidth in each UE band.
+            weights = self.calculate_bw_weights(
+                self.ue.bandwidth,
+                self.ue.center_freq,
+                float(self.param_system.bandwidth),
+                float(self.param_system.frequency),
+            )
+
+            in_band_interf_power = -500.
             if self.co_channel:
+                # Inteferer transmit power in dBm over the overlapping band (MHz) with UEs.
                 if self.overlapping_bandwidth > 0:
-                    # Inteferer transmit power in dBm over the overlapping band (MHz) with UEs.
-                    # Get the weight factor for the system overlaping bandwidth in each UE band.
-                    weights = self.calculate_bw_weights(
-                        self.parameters.imt.bandwidth,
-                        self.overlapping_bandwidth,
-                        self.parameters.imt.ue.k)
                     # in_band_interf_power = self.param_system.tx_power_density + \
                     #     10 * np.log10(self.overlapping_bandwidth * 1e6) + 30
                     in_band_interf_power = \
-                        self.param_system.tx_power_density + 10 * np.log10(self.ue.bandwidth[ue, np.newaxis] * 1e6) + \
-                        10 * np.log10(weights)[:, np.newaxis] - self.coupling_loss_imt_system[ue, :][:, active_sys]
+                        self.param_system.tx_power_density + 10 * np.log10(
+                            self.ue.bandwidth[ue, np.newaxis] * 1e6
+                        ) + 10 * np.log10(weights)[:, np.newaxis] - self.coupling_loss_imt_system[ue, :][:, active_sys]
 
-            oob_power = -500
-            oob_interf_lin = 0
+            oob_power = -500.
             if self.adjacent_channel:
-                if self.parameters.imt.adjacent_interf_model == "SPECTRAL_MASK":
-                    # Out-of-band power in the adjacent channel.
-                    oob_power = self.system.spectral_mask.power_calc(self.parameters.imt.frequency,
-                                                                     self.parameters.imt.bandwidth)
-                    oob_interf_lin = np.power(10, 0.1 * oob_power) / \
-                        np.power(10, 0.1 * self.parameters.imt.ue.adjacent_ch_selectivity)
-                elif self.parameters.imt.adjacent_interf_model == "ACIR":
-                    acir = -10 * np.log10(10**(-self.param_system.adjacent_ch_leak_ratio / 10) +
-                                          10**(-self.parameters.imt.ue.adjacent_ch_selectivity / 10))
-                    oob_power = self.param_system.tx_power_density + \
+                # emissions outside of tx bandwidth and inside of rx bw
+                # due to oob emissions on tx side
+                tx_oob = np.resize(-500., len(ue))
+
+                # emissions outside of rx bw and inside of tx bw
+                # due to non ideal filtering on rx side
+                # will be the same for all UE's, only considering
+                rx_oob = np.resize(-500., len(ue))
+
+                # TODO: M.2101 states that:
+                # "The ACIR value should be calculated based on per UE allocated number of resource blocks"
+
+                # should we actually implement that for ACS since the receiving filter is fixed?
+
+                # or maybe ignore ACS altogether (ACS = inf)? If we consider only allocated RB, it makes
+                # no sense to use ACS.
+                # At the same time, ignoring ACS doesn't seem correct since the interference
+                # could DECREASE when it would make sense for it to increase.
+                # e.g. adjacent systems -> slightly co-channel with ACS = inf
+                # should interfer ^        less than this ^
+
+                # Unless we never use ACS..?
+                if self.parameters.imt.adjacent_ch_reception == "ACS":
+                    if self.overlapping_bandwidth:
+                        if not hasattr(self, "ALREADY_WARNED_ABOUT_ACS_WHEN_OVERLAPPING_BAND"):
+                            print(
+                                "[WARNING]: You're trying to use ACS on a partially overlapping band"
+                                "with UEs. Verify the code implements the behavior you expect"
+                            )
+                            self.ALREADY_WARNED_ABOUT_ACS_WHEN_OVERLAPPING_BAND = True
+                    # only apply ACS over non overlapping bw
+                    p_tx = self.param_system.tx_power_density \
+                            + 10 * np.log10(
+                                (self.param_system.bandwidth - self.overlapping_bandwidth) * 1e6
+                            )
+
+                    rx_oob[::] = p_tx - self.parameters.imt.ue.adjacent_ch_selectivity
+                elif self.parameters.imt.adjacent_ch_reception ==  "OFF":
+                    pass
+                else:
+                    raise ValueError(
+                        f"No implementation for parameters.imt.adjacent_ch_reception == {self.parameters.imt.adjacent_ch_reception}"
+                    )
+
+                # for tx oob we accept ACLR and spectral mask
+                if self.param_system.adjacent_ch_emissions == "SPECTRAL_MASK":
+                    ue_bws = self.ue.bandwidth[ue]
+                    center_freqs = self.ue.center_freq[ue]
+
+                    for i, center_freq, bw in zip(range(len(center_freqs)), center_freqs, ue_bws):
+                        # calculate tx emissions in UE in use bandwidth only
+                        tx_oob[i] = self.system.spectral_mask.power_calc(
+                            center_freq,
+                            bw
+                        )
+                elif self.param_system.adjacent_ch_emissions == "ACLR":
+                    # consider ACLR only over non co-channel RBs
+                    # This should diminish some of the ACLR interference
+                    # in a way that make sense
+                    tx_oob[::] = self.param_system.tx_power_density + \
                         10 * np.log10(self.param_system.bandwidth * 1e6) -  \
-                        acir
-                    oob_interf_lin = 10**(oob_power / 10)
+                        self.param_system.adjacent_ch_leak_ratio + \
+                        10 * np.log10(1. - weights)
+                elif self.param_system.adjacent_ch_emissions ==  "OFF":
+                    pass
+                else:
+                    raise ValueError(
+                        f"No implementation for param_system.adjacent_ch_emissions == {self.param_system.adjacent_ch_emissions}"
+                    )
+
                 # Out of band power
-                oob_power = 10 * np.log10(oob_interf_lin) - self.coupling_loss_imt_system[ue, :][:, active_sys]
+                # sum linearly power leaked into band and power received in the adjacent band
+
+                oob_power = 10 * np.log10(
+                    10 ** (0.1 * tx_oob) + 10 ** (0.1 * rx_oob)
+                )
+                # repeat ue received power for each coupling loss
+                oob_power = np.tile(
+                    np.reshape(
+                        oob_power,
+                        (-1, 1)
+                    ),
+                    (1, len(active_sys))
+                )
+                # could use different coupling loss if
+                # different antenna pattern is to be considered on adj channel
+                oob_power -= self.coupling_loss_imt_system[ue, :][:, active_sys]
 
             # Total external interference into the UE in dBm
             ue_ext_int = 10 * np.log10(np.power(10, 0.1 * in_band_interf_power) + np.power(10, 0.1 * oob_power))
@@ -251,9 +327,10 @@ class SimulationDownlink(Simulation):
                 if self.overlapping_bandwidth:
                     acs = 0
                     weights = self.calculate_bw_weights(
-                        self.parameters.imt.bandwidth,
+                        self.ue.bandwidth,
+                        self.ue.center_freq,
                         self.param_system.bandwidth,
-                        self.parameters.imt.ue.k,
+                        self.param_system.frequency,
                     )
                 else:
                     acs = self.param_system.adjacent_ch_selectivity

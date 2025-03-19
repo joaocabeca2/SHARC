@@ -237,9 +237,10 @@ class SimulationUplink(Simulation):
                 if self.overlapping_bandwidth:
                     acs = 0
                     weights = self.calculate_bw_weights(
-                        self.parameters.imt.bandwidth,
+                        self.ue.bandwidth,
+                        self.ue.center_freq,
                         self.param_system.bandwidth,
-                        self.parameters.imt.ue.k,
+                        self.param_system.frequency,
                     )
                 else:
                     acs = self.param_system.adjacent_ch_selectivity
