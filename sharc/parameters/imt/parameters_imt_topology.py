@@ -12,7 +12,7 @@ from sharc.parameters.imt.parameters_single_bs import ParametersSingleBS
 @dataclass
 class ParametersImtTopology(ParametersBase):
     type: typing.Literal[
-        "MACROCELL", "HOTSPOT", "INDOOR", "SINGLE_BS", "NTN"
+        "MACROCELL", "HOTSPOT", "INDOOR", "SINGLE_BS", "NTN", "MSS_DC"
     ] = "MACROCELL"
 
     # these parameters are needed in case the other system requires coordinate
