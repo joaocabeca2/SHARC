@@ -63,25 +63,27 @@ class TestTopologyImtMssDc(unittest.TestCase):
 
     def test_calculate_coordinates(self):
         self.imt_mss_dc_topology.calculate_coordinates()
-        self.assertIsNotNone(self.imt_mss_dc_topology.x)
-        self.assertIsNotNone(self.imt_mss_dc_topology.y)
-        self.assertIsNotNone(self.imt_mss_dc_topology.z)
+        center_beam_idxs = np.arange(self.imt_mss_dc_topology.num_base_stations // self.imt_mss_dc_topology.num_sectors) *\
+            self.imt_mss_dc_topology.num_sectors
+        self.assertIsNotNone(self.imt_mss_dc_topology.space_station_x)
+        self.assertIsNotNone(self.imt_mss_dc_topology.space_station_y)
+        self.assertIsNotNone(self.imt_mss_dc_topology.space_station_z)
         self.assertIsNotNone(self.imt_mss_dc_topology.elevation)
         self.assertIsNotNone(self.imt_mss_dc_topology.azimuth)
-        self.assertEqual(len(self.imt_mss_dc_topology.x), self.imt_mss_dc_topology.num_base_stations)
-        self.assertEqual(len(self.imt_mss_dc_topology.y), self.imt_mss_dc_topology.num_base_stations)
-        self.assertEqual(len(self.imt_mss_dc_topology.z), self.imt_mss_dc_topology.num_base_stations)
+        self.assertEqual(len(self.imt_mss_dc_topology.space_station_x), self.imt_mss_dc_topology.num_base_stations)
+        self.assertEqual(len(self.imt_mss_dc_topology.space_station_y), self.imt_mss_dc_topology.num_base_stations)
+        self.assertEqual(len(self.imt_mss_dc_topology.space_station_z), self.imt_mss_dc_topology.num_base_stations)
 
         # Test: check if azimuth is pointing towards correct direction
         # y > 0 <=> azimuth < 0
         # y < 0 <=> azimuth > 0
-        self.imt_mss_dc_topology.calculate_coordinates()
-        npt.assert_array_equal(np.sign(self.imt_mss_dc_topology.azimuth), -np.sign(self.imt_mss_dc_topology.y))
+        npt.assert_array_equal(np.sign(self.imt_mss_dc_topology.azimuth[center_beam_idxs]),
+                               -np.sign(self.imt_mss_dc_topology.space_station_y[center_beam_idxs]))
 
         # Test: check if the altitude is calculated correctly
-        rx = self.imt_mss_dc_topology.x - self.earth_center_x
-        ry = self.imt_mss_dc_topology.y - self.earth_center_y
-        rz = self.imt_mss_dc_topology.z - self.earth_center_z
+        rx = self.imt_mss_dc_topology.space_station_x - self.earth_center_x
+        ry = self.imt_mss_dc_topology.space_station_y - self.earth_center_y
+        rz = self.imt_mss_dc_topology.space_station_z - self.earth_center_z
         r = np.sqrt(rx**2 + ry**2 + rz**2)
         expected_alt_km = (r - np.abs(self.earth_center_z)) / 1e3
         npt.assert_array_almost_equal(expected_alt_km, self.params.orbits[0].apogee_alt_km, decimal=0)
@@ -93,25 +95,30 @@ class TestTopologyImtMssDc(unittest.TestCase):
         ref_earth_center.z = self.earth_center_z
 
         ref_space_stations = StationManager(self.imt_mss_dc_topology.num_base_stations)
-        ref_space_stations.x = self.imt_mss_dc_topology.x
-        ref_space_stations.y = self.imt_mss_dc_topology.y
-        ref_space_stations.z = self.imt_mss_dc_topology.z
+        ref_space_stations.x = self.imt_mss_dc_topology.space_station_x
+        ref_space_stations.y = self.imt_mss_dc_topology.space_station_y
+        ref_space_stations.z = self.imt_mss_dc_topology.space_station_z
 
         phi, theta = ref_space_stations.get_pointing_vector_to(ref_earth_center)
-        npt.assert_array_almost_equal(np.squeeze(phi), self.imt_mss_dc_topology.azimuth, decimal=3)
-        npt.assert_array_almost_equal(np.squeeze(theta), 90 - self.imt_mss_dc_topology.elevation, decimal=3)
+        npt.assert_array_almost_equal(np.squeeze(phi[center_beam_idxs]), self.imt_mss_dc_topology.azimuth[center_beam_idxs],
+                                      decimal=3)
+        npt.assert_array_almost_equal(np.squeeze(theta[center_beam_idxs]), 90 - self.imt_mss_dc_topology.elevation[center_beam_idxs],
+                                      decimal=3)
 
     def test_visible_satellites(self):
         self.imt_mss_dc_topology.calculate_coordinates()
         min_elevation_angle = 5.0
+        idxs = np.arange(self.imt_mss_dc_topology.num_base_stations // self.imt_mss_dc_topology.num_sectors) *\
+            self.imt_mss_dc_topology.num_sectors
 
         # calculate the elevation angles with respect to the x-y plane
         xy_plane_elevations = np.degrees(np.arctan2(
-            self.imt_mss_dc_topology.z,
-            np.sqrt(self.imt_mss_dc_topology.x**2 + self.imt_mss_dc_topology.y**2))
+            self.imt_mss_dc_topology.space_station_z,
+            np.sqrt(self.imt_mss_dc_topology.space_station_x**2 + self.imt_mss_dc_topology.space_station_y**2))
         )
-        for elev in xy_plane_elevations:
+        for elev in xy_plane_elevations[idxs]:
             self.assertGreaterEqual(elev, min_elevation_angle)
+
 
 if __name__ == '__main__':
     unittest.main()

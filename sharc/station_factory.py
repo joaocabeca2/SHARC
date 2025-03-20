@@ -59,7 +59,7 @@ from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.mask.spectral_mask_mss import SpectralMaskMSS
 from sharc.satellite.ngso.orbit_model import OrbitModel
 from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
-from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian, rotate_angles_based_on_new_nadir, GeometryConverter
+from sharc.support.sharc_geom import rotate_angles_based_on_new_nadir, GeometryConverter
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -1203,8 +1203,6 @@ class StationFactory(object):
 
         return mss_ss
 
-
-
     def generate_mss_d2d(
         params: ParametersMssD2d,
         random_number_gen: np.random.RandomState,
@@ -1255,8 +1253,8 @@ class StationFactory(object):
                                                      scenario="OUTDOOR")
         elif params.spectral_mask == "MSS":
             mss_d2d.spectral_mask = SpectralMaskMSS(params.frequency,
-                                                     params.bandwidth,
-                                                     params.spurious_emissions)
+                                                    params.bandwidth,
+                                                    params.spurious_emissions)
         else:
             raise ValueError(f"Invalid or not implemented spectral mask - {params.spectral_mask}")
         mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 1e6))
@@ -1363,12 +1361,10 @@ class StationFactory(object):
             0
         )
 
-        earth_radius = np.sqrt(rx*rx + ry*ry + rz*rz)
+        earth_radius = np.sqrt(rx * rx + ry * ry + rz * rz)
         all_r = np.squeeze(np.array(all_positions['R'])) * 1e3
 
-        sat_altitude = np.mean(np.array(
-             all_r - earth_radius
-        )[active_satellite_idxs])
+        sat_altitude = np.mean(np.array(all_r - earth_radius)[active_satellite_idxs])
 
         geometry_converter.convert_station_3d_to_2d(
             mss_d2d
@@ -1393,8 +1389,8 @@ class StationFactory(object):
         )
 
         beams_2d_azim = np.rad2deg(np.arctan2(sy, sx))
-        beams_2d_elev = np.rad2deg(np.arctan2(np.sqrt(sy*sy + sx*sx), sat_altitude)) - 90
-        
+        beams_2d_elev = np.rad2deg(np.arctan2(np.sqrt(sy * sy + sx * sx), sat_altitude)) - 90
+
         beams_2d_azim = np.resize(
             beams_2d_azim,
             total_satellites * params.num_sectors

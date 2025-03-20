@@ -17,7 +17,8 @@ from sharc.topology.topology import Topology
 from sharc.parameters.imt.parameters_imt_mss_dc import ParametersImtMssDc
 from sharc.parameters.parameters_orbit import ParametersOrbit
 from sharc.satellite.ngso.orbit_model import OrbitModel
-from sharc.support.sharc_geom import GeometryConverter
+from sharc.support.sharc_geom import GeometryConverter, rotate_angles_based_on_new_nadir
+from sharc.topology.topology_ntn import TopologyNTN
 from sharc.satellite.utils.sat_utils import calc_elevation
 from sharc.support.sharc_geom import lla2ecef, cartesian_to_polar, polar_to_cartesian
 
@@ -34,12 +35,16 @@ class TopologyImtMssDc(Topology):
             GeometryConverter object that converts the ECEF coordintate system to one
             centered at GeometryConverter.reference.
         """
+        # That means the we need to pass the groud reference points to the base stations generator
         self.is_space_station = True
         self.num_sectors = params.num_beams
 
         # Specific attributes
         self.geometry_converter = geometry_converter
         self.orbit_params = params
+        self.space_station_x = None
+        self.space_station_y = None
+        self.space_station_z = None
         self.lat = None
         self.lon = None
         self.min_elev_angle = params.min_elev_angle  # Minimum elevation angle for satellite visibility
@@ -141,13 +146,12 @@ class TopologyImtMssDc(Topology):
                 )
         # We have the list of visible satellites, now create a Topolgy of this subset and move the coordinate system
         # reference.
-        self.x = np.squeeze(np.array(all_positions['sx']))[active_satellite_idxs] * 1e3  # Convert X-coordinates to meters
-        self.y = np.squeeze(np.array(all_positions['sy']))[active_satellite_idxs] * 1e3  # Convert Y-coordinates to meters
-        self.z = np.squeeze(np.array(all_positions['sz']))[active_satellite_idxs] * 1e3  # Convert Z-coordinates to meters
+        total_active_satellites = len(active_satellite_idxs)
+        self.space_station_x = np.squeeze(np.array(all_positions['sx']))[active_satellite_idxs] * 1e3  # Convert X-coordinates to meters
+        self.space_station_y = np.squeeze(np.array(all_positions['sy']))[active_satellite_idxs] * 1e3  # Convert Y-coordinates to meters
+        self.space_station_z = np.squeeze(np.array(all_positions['sz']))[active_satellite_idxs] * 1e3  # Convert Z-coordinates to meters
         self.elevation = np.squeeze(np.array(all_elevations))[active_satellite_idxs]  # Elevation angles
         self.azimuth = np.squeeze(np.array(all_azimuths))[active_satellite_idxs]  # Azimuth angles
-        self.num_base_stations = len(self.x)
-        self.indoor = np.zeros(self.num_base_stations, dtype=bool)
 
         # Store the latitude and longitude of the visible satellites for later use
         self.lat = np.squeeze(np.array(all_positions['lat']))[active_satellite_idxs]
@@ -155,8 +159,8 @@ class TopologyImtMssDc(Topology):
 
         # Convert the ECEF coordinates to the transformed cartesian coordinates and set the Space Station positions
         # used to generetate the IMT Base Stations
-        self.x, self.y, self.z = \
-            self.geometry_converter.convert_cartesian_to_transformed_cartesian(self.x, self.y, self.z)
+        self.space_station_x, self.space_station_y, self.space_station_z = \
+            self.geometry_converter.convert_cartesian_to_transformed_cartesian(self.space_station_x, self.space_station_y, self.space_station_z)
 
         # Rotate the azimuth and elevation angles off the center beam the new transformed cartesian coordinates
         r = 1
@@ -166,6 +170,70 @@ class TopologyImtMssDc(Topology):
             self.geometry_converter.convert_cartesian_to_transformed_cartesian(
                 pointing_vec_x, pointing_vec_y, pointing_vec_z, translate=0)
         _, self.azimuth, self.elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
+
+        # Create the other beams and rotate the azimuth and elevation angles
+
+        # Calculate the average altitude of the visible satellites
+        rx, ry, rz = lla2ecef(
+            np.squeeze(np.array(all_positions['lat'])),
+            np.squeeze(np.array(all_positions['lon'])),
+            0
+        )
+        earth_radius = np.sqrt(rx * rx + ry * ry + rz * rz)
+        all_r = np.squeeze(np.array(all_positions['R'])) * 1e3
+        sat_altitude = np.mean(np.array(all_r - earth_radius)[active_satellite_idxs])
+
+        # We borrow the TopologyNTN method to calculate the sectors azimuth and elevation angles from their
+        # respective x and y boresight coordinates
+        sx, sy = TopologyNTN.get_sectors_xy(
+            intersite_distance=self.orbit_params.beam_radius * np.sqrt(3),
+            num_sectors=self.orbit_params.num_beams
+        )
+
+        # Calculate the azimuth and elevation angles for each beam before rotating them
+        beams_azim = np.rad2deg(np.arctan2(sy, sx))
+        beams_elev = np.rad2deg(np.arctan2(np.sqrt(sy * sy + sx * sx), sat_altitude)) - 90
+
+        beams_azim = np.resize(
+            beams_azim,
+            total_active_satellites * self.orbit_params.num_beams
+        ).reshape(
+            (total_active_satellites, self.orbit_params.num_beams)
+        )
+
+        beams_elev = np.resize(
+            beams_elev,
+            total_active_satellites * self.orbit_params.num_beams
+        ).reshape(
+            (total_active_satellites, self.orbit_params.num_beams)
+        )
+
+        # Rotate and set the each beam azimuth and elevation angles - only for the visible satellites
+        for i in range(total_active_satellites):
+            # Rotate the azimuth and elevation angles based on the new nadir point
+            beams_elev[i], beams_azim[i] = rotate_angles_based_on_new_nadir(
+                beams_elev[i],
+                beams_azim[i],
+                self.elevation[i],
+                self.azimuth[i]
+            )
+        
+        # In SHARC each sector is treated as a separate base station, so we need to repeat the satellite positions
+        # for each sector.
+        self.space_station_x = np.repeat(self.space_station_x, self.orbit_params.num_beams)
+        self.space_station_y = np.repeat(self.space_station_y, self.orbit_params.num_beams)
+        self.space_station_z = np.repeat(self.space_station_z, self.orbit_params.num_beams)
+        # the offset of the beams boresight from the satellite position
+        offset_x = sat_altitude * np.tan(np.radians(90 + self.elevation)) * np.cos(np.radians(self.azimuth))
+        offset_y = sat_altitude * np.tan(np.radians(90 + self.elevation)) * np.sin(np.radians(self.azimuth))
+        self.x = self.space_station_x + np.resize(sx, self.orbit_params.num_beams * total_active_satellites) + np.repeat(offset_x, self.orbit_params.num_beams)
+        self.y = self.space_station_y + np.resize(sy, self.orbit_params.num_beams * total_active_satellites)+ np.repeat(offset_y, self.orbit_params.num_beams)
+        self.z = self.space_station_z
+        self.elevation = beams_elev.flatten()  # only valid at active satellites indices
+        self.azimuth = beams_azim.flatten()  # only valid at active satellites indices
+        self.num_base_stations = len(self.space_station_x)
+        self.indoor = np.zeros(self.num_base_stations, dtype=bool)  # ofcourse, all are outdoor
+        self.height = np.ones(self.num_base_stations) * sat_altitude  # all are at the same height
 
 
 # Example usage
@@ -186,7 +254,7 @@ if __name__ == '__main__':
     )
     params = ParametersImtMssDc(
         beam_radius=36516.0,
-        num_beams=19,
+        num_beams=7,
         orbits=[orbit]
     )
 
@@ -206,9 +274,9 @@ if __name__ == '__main__':
 
     # Create a 3D scatter plot using Plotly
     fig = go.Figure(data=[go.Scatter3d(
-        x=imt_mss_dc_topology.x / 1e3,
-        y=imt_mss_dc_topology.y / 1e3,
-        z=imt_mss_dc_topology.z / 1e3,
+        x=imt_mss_dc_topology.space_station_x / 1e3,
+        y=imt_mss_dc_topology.space_station_y / 1e3,
+        z=imt_mss_dc_topology.space_station_z / 1e3,
         mode='markers',
         marker=dict(
             size=4,
@@ -243,16 +311,16 @@ if __name__ == '__main__':
     # Calculate the elevation with respect to the x-y plane
     elevation_xy_plane = np.degrees(
         np.arctan2(
-            imt_mss_dc_topology.z,
-            np.sqrt(imt_mss_dc_topology.x**2 + imt_mss_dc_topology.y**2)
+            imt_mss_dc_topology.space_station_z,
+            np.sqrt(imt_mss_dc_topology.space_station_x**2 + imt_mss_dc_topology.space_station_y**2)
         )
     )
 
     # Add the elevation with respect to the x-y plane to the plot
     fig.add_trace(go.Scatter3d(
-        x=imt_mss_dc_topology.x / 1e3,
-        y=imt_mss_dc_topology.y / 1e3,
-        z=imt_mss_dc_topology.z / 1e3,
+        x=imt_mss_dc_topology.space_station_x / 1e3,
+        y=imt_mss_dc_topology.space_station_y / 1e3,
+        z=imt_mss_dc_topology.space_station_z / 1e3,
         mode='markers',
         marker=dict(
             size=4,
@@ -265,7 +333,7 @@ if __name__ == '__main__':
     ))
 
     # Add lines between the origin and the IMT space stations
-    for x, y, z in zip(imt_mss_dc_topology.x / 1e3, imt_mss_dc_topology.y / 1e3, imt_mss_dc_topology.z / 1e3):
+    for x, y, z in zip(imt_mss_dc_topology.space_station_x / 1e3, imt_mss_dc_topology.space_station_y / 1e3, imt_mss_dc_topology.space_station_z / 1e3):
         fig.add_trace(go.Scatter3d(
             x=[0, x],
             y=[0, y],
@@ -274,8 +342,10 @@ if __name__ == '__main__':
             line=dict(color='green', width=2, dash='dash'),
             name='Elevation Line'
         ))
+    # Suppress the legend for the elevation plot
+    fig.update_traces(showlegend=False, selector=dict(name='Elevation Line'))
 
-    # Plot boresights
+    # Plot beam boresight vectors
     boresight_length = 100  # Length of the boresight vectors for visualization
     boresight_x, boresight_y, boresight_z = polar_to_cartesian(
         boresight_length,
@@ -283,9 +353,9 @@ if __name__ == '__main__':
         imt_mss_dc_topology.elevation
     )
     # Add arrow heads to the end of the boresight vectors
-    for x, y, z, bx, by, bz in zip(imt_mss_dc_topology.x / 1e3,
-                                   imt_mss_dc_topology.y / 1e3,
-                                   imt_mss_dc_topology.z / 1e3,
+    for x, y, z, bx, by, bz in zip(imt_mss_dc_topology.space_station_x / 1e3,
+                                   imt_mss_dc_topology.space_station_y / 1e3,
+                                   imt_mss_dc_topology.space_station_z / 1e3,
                                    boresight_x,
                                    boresight_y,
                                    boresight_z):
@@ -301,9 +371,9 @@ if __name__ == '__main__':
             sizeref=40,
             showscale=False
         ))
-    for x, y, z, bx, by, bz in zip(imt_mss_dc_topology.x / 1e3,
-                                   imt_mss_dc_topology.y / 1e3,
-                                   imt_mss_dc_topology.z / 1e3,
+    for x, y, z, bx, by, bz in zip(imt_mss_dc_topology.space_station_x / 1e3,
+                                   imt_mss_dc_topology.space_station_y / 1e3,
+                                   imt_mss_dc_topology.space_station_z / 1e3,
                                    boresight_x,
                                    boresight_y,
                                    boresight_z):
@@ -315,11 +385,40 @@ if __name__ == '__main__':
             line=dict(color='orange', width=2),
             name='Boresight'
         ))
+    # Suppress the legend for the boresight plot
+    fig.update_traces(showlegend=False, selector=dict(name='Boresight'))
 
     # Maintain axis proportions
     fig.update_layout(scene_aspectmode='data')
 
     fig.show()
+
+    # Plot the IMT MSS-DC space stations in a 2D plane
+    fig_2d = go.Figure()
+
+    # Add circles centered at the (x, y) coordinates of the space stations
+    for x, y in zip(imt_mss_dc_topology.x, imt_mss_dc_topology.y):
+        circle = go.Scatter(
+            x=[x + imt_mss_dc_topology.orbit_params.beam_radius * np.cos(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
+            y=[y + imt_mss_dc_topology.orbit_params.beam_radius * np.sin(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
+            mode='lines',
+            line=dict(color='blue')
+        )
+        fig_2d.add_trace(circle)
+
+    # Set plot title and axis labels
+    fig_2d.update_layout(
+        title='IMT MSS-DC Topology in x-y Plane',
+        xaxis_title='X [m]',
+        yaxis_title='Y [m]',
+        showlegend=False
+    )
+
+    # Maintain axis proportions
+    fig_2d.update_yaxes(scaleanchor="x", scaleratio=1)
+
+    # Show the plot
+    fig_2d.show()
 
     # Print the elevation angles
     print('Elevation angles:', imt_mss_dc_topology.elevation)
@@ -328,4 +427,8 @@ if __name__ == '__main__':
     # Print the elevation w.r.t. the x-y plane
     print('Elevation w.r.t. XY plane:', elevation_xy_plane)
     # Print the slant range
-    print('Slant range:', np.sqrt(imt_mss_dc_topology.x**2 + imt_mss_dc_topology.y**2 + imt_mss_dc_topology.z**2) / 1e3)
+    idxs = np.arange(imt_mss_dc_topology.num_base_stations // imt_mss_dc_topology.num_sectors) * \
+        imt_mss_dc_topology.num_sectors
+    print('Slant range:', np.sqrt(imt_mss_dc_topology.space_station_x[idxs]**2 +
+                                  imt_mss_dc_topology.space_station_y[idxs]**2 +
+                                  imt_mss_dc_topology.space_station_z[idxs]**2) / 1e3)
