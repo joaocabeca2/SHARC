@@ -318,9 +318,12 @@ class StationFactory(object):
                 # theta is the horizontal angle of the UE wrt the serving BS
                 theta = topology.azimuth[bs] + angle[idx]
                 # calculate UE position in x-y coordinates
-                x = topology.x[bs] + radius[idx] * np.cos(np.radians(theta))
-                y = topology.y[bs] + radius[idx] * np.sin(np.radians(theta))
-                z = topology.z[bs] * np.ones_like(x)
+                x = radius[idx] * np.cos(np.radians(theta))
+                y = radius[idx] * np.sin(np.radians(theta))
+                z = np.zeros_like(x)
+                x, y, z = topology.transform_ue_xyz(
+                    bs, x, y, z
+                )
                 ue_x.extend(x)
                 ue_y.extend(y)
                 ue_z.extend(z)

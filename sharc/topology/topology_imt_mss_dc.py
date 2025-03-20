@@ -45,6 +45,11 @@ class TopologyImtMssDc(Topology):
         self.space_station_x = None
         self.space_station_y = None
         self.space_station_z = None
+
+        self.cell_radius = params.beam_radius
+        # TODO: check this:
+        self.intersite_distance = self.cell_radius * np.sqrt(3)
+
         self.lat = None
         self.lon = None
         self.min_elev_angle = params.min_elev_angle  # Minimum elevation angle for satellite visibility
@@ -181,7 +186,7 @@ class TopologyImtMssDc(Topology):
         )
         earth_radius = np.sqrt(rx * rx + ry * ry + rz * rz)
         all_r = np.squeeze(np.array(all_positions['R'])) * 1e3
-        sat_altitude = np.mean(np.array(all_r - earth_radius)[active_satellite_idxs])
+        sat_altitude = np.array(all_r - earth_radius)[active_satellite_idxs]
 
         # We borrow the TopologyNTN method to calculate the sectors azimuth and elevation angles from their
         # respective x and y boresight coordinates
@@ -190,25 +195,32 @@ class TopologyImtMssDc(Topology):
             num_sectors=self.orbit_params.num_beams
         )
 
-        # Calculate the azimuth and elevation angles for each beam before rotating them
-        beams_azim = np.rad2deg(np.arctan2(sy, sx))
-        beams_elev = np.rad2deg(np.arctan2(np.sqrt(sy * sy + sx * sx), sat_altitude)) - 90
+        assert(len(sx) == self.orbit_params.num_beams)
+        assert(len(sy) == self.orbit_params.num_beams)
 
-        beams_azim = np.resize(
-            beams_azim,
-            total_active_satellites * self.orbit_params.num_beams
-        ).reshape(
+        # we give num_beams sectors to each satellite
+        sx = np.resize(sx, self.orbit_params.num_beams * total_active_satellites)
+        sy = np.resize(sy, self.orbit_params.num_beams * total_active_satellites)
+
+        # Calculate the azimuth and elevation angles for each beam
+        # as though their nadir is at (0,0)
+        # before rotating them
+        beams_azim = np.rad2deg(np.arctan2(sy, sx))
+        beams_elev = np.rad2deg(np.arctan2(np.sqrt(sy * sy + sx * sx),
+                                           np.repeat(sat_altitude, self.orbit_params.num_beams))
+                            ) - 90
+
+        beams_azim = beams_azim.reshape(
             (total_active_satellites, self.orbit_params.num_beams)
         )
 
-        beams_elev = np.resize(
-            beams_elev,
-            total_active_satellites * self.orbit_params.num_beams
-        ).reshape(
+        beams_elev = beams_elev.reshape(
             (total_active_satellites, self.orbit_params.num_beams)
         )
 
         # Rotate and set the each beam azimuth and elevation angles - only for the visible satellites
+        assert(self.elevation.shape, (total_active_satellites,))
+        assert(self.azimuth.shape, (total_active_satellites,))
         for i in range(total_active_satellites):
             # Rotate the azimuth and elevation angles based on the new nadir point
             beams_elev[i], beams_azim[i] = rotate_angles_based_on_new_nadir(
@@ -224,16 +236,83 @@ class TopologyImtMssDc(Topology):
         self.space_station_y = np.repeat(self.space_station_y, self.orbit_params.num_beams)
         self.space_station_z = np.repeat(self.space_station_z, self.orbit_params.num_beams)
         # the offset of the beams boresight from the satellite position
-        offset_x = sat_altitude * np.tan(np.radians(90 + self.elevation)) * np.cos(np.radians(self.azimuth))
-        offset_y = sat_altitude * np.tan(np.radians(90 + self.elevation)) * np.sin(np.radians(self.azimuth))
-        self.x = self.space_station_x + np.resize(sx, self.orbit_params.num_beams * total_active_satellites) + np.repeat(offset_x, self.orbit_params.num_beams)
-        self.y = self.space_station_y + np.resize(sy, self.orbit_params.num_beams * total_active_satellites)+ np.repeat(offset_y, self.orbit_params.num_beams)
-        self.z = self.space_station_z
+        offset_x = np.repeat(
+            sat_altitude * np.cos(np.radians(self.elevation)) * np.cos(np.radians(self.azimuth)),
+            self.orbit_params.num_beams
+        )
+        offset_y = np.repeat(
+            sat_altitude * np.cos(np.radians(self.elevation)) * np.sin(np.radians(self.azimuth)),
+            self.orbit_params.num_beams
+        )
+        offset_z = np.repeat(
+            sat_altitude * np.sin(np.radians(self.elevation)),
+            self.orbit_params.num_beams
+        )
+        self.num_base_stations = self.orbit_params.num_beams * total_active_satellites
+        self.x = sx
+        self.y = sy
+        self.z = np.zeros_like(self.y)
         self.elevation = beams_elev.flatten()  # only valid at active satellites indices
         self.azimuth = beams_azim.flatten()  # only valid at active satellites indices
-        self.num_base_stations = len(self.space_station_x)
         self.indoor = np.zeros(self.num_base_stations, dtype=bool)  # ofcourse, all are outdoor
-        self.height = np.ones(self.num_base_stations) * sat_altitude  # all are at the same height
+        self.height = np.ones(self.num_base_stations) * np.repeat(sat_altitude, self.orbit_params.num_beams)  # all are at the same height
+        # Store the latitude and longitude of the visible satellites for later use
+        self.lat = np.repeat(self.lat, self.orbit_params.num_beams)
+        self.lon = np.repeat(self.lon, self.orbit_params.num_beams)
+
+        assert(self.lat.shape == (self.num_base_stations,))
+        assert(self.lon.shape == (self.num_base_stations,))
+        assert(self.x.shape == (self.num_base_stations,))
+        assert(self.y.shape == (self.num_base_stations,))
+        assert(self.z.shape == (self.num_base_stations,))
+        assert(self.elevation.shape == (self.num_base_stations,))
+        assert(self.azimuth.shape == (self.num_base_stations,))
+        assert(self.indoor.shape == (self.num_base_stations,))
+        assert(self.height.shape == (self.num_base_stations,))
+        assert(self.height.shape == (self.num_base_stations,))
+
+    # We can factor this out if another topology also ends up needing this
+    def transform_ue_xyz(self, bs_i, x, y, z):
+        x, y, z = super().transform_ue_xyz(bs_i, x, y, z)
+
+        # translate by earth radius on the lat long passed
+        # this way we mantain the center of topology on surface of earth
+        # considering a geodesic earth
+        # since we expect the area to be small, we can just consider
+        # the center of the topology for this translation
+        rx, ry, rz = lla2ecef(self.lat[bs_i], self.lon[bs_i], 0)
+        earth_radius_at_sat_nadir = np.sqrt(rx*rx + ry*ry + rz*rz)
+        z += earth_radius_at_sat_nadir
+
+        # get angle around y axis
+        around_y = np.arctan2(
+                np.sqrt(
+                    self.space_station_x[bs_i] ** 2 +
+                    self.space_station_y[bs_i] ** 2
+                ),
+                self.space_station_z[bs_i] + self.geometry_converter.get_translation()
+            )
+
+        # get around z axis
+        around_z = np.arctan2(self.space_station_y[bs_i], self.space_station_x[bs_i])
+
+        # rotating around y
+        nx = x * np.cos(around_y) + z * np.sin(around_y)
+        nz = x * -np.sin(around_y) + z * np.cos(around_y)
+        x = nx
+        z = nz
+
+        # now we have (x,y) = (A, 0)
+        # rotating around z
+        nx = x * np.cos(around_z) + y * -np.sin(around_z)
+        ny = x * np.sin(around_z) + y * np.cos(around_z)
+        x = nx
+        y = ny
+
+        # translate ue back so other system is in (0,0,0)
+        z -= self.geometry_converter.get_translation()
+
+        return (x, y, z)
 
 
 # Example usage
