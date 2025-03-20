@@ -84,6 +84,13 @@ class StationFactory(object):
             imt_base_stations.height = imt_base_stations.z
             imt_base_stations.elevation = topology.elevation
             imt_base_stations.is_space_station = True
+        elif param.topology.type == "MSS_DC":
+            imt_base_stations.x = topology.space_station_x * np.ones(num_bs)
+            imt_base_stations.y = topology.space_station_y * np.ones(num_bs)
+            imt_base_stations.z = topology.space_station_z * np.ones(num_bs)
+            imt_base_stations.height = topology.height
+            imt_base_stations.elevation = topology.elevation
+            imt_base_stations.is_space_station = True
         else:
             imt_base_stations.x = topology.x
             imt_base_stations.y = topology.y
