@@ -41,9 +41,6 @@ class SimulationIndoorTest(unittest.TestCase):
         self.param.imt.guard_band_ratio = 0.1
         self.param.imt.bs.load_probability = 1
 
-        self.param.imt.bs.antenna.horizontal_beamsteering_range = (-180., 180.)
-        self.param.imt.bs.antenna.vertical_beamsteering_range = (0., 180.)
-
         self.param.imt.bs.conducted_power = 2
         self.param.imt.bs.height = 3
         self.param.imt.bs.noise_figure = 12
