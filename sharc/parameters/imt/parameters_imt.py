@@ -73,8 +73,8 @@ class ParametersImt(ParametersBase):
         antenna: ParametersAntennaImt = field(
             default_factory=lambda: ParametersAntennaImt(
                                         downtilt=0.0,
-                                        horizontal_beamsteering_range=(-180.,180.),
-                                        vertical_beamsteering_range=(0.,180.)
+                                        horizontal_beamsteering_range=(-180., 180.),
+                                        vertical_beamsteering_range=(0., 180.)
                                     )
         )
 
