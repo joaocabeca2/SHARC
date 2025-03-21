@@ -112,6 +112,10 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(
             self.parameters.imt.ue.antenna.multiplication_factor, 12)
 
+        self.assertEqual(self.parameters.imt.topology.central_altitude, 1111)
+        self.assertEqual(self.parameters.imt.topology.central_latitude, 21.12)
+        self.assertEqual(self.parameters.imt.topology.central_longitude, -12.134)
+
         """Test ParametersHotspot
         """
         self.assertEqual(self.parameters.imt.topology.hotspot.num_hotspots_per_cell, 1)
@@ -133,9 +137,6 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.imt.topology.single_bs.intersite_distance,
                          self.parameters.imt.topology.single_bs.cell_radius * 3 / 2)
         self.assertEqual(self.parameters.imt.topology.single_bs.num_clusters, 2)
-        self.assertEqual(self.parameters.imt.topology.single_bs.is_spherical, True)
-        self.assertEqual(self.parameters.imt.topology.single_bs.central_latitude, -15.7802)
-        self.assertEqual(self.parameters.imt.topology.single_bs.central_longitude, -47.9293)
 
         """Test ParametersIndoor
         """

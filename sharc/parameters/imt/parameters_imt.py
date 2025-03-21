@@ -130,7 +130,7 @@ class ParametersImt(ParametersBase):
             raise ValueError(
                 f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
             )
-        if self.adjacent_ch_reception not in ["ACS"]:
+        if self.adjacent_ch_reception not in ["ACS", "OFF"]:
             raise ValueError(
                 f"""ParametersImt: Invalid Adjacent Channel Reception model {self.adjacent_ch_reception}""",
             )
