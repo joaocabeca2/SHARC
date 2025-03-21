@@ -33,6 +33,12 @@ class ParametersAntennaImt(ParametersBase):
     # Minimum array gain for the beamforming antenna [dBi].
     minimum_array_gain: float = -200.0
 
+    # beamforming angle limitation [deg].
+    # PS: it isn't implemented for UEs
+    # and current implementation doesn't make sense for UEs
+    horizontal_beamsteering_range: tuple[float, float] = (-60.,60.)
+    vertical_beamsteering_range: tuple[float, float] = (90.,100.)
+
     # Mechanical downtilt [degrees].
     # PS: downtilt doesn't make sense on UE's
     downtilt: float = 6.0
