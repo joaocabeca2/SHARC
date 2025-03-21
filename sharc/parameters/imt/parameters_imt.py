@@ -70,13 +70,7 @@ class ParametersImt(ParametersBase):
         ohmic_loss: float = 3.0
         body_loss: float = 4.0
         adjacent_ch_selectivity: float = 33  # Adjacent Channel Selectivity in dB
-        antenna: ParametersAntennaImt = field(
-            default_factory=lambda: ParametersAntennaImt(
-                                        downtilt=0.0,
-                                        horizontal_beamsteering_range=(-180., 180.),
-                                        vertical_beamsteering_range=(0., 180.)
-                                    )
-        )
+        antenna: ParametersAntennaImt = field(default_factory=lambda: ParametersAntennaImt(downtilt=0.0,))
 
     ue: ParametersUE = field(default_factory=ParametersUE)
 
