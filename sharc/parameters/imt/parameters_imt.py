@@ -68,7 +68,13 @@ class ParametersImt(ParametersBase):
         noise_figure: float = 10.0
         ohmic_loss: float = 3.0
         body_loss: float = 4.0
-        antenna: ParametersAntennaImt = field(default_factory=lambda: ParametersAntennaImt(downtilt=0.0))
+        antenna: ParametersAntennaImt = field(
+            default_factory=lambda: ParametersAntennaImt(
+                                        downtilt=0.0,
+                                        horizontal_beamsteering_range=(-180.,180.),
+                                        vertical_beamsteering_range=(0.,180.)
+                                    )
+        )
 
     ue: ParametersUE = field(default_factory=ParametersUE)
 

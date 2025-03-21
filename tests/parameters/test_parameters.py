@@ -29,6 +29,8 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.imt.spurious_emissions, -13.1)
         self.assertEqual(self.parameters.imt.guard_band_ratio, 0.14)
 
+        self.assertEqual(self.parameters.imt.bs.antenna.horizontal_beamsteering_range, (-10.1, 11.2))
+        self.assertEqual(self.parameters.imt.bs.antenna.vertical_beamsteering_range, (0., 180.))
         self.assertEqual(self.parameters.imt.bs.load_probability, 0.2)
         self.assertEqual(self.parameters.imt.bs.conducted_power, 11.1)
         self.assertEqual(self.parameters.imt.bs.height, 6.1)
@@ -37,6 +39,8 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.imt.uplink.attenuation_factor, 0.4)
         self.assertEqual(self.parameters.imt.uplink.sinr_min, -10.0)
         self.assertEqual(self.parameters.imt.uplink.sinr_max, 22.0)
+        self.assertEqual(self.parameters.imt.ue.antenna.horizontal_beamsteering_range, (-180., 180.))
+        self.assertEqual(self.parameters.imt.ue.antenna.vertical_beamsteering_range, (0., 180.))
         self.assertEqual(self.parameters.imt.ue.k, 3)
         self.assertEqual(self.parameters.imt.ue.k_m, 1)
         self.assertEqual(self.parameters.imt.ue.indoor_percent, 5.0)
