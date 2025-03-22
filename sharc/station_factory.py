@@ -39,6 +39,7 @@ from sharc.antenna.antenna_rs1861_9b import AntennaRS1861_9B
 from sharc.antenna.antenna_rs1861_9c import AntennaRS1861_9C
 from sharc.antenna.antenna_rs2043 import AntennaRS2043
 from sharc.antenna.antenna_s465 import AntennaS465
+from sharc.antenna.antenna_rra7_3 import AntennaReg_RR_A7_3
 from sharc.antenna.antenna_modified_s465 import AntennaModifiedS465
 from sharc.antenna.antenna_s580 import AntennaS580
 from sharc.antenna.antenna_s672 import AntennaS672
@@ -121,7 +122,8 @@ class StationFactory(object):
             imt_base_stations.antenna[i] = \
                 AntennaBeamformingImt(
                     param_ant, imt_base_stations.azimuth[i],
-                    imt_base_stations.elevation[i],)
+                    imt_base_stations.elevation[i], param_ant_bs.subarray
+                )
 
         # imt_base_stations.antenna = [AntennaOmni(0) for bs in range(num_bs)]
         imt_base_stations.bandwidth = param.bandwidth * np.ones(num_bs)
@@ -194,9 +196,12 @@ class StationFactory(object):
 
         ue_x = list()
         ue_y = list()
+        # TODO: Sanitaze the azimuth_range parameter
+        azimuth_range = param.ue.azimuth_range
+        if (not isinstance(azimuth_range, tuple)) or len(azimuth_range) != 2:
+            raise ValueError("Invalid type or length for parameter azimuth_range")
 
         # Calculate UE pointing
-        azimuth_range = (-60, 60)
         azimuth = (azimuth_range[1] - azimuth_range[0]) * \
             random_number_gen.random_sample(num_ue) + azimuth_range[0]
         # Remove the randomness from azimuth and you will have a perfect pointing
@@ -270,7 +275,7 @@ class StationFactory(object):
                     angle_mean, angle_scale, int(N * num_ue),
                 )
 
-                angle_cutoff = 60
+                angle_cutoff = np.max(azimuth_range)
                 idx = np.where((angle_n < angle_cutoff) & (
                     angle_n > -angle_cutoff
                 ))[0][:num_ue]
@@ -333,7 +338,7 @@ class StationFactory(object):
         for i in range(num_ue):
             imt_ue.antenna[i] = AntennaBeamformingImt(
                 par, imt_ue.azimuth[i],
-                imt_ue.elevation[i],
+                imt_ue.elevation[i], ue_param_ant.subarray
             )
 
         # imt_ue.antenna = [AntennaOmni(0) for bs in range(num_ue)]
@@ -360,8 +365,10 @@ class StationFactory(object):
 
         imt_ue.spectral_mask.set_mask()
 
-        if param.topology.type == 'MACROCELL' or param.topology.type == 'HOTSPOT':
-            imt_ue.intersite_dist = param.intersite_distance
+        if param.topology.type == 'MACROCELL':
+            imt_ue.intersite_dist = param.topology.macrocell.intersite_distance
+        elif param.topology.type == 'HOTSPOT':
+            imt_ue.intersite_dist = param.topology.hotspot.intersite_distance
 
         return imt_ue
 
@@ -488,7 +495,7 @@ class StationFactory(object):
         for i in range(num_ue):
             imt_ue.antenna[i] = AntennaBeamformingImt(
                 par, imt_ue.azimuth[i],
-                imt_ue.elevation[i],
+                imt_ue.elevation[i], ue_param_ant.subarray
             )
 
         # imt_ue.antenna = [AntennaOmni(0) for bs in range(num_ue)]
@@ -519,6 +526,11 @@ class StationFactory(object):
 
     @staticmethod
     def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState):
+        if parameters.imt.topology.type == 'MACROCELL':
+            intersite_dist = parameters.imt.topology.macrocell.intersite_distance
+        elif parameters.imt.topology.type == 'HOTSPOT':
+            intersite_dist = parameters.imt.topology.hotspot.intersite_distance
+
         if parameters.general.system == "METSAT_SS":
             return StationFactory.generate_metsat_ss(parameters.metsat_ss)
         elif parameters.general.system == "EESS_SS":
@@ -538,7 +550,7 @@ class StationFactory(object):
         elif parameters.general.system == "FS":
             return StationFactory.generate_fs_station(parameters.fs)
         elif parameters.general.system == "HAPS":
-            return StationFactory.generate_haps(parameters.haps, parameters.imt.intersite_distance, random_number_gen)
+            return StationFactory.generate_haps(parameters.haps, intersite_dist, random_number_gen)
         elif parameters.general.system == "RNS":
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         else:
@@ -602,7 +614,7 @@ class StationFactory(object):
         elif param.antenna_pattern == "ITU-R S.672":
             fss_space_station.antenna = np.array([AntennaS672(param)])
         elif param.antenna_pattern == "ITU-R S.1528":
-            fss_space_station.antenna = np.array([AntennaS1528(param)])
+            fss_space_station.antenna = np.array([AntennaS1528(param.antenna_s1528)])
         elif param.antenna_pattern == "FSS_SS":
             fss_space_station.antenna = np.array([AntennaFssSs(param)])
         else:
@@ -850,6 +862,10 @@ class StationFactory(object):
             case "ITU-R S.465":
                 single_earth_station.antenna = np.array(
                     [AntennaS465(param.antenna.itu_r_s_465)],
+                )
+            case "ITU-R Reg. RR. Appendice 7 Annex 3":
+                single_earth_station.antenna = np.array(
+                    [AntennaReg_RR_A7_3(param.antenna.itu_reg_rr_a7_3)],
                 )
             case "ITU-R S.1855":
                 single_earth_station.antenna = np.array(

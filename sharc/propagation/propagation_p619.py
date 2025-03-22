@@ -389,9 +389,7 @@ class PropagationP619(Propagation):
             earth_station_antenna_gain,
             is_single_entry_interf,
         )
-        # FIXME: Need this hack because the other IMT propagtion models returns num_bs x num_ue
-        if is_intra_imt:
-            loss = np.transpose(loss)
+
         return loss
 
     @dispatch(np.ndarray, np.ndarray, np.ndarray, dict, bool, np.ndarray, bool)
