@@ -157,7 +157,7 @@ class SimulationDownlinkTest(unittest.TestCase):
         self.param.ras.geometry.location.type = "FIXED"
         self.param.ras.geometry.location.x = -5000
         self.param.ras.geometry.location.y = 0
-        self.param.ras.height = 10
+        self.param.ras.geometry.height = 10
         self.param.ras.geometry.elevation.type = "FIXED"
         self.param.ras.geometry.elevation.fixed = 20
         self.param.ras.geometry.azimuth.fixed = 0
@@ -551,7 +551,7 @@ class SimulationDownlinkTest(unittest.TestCase):
         )
         self.simulation.system.x = np.array([-2000])
         self.simulation.system.y = np.array([0])
-        self.simulation.system.height = np.array([self.param.ras.height])
+        self.simulation.system.height = np.array([self.param.ras.geometry.height])
         self.simulation.system.antenna[0].effective_area = 54.9779
 
         # Test gain calculation
@@ -599,95 +599,249 @@ class SimulationDownlinkTest(unittest.TestCase):
         self.param.general.system = "FSS_ES"
         self.simulation = SimulationDownlink(self.param, "")
 
+        ############################################################################
+        # Calculating bw co-channel weights for when system is at start of band
         bw_imt = 200
         bw_sys = 33.33
         ue_k = 3
         ref_weights = np.array([0.5, 0, 0])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 100
         bw_sys = 25
         ue_k = 3
         ref_weights = np.array([0.75, 0, 0])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 200
         bw_sys = 66.67
         ue_k = 3
         ref_weights = np.array([1, 0, 0])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 400
         bw_sys = 200
         ue_k = 3
         ref_weights = np.array([1, 0.49, 0])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 200
         bw_sys = 133.33
         ue_k = 3
         ref_weights = np.array([1, 1, 0])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 200
         bw_sys = 150
         ue_k = 3
         ref_weights = np.array([1, 1, 0.25])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 150
         bw_sys = 150
         ue_k = 3
         ref_weights = np.array([1, 1, 1])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 200
         bw_sys = 300
         ue_k = 3
         ref_weights = np.array([1, 1, 1])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 200
         bw_sys = 50
         ue_k = 2
         ref_weights = np.array([0.5, 0])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 100
         bw_sys = 60
         ue_k = 2
         ref_weights = np.array([1, 0.2])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 300
         bw_sys = 300
         ue_k = 2
         ref_weights = np.array([1, 1])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 100
         bw_sys = 50
         ue_k = 1
         ref_weights = np.array([0.5])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
         bw_imt = 200
         bw_sys = 180
         ue_k = 1
         ref_weights = np.array([0.9])
-        weights = self.simulation.calculate_bw_weights(bw_imt, bw_sys, ue_k)
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2 + bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
+        npt.assert_allclose(ref_weights, weights, atol=1e-2)
+
+        ############################################################################
+        # Calculating weigths for overlap at the middle of band:
+        bw_imt = 200
+        bw_sys = 33.33
+        ue_k = 3
+        ref_weights = np.array([0, 0.5, 0])
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        # at middle of imt band
+        fc_sys = fc_imt - bw_sys / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
+        npt.assert_allclose(ref_weights, weights, atol=1e-2)
+
+        bw_imt = 200
+        bw_sys = 50
+        ue_k = 4
+        ref_weights = np.array([0, 0.5, 0.5, 0])
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        # at middle of imt band
+        fc_sys = fc_imt
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
+        npt.assert_allclose(ref_weights, weights, atol=1e-2)
+
+        bw_imt = 200
+        bw_sys = 50
+        ue_k = 4
+        ref_weights = np.array([0, 0.7, 0.3, 0])
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        # at middle - 10 of imt band
+        fc_sys = fc_imt - 10
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
+        npt.assert_allclose(ref_weights, weights, atol=1e-2)
+
+        ############################################################################
+        # Calculating co-channel weights for partial overlap
+
+        bw_imt = 200
+        bw_sys = 180
+        ue_k = 1
+        ref_weights = np.array([0.45])
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        # half inside, half outside
+        fc_sys = fc_imt - bw_imt / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
+        npt.assert_allclose(ref_weights, weights, atol=1e-2)
+
+        bw_imt = 200
+        bw_sys = 150
+        ue_k = 3
+        ref_weights = np.array([1, 0.125, 0])
+
+        bw_ue = np.repeat(bw_imt / ue_k, ue_k)
+        fc_imt = 2200
+        fc_ue = np.linspace(fc_imt - bw_imt / 2 + bw_ue[0]/2, fc_imt + bw_imt / 2 - bw_ue[0]/2, ue_k)
+        fc_sys = fc_imt - bw_imt / 2
+
+        weights = self.simulation.calculate_bw_weights(bw_ue, fc_ue, bw_sys, fc_sys)
         npt.assert_allclose(ref_weights, weights, atol=1e-2)
 
 
