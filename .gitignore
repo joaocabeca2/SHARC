@@ -92,6 +92,10 @@ myenv/Scripts/pythonw.exe
 [SYS]*.txt
 IMT_*.txt
 SYS_*.txt
+[IMT]*.csv
+[SYS]*.csv
+IMT_*.csv
+SYS_*.csv
 
 
 # Ignores campaigns output

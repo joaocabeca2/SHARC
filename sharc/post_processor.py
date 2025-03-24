@@ -286,10 +286,15 @@ class PostProcessor:
                 if attr_name not in figs:
                     figs[attr_name] = go.Figure()
                     figs[attr_name].update_layout(
-                        title=f'CDF Plot for {attr_plot_info["title"]}',
+                        title=f'CCDF Plot for {attr_plot_info["title"]}',
                         xaxis_title=attr_plot_info["x_label"],
-                        yaxis_title="CDF",
+                        yaxis_title="CCDF",
                         yaxis=dict(tickmode="array", tickvals=[0, 0.25, 0.5, 0.75, 1]),
+                        #yaxis=dict(
+                        #type="log",  # Define o eixo Y como logarítmico
+                        #tickmode="array",
+                        #tickvals=[1, 0.1, 0.01, 0.001, 0.0001],  # Adicionando mais níveis
+                        #range=[-4, 0]),
                         xaxis=dict(tickmode="linear", dtick=5),
                         legend_title="Labels",
                         meta={"related_results_attribute": attr_name},
@@ -443,8 +448,8 @@ class PostProcessor:
         )
         cumulative = np.cumsum(values)
         x = base[:-1]
-        y = cumulative / cumulative[-1]
-
+        y = cumulative / cumulative[-1] #cdf
+        #y = 1 - (cumulative / cumulative[-1]) #ccdf
         return (x, y)
 
     @staticmethod

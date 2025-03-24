@@ -144,7 +144,7 @@ single_earth_station:
       Hre: 5
       tx_lat: 10
       rx_lat: 11
-      polarization: horizontal # testar se roda com circular
+      polarization: circular # testar se roda com circular
       clutter_loss: TRUE
   geometry:
     height: 5
