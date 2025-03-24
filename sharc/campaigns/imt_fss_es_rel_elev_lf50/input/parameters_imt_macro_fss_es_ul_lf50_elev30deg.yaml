@@ -1,0 +1,166 @@
+###################################################################################
+# Cenario IMT --> FSS_ES (FSS space to Earth)
+# IMT interferidor em DL, topologia macrocell, urban, 1 cluster
+# 	Urban --> coerencia com 
+#				imt.bs.antenna.height
+#				imt.bs.n_rows
+#				imt.bs.n_columns
+#				imt.topology.macrocell.intersite_distance
+# Possiveis variacoes em campanhas: 
+#		No FSS Earth Station --> fss_es.x / fss_es.azimuth / fss_es.elevation
+#		No IMT BS --> imt.bs.load_probability 
+# Dependencias entre cenários ou modelos
+#       P452 (Hte, Hre) e IMT (HTe == bs.height / ue.height; Hre = fss_es.height)
+#       fss_es.noise_temperature --> 357.5 se fss_es.elevation < 5; 275 caso contrário
+###################################################################################
+general:  
+    num_snapshots: 5000
+    imt_link: UPLINK
+    system: SINGLE_EARTH_STATION
+    enable_cochannel: TRUE
+    enable_adjacent_channel: FALSE
+    seed: 101
+    overwrite_output: FALSE
+    output_dir: campaigns/imt_fss_es_rel_elev_lf50/output
+    output_dir_prefix: output_imt_fss_es_ul_elev30deg
+    
+imt:
+    minimum_separation_distance_bs_ue: 35
+    interfered_with: FALSE
+    frequency: 7500 # centro Sub-banda 4 (ver xls)
+    bandwidth: 100
+    rb_bandwidth: 0.180
+    spectral_mask: IMT-2020
+    spurious_emissions: -13
+    guard_band_ratio: 0.1
+    topology:
+        type: MACROCELL
+        macrocell:
+            intersite_distance: 600
+            wrap_around: FALSE
+            num_clusters: 1
+    adjacent_antenna_model: SINGLE_ELEMENT
+    bs:
+        load_probability: .5
+        conducted_power: 22 
+        height: 18 # 18 m for macrocell
+        noise_figure: 11
+        ohmic_loss: 0
+        antenna:
+            normalization: FALSE
+            normalization_file: antenna/beamforming_normalization/bs_norm.npz
+            element_pattern: M2101
+            minimum_array_gain: -200
+            downtilt: 6
+            element_max_g: 6.4
+            element_phi_3db: 90
+            element_theta_3db: 65
+            n_rows: 8
+            n_columns: 16
+            element_horiz_spacing: 0.5
+            element_vert_spacing: 2.1
+            element_am: 30
+            element_sla_v: 30
+            multiplication_factor: 12
+            ###########################################################################
+            # Subarray for IMT as defined in R23-WP5D-C-0413, Annex 4.2
+            # Single column sub array
+            subarray:
+                # NOTE: if subarray is enabled, element definition will mostly come from
+                # the above definitions
+                is_enabled: true
+                # Rows per subarray
+                n_rows: 3
+                # Sub array element spacing (d/lambda).
+                element_vert_spacing: 0.7
+                # Sub array eletrical downtilt [deg]
+                eletrical_downtilt: 3.0
+             #############################################################
+    ue:
+        k: 3
+        k_m: 1
+        indoor_percent: 70
+        distribution_type: UNIFORM
+        distribution_distance: UNIFORM
+        distribution_azimuth: UNIFORM
+        tx_power_control: ON
+        p_o_pusch: -92.2
+        alpha: 0.8
+        p_cmax: 23
+        power_dynamic_range: 56
+        height: 1.5
+        noise_figure: 13
+        ohmic_loss: 0
+        body_loss: 4
+        antenna:
+            normalization: FALSE
+            normalization_file: antenna/beamforming_normalization/ue_norm.npz
+            element_pattern: FIXED
+            minimum_array_gain: -200
+            element_max_g: -4
+            element_phi_3db: 180
+            element_theta_3db: 360
+            n_rows: 1
+            n_columns: 1
+            element_horiz_spacing: 0.5
+            element_vert_spacing: 0.5
+            element_am: 25
+            element_sla_v: 25
+            multiplication_factor: 12
+    uplink:
+        attenuation_factor: 0.4
+        sinr_min: -10
+        sinr_max: 22
+    downlink:
+        attenuation_factor: 0.6
+        sinr_min: -10
+        sinr_max: 30
+    channel_model: UMa
+    season: SUMMER
+    los_adjustment_factor: 18
+    shadowing: TRUE
+    noise_temperature: 290
+    param_p619:
+        space_station_alt_m: 540000
+        earth_station_alt_m: 1200
+        earth_station_lat_deg: 13
+        earth_station_long_diff_deg: 0
+        
+single_earth_station:
+  frequency: 7500
+  bandwidth: 100
+  tx_power_density: -200
+  noise_temperature: 275
+  channel_model: P452
+  param_p452:
+      atmospheric_pressure: 1017
+      air_temperature: 293.15
+      N0: 352.58
+      delta_N: 60
+      percentage_p: 0.2
+      Dct: 101
+      Dcr: 100
+      Hte: 1.5
+      Hre: 5
+      tx_lat: 10
+      rx_lat: 11
+      polarization: horizontal # testar se roda com circular
+      clutter_loss: TRUE
+  geometry:
+    height: 5
+    azimuth:
+      type: FIXED
+      fixed: 180
+    elevation:
+      type: FIXED
+      fixed: 30
+    location:
+      type: FIXED
+      fixed:
+        x: 2600 # Se for 1km, ajustar se não for.
+        y: 0
+  antenna:
+      pattern: ITU-R S.465
+      gain: 50.0
+      itu_r_s_465:
+        diameter: 5.15

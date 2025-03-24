@@ -261,6 +261,19 @@ imt:
             # side lobes when beamforming is assumed in adjacent channel.
             #       Original value: 12 (Rec. ITU-R M.2101)
             multiplication_factor  : 12
+            ###########################################################################
+            # Subarray for IMT as defined in R23-WP5D-C-0413, Annex 4.2
+            # Single column sub array
+            subarray:
+                # NOTE: if subarray is enabled, element definition will mostly come from
+                # the above definitions
+                is_enabled: true
+                # Rows per subarray
+                n_rows: 10
+                # Sub array element spacing (d/lambda).
+                element_vert_spacing: 0.05
+                # Sub array eletrical downtilt [deg]
+                eletrical_downtilt: 9.0
 
     ###########################################################################
     # User Equipment parameters:
@@ -1013,6 +1026,11 @@ single_earth_station:
             ###########################################################################
             # Antenna envelope gain [dBi]
             envelope_gain: -4
+        itu_reg_rr_a7_3:
+            ###########################################################################
+            # Antenna diameter [m]
+            # if no diameter is passed, a diameter will be assumed according to document
+            diameter: 2.12
     ###########################################################################
     # Selected channel model
     # Possible values are "P619", "P452", "TerrestrialSimple"

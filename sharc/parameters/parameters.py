@@ -98,7 +98,7 @@ class Parameters(object):
         #######################################################################
         # RAS station
         #######################################################################
-        self.ras.load_parameters_from_file(self.file_name)
+        #self.ras.load_parameters_from_file(self.file_name)
 
         #######################################################################
         # EESS passive

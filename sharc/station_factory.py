@@ -39,6 +39,7 @@ from sharc.antenna.antenna_rs1861_9b import AntennaRS1861_9B
 from sharc.antenna.antenna_rs1861_9c import AntennaRS1861_9C
 from sharc.antenna.antenna_rs2043 import AntennaRS2043
 from sharc.antenna.antenna_s465 import AntennaS465
+from sharc.antenna.antenna_rra7_3 import AntennaReg_RR_A7_3
 from sharc.antenna.antenna_modified_s465 import AntennaModifiedS465
 from sharc.antenna.antenna_s580 import AntennaS580
 from sharc.antenna.antenna_s672 import AntennaS672
@@ -121,7 +122,8 @@ class StationFactory(object):
             imt_base_stations.antenna[i] = \
                 AntennaBeamformingImt(
                     param_ant, imt_base_stations.azimuth[i],
-                    imt_base_stations.elevation[i],)
+                    imt_base_stations.elevation[i], param_ant_bs.subarray
+                )
 
         # imt_base_stations.antenna = [AntennaOmni(0) for bs in range(num_bs)]
         imt_base_stations.bandwidth = param.bandwidth * np.ones(num_bs)
@@ -336,7 +338,7 @@ class StationFactory(object):
         for i in range(num_ue):
             imt_ue.antenna[i] = AntennaBeamformingImt(
                 par, imt_ue.azimuth[i],
-                imt_ue.elevation[i],
+                imt_ue.elevation[i], ue_param_ant.subarray
             )
 
         # imt_ue.antenna = [AntennaOmni(0) for bs in range(num_ue)]
@@ -493,7 +495,7 @@ class StationFactory(object):
         for i in range(num_ue):
             imt_ue.antenna[i] = AntennaBeamformingImt(
                 par, imt_ue.azimuth[i],
-                imt_ue.elevation[i],
+                imt_ue.elevation[i], ue_param_ant.subarray
             )
 
         # imt_ue.antenna = [AntennaOmni(0) for bs in range(num_ue)]
@@ -702,7 +704,7 @@ class StationFactory(object):
 
         fss_earth_station.height = np.array([param.height])
 
-        if param.azimuth.upper() == "RANDOM":
+        if param.azimuth == "RANDOM":
             fss_earth_station.azimuth = random_number_gen.uniform(-180., 180.)
         else:
             fss_earth_station.azimuth = float(param.azimuth)
@@ -860,6 +862,10 @@ class StationFactory(object):
             case "ITU-R S.465":
                 single_earth_station.antenna = np.array(
                     [AntennaS465(param.antenna.itu_r_s_465)],
+                )
+            case "ITU-R Reg. RR. Appendice 7 Annex 3":
+                single_earth_station.antenna = np.array(
+                    [AntennaReg_RR_A7_3(param.antenna.itu_reg_rr_a7_3)],
                 )
             case "ITU-R S.1855":
                 single_earth_station.antenna = np.array(
