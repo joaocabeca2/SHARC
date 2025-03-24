@@ -152,7 +152,7 @@ class SimulationUplinkTest(unittest.TestCase):
         self.param.ras.geometry.location.type = "FIXED"
         self.param.ras.geometry.location.fixed.x = -5000
         self.param.ras.geometry.location.fixed.y = 0
-        self.param.ras.height = 10
+        self.param.ras.geometry.height = 10
         self.param.ras.geometry.elevation.fixed = 20
         self.param.ras.geometry.azimuth.fixed = 0
         self.param.ras.geometry.elevation.type = "FIXED"
@@ -447,11 +447,10 @@ class SimulationUplinkTest(unittest.TestCase):
                             rx_power[1] - total_interference[1],
                             atol=1e-2)
 
+        self.param.fss_es.x = -2000
+        self.param.fss_es.y = 0
         self.simulation.system = StationFactory.generate_fss_earth_station(
             self.param.fss_es, random_number_gen)
-        self.simulation.system.x = np.array([-2000])
-        self.simulation.system.y = np.array([0])
-        self.simulation.system.height = np.array([self.param.fss_es.height])
 
         # what if FSS ES is interferer???
         self.simulation.calculate_sinr_ext()
@@ -596,7 +595,7 @@ class SimulationUplinkTest(unittest.TestCase):
         )
         self.simulation.system.x = np.array([-2000])
         self.simulation.system.y = np.array([0])
-        self.simulation.system.height = np.array([self.param.ras.height])
+        self.simulation.system.height = np.array([self.param.ras.geometry.height])
         self.simulation.system.antenna[0].effective_area = 54.9779
 
         # Test gain calculation

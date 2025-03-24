@@ -163,8 +163,8 @@ class SimulationDownlink(Simulation):
 
             # Get the weight factor for the system overlaping bandwidth in each UE band.
             weights = self.calculate_bw_weights(
-                self.ue.bandwidth,
-                self.ue.center_freq,
+                self.ue.bandwidth[ue],
+                self.ue.center_freq[ue],
                 float(self.param_system.bandwidth),
                 float(self.param_system.frequency),
             )
@@ -326,9 +326,10 @@ class SimulationDownlink(Simulation):
             if self.co_channel:
                 if self.overlapping_bandwidth:
                     acs = 0
+                    ue = self.link[bs]
                     weights = self.calculate_bw_weights(
-                        self.ue.bandwidth,
-                        self.ue.center_freq,
+                        self.ue.bandwidth[ue],
+                        self.ue.center_freq[ue],
                         self.param_system.bandwidth,
                         self.param_system.frequency,
                     )

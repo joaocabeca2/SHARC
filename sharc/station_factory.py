@@ -783,6 +783,8 @@ class StationFactory(object):
         fss_earth_station.noise_temperature = np.array([param.noise_temperature])
         fss_earth_station.thermal_noise = np.array([-500])
         fss_earth_station.total_interference = np.array([-500])
+        fss_earth_station.rx_interference = np.array([-500])
+        fss_earth_station.rx_power = np.array([-500])
 
         return fss_earth_station
 
@@ -933,12 +935,12 @@ class StationFactory(object):
                 math.log10(param.bandwidth * 1e6) + 30],
         )
 
-        single_earth_station.noise_temperature = param.noise_temperature
+        single_earth_station.noise_temperature = np.array([param.noise_temperature])
 
         # TODO: check why this would not be set on the StationManager() constructor itself?
-        single_earth_station.rx_interference = -500
-        single_earth_station.thermal_noise = -500
-        single_earth_station.total_interference = -500
+        single_earth_station.rx_interference = np.array([-500])
+        single_earth_station.thermal_noise = np.array([-500])
+        single_earth_station.total_interference = np.array([-500])
 
         return single_earth_station
 
