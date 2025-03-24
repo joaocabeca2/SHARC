@@ -704,7 +704,7 @@ class StationFactory(object):
 
         fss_earth_station.height = np.array([param.height])
 
-        if param.azimuth.upper() == "RANDOM":
+        if param.azimuth == "RANDOM":
             fss_earth_station.azimuth = random_number_gen.uniform(-180., 180.)
         else:
             fss_earth_station.azimuth = float(param.azimuth)

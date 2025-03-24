@@ -40,4 +40,4 @@ def run_campaign(campaign_name):
 
 if __name__ == "__main__":
     # Example usage
-    run_campaign("imt_hibs_ras_2600_MHz")
+    run_campaign("imt_fss_es_rel_elev_lf20")
