@@ -33,6 +33,12 @@ class ParametersAntennaImt(ParametersBase):
     # Minimum array gain for the beamforming antenna [dBi].
     minimum_array_gain: float = -200.0
 
+    # beamforming angle limitation [deg].
+    # PS: it isn't implemented for UEs
+    # and current implementation doesn't make sense for UEs
+    horizontal_beamsteering_range: tuple[float | int, float | int] = (-180., 180.)
+    vertical_beamsteering_range: tuple[float | int, float | int] = (0., 180.)
+
     # Mechanical downtilt [degrees].
     # PS: downtilt doesn't make sense on UE's
     downtilt: float = 6.0
@@ -87,6 +93,62 @@ class ParametersAntennaImt(ParametersBase):
         if self.element_pattern.upper() not in ["M2101", "F1336", "FIXED"]:
             raise ValueError(
                 f"Invalid element_pattern value {self.element_pattern}",
+            )
+        if isinstance(self.horizontal_beamsteering_range, list):
+            self.horizontal_beamsteering_range = tuple(self.horizontal_beamsteering_range)
+
+        if not isinstance(self.horizontal_beamsteering_range, tuple):
+            raise ValueError(
+                f"Invalid {ctx}.horizontal_beamsteering_range={self.horizontal_beamsteering_range}\n"
+                "It needs to be a tuple"
+            )
+        if len(self.horizontal_beamsteering_range) != 2\
+            or not all(map(
+                lambda x: isinstance(x, float) or isinstance(x, int), self.horizontal_beamsteering_range
+            )):
+            raise ValueError(
+                f"Invalid {ctx}.horizontal_beamsteering_range={self.horizontal_beamsteering_range}\n"
+                "It needs to contain two numbers delimiting the range of beamsteering in degrees"
+            )
+        if self.horizontal_beamsteering_range[0] > self.horizontal_beamsteering_range[1]:
+            raise ValueError(
+                f"Invalid {ctx}.horizontal_beamsteering_range={self.horizontal_beamsteering_range}\n"
+                "The second value must be bigger than the first"
+            )
+        if not all(map(
+                lambda x: x >= -180. and x <= 180., self.horizontal_beamsteering_range
+            )):
+            raise ValueError(
+                f"Invalid {ctx}.horizontal_beamsteering_range={self.horizontal_beamsteering_range}\n"
+                "Horizontal beamsteering limit angles must be in the range [-180, 180]"
+            )
+
+        if isinstance(self.vertical_beamsteering_range, list):
+            self.vertical_beamsteering_range = tuple(self.vertical_beamsteering_range)
+        if not isinstance(self.vertical_beamsteering_range, tuple):
+            raise ValueError(
+                f"Invalid {ctx}.vertical_beamsteering_range={self.vertical_beamsteering_range}\n"
+                "It needs to be a tuple"
+            )
+        if len(self.vertical_beamsteering_range) != 2\
+            or not all(map(
+                lambda x: isinstance(x, float) or isinstance(x, int), self.vertical_beamsteering_range
+            )):
+            raise ValueError(
+                f"Invalid {ctx}.vertical_beamsteering_range={self.vertical_beamsteering_range}\n"
+                "It needs to contain two numbers delimiting the range of beamsteering in degrees"
+            )
+        if self.vertical_beamsteering_range[0] > self.vertical_beamsteering_range[1]:
+            raise ValueError(
+                f"Invalid {ctx}.vertical_beamsteering_range={self.vertical_beamsteering_range}\n"
+                "The second value must be bigger than the first"
+            )
+        if not all(map(
+                lambda x: x >= 0. and x <= 180., self.vertical_beamsteering_range
+            )):
+            raise ValueError(
+                f"Invalid {ctx}.vertical_beamsteering_range={self.vertical_beamsteering_range}\n"
+                "vertical beamsteering limit angles must be in the range [0, 180]"
             )
 
     def get_antenna_parameters(self) -> AntennaPar:

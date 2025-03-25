@@ -70,7 +70,15 @@ class ParametersImt(ParametersBase):
         ohmic_loss: float = 3.0
         body_loss: float = 4.0
         adjacent_ch_selectivity: float = 33  # Adjacent Channel Selectivity in dB
-        antenna: ParametersAntennaImt = field(default_factory=lambda: ParametersAntennaImt(downtilt=0.0))
+        antenna: ParametersAntennaImt = field(default_factory=lambda: ParametersAntennaImt(downtilt=0.0,))
+
+        def validate(self, ctx: str):
+            if self.antenna.horizontal_beamsteering_range != (-180., 180.)\
+                    or self.antenna.vertical_beamsteering_range != (0., 180.):
+                raise NotImplementedError(
+                    "UE antenna beamsteering limit has not been implemented. Default values of\n"
+                    "horizontal = (-180., 180.), vertical = (0., 180.) should not be changed"
+                )
 
     ue: ParametersUE = field(default_factory=ParametersUE)
 
