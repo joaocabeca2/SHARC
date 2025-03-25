@@ -51,7 +51,7 @@ imt:
             normalization_file: antenna/beamforming_normalization/bs_norm.npz
             element_pattern: M2101
             minimum_array_gain: -200
-            downtilt: 3
+            downtilt: 6
             element_max_g: 6.4
             element_phi_3db: 90
             element_theta_3db: 65
@@ -144,7 +144,7 @@ single_earth_station:
       Hre: 5
       tx_lat: 10
       rx_lat: 11
-      polarization: circular # testar se roda com circular
+      polarization: horizontal # testar se roda com circular
       clutter_loss: TRUE
   geometry:
     height: 5

@@ -286,9 +286,9 @@ class PostProcessor:
                 if attr_name not in figs:
                     figs[attr_name] = go.Figure()
                     figs[attr_name].update_layout(
-                        title=f'CCDF Plot for {attr_plot_info["title"]}',
+                        title=f'CDF Plot for {attr_plot_info["title"]}',
                         xaxis_title=attr_plot_info["x_label"],
-                        yaxis_title="CCDF",
+                        yaxis_title="CDF",
                         yaxis=dict(tickmode="array", tickvals=[0, 0.25, 0.5, 0.75, 1]),
                         #yaxis=dict(
                         #type="log",  # Define o eixo Y como logarítmico
