@@ -203,7 +203,13 @@ imt:
             # If normalization of M2101 should be applied for BS
             normalization: FALSE
             ###########################################################################
-            # If normalization of M2101 should be applied for UE
+            # Base station horizontal beamsteering range. [deg]
+            # The range considers the BS azimuth as 0deg
+            horizontal_beamsteering_range: !!python/tuple [-60., 60.]
+            ###########################################################################
+            # Base station horizontal beamsteering range. [deg]
+            # The range considers the horizon as 90deg, 0 as zenith
+            vertical_beamsteering_range: !!python/tuple [90., 100.]
             ###########################################################################
             # File to be used in the BS beamforming normalization
             # Normalization files can be generated with the

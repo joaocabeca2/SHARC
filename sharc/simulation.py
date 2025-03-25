@@ -409,10 +409,26 @@ class Simulation(ABC, Observable):
                 self.ue.active[self.link[bs]] = np.ones(K, dtype=bool)
                 for ue in self.link[bs]:
                     # add beam to BS antennas
-                    self.bs.antenna[bs].add_beam(
+
+                    # limit beamforming angle
+                    bs_beam_phi = np.clip(
                         self.bs_to_ue_phi[bs, ue],
-                        self.bs_to_ue_theta[bs, ue],
+                        *(self.parameters.imt.bs.antenna.horizontal_beamsteering_range + self.bs.azimuth[bs])
                     )
+
+                    bs_beam_theta = np.clip(
+                        self.bs_to_ue_theta[bs, ue],
+                        *self.parameters.imt.bs.antenna.vertical_beamsteering_range
+                    )
+
+                    self.bs.antenna[bs].add_beam(
+                        bs_beam_phi,
+                        bs_beam_theta,
+                    )
+
+                    # TODO?: limit beamforming on UE as well
+                    # would make sense, but we don't have any parameters explicitly setting it
+
                     # add beam to UE antennas
                     self.ue.antenna[ue].add_beam(
                         self.bs_to_ue_phi[bs, ue] - 180,
