@@ -56,6 +56,23 @@ class ParametersBase:
                 default_attr_value.load_subparameters(
                     f"{ctx}.{attr_name}", params[attr_name],
                 )
+            elif isinstance(default_attr_value, list):
+                if not self.nested_parameters_enabled:
+                    continue
+                if not isinstance(config[self.section_name][attr_name], list):
+                    raise ValueError(
+                        f"ERROR: Cannot parse parameter {ctx}.{attr_name}, is \
+                            {config[self.section_name][attr_name]} instead of a list",
+                    )
+                loaded_attr_vals = list()
+                default_item = attr_val[0]
+                for params in config[self.section_name][attr_name]:
+                    new_item = deepcopy(default_item)
+                    new_item.load_subparameters(
+                        f"{self.section_name}.{attr_name}", params,
+                    )
+                    loaded_attr_vals.append(new_item)
+                setattr(self, attr_name, loaded_attr_vals)
             else:
                 setattr(self, attr_name, params[attr_name])
 

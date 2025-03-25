@@ -17,6 +17,11 @@ class ParametersSingleEarthStation(ParametersBase):
     section_name: str = "single_earth_station"
     nested_parameters_enabled: bool = True
 
+    # for when other system needs it
+    central_latitude: float = None
+    central_altitude: float = None
+    central_longitude: float = None
+
     # Sensor center frequency [MHz]
     frequency: float = None  # Center frequency of the sensor in MHz
 
@@ -28,6 +33,9 @@ class ParametersSingleEarthStation(ParametersBase):
 
     # Adjacent channel selectivity [dB]
     adjacent_ch_selectivity: float = None
+
+    # Adjacent channel selectivity [dB]
+    adjacent_ch_emissions: float = None
 
     # Peak transmit power spectral density (clear sky) [dBW/Hz]
     tx_power_density: float = None

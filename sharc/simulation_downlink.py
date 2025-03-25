@@ -45,6 +45,7 @@ class SimulationDownlink(Simulation):
         # Create the other system (FSS, HAPS, etc...)
         self.system = StationFactory.generate_system(
             self.parameters, self.topology, random_number_gen,
+            geometry_converter=self.geometry_converter
         )
 
         # Create IMT user equipments

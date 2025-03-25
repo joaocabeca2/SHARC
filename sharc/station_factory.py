@@ -551,17 +551,12 @@ class StationFactory(object):
         return imt_ue
 
     @staticmethod
-    def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState):
-        geometry_converter = GeometryConverter()
-
-        if parameters.imt.topology.central_altitude is not None:
-            geometry_converter.set_reference(
-                # there should be no default values for them
-                parameters.imt.topology.central_latitude,
-                parameters.imt.topology.central_longitude,
-                parameters.imt.topology.central_altitude,
-            )
-
+    def generate_system(
+        parameters: Parameters,
+        topology: Topology,
+        random_number_gen: np.random.RandomState,
+        geometry_converter =GeometryConverter()
+    ):
         if parameters.imt.topology.type == 'MACROCELL':
             intersite_dist = parameters.imt.topology.macrocell.intersite_distance
         elif parameters.imt.topology.type == 'HOTSPOT':
