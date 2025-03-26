@@ -237,7 +237,7 @@ class SimulationDownlink(Simulation):
                         tx_oob[i] = self.system.spectral_mask.power_calc(
                             center_freq,
                             bw
-                        )
+                        ) - 30
                 elif self.param_system.adjacent_ch_emissions == "ACLR":
                     # consider ACLR only over non co-channel RBs
                     # This should diminish some of the ACLR interference
