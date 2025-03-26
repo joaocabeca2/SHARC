@@ -40,6 +40,14 @@ class Topology(object):
         atributes.
         """
 
+    # by default, a sharc topology will translate the UE distribution by the BS position
+    def transform_ue_xyz(self, bs_i: int, x: np.array, y: np.array, z: np.array):
+        return (
+            x + self.x[bs_i],
+            y + self.y[bs_i],
+            z + self.z[bs_i],
+        )
+
     @abstractmethod
     def plot(self, ax: matplotlib.axes.Axes):
         """

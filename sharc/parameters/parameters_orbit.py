@@ -17,15 +17,18 @@ class ParametersOrbit(ParametersBase):
         """Load parameters from file and validate."""
         super().load_parameters_from_file(config_file)
 
+        self.validate("ParametersOrbit")
+
+    def validate(self, ctx: str):
         if not (0 <= self.inclination_deg <= 180):
-            raise ValueError(f"ParametersOrbit: Invalid inclination_deg = {self.inclination_deg}. \
+            raise ValueError(f"Invalid {ctx}.inclination_deg = {self.inclination_deg}. \
                              Must be in the range [0, 180] degrees.")
         if self.perigee_alt_km < 0:
-            raise ValueError(f"ParametersOrbit: Invalid perigee_alt_km = {self.perigee_alt_km}. \
+            raise ValueError(f"Invalid {ctx}.perigee_alt_km = {self.perigee_alt_km}. \
                              Altitude must be non-negative.")
         if self.apogee_alt_km < self.perigee_alt_km:
-            raise ValueError(f"ParametersOrbit: Invalid apogee_alt_km = {self.apogee_alt_km}. \
+            raise ValueError(f"Invalid {ctx}.apogee_alt_km = {self.apogee_alt_km}. \
                              Must be greater than or equal to perigee_alt_km.")
         if not (0 <= self.phasing_deg <= 360):
-            raise ValueError(f"ParametersOrbit: Invalid phasing_deg = {self.phasing_deg}. \
+            raise ValueError(f"Invalid {ctx}.phasing_deg = {self.phasing_deg}. \
                              Must be in the range [0, 360] degrees.")

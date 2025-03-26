@@ -10,16 +10,16 @@ from sharc.satellite.utils.sat_utils import calc_elevation
 
 if __name__ == "__main__":
 
-    # Plot Global Star orbit using OrbitModel object
+    # Plot SystemA orbit using OrbitModel object
     orbit = OrbitModel(
-        Nsp=6,  # number of sats per plane
-        Np=8,  # number of planes
-        phasing=7.5,  # phasing in degrees
-        long_asc=0,  # longitude of the ascending node in degrees
+        Nsp=32,  # number of sats per plane
+        Np=20,  # number of planes
+        phasing=3.9,  # phasing in degrees
+        long_asc=18.0,  # longitude of the ascending node in degrees
         omega=0,  # argument of perigee in degrees
-        delta=52,  # inclination in degrees
-        hp=1414,  # perigee altitude in km
-        ha=1414,  # apogee altitude in km
+        delta=54.5,  # inclination in degrees
+        hp=525.0,  # perigee altitude in km
+        ha=525.0,  # apogee altitude in km
         Mo=0  # mean anomaly in degrees
     )
 
@@ -28,6 +28,7 @@ if __name__ == "__main__":
     GROUND_STA_LON = -42.9292
     MIN_ELEV_ANGLE_DEG = 5.0
     pos_vec = orbit.get_satellite_positions_time_interval(initial_time_secs=0, interval_secs=5, n_periods=10)
+    sat_altitude_km = orbit.apogee_alt_km  # altitude of the satellites in kilometers
     num_of_visible_sats_per_drop = []
     elevation_angles_per_drop = np.empty(0)
     NUM_DROPS = 1
@@ -42,9 +43,9 @@ if __name__ == "__main__":
         acc_pos['lat'].extend(pos_vec['lat'][:, i])
         acc_pos['lon'].extend(pos_vec['lon'][:, i])
         elev_angles = calc_elevation(GROUND_STA_LAT, pos_vec['lat'][:, i], GROUND_STA_LON,
-                                     pos_vec['lon'][:, i], 1414.0)
+                                     pos_vec['lon'][:, i], sat_altitude_km)
         elevation_angles_per_drop = np.append(elevation_angles_per_drop,
-                                              elev_angles[np.where(np.array(elev_angles) > 0)])
+                                              elev_angles[np.where(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG)])
         vis_sats = np.where(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG)[0]
         num_of_visible_sats_per_drop.append(len(vis_sats))
 
@@ -54,7 +55,7 @@ if __name__ == "__main__":
     MIN_ELEV_ANGLE_DEG = 5.0
     num_of_visible_sats_per_drop_rand = []
     elevation_angles_per_drop_rand = []
-    NUM_DROPS = 10000
+    NUM_DROPS = 1000
     rng = np.random.RandomState(seed=6)
     acc_pos = {'x': list(), 'y': list(), 'z': list(), 'lat': list(), 'lon': list()}
     for i in range(n_samples):
@@ -65,8 +66,8 @@ if __name__ == "__main__":
         acc_pos['lat'].extend(pos_vec['lat'].flatten())
         acc_pos['lon'].extend(pos_vec['lon'].flatten())
         elev_angles = calc_elevation(GROUND_STA_LAT, pos_vec['lat'].flatten(), GROUND_STA_LON,
-                                     pos_vec['lon'].flatten(), 1414.0)
-        elevation_angles_per_drop_rand.append(elev_angles[np.where(np.array(elev_angles) > 0)])
+                                     pos_vec['lon'].flatten(), sat_altitude_km)
+        elevation_angles_per_drop_rand.append(elev_angles[np.where(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG)])
         vis_sats = np.where(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG)[0]
         num_of_visible_sats_per_drop_rand.append(len(vis_sats))
 
@@ -76,7 +77,7 @@ if __name__ == "__main__":
     fig.update_layout(
         title_text='Visible satellites per drop',
         xaxis_title_text='Num of visible satellites',
-        yaxis_title_text='Percentage',
+        yaxis_title_text='Probability',
         bargap=0.2,
         bargroupgap=0.1,
         xaxis=dict(
@@ -93,7 +94,7 @@ if __name__ == "__main__":
     fig.update_layout(
         title_text='Visible satellites per drop - random',
         xaxis_title_text='Num of visible satellites',
-        yaxis_title_text='Percentage',
+        yaxis_title_text='Probability',
         bargap=0.2,
         bargroupgap=0.1,
         xaxis=dict(
@@ -110,7 +111,7 @@ if __name__ == "__main__":
     fig.update_layout(
         title_text='Elevation angles',
         xaxis_title_text='Elevation angle [deg]',
-        yaxis_title_text='Percentage',
+        yaxis_title_text='Probability',
         bargap=0.2,
         bargroupgap=0.1
     )

@@ -55,11 +55,12 @@ from sharc.antenna.antenna_multiple_transceiver import AntennaMultipleTransceive
 from sharc.topology.topology import Topology
 from sharc.topology.topology_ntn import TopologyNTN
 from sharc.topology.topology_macrocell import TopologyMacrocell
+from sharc.topology.topology_imt_mss_dc import TopologyImtMssDc
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.mask.spectral_mask_mss import SpectralMaskMSS
 from sharc.satellite.ngso.orbit_model import OrbitModel
 from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
-from sharc.support.sharc_geom import cartesian_to_polar, polar_to_cartesian, rotate_angles_based_on_new_nadir, GeometryConverter
+from sharc.support.sharc_geom import rotate_angles_based_on_new_nadir, GeometryConverter
 
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
@@ -82,6 +83,13 @@ class StationFactory(object):
             imt_base_stations.y = topology.space_station_y * np.ones(num_bs)
             imt_base_stations.z = topology.space_station_z * np.ones(num_bs)
             imt_base_stations.height = imt_base_stations.z
+            imt_base_stations.elevation = topology.elevation
+            imt_base_stations.is_space_station = True
+        elif param.topology.type == "MSS_DC":
+            imt_base_stations.x = topology.space_station_x * np.ones(num_bs)
+            imt_base_stations.y = topology.space_station_y * np.ones(num_bs)
+            imt_base_stations.z = topology.space_station_z * np.ones(num_bs)
+            imt_base_stations.height = topology.height
             imt_base_stations.elevation = topology.elevation
             imt_base_stations.is_space_station = True
         else:
@@ -311,9 +319,12 @@ class StationFactory(object):
                 # theta is the horizontal angle of the UE wrt the serving BS
                 theta = topology.azimuth[bs] + angle[idx]
                 # calculate UE position in x-y coordinates
-                x = topology.x[bs] + radius[idx] * np.cos(np.radians(theta))
-                y = topology.y[bs] + radius[idx] * np.sin(np.radians(theta))
-                z = topology.z[bs] * np.ones_like(x)
+                x = radius[idx] * np.cos(np.radians(theta))
+                y = radius[idx] * np.sin(np.radians(theta))
+                z = np.zeros_like(x)
+                x, y, z = topology.transform_ue_xyz(
+                    bs, x, y, z
+                )
                 ue_x.extend(x)
                 ue_y.extend(y)
                 ue_z.extend(z)
@@ -540,17 +551,12 @@ class StationFactory(object):
         return imt_ue
 
     @staticmethod
-    def generate_system(parameters: Parameters, topology: Topology, random_number_gen: np.random.RandomState):
-        geometry_converter = GeometryConverter()
-
-        if parameters.imt.topology.central_altitude is not None:
-            geometry_converter.set_reference(
-                # there should be no default values for them
-                parameters.imt.topology.central_latitude,
-                parameters.imt.topology.central_longitude,
-                parameters.imt.topology.central_altitude,
-            )
-
+    def generate_system(
+        parameters: Parameters,
+        topology: Topology,
+        random_number_gen: np.random.RandomState,
+        geometry_converter =GeometryConverter()
+    ):
         if parameters.imt.topology.type == 'MACROCELL':
             intersite_dist = parameters.imt.topology.macrocell.intersite_distance
         elif parameters.imt.topology.type == 'HOTSPOT':
@@ -1205,8 +1211,6 @@ class StationFactory(object):
 
         return mss_ss
 
-
-
     def generate_mss_d2d(
         params: ParametersMssD2d,
         random_number_gen: np.random.RandomState,
@@ -1257,8 +1261,8 @@ class StationFactory(object):
                                                      scenario="OUTDOOR")
         elif params.spectral_mask == "MSS":
             mss_d2d.spectral_mask = SpectralMaskMSS(params.frequency,
-                                                     params.bandwidth,
-                                                     params.spurious_emissions)
+                                                    params.bandwidth,
+                                                    params.spurious_emissions)
         else:
             raise ValueError(f"Invalid or not implemented spectral mask - {params.spectral_mask}")
         mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 1e6))
@@ -1365,12 +1369,10 @@ class StationFactory(object):
             0
         )
 
-        earth_radius = np.sqrt(rx*rx + ry*ry + rz*rz)
+        earth_radius = np.sqrt(rx * rx + ry * ry + rz * rz)
         all_r = np.squeeze(np.array(all_positions['R'])) * 1e3
 
-        sat_altitude = np.mean(np.array(
-             all_r - earth_radius
-        )[active_satellite_idxs])
+        sat_altitude = np.mean(np.array(all_r - earth_radius)[active_satellite_idxs])
 
         geometry_converter.convert_station_3d_to_2d(
             mss_d2d
@@ -1395,8 +1397,8 @@ class StationFactory(object):
         )
 
         beams_2d_azim = np.rad2deg(np.arctan2(sy, sx))
-        beams_2d_elev = np.rad2deg(np.arctan2(np.sqrt(sy*sy + sx*sx), sat_altitude)) - 90
-        
+        beams_2d_elev = np.rad2deg(np.arctan2(np.sqrt(sy * sy + sx * sx), sat_altitude)) - 90
+
         beams_2d_azim = np.resize(
             beams_2d_azim,
             total_satellites * params.num_sectors
@@ -1550,86 +1552,177 @@ class StationFactory(object):
 
 
 if __name__ == '__main__':
-    from matplotlib import pyplot as plt
+    rand_gen = np.random.RandomState(101)
+    geometry_converter = GeometryConverter()
 
-    # plot uniform distribution in macrocell scenario
+    # somente vou utilizar a translação que o satélite teoricamente sofreu:
+    ref_lat = -14.1
+    ref_long = -45.1
+    ref_alt = 1200
+    geometry_converter.set_reference(ref_lat, ref_long, ref_alt)
+    from sharc.parameters.parameters_orbit import ParametersOrbit
 
-    factory = StationFactory()
-    topology = TopologyMacrocell(1000, 1)
-    topology.calculate_coordinates()
+    orbit = ParametersOrbit(
+        n_planes=20,
+        sats_per_plane=32,
+        phasing_deg=3.9,
+        long_asc_deg=18.0,
+        inclination_deg=54.5,
+        perigee_alt_km=525,
+        apogee_alt_km=525
+    )
+    from sharc.parameters.imt.parameters_imt_mss_dc import ParametersImtMssDc
+    params = ParametersImtMssDc(
+        beam_radius=36516.0,
+        num_beams=7,
+        orbits=[orbit]
+    )
 
-    class ParamsAux(object):
-        def __init__(self):
-            self.spectral_mask = 'IMT-2020'
-            self.frequency = 10000
-            self.topology = 'MACROCELL'
-            self.ue_distribution_type = "UNIFORM_IN_CELL"
-            self.bs_height = 30
-            self.ue_height = 3
-            self.ue_indoor_percent = 0
-            self.ue_k = 3
-            self.ue_k_m = 1
-            self.bandwidth = np.random.rand()
-            self.ue_noise_figure = np.random.rand()
-            self.minimum_separation_distance_bs_ue = 200
-            self.spurious_emissions = -30
-            self.intersite_distance = 1000
+    topology = TopologyImtMssDc(params, geometry_converter)
 
-    params = ParamsAux()
+    topology.calculate_coordinates(rand_gen)
 
-    bs_ant_param = ParametersAntennaImt()
+    topology.calculate_coordinates(rand_gen)
 
-    bs_ant_param.adjacent_antenna_model = "SINGLE_ELEMENT"
-    bs_ant_param.element_pattern = "F1336"
-    bs_ant_param.element_max_g = 5
-    bs_ant_param.element_phi_3db = 65
-    bs_ant_param.element_theta_3db = 65
-    bs_ant_param.element_am = 30
-    bs_ant_param.element_sla_v = 30
-    bs_ant_param.n_rows = 8
-    bs_ant_param.n_columns = 8
-    bs_ant_param.element_horiz_spacing = 0.5
-    bs_ant_param.element_vert_spacing = 0.5
-    bs_ant_param.downtilt = 10
-    bs_ant_param.multiplication_factor = 12
-    bs_ant_param.minimum_array_gain = -200
+    parameters = ParametersImt()
+    parameters.ue.k = 1
+    parameters.ue.k_m = 1
+    parameters.ue.azimuth_range = (-180, 180)
+    parameters.ue.distribution_distance = "UNIFORM"
+    parameters.ue.distribution_type = "ANGLE_AND_DISTANCE"
+    parameters.ue.distribution_azimuth = "NORMAL"
+    parameters.ue.height = 1.5
+    parameters.ue.indoor_percent = 0
+    parameters.bandwidth = 10
+    parameters.frequency = 10
+    parameters.ue.noise_figure = 0
 
-    ue_ant_param = ParametersAntennaImt()
+    imt_ue = StationFactory.generate_imt_ue_outdoor(
+        parameters,
+        parameters.ue.antenna,
+        rand_gen,
+        topology
+    )
 
-    ue_ant_param.element_pattern = "FIXED"
-    ue_ant_param.element_max_g = 5
-    ue_ant_param.element_phi_3db = 90
-    ue_ant_param.element_theta_3db = 90
-    ue_ant_param.element_am = 25
-    ue_ant_param.element_sla_v = 25
-    ue_ant_param.n_rows = 4
-    ue_ant_param.n_columns = 4
-    ue_ant_param.element_horiz_spacing = 0.5
-    ue_ant_param.element_vert_spacing = 0.5
-    ue_ant_param.multiplication_factor = 12
-    ue_ant_param.minimum_array_gain = -200
+    from sharc.satellite.scripts.plot_3d_param_file import plot_globe_with_borders
+    fig = plot_globe_with_borders(True, geometry_converter)
 
-    ue_ant_param.normalization = False
-    bs_ant_param.normalization = False
+    import plotly.graph_objects as go
 
-    rnd = np.random.RandomState(1)
+    # fig.add_trace(go.Scatter3d(
+    #     x=topology.x,
+    #     y=topology.y,
+    #     z=topology.z,
+    #     mode='markers',
+    #     marker=dict(size=3, color='green', opacity=0.8),
+    #     showlegend=False
+    # ))
+    fig.add_trace(go.Scatter3d(
+        x=topology.space_station_x,
+        y=topology.space_station_y,
+        z=topology.space_station_z,
+        mode='markers',
+        marker=dict(size=3, color='green', opacity=0.8),
+        showlegend=False
+    ))
 
-    imt_ue = factory.generate_imt_ue(params, ue_ant_param, topology, rnd)
+    fig.add_trace(
+        go.Scatter3d(
+            x=imt_ue.x,
+            y=imt_ue.y,
+            z=imt_ue.z,
+            mode='markers',
+            marker=dict(size=1, color='red', opacity=1),
+            showlegend=False
+        )
+    )
 
-    fig = plt.figure(
-        figsize=(8, 8), facecolor='w',
-        edgecolor='k',
-    )  # create a figure object
-    ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
+    # TODO: replace this with generate imt mss dc station
+    st = StationManager(topology.num_base_stations)
+    st.x=topology.space_station_x
+    st.y=topology.space_station_y
+    st.z=topology.space_station_z
 
-    topology.plot(ax)
+    fig.add_trace(
+        go.Scatter3d(
+            x=[0],
+            y=[0],
+            z=[0],
+            mode='markers',
+            marker=dict(size=3, color='black', opacity=1),
+            showlegend=False
+        )
+    )
 
-    plt.axis('image')
-    plt.title("Macro cell topology")
-    plt.xlabel("x-coordinate [m]")
-    plt.ylabel("y-coordinate [m]")
+    from sharc.support.sharc_geom import polar_to_cartesian
+    # Plot beam boresight vectors
+    boresight_length = 100*1e3  # Length of the boresight vectors for visualization
+    boresight_x, boresight_y, boresight_z = polar_to_cartesian(
+        boresight_length,
+        imt_ue.azimuth,
+        imt_ue.elevation
+    )
+    # Add arrow heads to the end of the boresight vectors
+    for x, y, z, bx, by, bz in zip(imt_ue.x,
+                                   imt_ue.y,
+                                   imt_ue.z,
+                                   boresight_x,
+                                   boresight_y,
+                                   boresight_z):
+        fig.add_trace(go.Cone(
+            x=[x + bx],
+            y=[y + by],
+            z=[z + bz],
+            u=[bx],
+            v=[by],
+            w=[bz],
+            colorscale=[[0, 'orange'], [1, 'orange']],
+            sizemode='absolute',
+            sizeref=2*boresight_length/5,
+            showscale=False
+        ))
+    for x, y, z, bx, by, bz in zip(imt_ue.x,
+                                   imt_ue.y,
+                                   imt_ue.z,
+                                   boresight_x,
+                                   boresight_y,
+                                   boresight_z):
+        fig.add_trace(go.Scatter3d(
+            x=[x, x + bx],
+            y=[y, y + by],
+            z=[z, z + bz],
+            mode='lines',
+            line=dict(color='orange', width=2),
+            name='Boresight'
+        ))
+    # Suppress the legend for the boresight plot
+    fig.update_traces(showlegend=False, selector=dict(name='Boresight'))
 
-    plt.plot(imt_ue.x, imt_ue.y, "r.")
+    # Maintain axis proportions
+    fig.update_layout(scene_aspectmode='data')
 
-    plt.tight_layout()
-    plt.show()
+    ref_x = imt_ue.x[11]
+    ref_y = imt_ue.y[11]
+    ref_z = imt_ue.z[11]
+    range_scale = 1000
+
+    range_scale = 5000
+    ref_x = 0
+    ref_y = 0
+    ref_z = 0
+    fig.update_layout(
+        scene=dict(
+            zaxis=dict(
+                range=(-1e3*range_scale+ref_z, 1e3*range_scale+ ref_z)
+            ),
+            yaxis=dict(
+                range=(-1e3*range_scale+ref_y, 1e3*range_scale+ ref_y)
+            ),
+            xaxis=dict(
+                range=(-1e3*range_scale+ref_x, 1e3*range_scale+ ref_x)
+            ),
+        )
+    )
+
+    # fig.tight_layout()
+    fig.show()

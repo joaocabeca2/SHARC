@@ -45,6 +45,7 @@ class SimulationDownlink(Simulation):
         # Create the other system (FSS, HAPS, etc...)
         self.system = StationFactory.generate_system(
             self.parameters, self.topology, random_number_gen,
+            geometry_converter=self.geometry_converter
         )
 
         # Create IMT user equipments
@@ -236,7 +237,7 @@ class SimulationDownlink(Simulation):
                         tx_oob[i] = self.system.spectral_mask.power_calc(
                             center_freq,
                             bw
-                        )
+                        ) - 30
                 elif self.param_system.adjacent_ch_emissions == "ACLR":
                     # consider ACLR only over non co-channel RBs
                     # This should diminish some of the ACLR interference
