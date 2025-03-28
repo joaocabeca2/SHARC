@@ -311,6 +311,7 @@ class SimulationUplink(Simulation):
             if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
                 self.results.system_pfd.extend([self.system.pfd])
 
+        sys_active = np.where(self.system.active)[0]
         bs_active = np.where(self.bs.active)[0]
         for bs in bs_active:
             ue = self.link[bs]

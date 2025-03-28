@@ -184,6 +184,11 @@ class Simulation(ABC, Observable):
         self.imt_bs_antenna_gain = list()
         self.imt_ue_antenna_gain = list()
         self.path_loss_imt = np.empty([num_bs, num_ue])
+        self.coupling_loss_imt = np.empty([num_bs, num_ue])
+        self.coupling_loss_imt_system = np.empty(num_ue)
+        self.bs_to_ue_phi = np.empty([num_bs, num_ue])
+        self.bs_to_ue_theta = np.empty([num_bs, num_ue])
+        self.bs_to_ue_beam_rbs = -1.0 * np.ones(num_ue, dtype=int)
 
         self.ue = np.empty(num_ue)
         self.bs = np.empty(num_bs)
@@ -203,11 +208,6 @@ class Simulation(ABC, Observable):
         self.initialize_topology_dependant_variables()
 
         self.system = np.empty(1)
-
-        # this attribute indicates the list of UE's that are connected to each
-        # base station. The position the the list indicates the resource block
-        # group that is allocated to the given UE
-        self.link = dict([(bs, list()) for bs in range(num_bs)])
 
         # calculates the number of RB per BS
         self.num_rb_per_bs = math.trunc(
@@ -587,8 +587,10 @@ class Simulation(ABC, Observable):
                         phi_vec=phi[k, station_2_active],
                 )
         else:  # for IMT <-> IMT
+            off_axis_angle = station_1.get_off_axis_angle(station_2)
             for k in station_1_active:
                 gains[k, station_2_active] = station_1.antenna[k].calculate_gain(
+                    off_axis_angle_vec=off_axis_angle[k, station_2_active],
                     phi_vec=phi[k, station_2_active],
                     theta_vec=theta[
                         k,
