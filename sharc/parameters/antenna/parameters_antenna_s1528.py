@@ -10,11 +10,11 @@ class ParametersAntennaS1528(ParametersBase):
     """
     section_name: str = "S1528"
     # satellite center frequency [MHz]
-    frequency: float = 43000.0
+    frequency: float = None
     # channel bandwidth - used for Taylor antenna
-    bandwidth: float = 500.0
+    bandwidth: float = None
     # Peak antenna gain [dBi]
-    antenna_gain: float = 46.6
+    antenna_gain: float = None
     # Antenna pattern from ITU-R S.1528
     # Possible values: "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO", "ITU-R-S.1528-Taylor"
     antenna_pattern: str = "ITU-R-S.1528-LEO"
@@ -103,12 +103,17 @@ class ParametersAntennaS1528(ParametersBase):
 
     def validate(self, ctx: str):
         # Now do the sanity check for some parameters
+        if None in [self.frequency, self.bandwidth, self.antenna_gain]:
+            raise ValueError(
+                f"{ctx}.[frequency, bandwidth, antenna_gain] = {[self.frequency, self.bandwidth, self.antenna_gain]}.\
+                They need to all be set!")
+
         if self.antenna_pattern not in ["ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO", "ITU-R-S.1528-Taylor"]:
-            raise ValueError(f"ParametersAntennaS1528: \
+            raise ValueError(f"{ctx}: \
                              invalid value for parameter antenna_pattern - {self.antenna_pattern}. \
                              Possible values \
                              are \"ITU-R-S.1528-Section1.2\", \"ITU-R-S.1528-LEO\", \"ITU-R-S.1528-Taylor\"")
 
         if int(self.roll_off) not in [0, 3, 5, 7]:
             raise ValueError(
-                f"AntennaS1528Taylor: Invalid value for roll_off factor {self.roll_off}")
+                f"{ctx}: Invalid value for roll_off factor {self.roll_off}")
