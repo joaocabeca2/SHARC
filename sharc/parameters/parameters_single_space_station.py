@@ -141,7 +141,7 @@ class ParametersSingleSpaceStation(ParametersBase):
         super().load_parameters_from_file(config_file)
 
         self.propagate_parameters()
-        
+
         # this should be done by validating this parameters only if it is the selected system on the general section
         # TODO: make this better by changing the Parameters class itself
         should_validate = any(
@@ -167,8 +167,6 @@ class ParametersSingleSpaceStation(ParametersBase):
         # this parameter is required in system get description
         self.antenna_pattern = self.antenna.pattern
 
-        
-
     def validate(self, ctx="single_space_station"):
         super().validate(ctx)
 
@@ -187,4 +185,3 @@ class ParametersSingleSpaceStation(ParametersBase):
                 f"{ctx}.channel_model" +
                 "needs to be in ['FSPL', 'P619']",
             )
-

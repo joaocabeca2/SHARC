@@ -646,7 +646,6 @@ class StationFactory(object):
 
         return space_station
 
-
     @staticmethod
     def generate_fss_space_station(param: ParametersFssSs):
         fss_space_station = StationManager(1)

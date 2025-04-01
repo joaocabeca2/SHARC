@@ -12,6 +12,7 @@ import numpy.testing as npt
 from sharc.parameters.imt.parameters_imt import ParametersImt
 from sharc.station_factory import StationFactory
 from sharc.topology.topology_ntn import TopologyNTN
+from sharc.parameters.parameters_single_space_station import ParametersSingleSpaceStation
 
 
 class StationFactoryTest(unittest.TestCase):
