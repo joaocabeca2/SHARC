@@ -154,9 +154,37 @@ class ParametersSingleSpaceStation(ParametersBase):
             self.validate(self.section_name)
 
     def propagate_parameters(self):
+        if self.channel_model == "P619":
+            if self.param_p619.earth_station_alt_m != ParametersP619.earth_station_alt_m:
+                raise ValueError(
+                    f"{self.section_name}.param_p619.earth_station_alt_m should not be set by hand."
+                    "It is automatically set by other parameters in system"
+                )
+            if self.param_p619.earth_station_lat_deg != ParametersP619.earth_station_lat_deg:
+                raise ValueError(
+                    f"{self.section_name}.param_p619.earth_station_lat_deg should not be set by hand."
+                    "It is automatically set by other parameters in system"
+                )
+            if self.param_p619.space_station_alt_m != ParametersP619.space_station_alt_m:
+                raise ValueError(
+                    f"{self.section_name}.param_p619.space_station_alt_m should not be set by hand."
+                    "It is automatically set by other parameters in system"
+                )
+            if self.param_p619.earth_station_lat_deg != ParametersP619.earth_station_lat_deg:
+                raise ValueError(
+                    f"{self.section_name}.param_p619.earth_station_lat_deg should not be set by hand."
+                    "It is automatically set by other parameters in system"
+                )
         self.param_p619.space_station_alt_m = self.geometry.altitude
         self.param_p619.earth_station_alt_m = self.geometry.es_altitude
         self.param_p619.earth_station_lat_deg = self.geometry.es_lat_deg
+
+        if self.geometry.location.type == "FIXED":
+            self.param_p619.earth_station_long_diff_deg = self.geometry.location.fixed.long_deg - self.geometry.es_long_deg
+        else:
+            raise NotImplementedError(
+                f"No way to automatically set p619 parameters when geometry.location.type == {self.geometry.location.type}"
+            )
 
         # this is needed because nested parameters
         # don't know/cannot access parents attributes

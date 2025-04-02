@@ -1314,4 +1314,105 @@ single_earth_station:
         # Value in dB of building entry loss if
         # bs_building_entry_loss_type = FIXED_VALUE
         bs_building_entry_loss_value: 35
+single_space_station:
+    ###########################################################################
+    # Sensor center frequency [MHz]
+    frequency: 1
+    ###########################################################################
+    # Sensor bandwidth [MHz]
+    bandwidth: 1
+    ###########################################################################
+    # System receive noise temperature [K]
+    noise_temperature: 1
+    ###########################################################################
+    # Peak transmit power spectral density (clear sky) [dBW/Hz]
+    tx_power_density: 1
+    # Adjacent channel selectivity [dB]
+    adjacent_ch_selectivity: 1
+    geometry:
+        ###########################################################################
+        # Satellite altitude [meters]
+        altitude: 1
+        ###########################################################################
+        # earth station altitude [meters]
+        es_altitude: 1
+        ###########################################################################
+        # earth station lat long [deg]
+        es_lat_deg: 1
+        ###########################################################################
+        # earth station lat long [deg]
+        es_long_deg: 1
+        ###########################################################################
+        # Antenna azimuth angle [degrees]
+        azimuth:
+            ###########################################################################
+            # Type of azimuth. May be "FIXED" or "POINTING_AT_IMT"
+            type: POINTING_AT_IMT
+            ###########################################################################
+            # Arbitrary value of azimuth when type == "FIXED" [deg]
+            fixed: 0
+        ###########################################################################
+        # Antenna elevation angle [degrees]
+        elevation:
+            ###########################################################################
+            # Type of elevation. May be "FIXED" or "POINTING_AT_IMT"
+            type: POINTING_AT_IMT
+            ###########################################################################
+            # Arbitrary value of elevation when type == "FIXED" [deg]
+            fixed: -90
+        ###########################################################################
+        # Station location:
+        location:
+            ###########################################################################
+            # type may be "FIXED"
+            # location.type == FIXED means that the SS will be always at SAME fixed location
+            type: FIXED
+            ###########################################################################
+            # Value of position (lat, long) when type == "FIXED" [(deg, deg)]
+            fixed:
+                lat_deg: 0
+                long_deg: 0
+    antenna:
+        ###########################################################################
+        # Choose the antenna pattern. Can be one of:
+        # "OMNI", "ITU-R F.699", "ITU-R S.465", "ITU-R S.580", "MODIFIED ITU-R S.465", "ITU-R S.1855",
+        # "ITU-R Reg. RR. Appendice 7 Annex 3"
+        pattern: ITU-R S.465
+        ###########################################################################
+        # Earth station peak receive antenna gain [dBi]
+        gain: 28
+        itu_r_f_699:
+            ###########################################################################
+            # Antenna diameter [m]
+            diameter: 1
+        itu_r_s_465:
+            ###########################################################################
+            # Antenna diameter [m]
+            diameter: 1
+        itu_r_s_580:
+            ###########################################################################
+            # Antenna diameter [m]
+            diameter: 1
+        itu_r_s_1855:
+            ###########################################################################
+            # Antenna diameter [m]
+            diameter: 1
+        itu_r_s_465_modified:
+            ###########################################################################
+            # Antenna envelope gain [dBi]
+            envelope_gain: 1
+        itu_reg_rr_a7_3:
+            ###########################################################################
+            # Antenna diameter [m]
+            # if no diameter is passed, a diameter will be assumed according to document
+            diameter: 1
+
+    ###########################################################################
+    # Selected channel model. May be "FSPL" or "P619"
+    channel_model: "P619"
+
+    ###########################################################################
+    # season - season of the year.
+    #   Useful for P.619
+    season: SUMMER
 
