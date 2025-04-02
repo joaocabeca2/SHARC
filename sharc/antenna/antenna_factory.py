@@ -13,7 +13,7 @@ from sharc.antenna.antenna_rs2043 import AntennaRS2043
 from sharc.antenna.antenna_s465 import AntennaS465
 from sharc.antenna.antenna_s1855 import AntennaS1855
 from sharc.antenna.antenna_s672 import AntennaS672
-# from sharc.antenna.antenna_rra7_3 import AntennaReg_RR_A7_3
+from sharc.antenna.antenna_rra7_3 import AntennaReg_RR_A7_3
 from sharc.antenna.antenna_modified_s465 import AntennaModifiedS465
 from sharc.antenna.antenna_s580 import AntennaS580
 from sharc.antenna.antenna_s672 import AntennaS672
@@ -31,8 +31,8 @@ class AntennaFactory():
                 return AntennaS465(param.itu_r_s_465)
             case "ITU-R S.672":
                 return AntennaS672(param.itu_r_s_672)
-            # case "ITU-R Reg. RR. Appendice 7 Annex 3":
-            #     return AntennaReg_RR_A7_3(param.itu_reg_rr_a7_3)
+            case "ITU-R Reg. RR. Appendice 7 Annex 3":
+                return AntennaReg_RR_A7_3(param.itu_reg_rr_a7_3)
             case "ITU-R S.1855":
                 return AntennaS1855(param.itu_r_s_1855)
             case "MODIFIED ITU-R S.465":
