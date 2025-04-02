@@ -182,9 +182,7 @@ class ParametersSingleSpaceStation(ParametersBase):
         if self.geometry.location.type == "FIXED":
             self.param_p619.earth_station_long_diff_deg = self.geometry.location.fixed.long_deg - self.geometry.es_long_deg
         else:
-            raise NotImplementedError(
-                f"No way to automatically set p619 parameters when geometry.location.type == {self.geometry.location.type}"
-            )
+            self.param_p619.earth_station_long_diff_deg = None
 
         # this is needed because nested parameters
         # don't know/cannot access parents attributes

@@ -7,8 +7,8 @@ general:
     imt_link  : DOWNLINK
     ###########################################################################
     # The chosen system for sharing study
-    # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS
-    system  : FSS_ES
+    # SINGLE_SPACE_STATION, SINGLE_EARTH_STATION
+    system  : SINGLE_EARTH_STATION
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel  : FALSE

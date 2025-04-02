@@ -17,6 +17,13 @@ class ParametersSingleEarthStation(ParametersBase):
     section_name: str = "single_earth_station"
     nested_parameters_enabled: bool = True
 
+    # NOTE: when using P.619 it is suggested that polarization loss = 3dB is normal
+    # also,
+    # NOTE: Verification needed:
+    # polarization mismatch between IMT BS and linear polarization = 3dB in earth P2P case?
+    # = 0 is safer choice
+    polarization_loss: float = 3.0
+
     # Sensor center frequency [MHz]
     frequency: float = None  # Center frequency of the sensor in MHz
 
