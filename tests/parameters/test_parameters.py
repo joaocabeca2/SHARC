@@ -29,8 +29,8 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.imt.spurious_emissions, -13.1)
         self.assertEqual(self.parameters.imt.guard_band_ratio, 0.14)
 
-        self.assertEqual(self.parameters.imt.bs.antenna.horizontal_beamsteering_range, (-10.1, 11.2))
-        self.assertEqual(self.parameters.imt.bs.antenna.vertical_beamsteering_range, (0., 180.))
+        self.assertEqual(self.parameters.imt.bs.antenna.array.horizontal_beamsteering_range, (-10.1, 11.2))
+        self.assertEqual(self.parameters.imt.bs.antenna.array.vertical_beamsteering_range, (0., 180.))
         self.assertEqual(self.parameters.imt.bs.load_probability, 0.2)
         self.assertEqual(self.parameters.imt.bs.conducted_power, 11.1)
         self.assertEqual(self.parameters.imt.bs.height, 6.1)
@@ -39,8 +39,8 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.imt.uplink.attenuation_factor, 0.4)
         self.assertEqual(self.parameters.imt.uplink.sinr_min, -10.0)
         self.assertEqual(self.parameters.imt.uplink.sinr_max, 22.0)
-        self.assertEqual(self.parameters.imt.ue.antenna.horizontal_beamsteering_range, (-180., 180.))
-        self.assertEqual(self.parameters.imt.ue.antenna.vertical_beamsteering_range, (0., 180.))
+        self.assertEqual(self.parameters.imt.ue.antenna.array.horizontal_beamsteering_range, (-180., 180.))
+        self.assertEqual(self.parameters.imt.ue.antenna.array.vertical_beamsteering_range, (0., 180.))
         self.assertEqual(self.parameters.imt.ue.k, 3)
         self.assertEqual(self.parameters.imt.ue.k_m, 1)
         self.assertEqual(self.parameters.imt.ue.indoor_percent, 5.0)
@@ -72,49 +72,49 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(
             self.parameters.imt.adjacent_antenna_model,
             "BEAMFORMING")
-        self.assertEqual(self.parameters.imt.bs.antenna.normalization, False)
-        self.assertEqual(self.parameters.imt.ue.antenna.normalization, False)
-        self.assertEqual(self.parameters.imt.bs.antenna.normalization_file,
+        self.assertEqual(self.parameters.imt.bs.antenna.array.normalization, False)
+        self.assertEqual(self.parameters.imt.ue.antenna.array.normalization, False)
+        self.assertEqual(self.parameters.imt.bs.antenna.array.normalization_file,
                          "antenna/beamforming_normalization/bs_norm.npz")
-        self.assertEqual(self.parameters.imt.ue.antenna.normalization_file,
+        self.assertEqual(self.parameters.imt.ue.antenna.array.normalization_file,
                          "antenna/beamforming_normalization/ue_norm.npz")
         self.assertEqual(
-            self.parameters.imt.bs.antenna.element_pattern,
+            self.parameters.imt.bs.antenna.array.element_pattern,
             "F1336")
         self.assertEqual(
-            self.parameters.imt.ue.antenna.element_pattern,
+            self.parameters.imt.ue.antenna.array.element_pattern,
             "F1336")
         self.assertEqual(
-            self.parameters.imt.bs.antenna.minimum_array_gain, -200)
+            self.parameters.imt.bs.antenna.array.minimum_array_gain, -200)
         self.assertEqual(
-            self.parameters.imt.ue.antenna.minimum_array_gain, -200)
-        self.assertEqual(self.parameters.imt.bs.antenna.downtilt, 6)
-        self.assertEqual(self.parameters.imt.bs.antenna.element_max_g, 5)
-        self.assertEqual(self.parameters.imt.ue.antenna.element_max_g, 5)
-        self.assertEqual(self.parameters.imt.bs.antenna.element_phi_3db, 65)
-        self.assertEqual(self.parameters.imt.ue.antenna.element_phi_3db, 90)
-        self.assertEqual(self.parameters.imt.bs.antenna.element_theta_3db, 65)
-        self.assertEqual(self.parameters.imt.ue.antenna.element_theta_3db, 90)
-        self.assertEqual(self.parameters.imt.bs.antenna.n_rows, 8)
-        self.assertEqual(self.parameters.imt.ue.antenna.n_rows, 4)
-        self.assertEqual(self.parameters.imt.bs.antenna.n_columns, 8)
-        self.assertEqual(self.parameters.imt.ue.antenna.n_columns, 4)
+            self.parameters.imt.ue.antenna.array.minimum_array_gain, -200)
+        self.assertEqual(self.parameters.imt.bs.antenna.array.downtilt, 6)
+        self.assertEqual(self.parameters.imt.bs.antenna.array.element_max_g, 5)
+        self.assertEqual(self.parameters.imt.ue.antenna.array.element_max_g, 5)
+        self.assertEqual(self.parameters.imt.bs.antenna.array.element_phi_3db, 65)
+        self.assertEqual(self.parameters.imt.ue.antenna.array.element_phi_3db, 90)
+        self.assertEqual(self.parameters.imt.bs.antenna.array.element_theta_3db, 65)
+        self.assertEqual(self.parameters.imt.ue.antenna.array.element_theta_3db, 90)
+        self.assertEqual(self.parameters.imt.bs.antenna.array.n_rows, 8)
+        self.assertEqual(self.parameters.imt.ue.antenna.array.n_rows, 4)
+        self.assertEqual(self.parameters.imt.bs.antenna.array.n_columns, 8)
+        self.assertEqual(self.parameters.imt.ue.antenna.array.n_columns, 4)
         self.assertEqual(
-            self.parameters.imt.bs.antenna.element_horiz_spacing, 0.5)
+            self.parameters.imt.bs.antenna.array.element_horiz_spacing, 0.5)
         self.assertEqual(
-            self.parameters.imt.ue.antenna.element_horiz_spacing, 0.5)
+            self.parameters.imt.ue.antenna.array.element_horiz_spacing, 0.5)
         self.assertEqual(
-            self.parameters.imt.bs.antenna.element_vert_spacing, 0.5)
+            self.parameters.imt.bs.antenna.array.element_vert_spacing, 0.5)
         self.assertEqual(
-            self.parameters.imt.ue.antenna.element_vert_spacing, 0.5)
-        self.assertEqual(self.parameters.imt.bs.antenna.element_am, 30)
-        self.assertEqual(self.parameters.imt.ue.antenna.element_am, 25)
-        self.assertEqual(self.parameters.imt.bs.antenna.element_sla_v, 30)
-        self.assertEqual(self.parameters.imt.ue.antenna.element_sla_v, 25)
+            self.parameters.imt.ue.antenna.array.element_vert_spacing, 0.5)
+        self.assertEqual(self.parameters.imt.bs.antenna.array.element_am, 30)
+        self.assertEqual(self.parameters.imt.ue.antenna.array.element_am, 25)
+        self.assertEqual(self.parameters.imt.bs.antenna.array.element_sla_v, 30)
+        self.assertEqual(self.parameters.imt.ue.antenna.array.element_sla_v, 25)
         self.assertEqual(
-            self.parameters.imt.bs.antenna.multiplication_factor, 12)
+            self.parameters.imt.bs.antenna.array.multiplication_factor, 12)
         self.assertEqual(
-            self.parameters.imt.ue.antenna.multiplication_factor, 12)
+            self.parameters.imt.ue.antenna.array.multiplication_factor, 12)
 
         self.assertEqual(self.parameters.imt.topology.central_altitude, 1111)
         self.assertEqual(self.parameters.imt.topology.central_latitude, 21.12)
