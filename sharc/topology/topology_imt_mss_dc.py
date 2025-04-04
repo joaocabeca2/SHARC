@@ -12,6 +12,8 @@ The visible Space Stations are then used to generate the IMT Base Stations.
 """
 
 import numpy as np
+import geopandas as gpd
+import shapely as shp
 
 from sharc.topology.topology import Topology
 from sharc.parameters.imt.parameters_imt_mss_dc import ParametersImtMssDc
@@ -52,8 +54,48 @@ class TopologyImtMssDc(Topology):
 
         self.lat = None
         self.lon = None
-        self.min_elev_angle = params.min_elev_angle  # Minimum elevation angle for satellite visibility
         self.orbits = []
+
+        if "LAT_LONG_INSIDE_COUNTRY" in params.sat_is_active_if.conditions:
+            # preload file and some variables
+            shapes = gpd.read_file(
+                params.sat_is_active_if.lat_long_inside_country.country_shapes_filename,
+                columns=["NAME"]
+            )
+            geom = shapes[shapes["NAME"] == params.sat_is_active_if.lat_long_inside_country.country_name]["geometry"]
+
+            country_proj = shapes[shapes["NAME"] == params.sat_is_active_if.lat_long_inside_country.country_name]
+            if len(country_proj) == 0:
+                raise ValueError(
+                    f"No country named {params.sat_is_active_if.lat_long_inside_country.country_name}\n"
+                    f"in shapefile {params.sat_is_active_if.lat_long_inside_country.country_shapes_filename}"
+                )
+            if len(country_proj) > 1:
+                raise ValueError(
+                    f"Ambiguous country named {params.sat_is_active_if.lat_long_inside_country.country_name}\n"
+                    f"appears {len(country_proj)} times in shapefile {params.sat_is_active_if.lat_long_inside_country.country_shapes_filename}"
+                )
+            # NOTE: if country_proj is a GeoDataFrame instead of a polygon undesired behaviour will follow
+            # for that reason we can use union_all()
+            country_proj = country_proj["geometry"].geometry.union_all()
+
+            # not actually the border, but the coordinates that make it up
+            # so that we can calculate
+            country_border_coords = country_proj.boundary
+
+            if isinstance(country_border_coords, shp.geometry.MultiLineString):
+                # country_border_coords = [pt for line in country_border_coords.geoms for pt in line.coords]
+                country_border_coords_lon = [pt.x for line in country_border_coords.geoms for pt in line.coords]
+                country_border_coords_lat = [pt.y for line in country_border_coords.geoms for pt in line.coords]
+            elif isinstance(country_border_coords, shp.geometry.LineString):
+                country_border_coords_lon, country_border_coords_lat = country_border_coords.coords.xy
+                country_border_coords_lon, country_border_coords_lat = np.array(country_border_coords_lon), np.array(country_border_coords_lat)
+            else:
+                raise ValueError("Could not parse country border correctly")
+
+            self.country_border_coords_lon, self.country_border_coords_lat = country_border_coords_lon, country_border_coords_lat
+            self.country_proj = country_proj
+
 
         # Iterate through each orbit defined in the parameters
         for param in self.orbit_params.orbits:
@@ -82,18 +124,19 @@ class TopologyImtMssDc(Topology):
 
         idx_orbit = np.zeros(total_satellites, dtype=int)  # Add orbit index array
 
-        # Initialize arrays to store satellite positions, angles and distance from center of earth
-        all_positions = {"R": [], "lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
-        all_elevations = []  # Store satellite elevations
-        all_azimuths = []  # Store satellite azimuths
-
         # List to store indices of active satellites
         active_satellite_idxs = []
-        current_sat_idx = 0  # Index tracker for satellites across all orbits
 
         MAX_ITER = 100  # Maximum iterations to find at least one visible satellite
         i = 0  # Iteration counter for ensuring satellite visibility
         while len(active_satellite_idxs) == 0:
+            # Initialize arrays to store satellite positions, angles and distance from center of earth
+            all_positions = {"R": [], "lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
+            all_elevations = []  # Store satellite elevations
+            all_azimuths = []  # Store satellite azimuths
+
+            current_sat_idx = 0  # Index tracker for satellites across all orbits
+
             # Iterate through each orbit defined in the parameters
             for orbit_idx, orbit in enumerate(self.orbits):
                 # Generate random positions for satellites in this orbit
@@ -125,20 +168,88 @@ class TopologyImtMssDc(Topology):
                 all_elevations.extend(elevations)  # Elevation angles
                 all_azimuths.extend(azimuths)  # Azimuth angles
 
-                # Calculate satellite visibility from base stations
-                elev_from_bs = calc_elevation(
-                    self.geometry_converter.ref_lat,  # Latitude of base station
-                    pos_vec['lat'],  # Latitude of satellites
-                    self.geometry_converter.ref_long,  # Longitude of base station
-                    pos_vec['lon'],  # Longitude of satellites
-                    orbit.perigee_alt_km  # Perigee altitude in kilometers
-                )
+                active_sats_mask = np.ones(len(pos_vec['lat']), dtype=bool)
 
-                # Determine visible satellites based on minimum elevation angle
-                visible_sat_idxs = [
-                    current_sat_idx + idx for idx, elevation in enumerate(elev_from_bs)
-                    if elevation >= self.min_elev_angle
-                ]
+                for condition in params.sat_is_active_if.conditions:
+                    if "MINIMUM_ELEVATION_FROM_ES" == condition:
+                        # Calculate satellite visibility from base stations
+                        elev_from_bs = calc_elevation(
+                            geometry_converter.ref_lat,  # Latitude of base station
+                            pos_vec['lat'],  # Latitude of satellites
+                            geometry_converter.ref_long,  # Longitude of base station
+                            pos_vec['lon'],  # Longitude of satellites
+                            orbit.perigee_alt_km  # Perigee altitude in kilometers
+                        )
+
+                        # print("elev_from_bs", elev_from_bs)
+                        # exit()
+                        # Determine visible satellites based on minimum elevation angle
+                        active_sats_mask = active_sats_mask & (elev_from_bs.flatten() >= params.sat_is_active_if.minimum_elevation_from_es)
+                    elif "LAT_LONG_INSIDE_COUNTRY" == condition:
+                        flat_lon = pos_vec["lon"].flatten()
+                        flat_lat = pos_vec["lat"].flatten()
+
+                        # create geodataframe so we can compare to polygon
+                        sats_points = gpd.points_from_xy(flat_lon, flat_lat, crs="EPSG:4326")
+
+                        # Check if the satellite is inside the country polygon
+                        polygon_mask = sats_points.within(self.country_proj)
+
+                        if params.sat_is_active_if.lat_long_inside_country.margin_from_border != 0.0:
+                            geod = pyproj.Geod(ellps="WGS84")
+
+                            # TODO: optimize this
+                            # can prob filter 90% of sats already with the visibility angle
+                            # or create a bounding box
+                            flat_lon = np.repeat(
+                                flat_lon, len(self.country_border_coords_lon)
+                            ).reshape(
+                                (len(flat_lon), len(self.country_border_coords_lon))
+                            )
+                            flat_lat = np.repeat(
+                                flat_lat, len(self.country_border_coords_lon)
+                            ).reshape(
+                                (len(flat_lon), len(self.country_border_coords_lon))
+                            )
+
+                            border_lon = np.resize(
+                                self.country_border_coords_lon,
+                                len(flat_lon) * len(self.country_border_coords_lon)
+                            ).reshape(
+                                (len(flat_lon), len(self.country_border_coords_lon))
+                            )
+
+                            border_lat = np.resize(
+                                self.country_border_coords_lat,
+                                len(flat_lon) * len(self.country_border_coords_lon)
+                            ).reshape(
+                                (len(flat_lon), len(self.country_border_coords_lon))
+                            )
+
+                            # TODO: optimize
+                            # could search for nearest border point
+                            # instead of calculating all distances and taking min
+                            _, __, dist = geod.inv(
+                                flat_lon, flat_lat,
+                                border_lon, border_lat
+                            )
+                            dist = np.min(dist, axis=1)
+
+                            if params.sat_is_active_if.lat_long_inside_country.margin_from_border > 0:
+                                polygon_mask = polygon_mask & (dist > params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
+                            else:
+                                polygon_mask = polygon_mask | (dist < -params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
+
+                        active_sats_mask = active_sats_mask & polygon_mask
+                    else:
+                        raise NotImplementedError(
+                            "There needs to be a way to define if a satellite is visible or not!\n"
+                            f"'{condition}' is not a recognized value for that"
+                        )
+
+                visible_sat_idxs = np.arange(
+                    current_sat_idx, current_sat_idx + len(pos_vec['lat']), dtype=int
+                )[active_sats_mask]
                 active_satellite_idxs.extend(visible_sat_idxs)
 
                 # Update the index tracker for the next orbit
@@ -336,6 +447,12 @@ if __name__ == '__main__':
         num_beams=7,
         orbits=[orbit]
     )
+    params.sat_is_active_if.conditions = [
+        "LAT_LONG_INSIDE_COUNTRY",
+        "MINIMUM_ELEVATION_FROM_ES",
+    ]
+    params.sat_is_active_if.minimum_elevation_from_es = 5
+    params.sat_is_active_if.lat_long_inside_country.country_name = "Paraguay"
 
     # Define the geometry converter
     geometry_converter = GeometryConverter()

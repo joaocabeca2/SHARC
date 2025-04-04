@@ -72,12 +72,24 @@ class ParametersBase:
                     )
                 loaded_attr_vals = list()
                 default_item = default_attr_value[0]
-                for prm in params[attr_name]:
-                    new_item = deepcopy(default_item)
-                    new_item.load_subparameters(
-                        f"{self.section_name}.{attr_name}", prm,
-                    )
-                    loaded_attr_vals.append(new_item)
+
+                if isinstance(default_item, ParametersBase):
+                    for prm in params[attr_name]:
+                        new_item = deepcopy(default_item)
+                        new_item.load_subparameters(
+                            f"{self.section_name}.{attr_name}", prm,
+                        )
+                        loaded_attr_vals.append(new_item)
+                else:
+                    for prm in params[attr_name]:
+                        if not isinstance(prm, type(default_item)):
+                            raise ValueError(
+                                f"ERROR: Cannot parse section {ctx}.{attr_name}\n"
+                                f"List item does not respect expected type of {type(default_item)}\n"
+                                f"{prm} has type of {type(prm)}"
+                            )
+                        loaded_attr_vals.append(prm)
+
                 setattr(self, attr_name, loaded_attr_vals)
             else:
                 setattr(self, attr_name, params[attr_name])
