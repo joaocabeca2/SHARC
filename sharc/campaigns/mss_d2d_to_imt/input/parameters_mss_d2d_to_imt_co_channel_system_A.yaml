@@ -499,7 +499,7 @@ mss_d2d:
     sat_is_active_if:
         # for a satellite to be active, it needs to respect ALL conditions
         conditions:
-            - LAT_LONG_INSIDE_COUNTRY
+            # - LAT_LONG_INSIDE_COUNTRY
             - MINIMUM_ELEVATION_FROM_ES
         minimum_elevation_from_es: 5
         # lat_long_inside_country:

@@ -181,15 +181,13 @@ class TopologyImtMssDc(Topology):
                             orbit.perigee_alt_km  # Perigee altitude in kilometers
                         )
 
-                        # print("elev_from_bs", elev_from_bs)
-                        # exit()
                         # Determine visible satellites based on minimum elevation angle
                         active_sats_mask = active_sats_mask & (elev_from_bs.flatten() >= params.sat_is_active_if.minimum_elevation_from_es)
                     elif "LAT_LONG_INSIDE_COUNTRY" == condition:
                         flat_lon = pos_vec["lon"].flatten()
                         flat_lat = pos_vec["lat"].flatten()
 
-                        # create geodataframe so we can compare to polygon
+                        # create points(lon, lat) to compare to country
                         sats_points = gpd.points_from_xy(flat_lon, flat_lat, crs="EPSG:4326")
 
                         # Check if the satellite is inside the country polygon
