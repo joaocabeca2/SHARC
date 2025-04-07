@@ -17,32 +17,7 @@ class ParametersSelectActiveSatellite(ParametersBase):
         country_shapes_filename: Path = SHARC_ROOT_DIR / "sharc"/"topology"/"countries"/"ne_110m_admin_0_countries.shp"
 
         # may load automatically for different shapefiles
-        __ALLOWED_COUNTRY_NAMES = [
-            'Fiji', 'Tanzania', 'Western Sahara', 'Canada', 'United States of America', 'Kazakhstan',
-            'Indonesia', 'Argentina', 'Chile', 'Democratic Republic of the Congo', 'Somalia', 'Kenya',
-            'Haiti', 'Dominican Republic', 'Russia', 'The Bahamas', 'Falkland Islands', 'Norway', 'Greenland',
-            'East Timor', 'South Africa', 'Lesotho', 'Mexico', 'Uruguay', 'Brazil', 'Bolivia', 'Peru',
-            'Colombia', 'Panama', 'Costa Rica', 'Nicaragua', 'Honduras', 'El Salvador', 'Guatemala',
-            'Venezuela', 'Guyana', 'Suriname', 'France', 'Ecuador', 'Puerto Rico', 'Jamaica', 'Cuba',
-            'Zimbabwe', 'Botswana', 'Namibia', 'Senegal', 'Mali', 'Mauritania', 'Benin', 'Niger', 'Sudan',
-            'Nigeria', 'Cameroon', 'Togo', 'Ghana', 'Ivory Coast', 'Guinea', 'Guinea-Bissau', 'Liberia',
-            'Sierra Leone', 'Burkina Faso', 'Central African Republic', 'Republic of the Congo', 'Gabon',
-            'Mozambique', 'Eswatini', 'Angola', 'Burundi', 'Israel', 'Lebanon', 'Madagascar', 'Palestine',
-            'The Gambia', 'Tunisia', 'Algeria', 'Jordan', 'United Arab Emirates', 'Qatar', 'Kuwait', 'Iraq',
-            'Oman', 'Vanuatu', 'Cambodia', 'Thailand', 'Laos', 'Myanmar', 'Vietnam', 'North Korea', 'Zambia',
-            'South Korea', 'Mongolia', 'India', 'Bangladesh', 'Bhutan', 'Nepal', 'Pakistan', 'Afghanistan',
-            'Tajikistan', 'Kyrgyzstan', 'Turkmenistan', 'Iran', 'Syria', 'Armenia', 'Sweden', 'Belarus',
-            'Ukraine', 'Poland', 'Austria', 'Hungary', 'Moldova', 'Romania', 'Lithuania', 'Latvia', 'Belize',
-            'Estonia', 'Germany', 'Bulgaria', 'Greece', 'Turkey', 'Albania', 'Croatia', 'Switzerland', 'Chad',
-            'Luxembourg', 'Belgium', 'Netherlands', 'Portugal', 'Spain', 'Ireland', 'New Caledonia',
-            'New Zealand', 'Australia', 'Sri Lanka', "People's Republic of China", 'Taiwan', 'Italy', 'Denmark',
-            'Iceland', 'Azerbaijan', 'Georgia', 'Philippines', 'Malaysia', 'Brunei', 'Slovenia', 'Finland',
-            'Slovakia', 'Czech Republic', 'Eritrea', 'Japan', 'Paraguay', 'Yemen', 'Saudi Arabia', 'Antarctica',
-            'Turkish Republic of Northern Cyprus', 'Cyprus', 'Morocco', 'Egypt', 'Libya', 'Ethiopia', 'Djibouti',
-            'Uganda', 'Rwanda', 'Bosnia and Herzegovina', 'North Macedonia', 'Serbia', 'Montenegro', 'Kosovo',
-            'French Southern and Antarctic Lands', 'South Sudan', 'Trinidad and Tobago', 'Equatorial Guinea',
-            'Malawi', 'United Kingdom', 'Somaliland', 'Solomon Islands', 'Papua New Guinea', 'Uzbekistan',
-        ]
+        __ALLOWED_COUNTRY_NAMES = []
 
         __ALLOWED_COORDINATE_REFERENCES = [
             # it is a WGS84 based coordinate system that only contains (lat, long) information
@@ -56,28 +31,43 @@ class ParametersSelectActiveSatellite(ParametersBase):
         # if negative, makes border bigger by x km
         margin_from_border: float = 0.0
 
+        # geometry after file processing
+        country_geometry = None
+
+        already_validated = False
+
         def validate(self, ctx):
+            if self.already_validated:
+                return
+            self.already_validated = True
+
             if self.country_name is None:
                 raise ValueError(
                     f"{ctx}.country_name was not set, but is needed!"
                 )
 
-            if self.country_shapes_filename != ParametersLatLongInsideCountry.country_shapes_filename:
-                f = gpd.read_file(self.country_shapes_filename, columns=["NAME"])
-                if f.geometry.crs not in self.__ALLOWED_COORDINATE_REFERENCES:
-                    raise ValueError(
-                        f"Shapefile at {ctx}.country_shapes_filename = {self.country_shapes_filename}\n"
-                        f"does not use one of the allowed formats {self.__ALLOWED_COORDINATE_REFERENCES},"
-                        "with points as (lat, long).\n"
-                        "If for some reason you really want to use another projection for this parameter\n"
-                        "Add the projection so that this error isn't triggered"
-                    )
-                if "NAME" not in f:
-                    raise ValueError(
-                        f"Shapefile at {ctx}.country_shapes_filename = {self.country_shapes_filename}\n"
-                        "does not contains a 'NAME' column, so it cannot be read"
-                    )
-                self.__ALLOWED_COUNTRY_NAMES = list(f["NAME"])
+            f = gpd.read_file(self.country_shapes_filename, columns=["NAME"])
+            if f.geometry.crs not in self.__ALLOWED_COORDINATE_REFERENCES:
+                raise ValueError(
+                    f"Shapefile at {ctx}.country_shapes_filename = {self.country_shapes_filename}\n"
+                    f"does not use one of the allowed formats {self.__ALLOWED_COORDINATE_REFERENCES},"
+                    "with points as (lat, long).\n"
+                    "If for some reason you really want to use another projection for this parameter\n"
+                    "Add the projection so that this error isn't triggered"
+                )
+            if "NAME" not in f:
+                raise ValueError(
+                    f"Shapefile at {ctx}.country_shapes_filename = {self.country_shapes_filename}\n"
+                    "does not contains a 'NAME' column, so it cannot be read"
+                )
+            self.__ALLOWED_COUNTRY_NAMES = list(f["NAME"])
+
+            # preload country projection
+            country_proj = f[f["NAME"] == self.country_name]
+
+            # NOTE: if country_proj is a GeoDataFrame instead of a polygon undesired behaviour will follow
+            # for that reason we can use union_all()
+            self.country_geometry = country_proj["geometry"].geometry.union_all()
 
             if self.country_name not in self.__ALLOWED_COUNTRY_NAMES:
                 raise ValueError(
