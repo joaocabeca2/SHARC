@@ -19,6 +19,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
+from sharc.parameters.parameters_single_space_station import ParametersSingleSpaceStation
 
 
 class Parameters(object):
@@ -39,6 +40,7 @@ class Parameters(object):
         self.rns = ParametersRns()
         self.ras = ParametersRas()
         self.single_earth_station = ParametersSingleEarthStation()
+        self.single_space_station = ParametersSingleSpaceStation()
         self.metsat_ss = ParametersMetSatSS()
 
     def set_file_name(self, file_name: str):
@@ -106,6 +108,8 @@ class Parameters(object):
         self.eess_ss.load_parameters_from_file(self.file_name)
 
         self.single_earth_station.load_parameters_from_file(self.file_name)
+
+        self.single_space_station.load_parameters_from_file(self.file_name)
 
 
 if __name__ == "__main__":
