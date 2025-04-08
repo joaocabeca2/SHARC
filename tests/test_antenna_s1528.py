@@ -7,7 +7,7 @@ Created on Tue Aug 15 17:07:07 2017
 
 import unittest
 
-from sharc.antenna.antenna_s1528 import AntennaS1528
+from sharc.antenna.antenna_s1528 import AntennaS1528, AntennaS1528Taylor
 from sharc.parameters.antenna.parameters_antenna_s1528 import ParametersAntennaS1528
 
 import numpy as np
@@ -53,6 +53,32 @@ class AntennaS1528Test(unittest.TestCase):
         gain30 = self.antenna30.calculate_gain(
             off_axis_angle_vec=psi) - self.antenna30.peak_gain
         npt.assert_allclose(gain30, ref_gain30, atol=1e-2)
+
+    def test_calculate_params_bessel(self):
+        """Compare the parameteres calculated by the class with the reference values present in the Recommendation
+        S.1528-5 - Annex II - Examples for recommends 1.4 
+        """
+        a_deg = np.degrees(350 / 1469)  # beam radius over the satellite altitude
+        params_rolloff_7 = ParametersAntennaS1528(
+            antenna_gain=0,
+            frequency=12000,
+            bandwidth=10,
+            slr=20,
+            n_side_lobes=4,
+            roll_off=7,
+            a_deg=a_deg,
+            b_deg=a_deg
+        )
+
+        # Create an instance of AntennaS1528Taylor
+        antenna_rolloff_7 = AntennaS1528Taylor(params_rolloff_7)
+        ref_primary_roots = np.array([1.2, 2.233, 3.238])
+        ref_A = 0.95277
+        ref_sigma = 1.1692
+        npt.assert_allclose(antenna_rolloff_7.mu, ref_primary_roots, atol=1e-1)
+        npt.assert_allclose(antenna_rolloff_7.A, ref_A, atol=1e-2)
+        npt.assert_allclose(antenna_rolloff_7.sigma, ref_sigma, atol=1e-2)
+
 
 
 if __name__ == '__main__':
