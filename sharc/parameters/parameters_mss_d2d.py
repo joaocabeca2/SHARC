@@ -29,6 +29,10 @@ class ParametersMssD2d(ParametersBase):
     # MSS_D2d system bandwidth in MHz
     bandwidth: float = 5.0
 
+    # In case you want to use a load factor for beams
+    # that means that each beam has a probability of `beams_load_factor` to be active
+    beams_load_factor: float = 1.0
+
     # Adjacent channel emissions type
     # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
     adjacent_ch_emissions: str = "OFF"
@@ -126,6 +130,9 @@ class ParametersMssD2d(ParametersBase):
 
         if self.channel_model.upper() not in ["FSPL", "P619", "SATELLITESIMPLE"]:
             raise ValueError(f"Invalid channel model name {self.channel_model}")
+
+        if self.beams_load_factor < 0.0 or self.beams_load_factor > 1.0:
+            raise ValueError(f"{ctx}.beams_load_factor must be in interval [0.0, 1.0]")
 
     def propagate_parameters(self):
         self.antenna_s1528.set_external_parameters(antenna_pattern=self.antenna_pattern,

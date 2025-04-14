@@ -1460,19 +1460,20 @@ class StationFactory(object):
             (total_satellites, params.num_sectors)
         )
 
-        for i in range(total_satellites):
-            if not mss_d2d.active[i]:  # we don't really care about these
-                continue
+        active_beams = random_number_gen.uniform(
+            size=(len(active_satellite_idxs), params.num_sectors)
+        ) < params.beams_load_factor
 
+        for i_active, i in enumerate(np.where(mss_d2d.active)[0]):
             beams_3d_elev, beams_3d_azim = rotate_angles_based_on_new_nadir(
-                beams_2d_elev[i],
-                beams_2d_azim[i],
+                beams_2d_elev[i][active_beams[i_active]],
+                beams_2d_azim[i][active_beams[i_active]],
                 mss_d2d.elevation[i],
                 mss_d2d.azimuth[i]
             )
 
             mss_d2d.antenna[i] = AntennaMultipleTransceiver(
-                num_beams=params.num_sectors,
+                num_beams=np.sum(active_beams[i_active]),
                 transceiver_radiation_pattern=antenna_pattern,
                 azimuths=beams_3d_azim,
                 elevations=beams_3d_elev,
@@ -1624,6 +1625,8 @@ if __name__ == '__main__':
         num_beams=7,
         orbits=[orbit]
     )
+    params.sat_is_active_if.conditions = ["MINIMUM_ELEVATION_FROM_ES"]
+    params.sat_is_active_if.minimum_elevation_from_es = 5.0
 
     topology = TopologyImtMssDc(params, geometry_converter)
 
@@ -1646,7 +1649,7 @@ if __name__ == '__main__':
 
     imt_ue = StationFactory.generate_imt_ue_outdoor(
         parameters,
-        parameters.ue.antenna,
+        parameters.ue.antenna.array,
         rand_gen,
         topology
     )

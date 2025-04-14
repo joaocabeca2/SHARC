@@ -207,6 +207,9 @@ if __name__ == "__main__":
         intersite_distance=np.sqrt(3) * spotbeam_radius,
         orbits=[orbit_1, orbit_2]
     )
+    params.sat_is_active_if.conditions = ["MINIMUM_ELEVATION_FROM_ES"]
+    params.sat_is_active_if.minimum_elevation_from_es = 5.0
+    params.beams_load_factor = 0.1
 
     # Create a topology with a single base station
     from sharc.topology.topology_single_base_station import TopologySingleBaseStation

@@ -132,21 +132,21 @@ class TopologyImtMssDc(Topology):
 
                 active_sats_mask = np.ones(len(pos_vec['lat']), dtype=bool)
 
-                if "MINIMUM_ELEVATION_FROM_ES" in params.sat_is_active_if.conditions:
+                if "MINIMUM_ELEVATION_FROM_ES" in self.orbit_params.sat_is_active_if.conditions:
                     # Calculate satellite visibility from base stations
                     elev_from_bs = calc_elevation(
-                        geometry_converter.ref_lat,  # Latitude of base station
+                        self.geometry_converter.ref_lat,  # Latitude of base station
                         pos_vec['lat'],  # Latitude of satellites
-                        geometry_converter.ref_long,  # Longitude of base station
+                        self.geometry_converter.ref_long,  # Longitude of base station
                         pos_vec['lon'],  # Longitude of satellites
                         orbit.perigee_alt_km  # Perigee altitude in kilometers
                     )
 
                     # Determine visible satellites based on minimum elevation angle
-                    active_sats_mask = active_sats_mask & (elev_from_bs.flatten() >= params.sat_is_active_if.minimum_elevation_from_es)
+                    active_sats_mask = active_sats_mask & (elev_from_bs.flatten() >= self.orbit_params.sat_is_active_if.minimum_elevation_from_es)
 
                 # NOTE/WARN: some of the calc inside here is expensive, so it should be the last condition
-                if "LAT_LONG_INSIDE_COUNTRY" in params.sat_is_active_if.conditions:
+                if "LAT_LONG_INSIDE_COUNTRY" in self.orbit_params.sat_is_active_if.conditions:
                     flat_active_lon = pos_vec["lon"].flatten()[active_sats_mask]
                     flat_active_lat = pos_vec["lat"].flatten()[active_sats_mask]
 
@@ -157,7 +157,7 @@ class TopologyImtMssDc(Topology):
                     polygon_mask = np.zeros_like(active_sats_mask)
                     polygon_mask[active_sats_mask] = sats_points.within(self.country_proj)
 
-                    if params.sat_is_active_if.lat_long_inside_country.margin_from_border != 0.0:
+                    if self.orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border != 0.0:
                         geod = pyproj.Geod(ellps="WGS84")
 
                         # TODO: maybe optimize this by creating bounding box before closest point calc?
@@ -172,10 +172,10 @@ class TopologyImtMssDc(Topology):
                         dist = np.ones_like(active_sats_mask) * np.inf
                         dist[active_sats_mask] = active_dist
 
-                        if params.sat_is_active_if.lat_long_inside_country.margin_from_border > 0:
-                            polygon_mask = polygon_mask & (dist > params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
+                        if self.orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border > 0:
+                            polygon_mask = polygon_mask & (dist > self.orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
                         else:
-                            polygon_mask = polygon_mask | (dist < -params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
+                            polygon_mask = polygon_mask | (dist < -self.orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
 
                     active_sats_mask = active_sats_mask & polygon_mask
 
