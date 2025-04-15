@@ -424,16 +424,16 @@ mss_d2d:
     # Orbit parameters
     orbits:
         # Number of planes
-      - n_planes: 20
+      - n_planes: 28
         # Inclination in degrees
-        inclination_deg: 54.5
+        inclination_deg: 53.0
         # Perigee in km
         perigee_alt_km: 525.0
         # Apogee in km
         apogee_alt_km: 525.0
         # Number of satellites per plane
-        sats_per_plane: 32
+        sats_per_plane: 120
         # Longitude of the first ascending node in degrees
-        long_asc_deg: 18.0
+        long_asc_deg: 0.0
         # Phasing in degrees
-        phasing_deg: 3.9
+        phasing_deg: 1.5
