@@ -496,6 +496,8 @@ mss_d2d:
     # Possible values: "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO"
     antenna_pattern: ITU-R-S.1528-Taylor
     antenna_s1528:
+        # Maximum Antenna gain in dBi
+        antenna_gain: 34.1
         ### The following parameters are used for S.1528-Taylor antenna pattern
         # SLR is the side-lobe ratio of the pattern (dB), the difference in gain between the maximum
         # gain and the gain at the peak of the first side lobe.
