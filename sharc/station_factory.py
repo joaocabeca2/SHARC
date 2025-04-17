@@ -1443,22 +1443,106 @@ class StationFactory(object):
             num_sectors=params.num_sectors
         )
 
-        beams_2d_azim = np.rad2deg(np.arctan2(sy, sx))
+        sx = np.resize(
+            sx,
+            total_satellites * params.num_sectors
+        ).reshape(
+            (total_satellites, params.num_sectors)
+        )
+
+        sy = np.resize(
+            sy,
+            total_satellites * params.num_sectors
+        ).reshape(
+            (total_satellites, params.num_sectors)
+        )
+
+        if params.center_beam_positioning.type == "ANGLE_AND_DISTANCE_FROM_SUBSATELLITE":
+            match params.center_beam_positioning.angle_from_subsatellite_phi.type:
+                case "FIXED":
+                    azim_add = params.center_beam_positioning.angle_from_subsatellite_phi.fixed + np.zeros((total_satellites, 1))
+                case "~U(MIN,MAX)":
+                    azim_add = random_number_gen.uniform(
+                        params.center_beam_positioning.angle_from_subsatellite_phi.distribution.min,
+                        params.center_beam_positioning.angle_from_subsatellite_phi.distribution.max,
+                        (total_satellites, 1)
+                    )
+                case "~SQRT(U(0,1))*MAX":
+                    azim_add = random_number_gen.uniform(
+                        0, 1,
+                        (total_satellites, 1)
+                    ) * params.center_beam_positioning.angle_from_subsatellite_phi.distribution.max
+                case _:
+                    raise ValueError(
+                        f"mss_d2d_params.center_beam_positioning.angle_from_subsatellite_phi.type = \n"
+                        f"'{params.center_beam_positioning.angle_from_subsatellite_phi.type}' is not recognized!"
+                    )
+
+            match params.center_beam_positioning.distance_from_subsatellite.type:
+                case "FIXED":
+                    subsatellite_distance_add = params.center_beam_positioning.distance_from_subsatellite.fixed + np.zeros((total_satellites, 1))
+                case "~U(MIN,MAX)":
+                    subsatellite_distance_add = random_number_gen.uniform(
+                        params.center_beam_positioning.distance_from_subsatellite.distribution.min,
+                        params.center_beam_positioning.distance_from_subsatellite.distribution.max,
+                        (total_satellites, 1)
+                    )
+                case "~SQRT(U(0,1))*MAX":
+                    subsatellite_distance_add = random_number_gen.uniform(
+                        0, 1,
+                        (total_satellites, 1)
+                    ) * params.center_beam_positioning.distance_from_subsatellite.distribution.max
+                case _:
+                    raise ValueError(
+                        f"mss_d2d_params.center_beam_positioning.distance_from_subsatellite.type = \n"
+                        f"'{params.center_beam_positioning.angle_from_subsatellite_theta.type}' is not recognized!"
+                    )
+
+        elif params.center_beam_positioning.type == "ANGLE_FROM_SUBSATELLITE":
+            match params.center_beam_positioning.angle_from_subsatellite_theta.type:
+                case "FIXED":
+                    off_nadir_add = params.center_beam_positioning.angle_from_subsatellite_theta.fixed + np.zeros((total_satellites, 1))
+                case "~U(MIN,MAX)":
+                    off_nadir_add = random_number_gen.uniform(
+                        params.center_beam_positioning.angle_from_subsatellite_theta.distribution.min,
+                        params.center_beam_positioning.angle_from_subsatellite_theta.distribution.max,
+                        (total_satellites, 1)
+                    )
+                case "~SQRT(U(0,1))*MAX":
+                    off_nadir_add = random_number_gen.uniform(
+                        0, 1,
+                        (total_satellites, 1)
+                    ) * params.center_beam_positioning.angle_from_subsatellite_theta.distribution.max
+                case _:
+                    raise ValueError(
+                        f"mss_d2d_params.center_beam_positioning.angle_from_subsatellite_theta.type = \n"
+                        f"'{params.center_beam_positioning.angle_from_subsatellite_theta.type}' is not recognized!"
+                    )
+            subsatellite_distance_add = mss_d2d.height[:, np.newaxis] * np.tan(off_nadir_add)
+
+            match params.center_beam_positioning.angle_from_subsatellite_phi.type:
+                case "FIXED":
+                    azim_add = params.center_beam_positioning.angle_from_subsatellite_phi.fixed + np.zeros((total_satellites, 1))
+                case "~U(MIN,MAX)":
+                    azim_add = random_number_gen.uniform(
+                        params.center_beam_positioning.angle_from_subsatellite_phi.distribution.min,
+                        params.center_beam_positioning.angle_from_subsatellite_phi.distribution.max,
+                        (total_satellites, 1)
+                    )
+                case "~SQRT(U(0,1))*MAX":
+                    azim_add = random_number_gen.uniform(
+                        0, 1,
+                        (total_satellites, 1)
+                    ) * params.center_beam_positioning.angle_from_subsatellite_phi.distribution.max
+                case _:
+                    raise ValueError(
+                        f"mss_d2d_params.center_beam_positioning.angle_from_subsatellite_phi.type = \n"
+                        f"'{params.center_beam_positioning.angle_from_subsatellite_phi.type}' is not recognized!"
+                    )
+
+        sx += subsatellite_distance_add
+        beams_2d_azim = np.rad2deg(np.arctan2(sy, sx)) + azim_add
         beams_2d_elev = np.rad2deg(np.arctan2(np.sqrt(sy * sy + sx * sx), sat_altitude)) - 90
-
-        beams_2d_azim = np.resize(
-            beams_2d_azim,
-            total_satellites * params.num_sectors
-        ).reshape(
-            (total_satellites, params.num_sectors)
-        )
-
-        beams_2d_elev = np.resize(
-            beams_2d_elev,
-            total_satellites * params.num_sectors
-        ).reshape(
-            (total_satellites, params.num_sectors)
-        )
 
         active_beams = random_number_gen.uniform(
             size=(len(active_satellite_idxs), params.num_sectors)

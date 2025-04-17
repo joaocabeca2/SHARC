@@ -2,7 +2,7 @@ import numpy as np
 from dataclasses import dataclass, field, asdict
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_orbit import ParametersOrbit
-from sharc.parameters.imt.parameters_imt_mss_dc import ParametersSelectActiveSatellite
+from sharc.parameters.imt.parameters_imt_mss_dc import ParametersSelectActiveSatellite, ParametersSectorPositioning
 #from satellite.parameters.parameters_ngso_constellation import ParametersNgsoConstellation
 from sharc.parameters.parameters_p619 import ParametersP619
 from sharc.parameters.antenna.parameters_antenna_s1528 import ParametersAntennaS1528
@@ -32,6 +32,9 @@ class ParametersMssD2d(ParametersBase):
     # In case you want to use a load factor for beams
     # that means that each beam has a probability of `beams_load_factor` to be active
     beams_load_factor: float = 1.0
+
+    # Central beam positioning
+    center_beam_positioning: ParametersSectorPositioning = field(default_factory=ParametersSectorPositioning)
 
     # Adjacent channel emissions type
     # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
