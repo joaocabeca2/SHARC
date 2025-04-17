@@ -57,7 +57,13 @@ def plot_back(fig):
         colorscale=[[0, clor], [1, clor]],
         opacity=1.0,
         showlegend=False,
-        lighting=dict(diffuse=0.1)
+        lighting=dict(diffuse=0.1),
+        colorbar=dict(
+            tickmode='array',
+            tickvals=[0],
+            ticktext=[""],
+            title=""
+        ),
     )
 
 
@@ -95,7 +101,13 @@ def plot_front(fig):
         colorscale=[[0, clor], [1, clor]],
         opacity=1.0,
         showlegend=False,
-        lighting=dict(diffuse=0.1)
+        lighting=dict(diffuse=0.1),
+        colorbar=dict(
+            tickmode='array',
+            tickvals=[0],
+            ticktext=[""],
+            title=""
+        ),
     )
 
 
@@ -166,15 +178,18 @@ def plot_globe_with_borders():
 
 
 if __name__ == "__main__":
+    colors = ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#7f0000']
+    step = [3, 3, 4, 10] # dB
+    SUM_GAINS = False
+    # Number of iterations (drops)
+    NUM_DROPS = 1
+    DISCRETIZE = True
+    select_i = 3
+
     # Define the orbit parameters for two satellite constellations
     orbit_1 = ParametersOrbit(
-        n_planes=6, sats_per_plane=8, phasing_deg=7.5, long_asc_deg=0,
-        inclination_deg=52, perigee_alt_km=1414, apogee_alt_km=1414
-    )
-
-    orbit_2 = ParametersOrbit(
-        n_planes=4, sats_per_plane=10, phasing_deg=5.0, long_asc_deg=90,
-        inclination_deg=60, perigee_alt_km=1200, apogee_alt_km=1200
+        n_planes=28, sats_per_plane=120, phasing_deg=1.5, long_asc_deg=0,
+        inclination_deg=53.0, perigee_alt_km=525.0, apogee_alt_km=525.0
     )
 
     # Antenna parameters
@@ -208,7 +223,7 @@ if __name__ == "__main__":
         orbits=[orbit_1]
     )
     params.sat_is_active_if.conditions = [
-        # "MINIMUM_ELEVATION_FROM_ES",
+        "MINIMUM_ELEVATION_FROM_ES",
         "LAT_LONG_INSIDE_COUNTRY",
     ]
     params.sat_is_active_if.minimum_elevation_from_es = 5.0
@@ -229,9 +244,6 @@ if __name__ == "__main__":
 
     # Create a random number generator
     rng = np.random.RandomState(seed=42)
-
-    # Number of iterations (drops)
-    NUM_DROPS = 128
 
     # Lists to store satellite positions (all and visible)
     all_positions = {'x': [], 'y': [], 'z': []}
@@ -281,9 +293,16 @@ if __name__ == "__main__":
         visible_positions['y'].extend(y_vec[vis_sat_idxs])
         visible_positions['z'].extend(z_vec[vis_sat_idxs])
         vis_elevation.extend(mss_d2d_manager.elevation[vis_sat_idxs])
+    print("option structure: (drop number, drop indice, abs indice)")
     print("options", options)
     print("len(options)", len(options))
-    select_i = 656
+    # station_1 = StationManager(np.sum([m.active for m in managers]))
+    # station_1.x = np.ravel([item for m in managers for item in m.x[m.active]])
+    # station_1.y = np.ravel([item for m in managers for item in m.y[m.active]])
+    # station_1.z = np.ravel([item for m in managers for item in m.z[m.active]])
+    # station_1.azimuth = np.ravel([item for m in managers for item in m.azimuth[m.active]])
+    # station_1.elevation = np.ravel([item for m in managers for item in m.elevation[m.active]])
+    # station_1.antenna = np.ravel([item for m in managers for item in m.antenna[m.active]])
     station_1 = managers[options[select_i][0]]
     mss_active = np.where(station_1.active)[0]
     # consider satellite footprint
@@ -311,42 +330,36 @@ if __name__ == "__main__":
     scale = 0.5 / np.sqrt(visible_positions['x'][options[select_i][2]]**2 +
                           visible_positions['y'][options[select_i][2]]**2 +
                           visible_positions['z'][options[select_i][2]]**2)
-    eye = dict(
-        # x=0,
-        # y=0,
-        # z=0
-        x=visible_positions['x'][options[select_i][2]] * scale,
-        y=visible_positions['y'][options[select_i][2]] * scale,
-        z=visible_positions['z'][options[select_i][2]] * scale
-    )
-    print("eye", eye)
-
     # Set the camera position in Plotly
     # print(center_of_earth.z[0])
-    # fig.update_layout(
-    #     scene=dict(
-    #         zaxis=dict(
-    #             range=(-1400, 10000-1400)
-    #         ),
-    #         yaxis=dict(
-    #             range=(-5000, 5000)
-    #         ),
-    #         xaxis=dict(
-    #             range=(-5000, 5000)
-    #         ),
-    #         camera=dict(
-    #             eye=eye,   # Camera position
-    #             center=dict(x=0, y=0, z=center_of_earth.z[0]/1e3/10000),  # Look at Earth's center
-    #             # center=dict(x=0, y=0, z=0),  # Look at Earth's center
-    #             # up=dict(x=0, y=0, z=1)  # Ensure the up direction is correct
-    #         )
-    #     )
-    # )
+    show_range = 1e4
+    fig.update_layout(
+        scene=dict(
+            zaxis=dict(
+                range=(-show_range/2, show_range/2)
+            ),
+            yaxis=dict(
+                range=(-show_range/2, show_range/2)
+            ),
+            xaxis=dict(
+                range=(-show_range/2, show_range/2)
+            ),
+            camera=dict(
+                center=dict(x=0, y=0, z=center_of_earth.z[0]/show_range/1e3),
+            )
+        )
+    )
 
-    # 50 latitude points from -90 to 90 degrees.
-    lat_vals = np.linspace(sat_lat - 5.0, sat_lat + 5.0, 50)
-    # 50 longitude points for the front half.
-    lon_vals = np.linspace(sat_long - 5.0, sat_long + 5.0, 50)
+    # latitude points
+    lat_vals = np.linspace(sat_lat - 10.0, sat_lat + 10.0, 50)
+    # lat_vals = np.linspace(geoconv.ref_lat - 10.0, geoconv.ref_lat + 10.0, 50)
+    # lat_vals = np.linspace(-33.69111, 2.81972, 50)
+
+    # longitude points
+    lon_vals = np.linspace(sat_long - 10.0, sat_long + 10.0, 50)
+    # lon_vals = np.linspace(geoconv.ref_long - 10.0, geoconv.ref_long + 10.0, 50)
+    # lon_vals = np.linspace(-72.89583, -34.80861, 50)
+
     # lon and lat will be 2D arrays.
     lon, lat = np.meshgrid(lon_vals, lat_vals)
 
@@ -379,29 +392,71 @@ if __name__ == "__main__":
                 theta_vec=theta[k, station_2_active],
                 phi_vec=phi[k, station_2_active],
         )
-    lin_gains = 10 ** (gains / 10)
-    lin_gains = np.sum(lin_gains, axis=0)
     # lin_gains = gains
-    print("lin_gains")
-    print(lin_gains)
-    print(mss_active)
-    print("considering ", mss_to_consider)
-    print("considering z", station_1.z[mss_to_consider])
+    if SUM_GAINS:
+        gains = 10 ** (gains / 10)
+        gains = 10 * np.log10(np.sum(gains, axis=0))
+    else:
+        gains = np.max(gains, axis=0)
+    # lin_gains = gains
+    # print("lin_gains")
+    # print(lin_gains)
+    # print(mss_active)
+    # print("considering ", mss_to_consider)
+    # print("considering z", station_1.z[mss_to_consider])
 
     # Reshape the converted coordinates back to the 2D grid shape.
     world_surf_x = x_flat.reshape(lat.shape)
     world_surf_y = y_flat.reshape(lat.shape)
     world_surf_z = z_flat.reshape(lat.shape)
-    reshaped_gain = (lin_gains).reshape(lat.shape)
+    reshaped_gain = gains.reshape(lat.shape)
     clor = 'rgb(220, 220, 220)'
+
+    mx_gain = np.max(reshaped_gain)
+    mn_gain = np.min(reshaped_gain)
+    rnge = mx_gain - mn_gain
+    n_steps = len(step)
+    colorscale = [[0, clor], [1/n_steps/2-0.001, clor]]
+    bins = []
+    at = 0
+    offset = len(colors) - len(step)
+
+    for i in range(1, n_steps+1):
+        ci = offset + i-1
+
+        bins.append(mx_gain - at * rnge)
+        at += step[i-1]/rnge
+
+        if DISCRETIZE and i/n_steps - 1/n_steps/2 > 0:
+            colorscale.append([i/n_steps - 1/n_steps/2, "rgb(100,100,100)"])
+            colorscale.append([i/n_steps - 1/n_steps/2 + 0.001, colors[ci]])
+        colorscale.append([i/n_steps, colors[ci]])
+        if DISCRETIZE and i/n_steps + 1/n_steps/2 < 1.0:
+            colorscale.append([i/n_steps + 1/n_steps/2 - 0.001, colors[ci]])
+    # bins.append(mn_gain)
+    bins.reverse()
+
+    if DISCRETIZE:
+        surfacecolor = np.digitize(reshaped_gain, bins, right=True)
+        colorbar=dict(
+            tickmode='array',
+            tickvals=np.arange(0, len(bins) + 1),
+            ticktext=[f"< {bins[0]:.2f} dB"] + [f"{bins[i]:.2f} to {bins[i+1]:.2f} dB" for i in range(len(bins) - 1)],
+            title="Gain (dB)"
+        )
+    else:
+        surfacecolor = reshaped_gain
+        colorbar = None
+
     fig.add_surface(
         x=world_surf_x / 1e3, y=world_surf_y / 1e3, z=world_surf_z / 1e3,
-        surfacecolor=reshaped_gain,
+        surfacecolor=surfacecolor,
         # Uniform color scale for a solid color.
-        colorscale=[[0, clor], [0.1, "blue"], [1, "red"]],
+        colorscale=colorscale,
         opacity=1.0,
         showlegend=False,
-        lighting=dict(diffuse=0.1)
+        # lighting=dict(diffuse=0)
+        colorbar=colorbar,
     )
 
     # Plot all satellites (red markers)
