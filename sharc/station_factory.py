@@ -1215,7 +1215,8 @@ class StationFactory(object):
     def generate_mss_d2d(
         params: ParametersMssD2d,
         random_number_gen: np.random.RandomState,
-        geometry_converter: GeometryConverter
+        geometry_converter: GeometryConverter,
+        also_generate_inactive: bool = False
     ):
         """
         Generate the MSS D2D constellation with support for multiple orbits and base station visibility.
@@ -1241,6 +1242,7 @@ class StationFactory(object):
             geometry_converter,
             params,
             random_number_gen,
+            not also_generate_inactive
         )
 
         total_satellites = mss_d2d_values["num_satellites"]
@@ -1277,8 +1279,17 @@ class StationFactory(object):
         mss_d2d.azimuth = mss_d2d_values["sat_antenna_azim"]
         mss_d2d.height = mss_d2d_values["sat_alt"]
 
-        # Set active satellite flags
-        mss_d2d.active = np.ones(total_satellites, dtype=bool)  # Initialize all satellites as inactive
+        mss_d2d.active = np.zeros(total_satellites, dtype=bool)
+
+        if mss_d2d_values["num_active_satellites"] != mss_d2d_values["num_satellites"]:
+            mss_d2d.active[mss_d2d_values["active_satellites_idxs"]] = random_number_gen.uniform(
+                size=len(mss_d2d_values["active_satellites_idxs"])
+            ) < params.beams_load_factor
+        else:
+            # Set active satellite flags
+            mss_d2d.active = random_number_gen.uniform(
+                size=total_satellites
+            ) < params.beams_load_factor
 
         sat_altitude = mss_d2d_values["sat_alt"]
 
@@ -1297,13 +1308,6 @@ class StationFactory(object):
 
         for i in range(mss_d2d.num_stations):
             mss_d2d.antenna[i] = antenna_pattern
-
-        active_beams = random_number_gen.uniform(
-            size=total_satellites
-        ) < params.beams_load_factor
-
-        mss_d2d.active = np.zeros(total_satellites, dtype=bool)
-        mss_d2d.active[active_beams] = True
 
         return mss_d2d  # Return the configured StationManager
 

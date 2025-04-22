@@ -81,6 +81,7 @@ class TopologyImtMssDc(Topology):
         geometry_converter: GeometryConverter,
         orbit_params: ParametersImtMssDc,
         random_number_gen=np.random.RandomState(),
+        only_active=True,
     ):
         """
         Computes the coordintates of the visible space stations
@@ -227,16 +228,37 @@ class TopologyImtMssDc(Topology):
                 )
         # We have the list of visible satellites, now create a Topolgy of this subset and move the coordinate system
         # reference.
-        total_active_satellites = len(active_satellite_idxs)
-        space_station_x = np.squeeze(np.array(all_positions['sx']))[active_satellite_idxs] * 1e3  # Convert X-coordinates to meters
-        space_station_y = np.squeeze(np.array(all_positions['sy']))[active_satellite_idxs] * 1e3  # Convert Y-coordinates to meters
-        space_station_z = np.squeeze(np.array(all_positions['sz']))[active_satellite_idxs] * 1e3  # Convert Z-coordinates to meters
-        elevation = np.squeeze(np.array(all_elevations))[active_satellite_idxs]  # Elevation angles
-        azimuth = np.squeeze(np.array(all_azimuths))[active_satellite_idxs]  # Azimuth angles
+        if only_active:
+            total_active_satellites = len(active_satellite_idxs)
+            space_station_x = np.squeeze(np.array(all_positions['sx']))[active_satellite_idxs] * 1e3  # Convert X-coordinates to meters
+            space_station_y = np.squeeze(np.array(all_positions['sy']))[active_satellite_idxs] * 1e3  # Convert Y-coordinates to meters
+            space_station_z = np.squeeze(np.array(all_positions['sz']))[active_satellite_idxs] * 1e3  # Convert Z-coordinates to meters
+            elevation = np.squeeze(np.array(all_elevations))[active_satellite_idxs]  # Elevation angles
+            azimuth = np.squeeze(np.array(all_azimuths))[active_satellite_idxs]  # Azimuth angles
+            # Store the latitude and longitude of the visible satellites for later use
+            lat = np.squeeze(np.array(all_positions['lat']))[active_satellite_idxs]
+            lon = np.squeeze(np.array(all_positions['lon']))[active_satellite_idxs]
+        else:
+            total_active_satellites = total_satellites
+            space_station_x = np.squeeze(np.array(all_positions['sx'])) * 1e3  # Convert X-coordinates to meters
+            space_station_y = np.squeeze(np.array(all_positions['sy'])) * 1e3  # Convert Y-coordinates to meters
+            space_station_z = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
+            elevation = np.squeeze(np.array(all_elevations))  # Elevation angles
+            azimuth = np.squeeze(np.array(all_azimuths))  # Azimuth angles
+            # Store the latitude and longitude of the visible satellites for later use
+            lat = np.squeeze(np.array(all_positions['lat']))
+            lon = np.squeeze(np.array(all_positions['lon']))
 
-        # Store the latitude and longitude of the visible satellites for later use
-        lat = np.squeeze(np.array(all_positions['lat']))[active_satellite_idxs]
-        lon = np.squeeze(np.array(all_positions['lon']))[active_satellite_idxs]
+        rx, ry, rz = lla2ecef(
+            np.squeeze(lat),
+            np.squeeze(lon),
+            0
+        )
+        earth_radius = np.sqrt(rx * rx + ry * ry + rz * rz)
+        all_r = np.squeeze(np.array(all_positions['R'])) * 1e3
+        if only_active:
+            all_r = all_r[active_satellite_idxs]
+        sat_altitude = np.array(all_r - earth_radius)
 
         # Convert the ECEF coordinates to the transformed cartesian coordinates and set the Space Station positions
         # used to generetate the IMT Base Stations
@@ -251,18 +273,6 @@ class TopologyImtMssDc(Topology):
             geometry_converter.convert_cartesian_to_transformed_cartesian(
                 pointing_vec_x, pointing_vec_y, pointing_vec_z, translate=0)
         _, azimuth, elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
-
-        # Create the other beams and rotate the azimuth and elevation angles
-
-        # Calculate the average altitude of the visible satellites
-        rx, ry, rz = lla2ecef(
-            np.squeeze(np.array(all_positions['lat'])),
-            np.squeeze(np.array(all_positions['lon'])),
-            0
-        )
-        earth_radius = np.sqrt(rx * rx + ry * ry + rz * rz)
-        all_r = np.squeeze(np.array(all_positions['R'])) * 1e3
-        sat_altitude = np.array(all_r - earth_radius)[active_satellite_idxs]
 
         # We borrow the TopologyNTN method to calculate the sectors azimuth and elevation angles from their
         # respective x and y boresight coordinates
@@ -433,8 +443,17 @@ class TopologyImtMssDc(Topology):
         assert(sx.shape == (num_base_stations,))
         assert(sy.shape == (num_base_stations,))
 
+        # update indices (multiply by num_beams)
+        # and make all num_beams of satellite active
+        active_satellite_idxs = np.ravel(
+            np.array(active_satellite_idxs)[:, np.newaxis] * orbit_params.num_beams
+            + np.arange(orbit_params.num_beams)
+        )
+
         return {
             "num_satellites": num_base_stations,
+            "num_active_satellites": len(active_satellite_idxs),
+            "active_satellites_idxs": active_satellite_idxs,
             "sat_x": space_station_x,
             "sat_y": space_station_y,
             "sat_z": space_station_z,

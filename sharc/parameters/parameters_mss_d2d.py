@@ -123,11 +123,13 @@ class ParametersMssD2d(ParametersBase):
         # Now do the sanity check for some parameters
         if self.num_sectors not in [1, 7, 19]:
             raise ValueError(f"ParametersMssD2d: Invalid number of sectors {self.num_sectors}")
+        self.num_beams = self.num_sectors
 
         if self.cell_radius <= 0:
             raise ValueError(f"ParametersMssD2d: cell_radius must be greater than 0, but is {self.cell_radius}")
         else:
             self.intersite_distance = np.sqrt(3) * self.cell_radius
+            self.beam_radius = self.cell_radius
 
         if self.adjacent_ch_emissions not in ["SPECTRAL_MASK", "ACLR", "OFF"]:
             raise ValueError(f"""ParametersMssD2d: Invalid adjacent channel emissions {self.adjacent_ch_emissions}""")
