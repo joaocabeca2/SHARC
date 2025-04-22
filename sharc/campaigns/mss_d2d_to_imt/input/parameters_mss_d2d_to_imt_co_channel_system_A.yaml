@@ -177,18 +177,6 @@ imt:
             ###########################################################################
             # number of sectors [degree]
             num_sectors: 19
-            ###########################################################################
-            # Conducted power per element [dBm/bandwidth]
-            # bs_conducted_power: 37
-            # ###########################################################################
-            # # Backoff Power [Layer 2] [dB]. Allowed: 7 sector topology - Layer 2
-            # bs_backoff_power: 3
-            # ###########################################################################
-            # # NTN Antenna configuration
-            # bs_n_rows_layer1 : 2
-            # bs_n_columns_layer1: 2
-            # bs_n_rows_layer2 : 4
-            # bs_n_columns_layer2: 2
     ###########################################################################
     # Defines the antenna model to be used in compatibility studies between
     # IMT and other services in adjacent band
@@ -513,11 +501,13 @@ mss_d2d:
     # Possible values: "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO"
     antenna_pattern: ITU-R-S.1528-Taylor
     antenna_s1528:
+        # Maximum Antenna gain in dBi
+        antenna_gain: 34.1
         ### The following parameters are used for S.1528-Taylor antenna pattern
         # SLR is the side-lobe ratio of the pattern (dB), the difference in gain between the maximum
         # gain and the gain at the peak of the first side lobe.
         slr: 20.0
-        # Number of secondary lobes considered in the diagram (coincide with the roots of the Bessel function)
+        # Number of secondarylobes considered in the diagram (coincide with the roots of the Bessel function)
         n_side_lobes: 2
         # Radial (l_r) and transverse (l_t) sizes of the effective radiating area of the satellite transmitt antenna (m)
         l_r: 1.6
@@ -545,16 +535,16 @@ mss_d2d:
     # Orbit parameters
     orbits:
         # Number of planes
-      - n_planes: 20
+      - n_planes: 28
         # Inclination in degrees
-        inclination_deg: 54.5
+        inclination_deg: 53.0
         # Perigee in km
         perigee_alt_km: 525.0
         # Apogee in km
         apogee_alt_km: 525.0
         # Number of satellites per plane
-        sats_per_plane: 32
+        sats_per_plane: 128
         # Longitude of the first ascending node in degrees
-        long_asc_deg: 18.0
+        long_asc_deg: 0.0
         # Phasing in degrees
-        phasing_deg: 3.9
+        phasing_deg: 1.5
