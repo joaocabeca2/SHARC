@@ -216,6 +216,9 @@ class ParametersSelectActiveSatellite(ParametersBase):
                     f"{ctx}.minimum_elevation_from_es needs to be a positive number!"
                 )
 
+        if len(self.conditions) == 1 and self.conditions[0] == "":
+            self.conditions.pop()
+
         if any(cond not in self.__ALLOWED_CONDITIONS for cond in self.conditions):
             raise ValueError(
                 f"{ctx}.conditions = {self.conditions}\n"
@@ -250,6 +253,8 @@ class ParametersImtMssDc(ParametersBase):
     beam_radius: float = 36516.0
 
     sat_is_active_if: ParametersSelectActiveSatellite = field(default_factory=ParametersSelectActiveSatellite)
+
+    center_beam_positioning: ParametersSectorPositioning = field(default_factory=ParametersSectorPositioning)
 
     def validate(self, ctx: str):
         """
