@@ -9,7 +9,7 @@ from sharc.parameters.parameters_base import tuple_constructor
 yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple', tuple_constructor)
 
 local_dir = os.path.dirname(os.path.abspath(__file__))
-parameter_file_name = os.path.join(local_dir, "../input/parameters_mss_d2d_to_imt_base.yaml")
+parameter_file_name = os.path.join(local_dir, "../input/parameters_mss_d2d_to_imt_lat_variation_template.yaml")
 
 # load the base parameters from the yaml file
 with open(parameter_file_name, 'r') as file:
