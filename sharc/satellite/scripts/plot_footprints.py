@@ -179,12 +179,12 @@ def plot_globe_with_borders():
 
 if __name__ == "__main__":
     colors = ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#7f0000']
-    step = [3, 3, 4, 10] # dB
+    step = [3, 17, 20, 20] # dB
     SUM_GAINS = False
     # Number of iterations (drops)
     NUM_DROPS = 1
     DISCRETIZE = True
-    select_i = 3
+    select_i = 0
 
     # Define the orbit parameters for two satellite constellations
     orbit_1 = ParametersOrbit(
@@ -210,7 +210,7 @@ if __name__ == "__main__":
         roll_off=None
     )
 
-    spotbeam_radius = 98.12 * 1e3  # meters
+    spotbeam_radius = 39475  # meters
 
     # Configure the MSS D2D system parameters
     params = ParametersMssD2d(
@@ -223,7 +223,7 @@ if __name__ == "__main__":
         orbits=[orbit_1]
     )
     params.sat_is_active_if.conditions = [
-        "MINIMUM_ELEVATION_FROM_ES",
+        # "MINIMUM_ELEVATION_FROM_ES",
         "LAT_LONG_INSIDE_COUNTRY",
     ]
     params.sat_is_active_if.minimum_elevation_from_es = 5.0
@@ -351,14 +351,14 @@ if __name__ == "__main__":
     )
 
     # latitude points
-    lat_vals = np.linspace(sat_lat - 10.0, sat_lat + 10.0, 50)
+    # lat_vals = np.linspace(sat_lat - 10.0, sat_lat + 10.0, 200)
     # lat_vals = np.linspace(geoconv.ref_lat - 10.0, geoconv.ref_lat + 10.0, 50)
-    # lat_vals = np.linspace(-33.69111, 2.81972, 50)
+    lat_vals = np.linspace(-33.69111, 2.81972, 200)
 
     # longitude points
-    lon_vals = np.linspace(sat_long - 10.0, sat_long + 10.0, 50)
+    # lon_vals = np.linspace(sat_long - 10.0, sat_long + 10.0, 200)
     # lon_vals = np.linspace(geoconv.ref_long - 10.0, geoconv.ref_long + 10.0, 50)
-    # lon_vals = np.linspace(-72.89583, -34.80861, 50)
+    lon_vals = np.linspace(-72.89583, -34.80861, 200)
 
     # lon and lat will be 2D arrays.
     lon, lat = np.meshgrid(lon_vals, lat_vals)
