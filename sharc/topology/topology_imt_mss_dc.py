@@ -385,6 +385,7 @@ class TopologyImtMssDc(Topology):
         # Rotate and set the each beam azimuth and elevation angles - only for the visible satellites
         assert(elevation.shape, (total_active_satellites,))
         assert(azimuth.shape, (total_active_satellites,))
+
         for i in range(total_active_satellites):
             # Rotate the azimuth and elevation angles based on the new nadir point
             beams_elev[i], beams_azim[i] = rotate_angles_based_on_new_nadir(
@@ -527,17 +528,17 @@ if __name__ == '__main__':
     # Define the parameters for the IMT MSS-DC topology
     # SystemA Orbit parameters
     orbit = ParametersOrbit(
-        n_planes=20,
-        sats_per_plane=32,
-        phasing_deg=3.9,
-        long_asc_deg=18.0,
-        inclination_deg=54.5,
+        n_planes=28,
+        sats_per_plane=120,
+        phasing_deg=4.9,
+        long_asc_deg=0.0,
+        inclination_deg=53.0,
         perigee_alt_km=525,
         apogee_alt_km=525
     )
     params = ParametersImtMssDc(
-        beam_radius=36516.0,
-        num_beams=7,
+        beam_radius=39745.0,
+        num_beams=19,
         orbits=[orbit]
     )
     params.sat_is_active_if.conditions = [
@@ -682,14 +683,62 @@ if __name__ == '__main__':
 
     fig.show()
 
+    # Plot the interception of the boresight vectors with the x-y plane
+    fig_intercept = go.Figure()
+
+    # Calculate the interception points of the boresight vectors with the x-y plane
+    t_intercept = -imt_mss_dc_topology.space_station_z / boresight_z
+    intercept_x = imt_mss_dc_topology.space_station_x + t_intercept * boresight_x
+    intercept_y = imt_mss_dc_topology.space_station_y + t_intercept * boresight_y
+
+    # Add the interception points to the plot
+    fig_intercept.add_trace(go.Scatter(
+        x=intercept_x / 1e3,
+        y=intercept_y / 1e3,
+        mode='markers',
+        marker=dict(
+            size=6,
+            color='purple',
+            opacity=0.8
+        ),
+        name='Interception Points'
+    ))
+
+    # Add the space station positions for reference
+    fig_intercept.add_trace(go.Scatter(
+        x=imt_mss_dc_topology.space_station_x / 1e3,
+        y=imt_mss_dc_topology.space_station_y / 1e3,
+        mode='markers',
+        marker=dict(
+            size=4,
+            color='red',
+            opacity=0.8
+        ),
+        name='Space Stations'
+    ))
+
+    # Set plot title and axis labels
+    fig_intercept.update_layout(
+        title='Interception of Boresight Vectors with x-y Plane',
+        xaxis_title='X [km]',
+        yaxis_title='Y [km]',
+        showlegend=True
+    )
+
+    # Maintain axis proportions
+    fig_intercept.update_yaxes(scaleanchor="x", scaleratio=1)
+
+    # Show the plot
+    fig_intercept.show()
+
     # Plot the IMT MSS-DC space stations in a 2D plane
     fig_2d = go.Figure()
 
     # Add circles centered at the (x, y) coordinates of the space stations
     for x, y in zip(imt_mss_dc_topology.x, imt_mss_dc_topology.y):
         circle = go.Scatter(
-            x=[x + imt_mss_dc_topology.orbit_params.beam_radius * np.cos(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
-            y=[y + imt_mss_dc_topology.orbit_params.beam_radius * np.sin(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
+            x=[x + imt_mss_dc_topology.orbit_params.beam_radius / 1e3 * np.cos(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
+            y=[y + imt_mss_dc_topology.orbit_params.beam_radius / 1e3 * np.sin(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
             mode='lines',
             line=dict(color='blue')
         )
@@ -708,6 +757,8 @@ if __name__ == '__main__':
 
     # Show the plot
     fig_2d.show()
+
+
 
     # Print the elevation angles
     print('Elevation angles:', imt_mss_dc_topology.elevation)
