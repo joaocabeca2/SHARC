@@ -14,6 +14,7 @@ The visible Space Stations are then used to generate the IMT Base Stations.
 import numpy as np
 import geopandas as gpd
 import shapely as shp
+import pyproj
 
 from sharc.topology.topology import Topology
 from sharc.parameters.imt.parameters_imt_mss_dc import ParametersImtMssDc
@@ -75,14 +76,26 @@ class TopologyImtMssDc(Topology):
             )
             self.orbits.append(orbit)
 
-    def calculate_coordinates(self, random_number_gen=np.random.RandomState()):
+    @staticmethod
+    def get_coordinates(
+        geometry_converter: GeometryConverter,
+        orbit_params: ParametersImtMssDc,
+        random_number_gen=np.random.RandomState(),
+    ):
         """
         Computes the coordintates of the visible space stations
         """
-        self.geometry_converter.validate()
-
+        orbit_params.sat_is_active_if.validate("orbit_params.sat_is_active_if")
         # Calculate the total number of satellites across all orbits
-        total_satellites = sum(orbit.n_planes * orbit.sats_per_plane for orbit in self.orbit_params.orbits)
+        total_satellites = sum(orbit.n_planes * orbit.sats_per_plane for orbit in orbit_params.orbits)
+        if any([
+            not hasattr(orbit_params, attr)
+                for attr in ["sat_is_active_if", "orbits", "beam_radius", "num_beams", "center_beam_positioning"]
+            ]):
+            raise ValueError(
+                "Parameter passed to TopologyImtMssDc needs to contain all of the attributes:\n"
+                '["sat_is_active_if", "orbits", "beam_radius", "num_beams", "center_beam_positioning"]'
+            )
 
         idx_orbit = np.zeros(total_satellites, dtype=int)  # Add orbit index array
 
@@ -100,7 +113,18 @@ class TopologyImtMssDc(Topology):
             current_sat_idx = 0  # Index tracker for satellites across all orbits
 
             # Iterate through each orbit defined in the parameters
-            for orbit_idx, orbit in enumerate(self.orbits):
+            for orbit_idx, param in enumerate(orbit_params.orbits):
+                orbit = OrbitModel(
+                    Nsp=param.sats_per_plane,  # Satellites per plane
+                    Np=param.n_planes,  # Number of orbital planes
+                    phasing=param.phasing_deg,  # Phasing angle in degrees
+                    long_asc=param.long_asc_deg,  # Longitude of ascending node in degrees
+                    omega=param.omega_deg,  # Argument of perigee in degrees
+                    delta=param.inclination_deg,  # Orbital inclination in degrees
+                    hp=param.perigee_alt_km,  # Perigee altitude in kilometers
+                    ha=param.apogee_alt_km,  # Apogee altitude in kilometers
+                    Mo=param.initial_mean_anomaly  # Initial mean anomaly in degrees
+                )
                 # Generate random positions for satellites in this orbit
                 pos_vec = orbit.get_orbit_positions_random_time(rng=random_number_gen)
 
@@ -132,21 +156,21 @@ class TopologyImtMssDc(Topology):
 
                 active_sats_mask = np.ones(len(pos_vec['lat']), dtype=bool)
 
-                if "MINIMUM_ELEVATION_FROM_ES" in self.orbit_params.sat_is_active_if.conditions:
+                if "MINIMUM_ELEVATION_FROM_ES" in orbit_params.sat_is_active_if.conditions:
                     # Calculate satellite visibility from base stations
                     elev_from_bs = calc_elevation(
-                        self.geometry_converter.ref_lat,  # Latitude of base station
+                        geometry_converter.ref_lat,  # Latitude of base station
                         pos_vec['lat'],  # Latitude of satellites
-                        self.geometry_converter.ref_long,  # Longitude of base station
+                        geometry_converter.ref_long,  # Longitude of base station
                         pos_vec['lon'],  # Longitude of satellites
                         orbit.perigee_alt_km  # Perigee altitude in kilometers
                     )
 
                     # Determine visible satellites based on minimum elevation angle
-                    active_sats_mask = active_sats_mask & (elev_from_bs.flatten() >= self.orbit_params.sat_is_active_if.minimum_elevation_from_es)
+                    active_sats_mask = active_sats_mask & (elev_from_bs.flatten() >= orbit_params.sat_is_active_if.minimum_elevation_from_es)
 
                 # NOTE/WARN: some of the calc inside here is expensive, so it should be the last condition
-                if "LAT_LONG_INSIDE_COUNTRY" in self.orbit_params.sat_is_active_if.conditions:
+                if "LAT_LONG_INSIDE_COUNTRY" in orbit_params.sat_is_active_if.conditions:
                     flat_active_lon = pos_vec["lon"].flatten()[active_sats_mask]
                     flat_active_lat = pos_vec["lat"].flatten()[active_sats_mask]
 
@@ -155,13 +179,18 @@ class TopologyImtMssDc(Topology):
 
                     # Check if the satellite is inside the country polygon
                     polygon_mask = np.zeros_like(active_sats_mask)
-                    polygon_mask[active_sats_mask] = sats_points.within(self.country_proj)
+                    polygon_mask[active_sats_mask] = sats_points.within(
+                        orbit_params.sat_is_active_if.lat_long_inside_country.country_geometry
+                    )
 
-                    if self.orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border != 0.0:
+                    if orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border != 0.0:
                         geod = pyproj.Geod(ellps="WGS84")
 
                         # TODO: maybe optimize this by creating bounding box before closest point calc?
-                        border_nearest = shp.ops.nearest_points(sats_points, country_proj.boundary)[1]
+                        border_nearest = shp.ops.nearest_points(
+                            sats_points,
+                            orbit_params.sat_is_active_if.lat_long_inside_country.country_geometry.boundary
+                        )[1]
                         border_nearest_lon = np.array([p.x for p in border_nearest])
                         border_nearest_lat = np.array([p.y for p in border_nearest])
 
@@ -172,10 +201,14 @@ class TopologyImtMssDc(Topology):
                         dist = np.ones_like(active_sats_mask) * np.inf
                         dist[active_sats_mask] = active_dist
 
-                        if self.orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border > 0:
-                            polygon_mask = polygon_mask & (dist > self.orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
+                        if orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border > 0:
+                            polygon_mask = polygon_mask & (
+                                dist > orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3
+                            )
                         else:
-                            polygon_mask = polygon_mask | (dist < -self.orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
+                            polygon_mask = polygon_mask | (
+                                dist < -orbit_params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3
+                            )
 
                     active_sats_mask = active_sats_mask & polygon_mask
 
@@ -195,29 +228,29 @@ class TopologyImtMssDc(Topology):
         # We have the list of visible satellites, now create a Topolgy of this subset and move the coordinate system
         # reference.
         total_active_satellites = len(active_satellite_idxs)
-        self.space_station_x = np.squeeze(np.array(all_positions['sx']))[active_satellite_idxs] * 1e3  # Convert X-coordinates to meters
-        self.space_station_y = np.squeeze(np.array(all_positions['sy']))[active_satellite_idxs] * 1e3  # Convert Y-coordinates to meters
-        self.space_station_z = np.squeeze(np.array(all_positions['sz']))[active_satellite_idxs] * 1e3  # Convert Z-coordinates to meters
-        self.elevation = np.squeeze(np.array(all_elevations))[active_satellite_idxs]  # Elevation angles
-        self.azimuth = np.squeeze(np.array(all_azimuths))[active_satellite_idxs]  # Azimuth angles
+        space_station_x = np.squeeze(np.array(all_positions['sx']))[active_satellite_idxs] * 1e3  # Convert X-coordinates to meters
+        space_station_y = np.squeeze(np.array(all_positions['sy']))[active_satellite_idxs] * 1e3  # Convert Y-coordinates to meters
+        space_station_z = np.squeeze(np.array(all_positions['sz']))[active_satellite_idxs] * 1e3  # Convert Z-coordinates to meters
+        elevation = np.squeeze(np.array(all_elevations))[active_satellite_idxs]  # Elevation angles
+        azimuth = np.squeeze(np.array(all_azimuths))[active_satellite_idxs]  # Azimuth angles
 
         # Store the latitude and longitude of the visible satellites for later use
-        self.lat = np.squeeze(np.array(all_positions['lat']))[active_satellite_idxs]
-        self.lon = np.squeeze(np.array(all_positions['lon']))[active_satellite_idxs]
+        lat = np.squeeze(np.array(all_positions['lat']))[active_satellite_idxs]
+        lon = np.squeeze(np.array(all_positions['lon']))[active_satellite_idxs]
 
         # Convert the ECEF coordinates to the transformed cartesian coordinates and set the Space Station positions
         # used to generetate the IMT Base Stations
-        self.space_station_x, self.space_station_y, self.space_station_z = \
-            self.geometry_converter.convert_cartesian_to_transformed_cartesian(self.space_station_x, self.space_station_y, self.space_station_z)
+        space_station_x, space_station_y, space_station_z = \
+            geometry_converter.convert_cartesian_to_transformed_cartesian(space_station_x, space_station_y, space_station_z)
 
         # Rotate the azimuth and elevation angles off the center beam the new transformed cartesian coordinates
         r = 1
         # transform pointing vectors, without considering geodesical earth coord system
-        pointing_vec_x, pointing_vec_y, pointing_vec_z = polar_to_cartesian(r, self.azimuth, self.elevation)
+        pointing_vec_x, pointing_vec_y, pointing_vec_z = polar_to_cartesian(r, azimuth, elevation)
         pointing_vec_x, pointing_vec_y, pointing_vec_z = \
-            self.geometry_converter.convert_cartesian_to_transformed_cartesian(
+            geometry_converter.convert_cartesian_to_transformed_cartesian(
                 pointing_vec_x, pointing_vec_y, pointing_vec_z, translate=0)
-        _, self.azimuth, self.elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
+        _, azimuth, elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
 
         # Create the other beams and rotate the azimuth and elevation angles
 
@@ -234,85 +267,213 @@ class TopologyImtMssDc(Topology):
         # We borrow the TopologyNTN method to calculate the sectors azimuth and elevation angles from their
         # respective x and y boresight coordinates
         sx, sy = TopologyNTN.get_sectors_xy(
-            intersite_distance=self.orbit_params.beam_radius * np.sqrt(3),
-            num_sectors=self.orbit_params.num_beams
+            intersite_distance=orbit_params.beam_radius * np.sqrt(3),
+            num_sectors=orbit_params.num_beams
         )
 
-        assert(len(sx) == self.orbit_params.num_beams)
-        assert(len(sy) == self.orbit_params.num_beams)
+        assert(len(sx) == orbit_params.num_beams)
+        assert(len(sy) == orbit_params.num_beams)
 
         # we give num_beams sectors to each satellite
-        sx = np.resize(sx, self.orbit_params.num_beams * total_active_satellites)
-        sy = np.resize(sy, self.orbit_params.num_beams * total_active_satellites)
+        sx = np.resize(sx, orbit_params.num_beams * total_active_satellites)
+        sy = np.resize(sy, orbit_params.num_beams * total_active_satellites)
+
+        if orbit_params.center_beam_positioning.type == "ANGLE_AND_DISTANCE_FROM_SUBSATELLITE":
+            match orbit_params.center_beam_positioning.angle_from_subsatellite_phi.type:
+                case "FIXED":
+                    azim_add = np.repeat(orbit_params.center_beam_positioning.angle_from_subsatellite_phi.fixed, total_active_satellites)
+                case "~U(MIN,MAX)":
+                    azim_add = random_number_gen.uniform(
+                        orbit_params.center_beam_positioning.angle_from_subsatellite_phi.distribution.min,
+                        orbit_params.center_beam_positioning.angle_from_subsatellite_phi.distribution.max,
+                        total_active_satellites
+                    )
+                case "~SQRT(U(0,1))*MAX":
+                    azim_add = random_number_gen.uniform(
+                        0, 1,
+                        total_active_satellites
+                    ) * orbit_params.center_beam_positioning.angle_from_subsatellite_phi.distribution.max
+                case _:
+                    raise ValueError(
+                        f"mss_d2d_params.center_beam_positioning.angle_from_subsatellite_phi.type = \n"
+                        f"'{orbit_params.center_beam_positioning.angle_from_subsatellite_phi.type}' is not recognized!"
+                    )
+
+            match orbit_params.center_beam_positioning.distance_from_subsatellite.type:
+                case "FIXED":
+                    subsatellite_distance_add = np.repeat(orbit_params.center_beam_positioning.distance_from_subsatellite.fixed, total_active_satellites)
+                case "~U(MIN,MAX)":
+                    subsatellite_distance_add = random_number_gen.uniform(
+                        orbit_params.center_beam_positioning.distance_from_subsatellite.distribution.min,
+                        orbit_params.center_beam_positioning.distance_from_subsatellite.distribution.max,
+                        total_active_satellites
+                    )
+                case "~SQRT(U(0,1))*MAX":
+                    subsatellite_distance_add = random_number_gen.uniform(
+                        0, 1,
+                        total_active_satellites
+                    ) * orbit_params.center_beam_positioning.distance_from_subsatellite.distribution.max
+                case _:
+                    raise ValueError(
+                        f"mss_d2d_params.center_beam_positioning.distance_from_subsatellite.type = \n"
+                        f"'{orbit_params.center_beam_positioning.angle_from_subsatellite_theta.type}' is not recognized!"
+                    )
+
+        elif orbit_params.center_beam_positioning.type == "ANGLE_FROM_SUBSATELLITE":
+            match orbit_params.center_beam_positioning.angle_from_subsatellite_theta.type:
+                case "FIXED":
+                    off_nadir_add = np.repeat(orbit_params.center_beam_positioning.angle_from_subsatellite_theta.fixed, total_active_satellites)
+                case "~U(MIN,MAX)":
+                    off_nadir_add = random_number_gen.uniform(
+                        orbit_params.center_beam_positioning.angle_from_subsatellite_theta.distribution.min,
+                        orbit_params.center_beam_positioning.angle_from_subsatellite_theta.distribution.max,
+                        total_active_satellites
+                    )
+                case "~SQRT(U(0,1))*MAX":
+                    off_nadir_add = random_number_gen.uniform(
+                        0, 1,
+                        total_active_satellites
+                    ) * orbit_params.center_beam_positioning.angle_from_subsatellite_theta.distribution.max
+                case _:
+                    raise ValueError(
+                        f"mss_d2d_params.center_beam_positioning.angle_from_subsatellite_theta.type = \n"
+                        f"'{orbit_params.center_beam_positioning.angle_from_subsatellite_theta.type}' is not recognized!"
+                    )
+            subsatellite_distance_add = sat_altitude * np.tan(off_nadir_add)
+
+            match orbit_params.center_beam_positioning.angle_from_subsatellite_phi.type:
+                case "FIXED":
+                    azim_add = np.repeat(orbit_params.center_beam_positioning.angle_from_subsatellite_phi.fixed, total_active_satellites)
+                case "~U(MIN,MAX)":
+                    azim_add = random_number_gen.uniform(
+                        orbit_params.center_beam_positioning.angle_from_subsatellite_phi.distribution.min,
+                        orbit_params.center_beam_positioning.angle_from_subsatellite_phi.distribution.max,
+                        total_active_satellites
+                    )
+                case "~SQRT(U(0,1))*MAX":
+                    azim_add = random_number_gen.uniform(
+                        0, 1,
+                        total_active_satellites
+                    ) * orbit_params.center_beam_positioning.angle_from_subsatellite_phi.distribution.max
+                case _:
+                    raise ValueError(
+                        f"mss_d2d_params.center_beam_positioning.angle_from_subsatellite_phi.type = \n"
+                        f"'{orbit_params.center_beam_positioning.angle_from_subsatellite_phi.type}' is not recognized!"
+                    )
+
+        subsatellite_distance_add = np.repeat(subsatellite_distance_add, orbit_params.num_beams)
+        azim_add = np.repeat(azim_add, orbit_params.num_beams)
+
+        sx += subsatellite_distance_add
 
         # Calculate the azimuth and elevation angles for each beam
         # as though their nadir is at (0,0)
         # before rotating them
-        beams_azim = np.rad2deg(np.arctan2(sy, sx))
+        beams_azim = np.rad2deg(np.arctan2(sy, sx)) + azim_add
         beams_elev = np.rad2deg(np.arctan2(np.sqrt(sy * sy + sx * sx),
-                                           np.repeat(sat_altitude, self.orbit_params.num_beams))
+                                           np.repeat(sat_altitude, orbit_params.num_beams))
                             ) - 90
 
         beams_azim = beams_azim.reshape(
-            (total_active_satellites, self.orbit_params.num_beams)
+            (total_active_satellites, orbit_params.num_beams)
         )
 
         beams_elev = beams_elev.reshape(
-            (total_active_satellites, self.orbit_params.num_beams)
+            (total_active_satellites, orbit_params.num_beams)
         )
 
         # Rotate and set the each beam azimuth and elevation angles - only for the visible satellites
-        assert(self.elevation.shape, (total_active_satellites,))
-        assert(self.azimuth.shape, (total_active_satellites,))
+        assert(elevation.shape, (total_active_satellites,))
+        assert(azimuth.shape, (total_active_satellites,))
         for i in range(total_active_satellites):
             # Rotate the azimuth and elevation angles based on the new nadir point
             beams_elev[i], beams_azim[i] = rotate_angles_based_on_new_nadir(
                 beams_elev[i],
                 beams_azim[i],
-                self.elevation[i],
-                self.azimuth[i]
+                elevation[i],
+                azimuth[i]
             )
         
         # In SHARC each sector is treated as a separate base station, so we need to repeat the satellite positions
         # for each sector.
-        self.space_station_x = np.repeat(self.space_station_x, self.orbit_params.num_beams)
-        self.space_station_y = np.repeat(self.space_station_y, self.orbit_params.num_beams)
-        self.space_station_z = np.repeat(self.space_station_z, self.orbit_params.num_beams)
+        space_station_x = np.repeat(space_station_x, orbit_params.num_beams)
+        space_station_y = np.repeat(space_station_y, orbit_params.num_beams)
+        space_station_z = np.repeat(space_station_z, orbit_params.num_beams)
         # the offset of the beams boresight from the satellite position
         offset_x = np.repeat(
-            sat_altitude * np.cos(np.radians(self.elevation)) * np.cos(np.radians(self.azimuth)),
-            self.orbit_params.num_beams
+            sat_altitude * np.cos(np.radians(elevation)) * np.cos(np.radians(azimuth)),
+            orbit_params.num_beams
         )
         offset_y = np.repeat(
-            sat_altitude * np.cos(np.radians(self.elevation)) * np.sin(np.radians(self.azimuth)),
-            self.orbit_params.num_beams
+            sat_altitude * np.cos(np.radians(elevation)) * np.sin(np.radians(azimuth)),
+            orbit_params.num_beams
         )
         offset_z = np.repeat(
-            sat_altitude * np.sin(np.radians(self.elevation)),
-            self.orbit_params.num_beams
+            sat_altitude * np.sin(np.radians(elevation)),
+            orbit_params.num_beams
         )
-        self.num_base_stations = self.orbit_params.num_beams * total_active_satellites
-        self.x = sx
-        self.y = sy
-        self.z = np.zeros_like(self.y)
-        self.elevation = beams_elev.flatten()  # only valid at active satellites indices
-        self.azimuth = beams_azim.flatten()  # only valid at active satellites indices
-        self.indoor = np.zeros(self.num_base_stations, dtype=bool)  # ofcourse, all are outdoor
-        self.height = np.ones(self.num_base_stations) * np.repeat(sat_altitude, self.orbit_params.num_beams)  # all are at the same height
-        # Store the latitude and longitude of the visible satellites for later use
-        self.lat = np.repeat(self.lat, self.orbit_params.num_beams)
-        self.lon = np.repeat(self.lon, self.orbit_params.num_beams)
 
-        assert(self.lat.shape == (self.num_base_stations,))
-        assert(self.lon.shape == (self.num_base_stations,))
-        assert(self.x.shape == (self.num_base_stations,))
-        assert(self.y.shape == (self.num_base_stations,))
-        assert(self.z.shape == (self.num_base_stations,))
-        assert(self.elevation.shape == (self.num_base_stations,))
-        assert(self.azimuth.shape == (self.num_base_stations,))
-        assert(self.indoor.shape == (self.num_base_stations,))
-        assert(self.height.shape == (self.num_base_stations,))
-        assert(self.height.shape == (self.num_base_stations,))
+        num_base_stations = orbit_params.num_beams * total_active_satellites
+        elevation = beams_elev.flatten()
+        azimuth = beams_azim.flatten()
+        lat = np.repeat(lat, orbit_params.num_beams)
+        lon = np.repeat(lon, orbit_params.num_beams)
+
+        altitudes = np.repeat(sat_altitude, orbit_params.num_beams)
+
+        assert(space_station_x.shape == (num_base_stations,))
+        assert(space_station_y.shape == (num_base_stations,))
+        assert(space_station_z.shape == (num_base_stations,))
+        assert(lat.shape == (num_base_stations,))
+        assert(lon.shape == (num_base_stations,))
+        assert(altitudes.shape == (num_base_stations,))
+        assert(elevation.shape == (num_base_stations,))
+        assert(azimuth.shape == (num_base_stations,))
+        assert(sx.shape == (num_base_stations,))
+        assert(sy.shape == (num_base_stations,))
+
+        return {
+            "num_satellites": num_base_stations,
+            "sat_x": space_station_x,
+            "sat_y": space_station_y,
+            "sat_z": space_station_z,
+            "sat_lat": lat,
+            "sat_lon": lon,
+            "sat_alt": altitudes,
+            "sat_antenna_elev": elevation,
+            "sat_antenna_azim": azimuth,
+            "sectors_x": sx,
+            "sectors_y": sy,
+            "sectors_z": np.zeros_like(sx)
+        }
+
+    def calculate_coordinates(self, random_number_gen=np.random.RandomState()):
+        """
+        Computes the coordintates of the visible space stations
+        """
+        self.geometry_converter.validate()
+
+        sat_values = self.get_coordinates(self.geometry_converter, self.orbit_params, random_number_gen)
+
+        self.num_base_stations = sat_values["num_satellites"]
+
+        self.space_station_x = sat_values["sat_x"]
+        self.space_station_y = sat_values["sat_y"]
+        self.space_station_z = sat_values["sat_z"]
+        self.height = sat_values["sat_alt"]
+        self.lat = sat_values["sat_lat"]
+        self.lon = sat_values["sat_lon"]
+
+        self.elevation = sat_values["sat_antenna_elev"]
+        self.azimuth = sat_values["sat_antenna_azim"]
+
+        self.x = sat_values["sectors_x"]
+        self.y = sat_values["sectors_y"]
+        self.z = sat_values["sectors_z"]
+
+        self.indoor = np.zeros(self.num_base_stations, dtype=bool)  # ofcourse, all are outdoor
+
+        return
 
     # We can factor this out if another topology also ends up needing this
     def transform_ue_xyz(self, bs_i, x, y, z):

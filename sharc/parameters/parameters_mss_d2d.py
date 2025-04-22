@@ -115,6 +115,10 @@ class ParametersMssD2d(ParametersBase):
 
         self.propagate_parameters()
 
+    def __post_init__(self):
+        self.beam_radius = self.cell_radius
+        self.num_beams = self.num_sectors
+
     def validate(self, ctx):
         # Now do the sanity check for some parameters
         if self.num_sectors not in [1, 7, 19]:
