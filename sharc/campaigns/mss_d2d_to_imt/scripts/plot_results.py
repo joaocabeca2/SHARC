@@ -10,9 +10,16 @@ post_processor = PostProcessor()
 # This could easily come from a config file
 post_processor\
     .add_plot_legend_pattern(
-        dir_name_contains="_mss_d2d_to_imt_co_channel_system_A",
-        legend="SystemA MSS-D2D"
+        dir_name_contains="_mss_d2d_to_imt_ul_co_channel_system_A",
+        legend="MSS-D2D to IMT-UL"
     )
+
+post_processor\
+    .add_plot_legend_pattern(
+        dir_name_contains="_mss_d2d_to_imt_dl_co_channel_system_A",
+        legend="MSS-D2D to IMT-DL"
+    )
+
 campaign_base_dir = str((Path(__file__) / ".." / "..").resolve())
 
 many_results = Results.load_many_from_dir(os.path.join(campaign_base_dir, "output"), only_latest=True)
@@ -41,6 +48,10 @@ post_processor\
     .get_plot_by_results_attribute_name("imt_dl_inr")\
     .add_vline(protection_criteria, line_dash="dash")
 
+post_processor\
+    .get_plot_by_results_attribute_name("imt_ul_inr")\
+    .add_vline(protection_criteria, line_dash="dash")
+
 # Show a single plot:
 post_processor\
     .get_plot_by_results_attribute_name("imt_system_antenna_gain")\
@@ -61,6 +72,11 @@ post_processor\
 post_processor\
     .get_plot_by_results_attribute_name("imt_dl_inr")\
     .show()
+
+post_processor\
+    .get_plot_by_results_attribute_name("imt_ul_inr")\
+    .show()
+
 
 # Plot every plot:
 # for plot in plots:

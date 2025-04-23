@@ -4,7 +4,7 @@ general:
     num_snapshots: 1000
     ###########################################################################
     # IMT link that will be simulated (DOWNLINK or UPLINK)
-    imt_link: DOWNLINK
+    imt_link: UPLINK
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS, MSS_SS, MSS_D2D
@@ -12,7 +12,7 @@ general:
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel: true
-    enable_adjacent_channel: true
+    enable_adjacent_channel: false
     ###########################################################################
     # Seed for random number generator
     seed: 101
@@ -24,7 +24,7 @@ general:
     output_dir: campaigns/mss_d2d_to_imt/output/
     ###########################################################################
     # output folder prefix
-    output_dir_prefix: output_mss_d2d_to_imt_co_channel_system_A
+    output_dir_prefix: output_mss_d2d_to_imt_ul_co_channel_system_A
 imt:
     ###########################################################################
     # Minimum 2D separation distance from BS to UE [m]
@@ -93,7 +93,7 @@ imt:
             # Inter-site distance or Cell Radius in single Base Station network topology [m]
             # You can either provide 'cell_radius' or 'intersite_distance' for this topology
             # The relationship used is cell_radius = intersite_distance * 2 / 3
-            cell_radius: 100
+            cell_radius: 250
             # intersite_distance: 1
             ###########################################################################
             # Number of clusters in single base station topology
@@ -191,7 +191,7 @@ imt:
         load_probability: 1.0
         ###########################################################################
         # Conducted power per antenna element [dBm/bandwidth]
-        conducted_power: 28.0
+        conducted_power: 46.0
         ###########################################################################
         # Base station height [m]
         height: 20.0
@@ -200,7 +200,7 @@ imt:
         noise_figure: 5.0
         ###########################################################################
         # Base station array ohmic loss  [dB]
-        ohmic_loss: 2.0
+        ohmic_loss: 3.0
         # Base Station Antenna parameters:
         antenna:
             array:
@@ -227,27 +227,27 @@ imt:
                 ###########################################################################
                 # Radiation pattern of each antenna element
                 # Possible values: "M2101", "F1336", "FIXED"
-                element_pattern: M2101
+                element_pattern: F1336
                 ###########################################################################
                 # Minimum array gain for the beamforming antenna [dBi]
                 minimum_array_gain: -200
                 ###########################################################################
                 # mechanical downtilt [degrees]
                 # NOTE: consider defining it to 90 degrees in case of indoor simulations
-                downtilt: 6
+                downtilt: 10
                 ###########################################################################
                 # BS/UE maximum transmit/receive element gain [dBi]
                 # default: element_max_g = 5, for M.2101
                 #                           = 15, for M.2292
                 #                           = -3, for M.2292
-                element_max_g: 6.4
+                element_max_g: 16
                 ###########################################################################
                 # BS/UE horizontal 3dB beamwidth of single element [degrees]
-                element_phi_3db: 90
+                element_phi_3db: 65
                 ###########################################################################
                 # BS/UE vertical 3dB beamwidth of single element [degrees]
                 # For F1336: if equal to 0, then beamwidth is calculated automaticaly
-                element_theta_3db: 65
+                element_theta_3db: 0
                 ###########################################################################
                 # BS/UE number of rows in antenna array
                 n_rows: 4
@@ -279,7 +279,7 @@ imt:
         ###########################################################################
         # Number of UEs that are allocated to each cell within handover margin.
         # Remember that in macrocell network each base station has 3 cells (sectors)
-        k: 3
+        k: 1
         ###########################################################################
         # Multiplication factor that is used to ensure that the sufficient number
         # of UE's will distributed throughout ths system area such that the number
@@ -496,7 +496,7 @@ mss_d2d:
     # channel model, possible values are "FSPL" (free-space path loss),
     #                                    "SatelliteSimple" (FSPL + 4 + clutter loss)
     #                                    "P619"
-    channel_model: SatelliteSimple
+    channel_model: FSPL
     ###########################################################################
     # P619 parameters
     param_p619:
@@ -516,16 +516,29 @@ mss_d2d:
     # Orbit parameters
     orbits:
         # Number of planes
-      - n_planes: 28
+    #   - n_planes: 28
+    #     # Inclination in degrees
+    #     inclination_deg: 53.0
+    #     # Perigee in km
+    #     perigee_alt_km: 525.0
+    #     # Apogee in km
+    #     apogee_alt_km: 525.0
+    #     # Number of satellites per plane
+    #     sats_per_plane: 128
+    #     # Longitude of the first ascending node in degrees
+    #     long_asc_deg: 0.0
+    #     # Phasing in degrees
+    #     phasing_deg: 1.5
+      - n_planes: 20
         # Inclination in degrees
-        inclination_deg: 53.0
+        inclination_deg: 54.5
         # Perigee in km
         perigee_alt_km: 525.0
         # Apogee in km
         apogee_alt_km: 525.0
         # Number of satellites per plane
-        sats_per_plane: 128
+        sats_per_plane: 32
         # Longitude of the first ascending node in degrees
-        long_asc_deg: 0.0
+        long_asc_deg: 18.0
         # Phasing in degrees
-        phasing_deg: 1.5
+        phasing_deg: 3.9
