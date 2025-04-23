@@ -360,7 +360,7 @@ class SimulationUplink(Simulation):
                     self.imt_system_antenna_gain[np.ix_(sys_active, active_beams)].flatten(),
                 )
                 self.results.imt_system_path_loss.extend(
-                    self.imt_system_path_loss[np.ix_(sys_active, active_beams)],
+                    self.imt_system_path_loss[np.ix_(sys_active, active_beams)].flatten(),
                 )
                 if self.param_system.channel_model == "HDFSS":
                     self.results.imt_system_build_entry_loss.extend(
@@ -369,7 +369,7 @@ class SimulationUplink(Simulation):
                     self.results.imt_system_diffraction_loss.extend(
                         self.imt_system_diffraction_loss[np.ix_(sys_active, active_beams)],
                     )
-            else:
+            else:  # IMT is the interferer
                 self.results.system_imt_antenna_gain.extend(
                     self.system_imt_antenna_gain[np.ix_(sys_active, ue)],
                 )
