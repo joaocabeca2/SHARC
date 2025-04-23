@@ -217,7 +217,7 @@ if __name__ == "__main__":
         name="Example-MSS-D2D",
         antenna_pattern="ITU-R-S.1528-Taylor",
         num_sectors=19,
-        antenna_gain=g_max,
+        # antenna_gain=g_max,
         antenna_s1528=antenna_params,
         intersite_distance=np.sqrt(3) * spotbeam_radius,
         orbits=[orbit_1]
@@ -369,9 +369,8 @@ if __name__ == "__main__":
 
     # Convert the lat/lon grid to transformed Cartesian coordinates.
     # Ensure your converter function can handle vectorized (numpy array) inputs.
-    x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(
-        lat_flat, lon_flat, 0)
-    # x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
+    x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
+
     surf_manager = StationManager(len(x_flat))
     surf_manager.x = x_flat
     surf_manager.y = y_flat
@@ -381,10 +380,11 @@ if __name__ == "__main__":
     station_2 = surf_manager
     station_2_active = np.where(station_2.active)[0]
 
+    # Calculate vector and apointment off_axis
     phi, theta = station_1.get_pointing_vector_to(station_2)
-    gains = np.zeros(phi.shape)
     off_axis_angle = station_1.get_off_axis_angle(station_2)
     phi, theta = station_1.get_pointing_vector_to(station_2)
+    gains = np.zeros((len(mss_active), len(station_2_active)))
     for k in mss_active:
         gains[k, station_2_active] = \
             station_1.antenna[k].calculate_gain(
@@ -405,7 +405,6 @@ if __name__ == "__main__":
     # print("considering ", mss_to_consider)
     # print("considering z", station_1.z[mss_to_consider])
 
-    # Reshape the converted coordinates back to the 2D grid shape.
     world_surf_x = x_flat.reshape(lat.shape)
     world_surf_y = y_flat.reshape(lat.shape)
     world_surf_z = z_flat.reshape(lat.shape)
