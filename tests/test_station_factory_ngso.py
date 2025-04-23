@@ -51,7 +51,8 @@ class StationFactoryNgsoTest(unittest.TestCase):
             name="Acme-Star-1",                         # Name of the constellation
             antenna_pattern="ITU-R-S.1528-Taylor",     # Antenna type
             antenna_gain=30.0,                 # Maximum antenna gain in dBi
-            orbits=[orbit_1, orbit_2]                   # List of orbital parameters
+            orbits=[orbit_1, orbit_2],                   # List of orbital parameters
+            num_sectors=1,
         )
         self.param.antenna_s1528.frequency = 43000.0
         self.param.antenna_s1528.bandwidth = 500.0

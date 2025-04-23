@@ -40,6 +40,8 @@ class TestTopologyImtMssDc(unittest.TestCase):
             num_beams=19,
             orbits=[orbit]
         )
+        self.params.sat_is_active_if.conditions = ["MINIMUM_ELEVATION_FROM_ES"]
+        self.params.sat_is_active_if.minimum_elevation_from_es = 5.0
 
         # Define the geometry converter
         self.geometry_converter = GeometryConverter()

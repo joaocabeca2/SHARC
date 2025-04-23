@@ -9,9 +9,6 @@ from warnings import warn
 import numpy as np
 import sys
 import math
-import geopandas as gpd
-import shapely as shp
-import pyproj
 
 from sharc.support.enumerations import StationType
 from sharc.parameters.parameters import Parameters
@@ -1218,7 +1215,8 @@ class StationFactory(object):
     def generate_mss_d2d(
         params: ParametersMssD2d,
         random_number_gen: np.random.RandomState,
-        geometry_converter: GeometryConverter
+        geometry_converter: GeometryConverter,
+        also_generate_inactive: bool = False
     ):
         """
         Generate the MSS D2D constellation with support for multiple orbits and base station visibility.
@@ -1239,16 +1237,19 @@ class StationFactory(object):
         """
         geometry_converter.validate()
 
-        MAX_ITER = 100  # Maximum iterations to find at least one visible satellite
-
-        # Calculate the total number of satellites across all orbits
-        total_satellites = sum(orbit.n_planes * orbit.sats_per_plane for orbit in params.orbits)
-
         # Initialize the StationManager for the MSS D2D system
+        mss_d2d_values = TopologyImtMssDc.get_coordinates(
+            geometry_converter,
+            params,
+            random_number_gen,
+            not also_generate_inactive
+        )
+
+        total_satellites = mss_d2d_values["num_satellites"]
+
         mss_d2d = StationManager(n=total_satellites)
         mss_d2d.station_type = StationType.MSS_D2D  # Set the station type to MSS D2D
         mss_d2d.is_space_station = True  # Indicate that the station is in space
-        mss_d2d.idx_orbit = np.zeros(total_satellites, dtype=int)  # Add orbit index array
 
         if params.spectral_mask == "IMT-2020":
             mss_d2d.spectral_mask = SpectralMaskImt(StationType.IMT_BS,
@@ -1270,160 +1271,27 @@ class StationFactory(object):
             raise ValueError(f"Invalid or not implemented spectral mask - {params.spectral_mask}")
         mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 1e6))
 
-        i = 0  # Iteration counter for ensuring satellite visibility
-        # List to store indices of active satellites
-        active_satellite_idxs = []
+       # Configure satellite positions in the StationManager
+        mss_d2d.x = mss_d2d_values["sat_x"]
+        mss_d2d.y = mss_d2d_values["sat_y"]
+        mss_d2d.z = mss_d2d_values["sat_z"]
+        mss_d2d.elevation = mss_d2d_values["sat_antenna_elev"]
+        mss_d2d.azimuth = mss_d2d_values["sat_antenna_azim"]
+        mss_d2d.height = mss_d2d_values["sat_alt"]
 
+        mss_d2d.active = np.zeros(total_satellites, dtype=bool)
 
-        params.sat_is_active_if.validate("params.sat_is_active_if")
-        country_proj = params.sat_is_active_if.lat_long_inside_country.country_geometry
+        if mss_d2d_values["num_active_satellites"] != mss_d2d_values["num_satellites"]:
+            mss_d2d.active[mss_d2d_values["active_satellites_idxs"]] = random_number_gen.uniform(
+                size=len(mss_d2d_values["active_satellites_idxs"])
+            ) < params.beams_load_factor
+        else:
+            # Set active satellite flags
+            mss_d2d.active = random_number_gen.uniform(
+                size=total_satellites
+            ) < params.beams_load_factor
 
-        while len(active_satellite_idxs) == 0:
-            # Initialize arrays to store satellite positions, angles and distance from center of earth
-            all_positions = {"R": [], "lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
-            all_elevations = []  # Store satellite elevations
-            all_azimuths = []  # Store satellite azimuths
-
-            current_sat_idx = 0  # Index tracker for satellites across all orbits
-
-            # Iterate through each orbit defined in the parameters
-            for orbit_idx, param in enumerate(params.orbits):
-                # Instantiate an OrbitModel for the current orbit
-                orbit = OrbitModel(
-                    Nsp=param.sats_per_plane,  # Satellites per plane
-                    Np=param.n_planes,  # Number of orbital planes
-                    phasing=param.phasing_deg,  # Phasing angle in degrees
-                    long_asc=param.long_asc_deg,  # Longitude of ascending node in degrees
-                    omega=param.omega_deg,  # Argument of perigee in degrees
-                    delta=param.inclination_deg,  # Orbital inclination in degrees
-                    hp=param.perigee_alt_km,  # Perigee altitude in kilometers
-                    ha=param.apogee_alt_km,  # Apogee altitude in kilometers
-                    Mo=param.initial_mean_anomaly  # Initial mean anomaly in degrees
-                )
-
-                # Generate random positions for satellites in this orbit
-                pos_vec = orbit.get_orbit_positions_random_time(rng=random_number_gen)
-
-                # Determine the number of satellites in this orbit
-                num_satellites = len(pos_vec["sx"])
-
-                # Assign orbit index to satellites
-                mss_d2d.idx_orbit[current_sat_idx:current_sat_idx + num_satellites] = orbit_idx
-
-                # Extract satellite positions and calculate distances
-                sx, sy, sz = pos_vec['sx'], pos_vec['sy'], pos_vec['sz']
-                r = np.sqrt(sx**2 + sy**2 + sz**2)  # Distance from Earth's center
-
-                # When getting azimuth and elevation, we need to consider sx, sy and sz points
-                # from the center of earth to the satellite, and we need to point the satellite
-                # towards the center of earth
-                elevations = np.degrees(np.arcsin(-sz / r))  # Calculate elevation angles
-                azimuths = np.degrees(np.arctan2(-sy, -sx))  # Calculate azimuth angles
-
-                # Append satellite positions and angles to global lists
-                all_positions['lat'].extend(pos_vec['lat'])  # Latitudes
-                all_positions['lon'].extend(pos_vec['lon'])  # Longitudes
-                all_positions['sx'].extend(sx)  # X-coordinates
-                all_positions['sy'].extend(sy)  # Y-coordinates
-                all_positions['sz'].extend(sz)  # Z-coordinates
-                all_positions["R"].extend(r)
-                all_elevations.extend(elevations)  # Elevation angles
-                all_azimuths.extend(azimuths)  # Azimuth angles
-
-                active_sats_mask = np.ones(len(pos_vec['lat']), dtype=bool)
-
-                if "MINIMUM_ELEVATION_FROM_ES" in params.sat_is_active_if.conditions:
-                    # Calculate satellite visibility from base stations
-                    elev_from_bs = calc_elevation(
-                        geometry_converter.ref_lat,  # Latitude of base station
-                        pos_vec['lat'],  # Latitude of satellites
-                        geometry_converter.ref_long,  # Longitude of base station
-                        pos_vec['lon'],  # Longitude of satellites
-                        orbit.perigee_alt_km  # Perigee altitude in kilometers
-                    )
-
-                    # Determine visible satellites based on minimum elevation angle
-                    active_sats_mask = active_sats_mask & (elev_from_bs.flatten() >= params.sat_is_active_if.minimum_elevation_from_es)
-
-                # NOTE/WARN: some of the calc inside here is expensive, so it should be the last condition
-                if "LAT_LONG_INSIDE_COUNTRY" in params.sat_is_active_if.conditions:
-                    flat_active_lon = pos_vec["lon"].flatten()[active_sats_mask]
-                    flat_active_lat = pos_vec["lat"].flatten()[active_sats_mask]
-
-                    # create points(lon, lat) to compare to country
-                    sats_points = gpd.points_from_xy(flat_active_lon, flat_active_lat, crs="EPSG:4326")
-
-                    # Check if the satellite is inside the country polygon
-                    polygon_mask = np.zeros_like(active_sats_mask)
-                    polygon_mask[active_sats_mask] = sats_points.within(country_proj)
-
-                    if params.sat_is_active_if.lat_long_inside_country.margin_from_border != 0.0:
-                        geod = pyproj.Geod(ellps="WGS84")
-
-                        # TODO: maybe optimize this by creating bounding box before closest point calc?
-                        border_nearest = shp.ops.nearest_points(sats_points, country_proj.boundary)[1]
-                        border_nearest_lon = np.array([p.x for p in border_nearest])
-                        border_nearest_lat = np.array([p.y for p in border_nearest])
-
-                        _, __, active_dist = geod.inv(
-                            flat_active_lon, flat_active_lat,
-                            border_nearest_lon, border_nearest_lat
-                        )
-                        dist = np.ones_like(active_sats_mask) * np.inf
-                        dist[active_sats_mask] = active_dist
-
-                        if params.sat_is_active_if.lat_long_inside_country.margin_from_border > 0:
-                            polygon_mask = polygon_mask & (dist > params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
-                        else:
-                            polygon_mask = polygon_mask | (dist < -params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
-
-                    active_sats_mask = active_sats_mask & polygon_mask
-
-                visible_sat_idxs = np.arange(
-                    current_sat_idx, current_sat_idx + len(pos_vec['lat']), dtype=int
-                )[active_sats_mask]
-                active_satellite_idxs.extend(visible_sat_idxs)
-
-                # Update the index tracker for the next orbit
-                current_sat_idx += len(sx)
-
-            i += 1  # Increment iteration counter
-            if i >= MAX_ITER:  # Check if maximum iterations reached
-                raise RuntimeError(
-                    "Maximum iterations reached, and no satellite was selected within the minimum elevation criteria."
-                )
-
-        # Configure satellite positions in the StationManager
-        mss_d2d.x = np.squeeze(np.array(all_positions['sx'])) * 1e3  # Convert X-coordinates to meters
-        mss_d2d.y = np.squeeze(np.array(all_positions['sy'])) * 1e3  # Convert Y-coordinates to meters
-        mss_d2d.z = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
-        mss_d2d.elevation = np.squeeze(np.array(all_elevations))  # Elevation angles
-        mss_d2d.azimuth = np.squeeze(np.array(all_azimuths))  # Azimuth angles
-
-        # Set the height of the satellites based on its orbit index
-        # The height is set to the perigee altitude of the orbit (relative to Earth's surface)
-        for orbit_idx, param in enumerate(params.orbits):
-            idxs = np.where(mss_d2d.idx_orbit == orbit_idx)
-            mss_d2d.height[idxs] = param.perigee_alt_km * 1e3
-
-        # Set active satellite flags
-        mss_d2d.active = np.zeros(total_satellites, dtype=bool)  # Initialize all satellites as inactive
-        mss_d2d.active[active_satellite_idxs] = True  # Mark visible satellites as active
-
-        rx, ry, rz = lla2ecef(
-            np.squeeze(np.array(all_positions['lat'])),
-            np.squeeze(np.array(all_positions['lon'])),
-            0
-        )
-
-        earth_radius = np.sqrt(rx * rx + ry * ry + rz * rz)
-        all_r = np.squeeze(np.array(all_positions['R'])) * 1e3
-
-        sat_altitude = np.mean(np.array(all_r - earth_radius)[active_satellite_idxs])
-
-        geometry_converter.convert_station_3d_to_2d(
-            mss_d2d
-        )
+        sat_altitude = mss_d2d_values["sat_alt"]
 
         # Initialize satellites antennas
         # we need to initialize them after coordinates transformation because of
@@ -1438,45 +1306,8 @@ class StationFactory(object):
         else:
             raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
 
-        sx, sy = TopologyNTN.get_sectors_xy(
-            intersite_distance=params.intersite_distance,
-            num_sectors=params.num_sectors
-        )
-
-        beams_2d_azim = np.rad2deg(np.arctan2(sy, sx))
-        beams_2d_elev = np.rad2deg(np.arctan2(np.sqrt(sy * sy + sx * sx), sat_altitude)) - 90
-
-        beams_2d_azim = np.resize(
-            beams_2d_azim,
-            total_satellites * params.num_sectors
-        ).reshape(
-            (total_satellites, params.num_sectors)
-        )
-
-        beams_2d_elev = np.resize(
-            beams_2d_elev,
-            total_satellites * params.num_sectors
-        ).reshape(
-            (total_satellites, params.num_sectors)
-        )
-
-        for i in range(total_satellites):
-            if not mss_d2d.active[i]:  # we don't really care about these
-                continue
-
-            beams_3d_elev, beams_3d_azim = rotate_angles_based_on_new_nadir(
-                beams_2d_elev[i],
-                beams_2d_azim[i],
-                mss_d2d.elevation[i],
-                mss_d2d.azimuth[i]
-            )
-
-            mss_d2d.antenna[i] = AntennaMultipleTransceiver(
-                num_beams=params.num_sectors,
-                transceiver_radiation_pattern=antenna_pattern,
-                azimuths=beams_3d_azim,
-                elevations=beams_3d_elev,
-            )
+        for i in range(mss_d2d.num_stations):
+            mss_d2d.antenna[i] = antenna_pattern
 
         return mss_d2d  # Return the configured StationManager
 
@@ -1624,6 +1455,8 @@ if __name__ == '__main__':
         num_beams=7,
         orbits=[orbit]
     )
+    params.sat_is_active_if.conditions = ["MINIMUM_ELEVATION_FROM_ES"]
+    params.sat_is_active_if.minimum_elevation_from_es = 5.0
 
     topology = TopologyImtMssDc(params, geometry_converter)
 
@@ -1646,7 +1479,7 @@ if __name__ == '__main__':
 
     imt_ue = StationFactory.generate_imt_ue_outdoor(
         parameters,
-        parameters.ue.antenna,
+        parameters.ue.antenna.array,
         rand_gen,
         topology
     )

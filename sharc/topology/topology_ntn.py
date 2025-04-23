@@ -57,8 +57,8 @@ class TopologyNTN(Topology):
     @staticmethod
     def get_sectors_xy(*, num_sectors, intersite_distance) -> (np.array, np.array):
         d = intersite_distance
-        x = [0]
-        y = [0]
+        x = [0.]
+        y = [0.]
         # First ring (6 points)
         if num_sectors == 7 or num_sectors == 19:
 

@@ -2,7 +2,7 @@ import numpy as np
 from dataclasses import dataclass, field, asdict
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_orbit import ParametersOrbit
-from sharc.parameters.imt.parameters_imt_mss_dc import ParametersSelectActiveSatellite
+from sharc.parameters.imt.parameters_imt_mss_dc import ParametersSelectActiveSatellite, ParametersSectorPositioning
 #from satellite.parameters.parameters_ngso_constellation import ParametersNgsoConstellation
 from sharc.parameters.parameters_p619 import ParametersP619
 from sharc.parameters.antenna.parameters_antenna_s1528 import ParametersAntennaS1528
@@ -28,6 +28,13 @@ class ParametersMssD2d(ParametersBase):
 
     # MSS_D2d system bandwidth in MHz
     bandwidth: float = 5.0
+
+    # In case you want to use a load factor for beams
+    # that means that each beam has a probability of `beams_load_factor` to be active
+    beams_load_factor: float = 1.0
+
+    # Central beam positioning
+    center_beam_positioning: ParametersSectorPositioning = field(default_factory=ParametersSectorPositioning)
 
     # Adjacent channel emissions type
     # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
@@ -108,15 +115,21 @@ class ParametersMssD2d(ParametersBase):
 
         self.propagate_parameters()
 
+    def __post_init__(self):
+        self.beam_radius = self.cell_radius
+        self.num_beams = self.num_sectors
+
     def validate(self, ctx):
         # Now do the sanity check for some parameters
         if self.num_sectors not in [1, 7, 19]:
             raise ValueError(f"ParametersMssD2d: Invalid number of sectors {self.num_sectors}")
+        self.num_beams = self.num_sectors
 
         if self.cell_radius <= 0:
             raise ValueError(f"ParametersMssD2d: cell_radius must be greater than 0, but is {self.cell_radius}")
         else:
             self.intersite_distance = np.sqrt(3) * self.cell_radius
+            self.beam_radius = self.cell_radius
 
         if self.adjacent_ch_emissions not in ["SPECTRAL_MASK", "ACLR", "OFF"]:
             raise ValueError(f"""ParametersMssD2d: Invalid adjacent channel emissions {self.adjacent_ch_emissions}""")
@@ -126,6 +139,9 @@ class ParametersMssD2d(ParametersBase):
 
         if self.channel_model.upper() not in ["FSPL", "P619", "SATELLITESIMPLE"]:
             raise ValueError(f"Invalid channel model name {self.channel_model}")
+
+        if self.beams_load_factor < 0.0 or self.beams_load_factor > 1.0:
+            raise ValueError(f"{ctx}.beams_load_factor must be in interval [0.0, 1.0]")
 
     def propagate_parameters(self):
         self.antenna_s1528.set_external_parameters(antenna_pattern=self.antenna_pattern,
