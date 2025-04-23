@@ -63,10 +63,10 @@ imt:
     # Network topology parameters.
     topology:
         ###########################################################################
-        # The latitude position is is_spherical is set to true
+        # The latitude position
         central_latitude: -15.7801  # Brasília
         ###########################################################################
-        # The longitude position is is_spherical is set to true
+        # The longitude position
         central_longitude: -47.9292  # Brasília
         ##########################
         central_altitude: 1200
@@ -477,6 +477,25 @@ mss_d2d:
     tx_power_density: -54.2
     # Number of sectors
     num_sectors: 19
+    # conditional to select active satellites
+    # in simulation we sample uniformly from time
+    # if no active satellites are active on that time
+    # we resample
+    # only active satellites will contribute to interference
+    sat_is_active_if:
+        # for a satellite to be active, it needs to respect ALL conditions
+        conditions:
+            # - LAT_LONG_INSIDE_COUNTRY
+            - MINIMUM_ELEVATION_FROM_ES
+        minimum_elevation_from_es: 5
+        # lat_long_inside_country:
+        #     # You may specify another shp file for country borders reference
+        #     # country_shapes_filename: sharc/topology/countries/ne_110m_admin_0_countries.shp
+        #     country_name: BRAZIL
+        #     # margin from inside of border [km]
+        #     # if positive, makes border smaller by x km
+        #     # if negative, makes border bigger by x km
+        #     margin_from_border: 0
     # Satellite antenna pattern
     # Antenna pattern from ITU-R S.1528
     # Possible values: "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO"

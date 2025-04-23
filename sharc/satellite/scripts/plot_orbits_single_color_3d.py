@@ -171,8 +171,22 @@ if __name__ == "__main__":
         name="Example-MSS-D2D",
         antenna_pattern="ITU-R-S.1528-Taylor",
         antenna_gain=30.0,
-        orbits=[orbit_1, orbit_2]
+        orbits=[orbit_1, orbit_2],
+        frequency=2100,
+        bandwidth=5
     )
+
+    params.sat_is_active_if.conditions = [
+        "LAT_LONG_INSIDE_COUNTRY",
+        "MINIMUM_ELEVATION_FROM_ES",
+    ]
+    params.sat_is_active_if.minimum_elevation_from_es = 5
+    # params.sat_is_active_if.lat_long_inside_country.country_name = "Colombia"
+    params.sat_is_active_if.lat_long_inside_country.margin_from_border = 0
+    # params.sat_is_active_if.lat_long_inside_country.margin_from_border = 0
+    params.sat_is_active_if.lat_long_inside_country.country_name = "Brazil"
+
+    params.propagate_parameters()
 
     # Create a topology with a single base station
     from sharc.topology.topology_single_base_station import TopologySingleBaseStation
@@ -208,7 +222,7 @@ if __name__ == "__main__":
         # Extract satellite positions
         x_vec = mss_d2d_manager.x /1e3 #(Km)
         y_vec = mss_d2d_manager.y /1e3 #(Km)
-        z_vec = mss_d2d_manager.height /1e3 #(Km) 
+        z_vec = mss_d2d_manager.z /1e3 #(Km)
         # Store all positions
         all_positions['x'].extend(x_vec)
         all_positions['y'].extend(y_vec)

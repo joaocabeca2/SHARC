@@ -2,6 +2,7 @@ import numpy as np
 from dataclasses import dataclass, field, asdict
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_orbit import ParametersOrbit
+from sharc.parameters.imt.parameters_imt_mss_dc import ParametersSelectActiveSatellite
 #from satellite.parameters.parameters_ngso_constellation import ParametersNgsoConstellation
 from sharc.parameters.parameters_p619 import ParametersP619
 from sharc.parameters.antenna.parameters_antenna_s1528 import ParametersAntennaS1528
@@ -73,6 +74,8 @@ class ParametersMssD2d(ParametersBase):
     # Paramters for the ITU-R-S.1528 antenna patterns
     antenna_s1528: ParametersAntennaS1528 = field(default_factory=ParametersAntennaS1528)
 
+    sat_is_active_if: ParametersSelectActiveSatellite = field(default_factory=ParametersSelectActiveSatellite)
+
     # paramters for channel model
     param_p619: ParametersP619 = field(default_factory=ParametersP619)
     earth_station_alt_m: float = 0.0
@@ -101,6 +104,11 @@ class ParametersMssD2d(ParametersBase):
         """
         super().load_parameters_from_file(config_file)
 
+        self.validate(self.section_name)
+
+        self.propagate_parameters()
+
+    def validate(self, ctx):
         # Now do the sanity check for some parameters
         if self.num_sectors not in [1, 7, 19]:
             raise ValueError(f"ParametersMssD2d: Invalid number of sectors {self.num_sectors}")
@@ -116,6 +124,10 @@ class ParametersMssD2d(ParametersBase):
         if self.spectral_mask.upper() not in ["IMT-2020", "3GPP E-UTRA", "MSS"]:
             raise ValueError(f"""ParametersMssD2d: Inavlid Spectral Mask Name {self.spectral_mask}""")
 
+        if self.channel_model.upper() not in ["FSPL", "P619", "SATELLITESIMPLE"]:
+            raise ValueError(f"Invalid channel model name {self.channel_model}")
+
+    def propagate_parameters(self):
         self.antenna_s1528.set_external_parameters(antenna_pattern=self.antenna_pattern,
                                                    frequency=self.frequency,
                                                    bandwidth=self.bandwidth,
@@ -123,9 +135,6 @@ class ParametersMssD2d(ParametersBase):
                                                    antenna_3_dB_bw=self.antenna_3_dB_bw,
                                                    a_deg=self.antenna_3_dB_bw / 2,
                                                    b_deg=self.antenna_3_dB_bw / 2)
-
-        if self.channel_model.upper() not in ["FSPL", "P619", "SATELLITESIMPLE"]:
-            raise ValueError(f"Invalid channel model name {self.channel_model}")
 
         if self.channel_model == "P619":
             # mean station altitude in meters
