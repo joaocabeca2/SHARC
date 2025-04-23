@@ -25,15 +25,6 @@ plots = post_processor.generate_ccdf_plots_from_results(
 
 post_processor.add_plots(plots)
 
-# # This function aggregates IMT downlink and uplink
-# aggregated_results = PostProcessor.aggregate_results(
-#     downlink_result=post_processor.get_results_by_output_dir("MHz_60deg_dl"),
-#     uplink_result=post_processor.get_results_by_output_dir("MHz_60deg_ul"),
-#     ul_tdd_factor=(3, 4),
-#     n_bs_sim=7 * 19 * 3 * 3,
-#     n_bs_actual=int
-# )
-
 # Add a protection criteria line:
 protection_criteria = -6
 post_processor\
@@ -61,37 +52,8 @@ post_processor\
     .get_plot_by_results_attribute_name("imt_dl_inr", plot_type='ccdf')\
     .show()
 
-# Plot every plot:
-# for plot in plots:
-#     plot.update_layout(legend_traceorder="normal")
-#     plot.show()
-
 for result in many_results:
     # This generates the mean, median, variance, etc
     stats = PostProcessor.generate_statistics(
         result=result
     ).write_to_results_dir()
-    # # do whatever you want here:
-    # if "fspl_45deg" in stats.results_output_dir:
-    #     get some stat and do something
-
-# # example on how to aggregate results and add it to plot:
-# dl_res = post_processor.get_results_by_output_dir("1_cluster")
-# aggregated_results = PostProcessor.aggregate_results(
-#     dl_samples=dl_res.system_dl_interf_power,
-#     ul_samples=ul_res.system_ul_interf_power,
-#     ul_tdd_factor=0.75,
-#     n_bs_sim=1 * 19 * 3 * 3,
-#     n_bs_actual=7 * 19 * 3 * 3
-# )
-
-# relevant = post_processor\
-#     .get_plot_by_results_attribute_name("system_ul_interf_power")
-
-# aggr_x, aggr_y = PostProcessor.cdf_from(aggregated_results)
-
-# relevant.add_trace(
-#     go.Scatter(x=aggr_x, y=aggr_y, mode='lines', name='Aggregate interference',),
-# )
-
-# relevant.show()
