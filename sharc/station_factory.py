@@ -9,6 +9,9 @@ from warnings import warn
 import numpy as np
 import sys
 import math
+import geopandas as gpd
+import shapely as shp
+import pyproj
 
 from sharc.support.enumerations import StationType
 from sharc.parameters.parameters import Parameters
@@ -1236,7 +1239,6 @@ class StationFactory(object):
         """
         geometry_converter.validate()
 
-        MIN_ELEV_ANGLE_DEG = 5.0  # Minimum elevation angle for satellite visibility
         MAX_ITER = 100  # Maximum iterations to find at least one visible satellite
 
         # Calculate the total number of satellites across all orbits
@@ -1268,17 +1270,22 @@ class StationFactory(object):
             raise ValueError(f"Invalid or not implemented spectral mask - {params.spectral_mask}")
         mss_d2d.spectral_mask.set_mask(params.tx_power_density + 10 * np.log10(params.bandwidth * 1e6))
 
-        # Initialize arrays to store satellite positions, angles and distance from center of earth
-        all_positions = {"R": [], "lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
-        all_elevations = []  # Store satellite elevations
-        all_azimuths = []  # Store satellite azimuths
-
+        i = 0  # Iteration counter for ensuring satellite visibility
         # List to store indices of active satellites
         active_satellite_idxs = []
-        current_sat_idx = 0  # Index tracker for satellites across all orbits
 
-        i = 0  # Iteration counter for ensuring satellite visibility
+
+        params.sat_is_active_if.validate("params.sat_is_active_if")
+        country_proj = params.sat_is_active_if.lat_long_inside_country.country_geometry
+
         while len(active_satellite_idxs) == 0:
+            # Initialize arrays to store satellite positions, angles and distance from center of earth
+            all_positions = {"R": [], "lat": [], "lon": [], "sx": [], "sy": [], "sz": []}
+            all_elevations = []  # Store satellite elevations
+            all_azimuths = []  # Store satellite azimuths
+
+            current_sat_idx = 0  # Index tracker for satellites across all orbits
+
             # Iterate through each orbit defined in the parameters
             for orbit_idx, param in enumerate(params.orbits):
                 # Instantiate an OrbitModel for the current orbit
@@ -1323,19 +1330,58 @@ class StationFactory(object):
                 all_elevations.extend(elevations)  # Elevation angles
                 all_azimuths.extend(azimuths)  # Azimuth angles
 
-                # Calculate satellite visibility from base stations
-                elev_from_bs = calc_elevation(
-                    geometry_converter.ref_lat,  # Latitude of base station
-                    pos_vec['lat'],  # Latitude of satellites
-                    geometry_converter.ref_long,  # Longitude of base station
-                    pos_vec['lon'],  # Longitude of satellites
-                    orbit.perigee_alt_km  # Perigee altitude in kilometers
-                )
+                active_sats_mask = np.ones(len(pos_vec['lat']), dtype=bool)
 
-                # Determine visible satellites based on minimum elevation angle
-                visible_sat_idxs = [
-                    current_sat_idx + idx for idx, elevation in enumerate(elev_from_bs) if elevation >= MIN_ELEV_ANGLE_DEG
-                ]
+                if "MINIMUM_ELEVATION_FROM_ES" in params.sat_is_active_if.conditions:
+                    # Calculate satellite visibility from base stations
+                    elev_from_bs = calc_elevation(
+                        geometry_converter.ref_lat,  # Latitude of base station
+                        pos_vec['lat'],  # Latitude of satellites
+                        geometry_converter.ref_long,  # Longitude of base station
+                        pos_vec['lon'],  # Longitude of satellites
+                        orbit.perigee_alt_km  # Perigee altitude in kilometers
+                    )
+
+                    # Determine visible satellites based on minimum elevation angle
+                    active_sats_mask = active_sats_mask & (elev_from_bs.flatten() >= params.sat_is_active_if.minimum_elevation_from_es)
+
+                # NOTE/WARN: some of the calc inside here is expensive, so it should be the last condition
+                if "LAT_LONG_INSIDE_COUNTRY" in params.sat_is_active_if.conditions:
+                    flat_active_lon = pos_vec["lon"].flatten()[active_sats_mask]
+                    flat_active_lat = pos_vec["lat"].flatten()[active_sats_mask]
+
+                    # create points(lon, lat) to compare to country
+                    sats_points = gpd.points_from_xy(flat_active_lon, flat_active_lat, crs="EPSG:4326")
+
+                    # Check if the satellite is inside the country polygon
+                    polygon_mask = np.zeros_like(active_sats_mask)
+                    polygon_mask[active_sats_mask] = sats_points.within(country_proj)
+
+                    if params.sat_is_active_if.lat_long_inside_country.margin_from_border != 0.0:
+                        geod = pyproj.Geod(ellps="WGS84")
+
+                        # TODO: maybe optimize this by creating bounding box before closest point calc?
+                        border_nearest = shp.ops.nearest_points(sats_points, country_proj.boundary)[1]
+                        border_nearest_lon = np.array([p.x for p in border_nearest])
+                        border_nearest_lat = np.array([p.y for p in border_nearest])
+
+                        _, __, active_dist = geod.inv(
+                            flat_active_lon, flat_active_lat,
+                            border_nearest_lon, border_nearest_lat
+                        )
+                        dist = np.ones_like(active_sats_mask) * np.inf
+                        dist[active_sats_mask] = active_dist
+
+                        if params.sat_is_active_if.lat_long_inside_country.margin_from_border > 0:
+                            polygon_mask = polygon_mask & (dist > params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
+                        else:
+                            polygon_mask = polygon_mask | (dist < -params.sat_is_active_if.lat_long_inside_country.margin_from_border * 1e3)
+
+                    active_sats_mask = active_sats_mask & polygon_mask
+
+                visible_sat_idxs = np.arange(
+                    current_sat_idx, current_sat_idx + len(pos_vec['lat']), dtype=int
+                )[active_sats_mask]
                 active_satellite_idxs.extend(visible_sat_idxs)
 
                 # Update the index tracker for the next orbit
