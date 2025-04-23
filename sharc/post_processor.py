@@ -6,6 +6,7 @@ import os
 import numpy as np
 import scipy
 import typing
+import pathlib
 
 
 class FieldStatistics:
@@ -182,7 +183,7 @@ class PostProcessor:
             "title": "[SYS] IMT to system coupling loss",
         },
         "system_dl_interf_power": {
-            "x_label": "Interference Power [dBm/MHz]",
+            "x_label": "Interference Power [dBm/BMHz]",
             "title": "[SYS] system interference power from IMT DL",
         },
         "imt_system_diffraction_loss": {
@@ -215,7 +216,15 @@ class PostProcessor:
         },
         "system_ul_interf_power": {
             "title": "[SYS] system interference power from IMT UL",
-            "x_label": "Interference Power [dBm]",
+            "x_label": "Interference Power [dBm/BMHz]",
+        },
+        "system_ul_interf_power_per_mhz": {
+            "title": "[SYS] system interference PSD from IMT UL",
+            "x_label": "Interference Power [dBm/MHz]",
+        },
+        "system_dl_interf_power_per_mhz": {
+            "title": "[SYS] system interference PSD from IMT DL",
+            "x_label": "Interference Power [dBm/MHz]",
         },
         "system_inr": {
             "title": "[SYS] system INR",
@@ -237,9 +246,21 @@ class PostProcessor:
     }
 
     plot_legend_patterns: list = field(default_factory=list)
+    legends_generator = None
 
     plots: list[go.Figure] = field(default_factory=list)
     results: list[Results] = field(default_factory=list)
+
+    def add_plot_legend_generator(
+        self, generator
+    ) -> "PostProcessor":
+        """
+        You can either add a plot generator or many plot legend patterns.
+        A generator is much more flexible.
+        """
+        if self.legends_generator is not None:
+            raise ValueError("Can only have one legends generator at a time")
+        self.legends_generator = generator
 
     def add_plot_legend_pattern(
         self, *, dir_name_contains: str, legend: str
@@ -251,6 +272,26 @@ class PostProcessor:
 
         return self
 
+    def get_results_possible_legends(self, result: Results) -> list[dict]:
+        """
+        You get a list with dicts tha have at least { "legend": str } in them.
+        They may also have { "dir_name_contains": str }
+        """
+        possible = list(
+            filter(
+                lambda pl: pl["dir_name_contains"]
+                in os.path.basename(result.output_directory),
+                self.plot_legend_patterns,
+            )
+        )
+
+        if len(possible) == 0 and self.legends_generator is not None:
+            return [
+                {"legend": self.legends_generator(os.path.basename(result.output_directory))}
+            ]
+
+        return possible
+
     def generate_cdf_plots_from_results(
         self, results: list[Results], *, n_bins=200
     ) -> list[go.Figure]:
@@ -259,13 +300,7 @@ class PostProcessor:
         # Sort based on path name - TODO: sort alphabeticaly by legend
         results.sort(key=lambda r: r.output_directory)
         for res in results:
-            possible_legends_mapping = list(
-                filter(
-                    lambda pl: pl["dir_name_contains"]
-                    in os.path.basename(res.output_directory),
-                    self.plot_legend_patterns,
-                )
-            )
+            possible_legends_mapping = self.get_results_possible_legends(res)
 
             if len(possible_legends_mapping):
                 legend = possible_legends_mapping[0]["legend"]
@@ -298,11 +333,81 @@ class PostProcessor:
                         yaxis=dict(tickmode="array", tickvals=[0, 0.25, 0.5, 0.75, 1]),
                         xaxis=dict(tickmode="linear", dtick=5),
                         legend_title="Labels",
-                        meta={"related_results_attribute": attr_name},
+                        meta={"related_results_attribute": attr_name, "plot_type": "cdf"},
                     )
 
                 # TODO: take this fn as argument, to plot more than only cdf's
                 x, y = PostProcessor.cdf_from(attr_val, n_bins=n_bins)
+
+                fig = figs[attr_name]
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=x,
+                        y=y,
+                        mode="lines",
+                        name=f"{legend}",
+                    ),
+                )
+
+        return figs.values()
+
+    def generate_ccdf_plots_from_results(
+        self, results: list[Results], *, n_bins=200, cutoff_percentage=0.01
+    ) -> list[go.Figure]:
+        """
+        Generates ccdf plots for results added to instance, in log scale
+        cutoff_percentage: useful for cutting off
+        """
+        figs: dict[str, list[go.Figure]] = {}
+
+        for res in results:
+            possible_legends_mapping = self.get_results_possible_legends(res)
+
+            if len(possible_legends_mapping):
+                legend = possible_legends_mapping[0]["legend"]
+            else:
+                legend = res.output_directory
+
+            attr_names = res.get_relevant_attributes()
+
+            next_tick = 1
+            ticks_at = []
+            while next_tick > cutoff_percentage:
+                ticks_at.append(next_tick)
+                next_tick /= 10
+            ticks_at.append(cutoff_percentage)
+            ticks_at.reverse()
+
+            for attr_name in attr_names:
+                attr_val = getattr(res, attr_name)
+                if not len(attr_val):
+                    continue
+                if attr_name not in PostProcessor.RESULT_FIELDNAME_TO_PLOT_INFO:
+                    print(
+                        f"[WARNING]: {attr_name} is not a plottable field, because it does not have a configuration set on PostProcessor."
+                    )
+                    continue
+                attr_plot_info = PostProcessor.RESULT_FIELDNAME_TO_PLOT_INFO[attr_name]
+                if attr_plot_info == PostProcessor.IGNORE_FIELD:
+                    print(
+                        f"[WARNING]: {attr_name} is currently being ignored on plots."
+                    )
+                    continue
+                if attr_name not in figs:
+                    figs[attr_name] = go.Figure()
+                    figs[attr_name].update_layout(
+                        title=f'CCDF Plot for {attr_plot_info["title"]}',
+                        xaxis_title=attr_plot_info["x_label"],
+                        yaxis_title="$\\text{P } I > X$",
+                        yaxis=dict(tickmode="array", tickvals=ticks_at, type="log", range=[np.log10(cutoff_percentage), 0]),
+                        xaxis=dict(tickmode="linear", dtick=5),
+                        legend_title="Labels",
+                        meta={"related_results_attribute": attr_name, "plot_type": "ccdf"},
+                    )
+
+                # TODO: take this fn as argument, to plot more than only cdf's
+                x, y = PostProcessor.ccdf_from(attr_val, n_bins=n_bins)
 
                 fig = figs[attr_name]
 
@@ -342,14 +447,15 @@ class PostProcessor:
 
         return filtered_results[0]
 
-    def get_plot_by_results_attribute_name(self, attr_name: str) -> go.Figure:
+    def get_plot_by_results_attribute_name(self, attr_name: str, *, plot_type="cdf") -> go.Figure:
         """
         You can get a plot using an attribute name from Results.
         See Results class to check what attributes exist.
+        plot_type: 'cdf', 'ccdf'
         """
         filtered = list(
             filter(
-                lambda x: x.layout.meta["related_results_attribute"] == attr_name,
+                lambda x: x.layout.meta["related_results_attribute"] == attr_name and x.layout.meta["plot_type"] == plot_type,
                 self.plots,
             )
         )
@@ -452,6 +558,51 @@ class PostProcessor:
         y = cumulative / cumulative[-1]
 
         return (x, y)
+
+    @staticmethod
+    def ccdf_from(data: list[float], *, n_bins=200) -> (list[float], list[float]):
+        """
+        Takes a dataset and returns both axis of a ccdf (x, y)
+        """
+        x, y = PostProcessor.cdf_from(data, n_bins=n_bins)
+
+        return (x, 1 - y)
+
+    @staticmethod
+    def save_plots(
+        dir: str,
+        plots: list[go.Figure],
+        *,
+        width=1200,
+        height=800
+    ) -> None:
+        """
+        dir: A directory path on which to save the plot files
+        plots: Figures to save. They are saved by their name
+        """
+        pathlib.Path(dir).mkdir(parents=True, exist_ok=True)
+
+        for plot in plots:
+            # TODO: check if reset to previous state is functional
+            # so much state used in this post processor, should def. migrate
+            # post processing to Haskell (obv. not rly)
+            prev_autosize = plot.layout.autosize
+            prev_width = plot.layout.width
+            prev_height = plot.layout.height
+
+            plot.update_layout(
+                autosize=False,
+                width=width,
+                height=height
+            )
+
+            plot.write_image(os.path.join(dir, f"{plot.layout.title.text}.jpg"))
+
+            plot.update_layout(
+                autosize=prev_autosize,
+                width=prev_width,
+                height=prev_height
+            )
 
     @staticmethod
     def generate_statistics(result: Results) -> ResultsStatistics:

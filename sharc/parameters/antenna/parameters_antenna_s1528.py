@@ -40,13 +40,15 @@ class ParametersAntennaS1528(ParametersBase):
     n_side_lobes: int = 4
 
     # Radial (l_r) and transverse (l_t) sizes of the effective radiating area of the satellite transmitt antenna (m)
+    # Only used if roll_off = None.
     l_r: float = 1.6
     l_t: float = 1.6
 
     # beam roll-off (difference between the maximum gain and the gain at the edge of the illuminated beam)
     # Possible values are 0, 3, 5 and 7. The value 0 (zero) means that the first J1 root of the bessel function 
     # sits at the edge of the beam
-    roll_off: int = 7
+    # If None, the roll_off is not used for calculation of the antenna pattern
+    roll_off: int | None = None
 
     def load_parameters_from_file(self, config_file: str):
         """Load the parameters from file an run a sanity check.
@@ -103,9 +105,9 @@ class ParametersAntennaS1528(ParametersBase):
 
     def validate(self, ctx: str):
         # Now do the sanity check for some parameters
-        if None in [self.frequency, self.bandwidth, self.antenna_gain]:
+        if None in [self.frequency, self.bandwidth]:
             raise ValueError(
-                f"{ctx}.[frequency, bandwidth, antenna_gain] = {[self.frequency, self.bandwidth, self.antenna_gain]}.\
+                f"{ctx}.[frequency, bandwidth, antenna_gain] = {[self.frequency, self.bandwidth]}.\
                 They need to all be set!")
 
         if self.antenna_pattern not in ["ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO", "ITU-R-S.1528-Taylor"]:
@@ -114,6 +116,7 @@ class ParametersAntennaS1528(ParametersBase):
                              Possible values \
                              are \"ITU-R-S.1528-Section1.2\", \"ITU-R-S.1528-LEO\", \"ITU-R-S.1528-Taylor\"")
 
-        if int(self.roll_off) not in [0, 3, 5, 7]:
-            raise ValueError(
-                f"{ctx}: Invalid value for roll_off factor {self.roll_off}")
+        if self.roll_off is not None:
+            if int(self.roll_off) not in [0, 3, 5, 7]:
+                raise ValueError(
+                    f"{ctx}: Invalid value for roll_off factor {self.roll_off}")
