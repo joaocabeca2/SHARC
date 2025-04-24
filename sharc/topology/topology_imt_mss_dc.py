@@ -756,8 +756,8 @@ if __name__ == '__main__':
     # Add circles centered at the (x, y) coordinates of the space stations
     for x, y in zip(imt_mss_dc_topology.x, imt_mss_dc_topology.y):
         circle = go.Scatter(
-            x=[x + imt_mss_dc_topology.orbit_params.beam_radius / 1e3 * np.cos(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
-            y=[y + imt_mss_dc_topology.orbit_params.beam_radius / 1e3 * np.sin(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
+            x=[x/1e3 + imt_mss_dc_topology.orbit_params.beam_radius / 1e3 * np.cos(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
+            y=[y/1e3 + imt_mss_dc_topology.orbit_params.beam_radius / 1e3 * np.sin(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
             mode='lines',
             line=dict(color='blue')
         )
