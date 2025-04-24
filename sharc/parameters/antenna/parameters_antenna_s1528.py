@@ -105,9 +105,9 @@ class ParametersAntennaS1528(ParametersBase):
 
     def validate(self, ctx: str):
         # Now do the sanity check for some parameters
-        if None in [self.frequency, self.bandwidth, self.antenna_gain]:
+        if None in [self.frequency, self.bandwidth]:
             raise ValueError(
-                f"{ctx}.[frequency, bandwidth, antenna_gain] = {[self.frequency, self.bandwidth, self.antenna_gain]}.\
+                f"{ctx}.[frequency, bandwidth, antenna_gain] = {[self.frequency, self.bandwidth]}.\
                 They need to all be set!")
 
         if self.antenna_pattern not in ["ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO", "ITU-R-S.1528-Taylor"]:

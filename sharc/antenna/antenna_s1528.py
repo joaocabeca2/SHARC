@@ -333,7 +333,7 @@ if __name__ == '__main__':
     # Section 1.4 (Taylor) - Compare to Fig 6
     beam_radius = 350  # km
     sat_altitude = 1446  # km
-    a_deg = np.degrees(beam_radius / sat_altitude)
+    a_deg = np.degrees(np.arctan(beam_radius / sat_altitude))
     params_rolloff_7 = ParametersAntennaS1528(
         antenna_gain=0,
         frequency=12000,
