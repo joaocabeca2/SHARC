@@ -1,8 +1,9 @@
 import os
-import subprocess
 import sys
+import subprocess
 from pathlib import Path
 import platform
+
 
 def run_command(command, shell=False):
     try:
@@ -10,6 +11,7 @@ def run_command(command, shell=False):
     except subprocess.CalledProcessError as e:
         print(f"Error: Command '{' '.join(command)}' failed with exit code {e.returncode}")
         sys.exit(e.returncode)
+
 
 def main():
     print("- SHARC Installer Starting...")
@@ -43,16 +45,16 @@ def main():
     print("- Installing dependencies from requirements.txt...")
     run_command([str(pip_executable), "install", "-r", str(requirements_file)])
 
-    # pip install -e .
     print("- Installing SHARC in editable mode...")
     run_command([str(pip_executable), "install", "-e", str(project_root)])
 
-    print("\n - SHARC installation complete!")
+    print("\n- SHARC installation complete!")
     print("- To activate your virtual environment, run:")
     if platform.system() == "Windows":
         print(r".venv\Scripts\activate")
     else:
         print("source .venv/bin/activate")
+
 
 if __name__ == "__main__":
     main()
