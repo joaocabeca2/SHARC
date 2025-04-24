@@ -50,7 +50,6 @@ class StationFactoryNgsoTest(unittest.TestCase):
         self.param = ParametersMssD2d(
             name="Acme-Star-1",                         # Name of the constellation
             antenna_pattern="ITU-R-S.1528-Taylor",     # Antenna type
-            antenna_gain=30.0,                 # Maximum antenna gain in dBi
             orbits=[orbit_1, orbit_2],                   # List of orbital parameters
             num_sectors=1,
         )

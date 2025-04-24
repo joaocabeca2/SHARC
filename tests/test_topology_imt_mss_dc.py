@@ -118,8 +118,8 @@ class TestTopologyImtMssDc(unittest.TestCase):
             self.imt_mss_dc_topology.space_station_z,
             np.sqrt(self.imt_mss_dc_topology.space_station_x**2 + self.imt_mss_dc_topology.space_station_y**2))
         )
-        for elev in xy_plane_elevations[idxs]:
-            self.assertGreaterEqual(elev, min_elevation_angle)
+
+        npt.assert_array_less(min_elevation_angle, xy_plane_elevations)
 
 
 if __name__ == '__main__':

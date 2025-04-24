@@ -73,11 +73,12 @@ class Simulation(ABC, Observable):
 
         geometry_converter = GeometryConverter()
 
-        geometry_converter.set_reference(
-            self.parameters.imt.topology.central_latitude,
-            self.parameters.imt.topology.central_longitude,
-            self.parameters.imt.topology.central_altitude,
-        )
+        if self.parameters.imt.topology.central_latitude is not None:
+            geometry_converter.set_reference(
+                self.parameters.imt.topology.central_latitude,
+                self.parameters.imt.topology.central_longitude,
+                self.parameters.imt.topology.central_altitude,
+            )
 
         self.geometry_converter = geometry_converter
 

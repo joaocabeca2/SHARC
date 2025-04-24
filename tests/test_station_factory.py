@@ -47,7 +47,7 @@ class StationFactoryTest(unittest.TestCase):
             param_imt.topology.ntn.num_sectors)
 
         ntn_topology.calculate_coordinates()
-        ntn_bs = StationFactory.generate_imt_base_stations(param_imt, param_imt.bs.antenna, ntn_topology, rng)
+        ntn_bs = StationFactory.generate_imt_base_stations(param_imt, param_imt.bs.antenna.array, ntn_topology, rng)
         npt.assert_equal(ntn_bs.height, param_imt.topology.ntn.bs_height)
         # the azimuth seen from BS antenna
         npt.assert_almost_equal(ntn_bs.azimuth[0], param_imt.topology.ntn.bs_azimuth - 180, 1e-3)
@@ -87,7 +87,7 @@ class StationFactoryTest(unittest.TestCase):
             param_imt.topology.ntn.num_sectors)
 
         ntn_topology.calculate_coordinates()
-        ntn_ue = StationFactory.generate_imt_ue_outdoor(param_imt, param_imt.ue.antenna, rng, ntn_topology)
+        ntn_ue = StationFactory.generate_imt_ue_outdoor(param_imt, param_imt.ue.antenna.array, rng, ntn_topology)
         dist = np.sqrt(ntn_ue.x**2 + ntn_ue.y**2)
         # test if the maximum distance is close to the cell radius within a 100km range
         npt.assert_almost_equal(dist.max(), param_imt.topology.ntn.cell_radius, -2)

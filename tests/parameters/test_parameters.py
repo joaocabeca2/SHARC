@@ -473,7 +473,6 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.mss_d2d.bandwidth, 5.0)
         self.assertEqual(self.parameters.mss_d2d.cell_radius, 19000)
         self.assertEqual(self.parameters.mss_d2d.tx_power_density, -30)
-        self.assertEqual(self.parameters.mss_d2d.antenna_gain, 34.1)
         self.assertEqual(self.parameters.mss_d2d.num_sectors, 19)
         self.assertEqual(self.parameters.mss_d2d.antenna_diamter, 1.0)
         self.assertEqual(self.parameters.mss_d2d.antenna_l_s, -6.75)
