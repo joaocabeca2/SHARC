@@ -1,0 +1,130 @@
+general:
+    num_snapshots: 20000
+    imt_link: UPLINK
+    system: SINGLE_EARTH_STATION
+    enable_cochannel: TRUE
+    enable_adjacent_channel: FALSE
+    seed: 100
+    overwrite_output: FALSE
+    output_dir: campaigns/imt_FSS_ES_MICRO/output
+    output_dir_prefix: ooutput_UL_LF_50_DIST_2000
+imt:
+    minimum_separation_distance_bs_ue: 5
+    interfered_with: FALSE
+    frequency: 7500 # center 7250-7750
+    bandwidth: 100
+    rb_bandwidth: 0.180
+    spectral_mask: IMT-2020
+    spurious_emissions: -13   
+    adjacent_antenna_model: BEAMFORMING 
+    guard_band_ratio: 0.1 
+    topology:
+        type: HOTSPOT 
+        hotspot:
+            intersite_distance: 600 # ISD = 400 * 1.5 --> 600 for micro and macro
+            wrap_around: false
+            num_clusters: 1
+            num_hotspots_per_cell: 1
+            max_dist_hotspot_ue: 70
+            min_dist_bs_hotspot: 1.2
+    bs: 
+        load_probability: .5 # 50% only 
+        conducted_power: 16  # 22 for macro; 16 for micro
+        height: 6 # 18 m for macro; 6 m for micro
+        noise_figure: 11  
+        ohmic_loss: 0 
+        antenna:
+            normalization: FALSE
+            element_pattern: M2101
+            minimum_array_gain: -200  
+            downtilt: 10 
+            element_max_g: 6.4
+            element_phi_3db: 90
+            element_theta_3db: 65 
+            n_rows: 8 
+            n_columns: 8
+            element_horiz_spacing: 0.5            
+            element_vert_spacing: 0.7  
+            element_am: 30
+            element_sla_v: 30  
+            multiplication_factor: 12
+            subarray:
+                is_enabled: false
+                n_rows: 1
+                element_vert_spacing: 0.7                
+                eletrical_downtilt: 3.0
+    ue: 
+        k: 3
+        k_m: 1
+        indoor_percent: 70
+        distribution_type: ANGLE_AND_DISTANCE
+        distribution_distance: RAYLEIGH
+        distribution_azimuth: NORMAL
+        tx_power_control: ON 
+        p_o_pusch: -87.2
+        alpha: 0.8
+        p_cmax: 23
+        power_dynamic_range: 56
+        height: 1.5
+        noise_figure: 13
+        ohmic_loss: 0
+        body_loss: 4
+        antenna:
+            normalization: FALSE
+            element_pattern: FIXED
+            minimum_array_gain: -200
+            element_max_g: -4 
+            element_phi_3db: 180
+            element_theta_3db: 360
+            n_rows: 1
+            n_columns: 1            
+            element_am: 25
+            element_sla_v: 25
+            multiplication_factor: 12  
+    downlink:   
+        attenuation_factor: 0.6
+        sinr_min: -10
+        sinr_max: 30
+    channel_model: UMi
+    shadowing: TRUE
+    season: SUMMER
+    los_adjustment_factor: 18
+    noise_temperature: 290
+single_earth_station:
+  frequency: 7500
+  bandwidth: 125
+  noise_temperature: 357.5
+  channel_model: P452  
+  tx_power_density: 0  
+  param_p452:
+      atmospheric_pressure: 1017
+      air_temperature: 293.15
+      N0: 352.58
+      delta_N: 60
+      percentage_p: 0.2
+      Dct: 101
+      Dcr: 100
+      Hte: 1.5 # same as UE in UL; same as BS in DL 
+      Hre: 5   # same as geomety.height
+      tx_lat: 10
+      rx_lat: 11
+      polarization: horizontal # testar se roda com circular
+      clutter_loss: TRUE
+  geometry:
+    height: 5
+    azimuth:
+      type: FIXED
+      fixed: 180
+    elevation:
+      type: FIXED
+      fixed: 3
+    location:
+      type: FIXED
+      fixed:
+        x: 3600 # [1000 2000 5000 10000] --> [2600 3600 6600 11600]
+        y: 0
+  antenna:
+      pattern: ITU-R S.465
+      gain: 50.0
+      itu_r_s_465:
+        diameter: 5.15
