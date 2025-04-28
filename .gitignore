@@ -1,5 +1,5 @@
 /sharc/output/*.txt
-/sharc/output/*.png
+#/sharc/output/*.png
 /sharc/output_*/*
 /sharc/campaigns/*/output/
 
