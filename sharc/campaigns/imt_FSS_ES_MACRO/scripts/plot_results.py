@@ -70,34 +70,34 @@ post_processor.add_plots(plots)
 #     .show()
 
 # Plot every plot:
-for plt in plots:
+output_dir = os.path.join(campaign_base_dir, "plots")
+os.makedirs(output_dir, exist_ok=True)  # Cria a pasta plots/ se não existir
+
+for idx, plt in enumerate(plots):
     if plt:
+        # Atualiza seu layout como você já faz
         plt.update_layout(
             yaxis=dict(
                 tickmode="array",
-                tickvals=[1, 0.1, 0.01, 0.001, 0.0001],  # Valores exatos dos ticks
-                ticktext=["1", "0.1", "0.01", "0.001", "0.0001"],  # Rótulos correspondentes   
-                type="log",  # Define escala logarítmica, se necessário
-                range=[-5, 0]  # Intervalo em escala log10 (log10(0.00005) ≈ -4.3 e log10(1) = 0)
+                tickvals=[1, 0.1, 0.01, 0.001, 0.0001],
+                ticktext=["1", "0.1", "0.01", "0.001", "0.0001"],
+                type="log",
+                range=[-5, 0]
             )
         )
-        plt.add_vline(
-            -10.5, line_dash="dash",
-            name="20% criteria x"
-        )
-        plt.add_vline(
-            -6, line_dash="dash",
-            name="30% criteria x"
-        )
-        plt.add_hline(
-            0.2, line_dash="dash",
-            name="20% criteria y"
-        )
-        plt.add_hline(
-            0.0003, line_dash="dash",
-            name="30% criteria y"
-        )
-    plt.show()
+        plt.add_vline(-10.5, line_dash="dash", name="20% criteria x")
+        plt.add_vline(-6, line_dash="dash", name="30% criteria x")
+        plt.add_hline(0.2, line_dash="dash", name="20% criteria y")
+        plt.add_hline(0.0003, line_dash="dash", name="30% criteria y")
+
+        # Salva o plot como imagem
+        save_path = os.path.join(output_dir, f"plot_{idx}.png")
+        plt.write_image(save_path)
+
+        print(f"Salvou: {save_path}")
+        
+        # Se ainda quiser mostrar
+        #plt.show()
 
 for result in many_results:
     # This generates the mean, median, variance, etc
