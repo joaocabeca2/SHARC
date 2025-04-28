@@ -8,7 +8,6 @@ from sharc.satellite.utils.sat_utils import ecef2lla
 from sharc.satellite.ngso.constants import EARTH_RADIUS_KM, KEPLER_CONST, EARTH_ROTATION_RATE
 
 
-
 class OrbitModel():
     """Orbit Model for satellite positions."""
 
@@ -108,10 +107,24 @@ class OrbitModel():
         return self.__get_satellite_positions(t)
 
     def get_orbit_positions_random(self, rng: np.random.RandomState, n_samples=1) -> dict:
-        """Returns satellite positions in a random time instant in seconds."""
+        """Returns satellite positions in a random time instant in seconds.
+                Parameters
+                ----------
+                rng : np.random.RandomState
+                    Random number generator for reproducibility
+                n_samples : int
+                    Number of random samples to generate, by default 1
+                Returns
+                -------
+                dict
+                    A dictionary with satellite positions in spherical and ecef coordinates.
+                        lat, lon, sx, sy, sz
+        """
+
         # return self.__get_satellite_positions(rng.random_sample(1) * 1000 * self.orbital_period_sec)
         # Mean anomaly (M)
-        self.mean_anomaly = (self.initial_mean_anomalies_rad[:, None] + 2 * np.pi * rng.random_sample(n_samples)) % (2 * np.pi)
+        self.mean_anomaly = (self.initial_mean_anomalies_rad[:, None] +
+                             2 * np.pi * rng.random_sample(n_samples)) % (2 * np.pi)
 
         # Eccentric anomaly (E)
         self.eccentric_anom = eccentric_anomaly(self.eccentricity, self.mean_anomaly)
