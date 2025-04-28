@@ -11,28 +11,28 @@ post_processor = PostProcessor()
 post_processor\
     .add_plot_legend_pattern(
         dir_name_contains="output_DL_LF_50",
-        legend="Distância = 1000m"
+        legend="DL - Distância = 1000m"
     ).add_plot_legend_pattern(
         dir_name_contains="output_DL_LF_50_DIST_2000",
-        legend="Distância = 2000m"
+        legend="DL - Distância = 2000m"
     ).add_plot_legend_pattern(
         dir_name_contains="output_DL_LF_50_DIST_5000",
-        legend="Distância = 5000m"
+        legend="DL - Distância = 5000m"
     ).add_plot_legend_pattern(
         dir_name_contains="output_DL_LF_50_DIST_10000",
-        legend="Distância = 10000m"
+        legend="DL - Distância = 10000m"
     ).add_plot_legend_pattern(
         dir_name_contains="output_UL_LF_50_DIST_1000",
-        legend="Distância = 1000m"
+        legend="UL - Distância = 1000m"
     ).add_plot_legend_pattern(
         dir_name_contains="output_UL_LF_50_DIST_2000",
-        legend="Distância = 2000m"
+        legend="UL - Distância = 2000m"
     ).add_plot_legend_pattern(
         dir_name_contains="output_UL_LF_50_DIST_5000",
-        legend="Distância = 5000m"
+        legend="UL - Distância = 5000m"
     ).add_plot_legend_pattern(
         dir_name_contains="output_UL_LF_50_DIST_10000",
-        legend="Distância = 10000m"
+        legend="UL - Distância = 10000m"
     )
 
 campaign_base_dir = str((Path(__file__) / ".." / "..").resolve())
