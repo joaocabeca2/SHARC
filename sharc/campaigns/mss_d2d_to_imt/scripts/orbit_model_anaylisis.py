@@ -27,7 +27,7 @@ if __name__ == "__main__":
     MIN_ELEV_ANGLE_DEG = 5.0  # minimum elevation angle for visibility
 
     # Time duration in days for the linear time simulation
-    TIME_DURATION_HOURS = 1 * 24
+    TIME_DURATION_HOURS = 76
 
     # Random samples
     N_DROPS = 50000
@@ -56,27 +56,25 @@ if __name__ == "__main__":
                                                           n_periods=total_periods)
     sat_altitude_km = orbit.apogee_alt_km  # altitude of the satellites in kilometers
     num_of_visible_sats_per_drop = []
-    elevation_angles_per_drop = np.empty(0)
-    rng = np.random.RandomState(seed=6)
-    for i in range(pos_vec['sx'].shape[1]):
-        elev_angles = calc_elevation(GROUND_STA_LAT, pos_vec['lat'][:, i], GROUND_STA_LON,
-                                     pos_vec['lon'][:, i], sat_altitude_km)
-        elevation_angles_per_drop = np.append(elevation_angles_per_drop,
-                                              elev_angles[np.where(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG)])
-        vis_sats = np.where(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG)[0]
-        num_of_visible_sats_per_drop.append(len(vis_sats))
+    elev_angles = calc_elevation(GROUND_STA_LAT, pos_vec['lat'], GROUND_STA_LON, pos_vec['lon'], sat_altitude_km)
+    elevation_angles_per_drop = elev_angles[np.where(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG)]
+    num_of_visible_sats_per_drop = np.sum(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG, axis=0)
 
     # Show visible satellites from ground-station - random
     num_of_visible_sats_per_drop_rand = []
     elevation_angles_per_drop_rand = []
     rng = np.random.RandomState(seed=SEED)
-    for i in range(N_DROPS):
-        pos_vec = orbit.get_orbit_positions_random_time(rng=rng)
-        elev_angles = calc_elevation(GROUND_STA_LAT, pos_vec['lat'].flatten(), GROUND_STA_LON,
-                                     pos_vec['lon'].flatten(), sat_altitude_km)
-        elevation_angles_per_drop_rand.append(elev_angles[np.where(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG)])
-        vis_sats = np.where(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG)[0]
-        num_of_visible_sats_per_drop_rand.append(len(vis_sats))
+    pos_vec = orbit.get_orbit_positions_random(rng=rng, n_samples=N_DROPS)
+    elev_angles = calc_elevation(GROUND_STA_LAT,
+                                 pos_vec['lat'],
+                                 GROUND_STA_LON, pos_vec['lon'],
+                                 sat_altitude_km)
+    elevation_angles_per_drop_rand = elev_angles[np.where(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG)]
+    num_of_visible_sats_per_drop_rand = np.sum(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG, axis=0)
+
+    # Free some memory
+    del elev_angles
+    del pos_vec
 
     # plot histogram of visible satellites
     fig = go.Figure(data=[go.Histogram(x=num_of_visible_sats_per_drop,
@@ -102,7 +100,7 @@ if __name__ == "__main__":
     fig.data[1].name = 'Random'
     fig.update_layout(legend_title_text='Observation Type')
     file_name = Path(__file__).parent / "visible_sats_per_drop.html"
-    fig.write_html(file=file_name, include_plotlyjs="cdn", auto_open=False)
+    fig.write_html(file=file_name, include_plotlyjs="cdn", auto_open=True)
 
     # plot histogram of elevation angles
     fig = go.Figure(data=[go.Histogram(x=np.array(elevation_angles_per_drop).flatten(),

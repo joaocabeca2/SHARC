@@ -48,7 +48,7 @@ class TestOrbitModel(unittest.TestCase):
         np.testing.assert_array_almost_equal(np.diff(ma_deg, axis=1), r, decimal=4)
 
         # Check mean anomaly values with randon time
-        self.orbit.get_orbit_positions_random_time(rng=np.random.RandomState())
+        self.orbit.get_orbit_positions_random(rng=np.random.RandomState())
         ma_deg = np.unwrap(np.degrees(self.orbit.mean_anomaly.reshape((self.orbit.Np, self.orbit.Nsp))), period=360)
 
         # Check phasing between satellites in the same plane

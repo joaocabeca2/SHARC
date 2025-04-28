@@ -107,11 +107,11 @@ class OrbitModel():
         t = np.array([time_instant_secs])
         return self.__get_satellite_positions(t)
 
-    def get_orbit_positions_random_time(self, rng: np.random.RandomState) -> dict:
+    def get_orbit_positions_random(self, rng: np.random.RandomState, n_samples=1) -> dict:
         """Returns satellite positions in a random time instant in seconds."""
         # return self.__get_satellite_positions(rng.random_sample(1) * 1000 * self.orbital_period_sec)
         # Mean anomaly (M)
-        self.mean_anomaly = (self.initial_mean_anomalies_rad[:, None] + 2 * np.pi * rng.random_sample(1)) % (2 * np.pi)
+        self.mean_anomaly = (self.initial_mean_anomalies_rad[:, None] + 2 * np.pi * rng.random_sample(n_samples)) % (2 * np.pi)
 
         # Eccentric anomaly (E)
         self.eccentric_anom = eccentric_anomaly(self.eccentricity, self.mean_anomaly)
@@ -135,7 +135,7 @@ class OrbitModel():
         # phiS = np.arccos(np.cos(gamma) / np.cos(theta)) * np.sign(gamma)
 
         # Longitudes of the ascending node (OmegaG)
-        raan_rad = (self.inital_raan_rad[:, None] + 2 * np.pi * rng.random_sample(1))  # shape (Np*Nsp, len(t))
+        raan_rad = (self.inital_raan_rad[:, None] + 2 * np.pi * rng.random_sample(n_samples))  # shape (Np*Nsp, len(t))
         raan_rad = wrap2pi(raan_rad)
 
         # POSITION CALCULATION IN ECEF COORDINATES - ITU-R S.1503
@@ -146,7 +146,7 @@ class OrbitModel():
                               self.omega,
                               np.degrees(self.true_anomaly))
 
-        r_ecef = eci2ecef(2 * np.pi * rng.random_sample(1) / EARTH_ROTATION_RATE, r_eci)
+        r_ecef = eci2ecef(2 * np.pi * rng.random_sample(n_samples) / EARTH_ROTATION_RATE, r_eci)
         sx, sy, sz = r_ecef[0], r_ecef[1], r_ecef[2]
         lat = np.degrees(np.arcsin(sz / r))
         lon = np.degrees(np.arctan2(sy, sx))

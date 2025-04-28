@@ -118,7 +118,7 @@ if __name__ == "__main__":
     rng = np.random.RandomState(seed=6)
     acc_pos = {'x': list(), 'y': list(), 'z': list()}
     for i in range(NUM_DROPS):
-        pos_vec = orbit.get_orbit_positions_random_time(rng=rng)
+        pos_vec = orbit.get_orbit_positions_random(rng=rng)
         acc_pos['x'].extend(pos_vec['sx'].flatten())
         acc_pos['y'].extend(pos_vec['sy'].flatten())
         acc_pos['z'].extend(pos_vec['sz'].flatten())
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     rng = np.random.RandomState(seed=6)
     acc_pos = {'x': list(), 'y': list(), 'z': list(), 'lat': list(), 'lon': list()}
     for i in range(NUM_DROPS):
-        pos_vec = orbit.get_orbit_positions_random_time(rng=rng)
+        pos_vec = orbit.get_orbit_positions_random(rng=rng)
         acc_pos['x'].extend(pos_vec['sx'].flatten())
         acc_pos['y'].extend(pos_vec['sy'].flatten())
         acc_pos['z'].extend(pos_vec['sz'].flatten())
