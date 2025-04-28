@@ -27,7 +27,7 @@ if __name__ == "__main__":
     MIN_ELEV_ANGLE_DEG = 5.0  # minimum elevation angle for visibility
 
     # Time duration in days for the linear time simulation
-    TIME_DURATION_HOURS = 76
+    TIME_DURATION_HOURS = 72
 
     # Random samples
     N_DROPS = 50000
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     fig.data[1].name = 'Random'
     fig.update_layout(legend_title_text='Observation Type')
     file_name = Path(__file__).parent / "visible_sats_per_drop.html"
-    fig.write_html(file=file_name, include_plotlyjs="cdn", auto_open=True)
+    fig.write_html(file=file_name, include_plotlyjs="cdn", auto_open=False)
 
     # plot histogram of elevation angles
     fig = go.Figure(data=[go.Histogram(x=np.array(elevation_angles_per_drop).flatten(),
