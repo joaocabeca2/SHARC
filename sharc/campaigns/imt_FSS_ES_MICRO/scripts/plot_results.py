@@ -25,7 +25,7 @@ post_processor\
         dir_name_contains="output_UL_LF_50_DIST_1000",
         legend="UL - Distância = 1000m"
     ).add_plot_legend_pattern(
-        dir_name_contains="output_UL_LF_50_DIST_2000",
+        dir_name_contains="ooutput_UL_LF_50_DIST_2000",
         legend="UL - Distância = 2000m"
     ).add_plot_legend_pattern(
         dir_name_contains="output_UL_LF_50_DIST_5000",
