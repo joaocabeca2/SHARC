@@ -100,15 +100,30 @@ if __name__ == "__main__":
         Mo=0  # mean anomaly in degrees
     )
 
+    # Set parameters for ground station
+    GROUND_STA_LAT = -15.7801
+    GROUND_STA_LON = -42.9292
+    MIN_ELEV_ANGLE_DEG = 5.0
+
     # Plot satellite traces from a time interval
     fig = plot_globe_with_borders()
     pos_vec = orbit.get_satellite_positions_time_interval(initial_time_secs=0, interval_secs=5, n_periods=1)
-    # pos_vec = orbit.get_orbit_positions_time_instant()
     fig.add_trace(go.Scatter3d(x=pos_vec['sx'].flatten(),
                                y=pos_vec['sy'].flatten(),
                                z=pos_vec['sz'].flatten(),
                                mode='lines',
                                showlegend=False))
+
+    fig.update_layout(
+        title_text='Satellite Traces',
+        scene=dict(
+            xaxis_title='X [km]',
+            yaxis_title='Y [km]',
+            zaxis_title='Z [km]',
+            aspectmode='data'
+        ),
+        margin=dict(l=0, r=0, b=0, t=0)
+    )
 
     fig.show()
 
@@ -116,16 +131,10 @@ if __name__ == "__main__":
     fig = plot_globe_with_borders()
     NUM_DROPS = 100
     rng = np.random.RandomState(seed=6)
-    acc_pos = {'x': list(), 'y': list(), 'z': list()}
-    for i in range(NUM_DROPS):
-        pos_vec = orbit.get_orbit_positions_random(rng=rng)
-        acc_pos['x'].extend(pos_vec['sx'].flatten())
-        acc_pos['y'].extend(pos_vec['sy'].flatten())
-        acc_pos['z'].extend(pos_vec['sz'].flatten())
-
-    fig.add_trace(go.Scatter3d(x=acc_pos['x'],
-                               y=acc_pos['y'],
-                               z=acc_pos['z'],
+    pos_vec = orbit.get_orbit_positions_random(rng=rng, n_samples=NUM_DROPS)
+    fig.add_trace(go.Scatter3d(x=pos_vec['sx'].flatten(),
+                               y=pos_vec['sy'].flatten(),
+                               z=pos_vec['sz'].flatten(),
                                mode='markers',
                                marker=dict(size=2,
                                            color='red',
@@ -134,47 +143,29 @@ if __name__ == "__main__":
     fig.show()
 
     # Show visible satellites from ground-station
-    GROUND_STA_LAT = -15.7801
-    GROUND_STA_LON = -42.9292
-    MIN_ELEV_ANGLE_DEG = 5.0
     fig = plot_globe_with_borders()
-    pos_vec = orbit.get_satellite_positions_time_interval()
-    num_of_visible_sats_per_drop = []
-    elevation_angles_per_drop = []
     NUM_DROPS = 1000
     rng = np.random.RandomState(seed=6)
-    acc_pos = {'x': list(), 'y': list(), 'z': list(), 'lat': list(), 'lon': list()}
-    for i in range(NUM_DROPS):
-        pos_vec = orbit.get_orbit_positions_random(rng=rng)
-        acc_pos['x'].extend(pos_vec['sx'].flatten())
-        acc_pos['y'].extend(pos_vec['sy'].flatten())
-        acc_pos['z'].extend(pos_vec['sz'].flatten())
-        acc_pos['lat'].extend(pos_vec['lat'].flatten())
-        acc_pos['lon'].extend(pos_vec['lon'].flatten())
-        elev_angles = calc_elevation(GROUND_STA_LAT, pos_vec['lat'].flatten(), GROUND_STA_LON,
-                                     pos_vec['lon'].flatten(), 1414.0)
-        elevation_angles_per_drop.append(elev_angles[np.where(np.array(elev_angles) > 0)])
-        vis_sats = np.where(np.array(elev_angles) > MIN_ELEV_ANGLE_DEG)[0]
-        num_of_visible_sats_per_drop.append(len(vis_sats))
+    pos_vec = orbit.get_orbit_positions_random(rng=rng, n_samples=NUM_DROPS)
+    look_angles = calc_elevation(GROUND_STA_LAT, pos_vec['lat'], GROUND_STA_LON, pos_vec['lon'], orbit.apogee_alt_km)
+    elevation_angles_per_drop = look_angles[np.where(np.array(look_angles) > 0)]
+    num_of_visible_sats_per_drop = np.sum(look_angles > MIN_ELEV_ANGLE_DEG, axis=0)
 
     # plot all satellites in drops
-    fig.add_trace(go.Scatter3d(x=acc_pos['x'],
-                               y=acc_pos['y'],
-                               z=acc_pos['z'],
+    fig.add_trace(go.Scatter3d(x=pos_vec['sx'].flatten(),
+                               y=pos_vec['sy'].flatten(),
+                               z=pos_vec['sz'].flatten(),
                                mode='markers',
                                marker=dict(size=2,
                                            color='red',
                                            opacity=0.8),
                                showlegend=False))
 
-    lookangles = calc_elevation(GROUND_STA_LAT, acc_pos['lat'], GROUND_STA_LON, acc_pos['lon'], 1414.0)
-    vis_sat_idxs = np.where(lookangles > MIN_ELEV_ANGLE_DEG)[0]
-
     # plot visible satellites
     fig.add_trace(go.Scatter3d(
-        x=np.array(acc_pos['x'])[vis_sat_idxs],
-        y=np.array(acc_pos['y'])[vis_sat_idxs],
-        z=np.array(acc_pos['z'])[vis_sat_idxs],
+        x=pos_vec['sx'][np.where(look_angles > MIN_ELEV_ANGLE_DEG)].flatten(),
+        y=pos_vec['sy'][np.where(look_angles > MIN_ELEV_ANGLE_DEG)].flatten(),
+        z=pos_vec['sz'][np.where(look_angles > MIN_ELEV_ANGLE_DEG)].flatten(),
         mode='markers',
         marker=dict(size=2,
                     color='green',
@@ -193,38 +184,4 @@ if __name__ == "__main__":
                     opacity=1.0),
         showlegend=False))
 
-    fig.show()
-
-    # plot histogram of visible satellites
-    fig = go.Figure(data=[go.Histogram(x=num_of_visible_sats_per_drop,
-                                       histnorm='probability', xbins=dict(start=-0.5, size=1))])
-    fig.update_layout(
-        title_text='Visible satellites per drop',
-        xaxis_title_text='Num of visible satellites',
-        yaxis_title_text='Percentage',
-        bargap=0.2,
-        bargroupgap=0.1,
-        xaxis=dict(
-            tickmode='linear',
-            tick0=0,
-            dtick=1
-        )
-    )
-    fig.show()
-
-    # plot histogram of elevation angles
-    fig = go.Figure(data=[go.Histogram(x=np.array(elevation_angles_per_drop).flatten(),
-                                       histnorm='probability', xbins=dict(start=0, size=5))])
-    fig.update_layout(
-        title_text='Elevation angles',
-        xaxis_title_text='Elevation angle [deg]',
-        yaxis_title_text='Percentage',
-        bargap=0.2,
-        bargroupgap=0.1,
-        # xaxis=dict(
-        #     tickmode='linear',
-        #     tick0=0,
-        #     dtick=5
-        # )
-    )
     fig.show()
