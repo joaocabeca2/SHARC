@@ -10,17 +10,29 @@ post_processor = PostProcessor()
 # This could easily come from a config file
 post_processor\
     .add_plot_legend_pattern(
-        dir_name_contains="_0km",
-        legend="0 Km"
+        dir_name_contains="output_DL_LF_50_DIST_1000",
+        legend="Distância = 1000m"
     ).add_plot_legend_pattern(
-        dir_name_contains="_45km",
-        legend="45 Km"
+        dir_name_contains="output_DL_LF_50_DIST_2000",
+        legend="Distância = 2000m"
     ).add_plot_legend_pattern(
-        dir_name_contains="_90km",
-        legend="90 Km"
+        dir_name_contains="output_DL_LF_50_DIST_5000",
+        legend="Distância = 5000m"
     ).add_plot_legend_pattern(
-        dir_name_contains="_500km",
-        legend="500 Km"
+        dir_name_contains="output_DL_LF_50_DIST_10000",
+        legend="Distância = 10000m"
+    ).add_plot_legend_pattern(
+        dir_name_contains="output_UL_LF_50_DIST_1000",
+        legend="Distância = 1000m"
+    ).add_plot_legend_pattern(
+        dir_name_contains="output_UL_LF_50_DIST_2000",
+        legend="Distância = 2000m"
+    ).add_plot_legend_pattern(
+        dir_name_contains="output_UL_LF_50_DIST_5000",
+        legend="Distância = 5000m"
+    ).add_plot_legend_pattern(
+        dir_name_contains="output_UL_LF_50_DIST_10000",
+        legend="Distância = 10000m"
     )
 
 campaign_base_dir = str((Path(__file__) / ".." / "..").resolve())
@@ -58,8 +70,34 @@ post_processor.add_plots(plots)
 #     .show()
 
 # Plot every plot:
-for plot in plots:
-    plot.show()
+for plt in plots:
+    if plt:
+        plt.update_layout(
+            yaxis=dict(
+                tickmode="array",
+                tickvals=[1, 0.1, 0.01, 0.001, 0.0001],  # Valores exatos dos ticks
+                ticktext=["1", "0.1", "0.01", "0.001", "0.0001"],  # Rótulos correspondentes   
+                type="log",  # Define escala logarítmica, se necessário
+                range=[-5, 0]  # Intervalo em escala log10 (log10(0.00005) ≈ -4.3 e log10(1) = 0)
+            )
+        )
+        plt.add_vline(
+            -10.5, line_dash="dash",
+            name="20% criteria x"
+        )
+        plt.add_vline(
+            -6, line_dash="dash",
+            name="30% criteria x"
+        )
+        plt.add_hline(
+            0.2, line_dash="dash",
+            name="20% criteria y"
+        )
+        plt.add_hline(
+            0.0003, line_dash="dash",
+            name="30% criteria y"
+        )
+    plt.show()
 
 for result in many_results:
     # This generates the mean, median, variance, etc
