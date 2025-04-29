@@ -14,6 +14,14 @@ def run_command(command, shell=False):
 
 
 def main():
+    if int("".join(sys.version.split(" ")[0].split("."))) > 3120:
+        print("- Compatible Python version successfully recognized, starting installation process...")
+        start_install()
+    else:
+        print(f"- Error: Try updating Python to version 3.12 or above! \n - Current Python version: {sys.version}")
+
+
+def start_install():
     print("- SHARC Installer Starting...")
 
     # Set up path
