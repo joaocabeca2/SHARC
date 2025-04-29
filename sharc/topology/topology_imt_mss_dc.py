@@ -103,7 +103,7 @@ class TopologyImtMssDc(Topology):
         # List to store indices of active satellites
         active_satellite_idxs = []
 
-        MAX_ITER = 100  # Maximum iterations to find at least one visible satellite
+        MAX_ITER = 10000  # Maximum iterations to find at least one visible satellite
         i = 0  # Iteration counter for ensuring satellite visibility
         while len(active_satellite_idxs) == 0:
             # Initialize arrays to store satellite positions, angles and distance from center of earth
@@ -127,7 +127,7 @@ class TopologyImtMssDc(Topology):
                     Mo=param.initial_mean_anomaly  # Initial mean anomaly in degrees
                 )
                 # Generate random positions for satellites in this orbit
-                pos_vec = orbit.get_orbit_positions_random_time(rng=random_number_gen)
+                pos_vec = orbit.get_orbit_positions_random(rng=random_number_gen)
 
                 # Determine the number of satellites in this orbit
                 num_satellites = len(pos_vec["sx"])
@@ -281,8 +281,8 @@ class TopologyImtMssDc(Topology):
             num_sectors=orbit_params.num_beams
         )
 
-        assert(len(sx) == orbit_params.num_beams)
-        assert(len(sy) == orbit_params.num_beams)
+        assert (len(sx) == orbit_params.num_beams)
+        assert (len(sy) == orbit_params.num_beams)
 
         # we give num_beams sectors to each satellite
         sx = np.resize(sx, orbit_params.num_beams * total_active_satellites)
@@ -393,9 +393,6 @@ class TopologyImtMssDc(Topology):
         )
 
         # Rotate and set the each beam azimuth and elevation angles - only for the visible satellites
-        assert(elevation.shape, (total_active_satellites,))
-        assert(azimuth.shape, (total_active_satellites,))
-
         for i in range(total_active_satellites):
             # Rotate the azimuth and elevation angles based on the new nadir point
             beams_elev[i], beams_azim[i] = rotate_angles_based_on_new_nadir(
@@ -410,19 +407,6 @@ class TopologyImtMssDc(Topology):
         space_station_x = np.repeat(space_station_x, orbit_params.num_beams)
         space_station_y = np.repeat(space_station_y, orbit_params.num_beams)
         space_station_z = np.repeat(space_station_z, orbit_params.num_beams)
-        # the offset of the beams boresight from the satellite position
-        offset_x = np.repeat(
-            sat_altitude * np.cos(np.radians(elevation)) * np.cos(np.radians(azimuth)),
-            orbit_params.num_beams
-        )
-        offset_y = np.repeat(
-            sat_altitude * np.cos(np.radians(elevation)) * np.sin(np.radians(azimuth)),
-            orbit_params.num_beams
-        )
-        offset_z = np.repeat(
-            sat_altitude * np.sin(np.radians(elevation)),
-            orbit_params.num_beams
-        )
 
         num_base_stations = orbit_params.num_beams * total_active_satellites
         elevation = beams_elev.flatten()
@@ -432,22 +416,22 @@ class TopologyImtMssDc(Topology):
 
         altitudes = np.repeat(sat_altitude, orbit_params.num_beams)
 
-        assert(space_station_x.shape == (num_base_stations,))
-        assert(space_station_y.shape == (num_base_stations,))
-        assert(space_station_z.shape == (num_base_stations,))
-        assert(lat.shape == (num_base_stations,))
-        assert(lon.shape == (num_base_stations,))
-        assert(altitudes.shape == (num_base_stations,))
-        assert(elevation.shape == (num_base_stations,))
-        assert(azimuth.shape == (num_base_stations,))
-        assert(sx.shape == (num_base_stations,))
-        assert(sy.shape == (num_base_stations,))
+        assert (space_station_x.shape == (num_base_stations,))
+        assert (space_station_y.shape == (num_base_stations,))
+        assert (space_station_z.shape == (num_base_stations,))
+        assert (lat.shape == (num_base_stations,))
+        assert (lon.shape == (num_base_stations,))
+        assert (altitudes.shape == (num_base_stations,))
+        assert (elevation.shape == (num_base_stations,))
+        assert (azimuth.shape == (num_base_stations,))
+        assert (sx.shape == (num_base_stations,))
+        assert (sy.shape == (num_base_stations,))
 
         # update indices (multiply by num_beams)
         # and make all num_beams of satellite active
         active_satellite_idxs = np.ravel(
-            np.array(active_satellite_idxs)[:, np.newaxis] * orbit_params.num_beams
-            + np.arange(orbit_params.num_beams)
+            np.array(active_satellite_idxs)[:, np.newaxis] * orbit_params.num_beams +
+                np.arange(orbit_params.num_beams)
         )
 
         return {
@@ -549,7 +533,7 @@ if __name__ == '__main__':
     orbit = ParametersOrbit(
         n_planes=28,
         sats_per_plane=120,
-        phasing_deg=4.9,
+        phasing_deg=1.5,
         long_asc_deg=0.0,
         inclination_deg=53.0,
         perigee_alt_km=525,
@@ -565,7 +549,7 @@ if __name__ == '__main__':
         "MINIMUM_ELEVATION_FROM_ES",
     ]
     params.sat_is_active_if.minimum_elevation_from_es = 5
-    params.sat_is_active_if.lat_long_inside_country.country_name = "Paraguay"
+    params.sat_is_active_if.lat_long_inside_country.country_name = "Brazil"
 
     # Define the geometry converter
     geometry_converter = GeometryConverter()
