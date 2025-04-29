@@ -20,10 +20,10 @@ with open(parameter_file_name, 'r') as file:
 
 # Distance from topology boarders in meters
 border_distances_array = np.array(
-    [0, 10e3, 20e3, 30e3, 40e3, 50e3, 100e3])
+    [0, 10e3, 20e3, 30e3, 40e3, 50e3, 60e3, 70e3, 80e3, 90e3, 100e3])
 
 for dist in border_distances_array:
-    print(f'Generating parameters for distance {dist} km')
+    print(f'Generating parameters for distance {dist / 1e3} km')
     # Create a copy of the base parameters
     params = parameters_template.copy()
 
@@ -33,9 +33,9 @@ for dist in border_distances_array:
     params['mss_ss']['x'] = float(macro_topology_radius + ntn_footprint_radius + dist)
 
     # Set the right campaign prefix
-    params['general']['output_dir_prefix'] = 'output_imt_ntn_to_imt_tn_co_channel_sep_' + str(dist) + "_km"
+    params['general']['output_dir_prefix'] = 'output_imt_ntn_to_imt_tn_co_channel_sep_' + str(dist / 1e3) + "_km"
     # Save the parameters to a new yaml file
-    parameter_file_name = "../input/parameters_imt_ntn_to_imt_tn_co_channel_sep_" + str(dist) + "_km.yaml"
+    parameter_file_name = "../input/parameters_imt_ntn_to_imt_tn_co_channel_sep_" + str(dist / 1e3) + "_km.yaml"
     with open(os.path.join(local_dir, parameter_file_name), 'w') as file:
         yaml.dump(params, file, default_flow_style=False)
 

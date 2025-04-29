@@ -9,13 +9,13 @@ post_processor = PostProcessor()
 
 # Distance from topology boarders in meters
 border_distances_array = np.array(
-    [0, 10e3, 20e3, 30e3, 40e3, 50e3, 100e3])
+    [0, 10e3, 20e3, 30e3, 40e3, 50e3, 60e3, 70e3, 80e3, 90e3, 100e3])
 
 # Add a legend to results in folder that match the pattern
 for dist in border_distances_array:
     post_processor.add_plot_legend_pattern(
-        dir_name_contains=f"_imt_ntn_to_imt_tn_co_channel_sep_{dist}_km",
-        legend=f"no-overlap bessel sep {dist} Km"
+        dir_name_contains=f"_imt_ntn_to_imt_tn_co_channel_sep_{dist / 1e3}_km",
+        legend=f"separation {dist / 1e3} Km"
     )
 
 campaign_base_dir = str((Path(__file__) / ".." / "..").resolve())
@@ -37,10 +37,17 @@ post_processor\
     .get_plot_by_results_attribute_name("imt_dl_inr")\
     .add_vline(protection_criteria, line_dash="dash")
 
-# Plot every plot:
+# Plot every plot
+plots_dir = Path(campaign_base_dir) / "output" / "plots"
+plots_dir.mkdir(parents=True, exist_ok=True)
 for plot in plots:
     plot.update_layout(legend_traceorder="normal")
-    plot.show()
+    plot.write_html(
+        plots_dir / f"{plot.layout.meta['related_results_attribute']}.html",
+        include_plotlyjs="cdn",
+        auto_open=False,
+        config={"displayModeBar": False}
+    )
 
 for result in many_results:
     # This generates the mean, median, variance, etc
