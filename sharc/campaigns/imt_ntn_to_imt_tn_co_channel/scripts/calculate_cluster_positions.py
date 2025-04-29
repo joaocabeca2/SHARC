@@ -36,8 +36,8 @@ if __name__ == "__main__":
 
     # calculate the position of the NTN footprint center
     ntn_footprint_left_edge = - 4 * param_mss.cell_radius
-    ntn_footprint_radius = 5 * param_mss.cell_radius * np.sin(np.pi/3)
-    macro_topology_radius = 4 * macro_cell_radius 
+    ntn_footprint_radius = 5 * param_mss.cell_radius * np.sin(np.pi / 3)
+    macro_topology_radius = 4 * macro_cell_radius
     ntn_footprint_x_offset = macro_topology_radius + ntn_footprint_radius + border_distances_array
     param_mss.x = ntn_footprint_x_offset[dist_idx]
 
