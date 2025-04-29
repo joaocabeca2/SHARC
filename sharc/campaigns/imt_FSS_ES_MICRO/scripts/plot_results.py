@@ -3,6 +3,8 @@ from pathlib import Path
 from sharc.results import Results
 # import plotly.graph_objects as go
 from sharc.post_processor import PostProcessor
+import matplotlib.pyplot as plt
+import numpy as np
 
 post_processor = PostProcessor()
 
@@ -70,61 +72,64 @@ post_processor.add_plots(plots)
 #     .show()
 
 # Plot every plot:
-output_dir = os.path.join(campaign_base_dir, "plots")
-os.makedirs(output_dir, exist_ok=True)  # Cria a pasta plots/ se não existir
+for plot in plots:
+    # Get x and y data from plotly object
+    x_values = []
+    y_values = []
 
-for idx, plt in enumerate(plots):
-    if plt:
-        # Atualiza seu layout como você já faz
-        plt.update_layout(
-            yaxis=dict(
-                tickmode="array",
-                tickvals=[1, 0.1, 0.01, 0.001, 0.0001],
-                ticktext=["1", "0.1", "0.01", "0.001", "0.0001"],
-                type="log",
-                range=[-5, 0]
-            )
-        )
-        plt.add_vline(-10.5, line_dash="dash", name="20% criteria x")
-        plt.add_vline(-6, line_dash="dash", name="30% criteria x")
-        plt.add_hline(0.2, line_dash="dash", name="20% criteria y")
-        plt.add_hline(0.0003, line_dash="dash", name="30% criteria y")
+    for trace in plot.data:
+        x_values.append(np.array(trace['x']))
+        y_values.append(np.array(trace['y']))
+    
+    plt.rcParams["font.family"] = "Arial"
+    inr_criteria = np.array([[0.2, -10.5],[5e-4, -1.3]]) # INR thresholds
 
-        # Salva o plot como imagem
-        save_path = os.path.join(output_dir, f"plot_{idx}.png")
-        plt.write_image(save_path)
+    if (plot.layout.meta.get('related_results_attribute') == 'system_inr'): # CCDF
+        plt.figure(figsize=(10, 6))
+        for i, (x, y) in enumerate(zip(x_values, y_values)):
+            plt.semilogy(x, 1-y, label=plot.data[i]['name'])
 
-        print(f"Salvou: {save_path}")
+        cr1 = 'Criteria = ' + str(inr_criteria[0,1]) + ' dB'
+        cr2 = 'Criteria = ' + str(inr_criteria[1,1]) + ' dB'
+
+        # Thtresholds
+        plt.semilogy(inr_criteria[0,1],inr_criteria[0,0],'.', color='orange')
+        plt.semilogy(inr_criteria[1,1],inr_criteria[1,0],'.', color = 'red')        
+
+        plt.axvline(x = inr_criteria[0,1], color="orange", linestyle="--", linewidth=1.0)
+        plt.axhline(y = inr_criteria[0,0], color="orange", linestyle="--", linewidth=1.0, label = cr1)
+        plt.axvline(x = inr_criteria[1,1], color="red", linestyle="--", linewidth=1.0)
+        plt.axhline(y = inr_criteria[1,0], color="red", linestyle="--", linewidth=1.0, label = cr2)   
+
+        #  Cosmetics
+        plt.grid(which="major", linestyle="--", linewidth = 0.5, color = 'gray', dashes=[4, 4]) 
+        plt.grid(which="minor", linestyle="--", linewidth = 0.2, color = 'gray', dashes=[10, 10]) 
+        plt.minorticks_on()
+
+        plt.title("CCDF of System INR")
+        plt.xlabel(plot.layout.xaxis.title.text)
+        plt.ylabel("P(INR > x)")
+        plt.legend()        
         
-        # Se ainda quiser mostrar
-        #plt.show()
+        # Save as png   
+        fname = os.path.join(campaign_base_dir, "output", plot.layout.meta.get('related_results_attribute')) + ".png"
+        plt.savefig(fname, format="png", dpi=600)
 
-for result in many_results:
-    # This generates the mean, median, variance, etc
-    stats = PostProcessor.generate_statistics(
-        result=result
-    ).write_to_results_dir()
-    # # do whatever you want here:
-    # if "fspl_45deg" in stats.results_output_dir:
-    #     get some stat and do something
+    else:
+        plt.figure(figsize=(10, 6))
+        for i, (x, y) in enumerate(zip(x_values, y_values)):            
+            plt.plot(x, y, label=plot.data[i]['name'])  # Use the name for labels
+        
+        plt.grid(which="major", linestyle="--", linewidth = 0.5, color = 'k') 
+        plt.grid(which="minor", linestyle="--", linewidth = 0.2, color = 'k') 
+        plt.minorticks_on()
 
-# # example on how to aggregate results and add it to plot:
-# dl_res = post_processor.get_results_by_output_dir("1_cluster")
-# aggregated_results = PostProcessor.aggregate_results(
-#     dl_samples=dl_res.system_dl_interf_power,
-#     ul_samples=ul_res.system_ul_interf_power,
-#     ul_tdd_factor=0.75,
-#     n_bs_sim=1 * 19 * 3 * 3,
-#     n_bs_actual=7 * 19 * 3 * 3
-# )
+        plt.title(plot.layout.title.text)
+        plt.xlabel(plot.layout.xaxis.title.text)
+        plt.ylabel(plot.layout.yaxis.title.text)
+        plt.legend()
+        plt.ylim(0, 1)
 
-# relevant = post_processor\
-#     .get_plot_by_results_attribute_name("system_ul_interf_power")
-
-# aggr_x, aggr_y = PostProcessor.cdf_from(aggregated_results)
-
-# relevant.add_trace(
-#     go.Scatter(x=aggr_x, y=aggr_y, mode='lines', name='Aggregate interference',),
-# )
-
-# relevant.show()
+        # Save as png   
+        fname = os.path.join(campaign_base_dir, "output", plot.layout.meta.get('related_results_attribute')) + ".png"
+        plt.savefig(fname, format="png", dpi=600)
