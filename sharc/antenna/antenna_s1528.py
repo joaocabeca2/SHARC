@@ -12,6 +12,8 @@ import math
 import numpy as np
 from scipy.special import jn, jn_zeros
 
+NUM_OF_BESSEL_ROOTS = 3
+
 
 class AntennaS1528Taylor(Antenna):
     """
@@ -47,7 +49,7 @@ class AntennaS1528Taylor(Antenna):
         self.A = (1 / np.pi) * np.arccosh(10 ** (self.slr / 20))
         self.j1_roots = jn_zeros(1, self.n_side_lobes) / np.pi
         self.sigma = self.j1_roots[-1] / np.sqrt(self.A ** 2 + (self.n_side_lobes - 1 / 2) ** 2)
-        self.mu = jn_zeros(1, self.n_side_lobes - 1) / np.pi
+        self.mu = jn_zeros(1, NUM_OF_BESSEL_ROOTS) / np.pi
 
     def calculate_gain(self, *args, **kwargs) -> np.array:
         # The reference angles for the simulator and the antenna realisation are switched.
@@ -62,7 +64,7 @@ class AntennaS1528Taylor(Antenna):
         u = (np.pi / self.lamb) * np.sqrt((self.l_r * np.sin(theta) * np.cos(phi)) ** 2 +
                                           (self.l_t * np.sin(theta) * np.sin(phi)) ** 2)
 
-        v = np.ones(u.shape + (self.n_side_lobes - 1,))
+        v = np.ones(u.shape + (NUM_OF_BESSEL_ROOTS,))
 
         for i, ui in enumerate(self.mu):
             v[..., i] = (1 - u ** 2 / (np.pi ** 2 * self.sigma ** 2 *
