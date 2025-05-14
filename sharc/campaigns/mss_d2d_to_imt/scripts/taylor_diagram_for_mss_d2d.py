@@ -24,7 +24,6 @@ antenna_params = ParametersAntennaS1528(
     n_side_lobes=n_side_lobes,
     l_r=l_r,
     l_t=l_t,
-    roll_off=None
 )
 
 # Create an instance of AntennaS1528Taylor
@@ -43,7 +42,7 @@ fig = go.Figure()
 # Add a trace for the antenna gain
 fig.add_trace(go.Scatter(x=theta_angles, y=gain_rolloff_7 - g_max, mode='lines', name='Antenna Gain'))
 # Limit the y-axis from 0 to 35 dBi
-fig.update_yaxes(range=[-20 - g_max, 35])
+fig.update_yaxes(range=[-20 - g_max, 2])
 fig.update_xaxes(range=[0, 90])
 # Set the title and labels
 fig.update_layout(
