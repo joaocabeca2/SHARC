@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 from sharc.satellite.ngso.orbit_model import OrbitModel
 
+
 class TestOrbitModel(unittest.TestCase):
 
     def setUp(self):
@@ -14,7 +15,7 @@ class TestOrbitModel(unittest.TestCase):
             delta=52,
             hp=1414,
             ha=1414,
-            Mo=0
+            Mo=0,
         )
 
     def test_initialization(self):

@@ -45,7 +45,8 @@ class StationFactoryTest(unittest.TestCase):
             param_imt.topology.ntn.bs_height,
             param_imt.topology.ntn.bs_azimuth,
             param_imt.topology.ntn.bs_elevation,
-            param_imt.topology.ntn.num_sectors)
+            param_imt.topology.ntn.num_sectors,
+        )
 
         ntn_topology.calculate_coordinates()
         ntn_bs = StationFactory.generate_imt_base_stations(param_imt, param_imt.bs.antenna.array, ntn_topology, rng)
@@ -54,9 +55,11 @@ class StationFactoryTest(unittest.TestCase):
         npt.assert_almost_equal(ntn_bs.azimuth[0], param_imt.topology.ntn.bs_azimuth - 180, 1e-3)
         # Elevation w.r.t to xy plane
         npt.assert_almost_equal(ntn_bs.elevation[0], -45.0, 1e-2)
-        npt.assert_almost_equal(ntn_bs.x, param_imt.topology.ntn.bs_height *
-                                np.tan(np.radians(param_imt.topology.ntn.bs_elevation)) *
-                                np.cos(np.radians(param_imt.topology.ntn.bs_azimuth)), 1e-2)
+        npt.assert_almost_equal(
+            ntn_bs.x, param_imt.topology.ntn.bs_height *
+            np.tan(np.radians(param_imt.topology.ntn.bs_elevation)) *
+            np.cos(np.radians(param_imt.topology.ntn.bs_azimuth)), 1e-2,
+        )
 
     def test_generate_imt_ue_outdoor_ntn(self):
         """Basic test for IMT UE NTN generation."""
@@ -85,7 +88,8 @@ class StationFactoryTest(unittest.TestCase):
             param_imt.topology.ntn.bs_height,
             param_imt.topology.ntn.bs_azimuth,
             param_imt.topology.ntn.bs_elevation,
-            param_imt.topology.ntn.num_sectors)
+            param_imt.topology.ntn.num_sectors,
+        )
 
         ntn_topology.calculate_coordinates()
         ntn_ue = StationFactory.generate_imt_ue_outdoor(param_imt, param_imt.ue.antenna.array, rng, ntn_topology)
