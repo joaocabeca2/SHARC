@@ -7,8 +7,8 @@ general:
     imt_link: DOWNLINK
     ###########################################################################
     # The chosen system for sharing study
-    # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS, SINGLE_EARTH_STATION
-    system: FSS_ES
+    # SINGLE_EARTH_STATION, SINGLE_SPACE_STATION
+    system: SINGLE_EARTH_STATION
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel: FALSE
@@ -232,6 +232,13 @@ imt:
             # Base station horizontal beamsteering range. [deg]
             # The range considers the horizon as 90deg, 0 as zenith
             vertical_beamsteering_range: !!python/tuple [90., 100.]
+            # Base station horizontal beamsteering range. [deg]
+            # The range considers the BS azimuth as 0deg
+            horizontal_beamsteering_range: !!python/tuple [-60., 60.]
+            ###########################################################################
+            # Base station horizontal beamsteering range. [deg]
+            # The range considers the horizon as 90deg, 0 as zenith
+            vertical_beamsteering_range: !!python/tuple [90., 100.]
             ###########################################################################
             # File to be used in the BS beamforming normalization
             # Normalization files can be generated with the
@@ -289,6 +296,19 @@ imt:
             # side lobes when beamforming is assumed in adjacent channel.
             #       Original value: 12 (Rec. ITU-R M.2101)
             multiplication_factor: 12
+            ###########################################################################
+            # Subarray for IMT as defined in R23-WP5D-C-0413, Annex 4.2
+            # Single column sub array
+            subarray:
+                # NOTE: if subarray is enabled, element definition will mostly come from
+                # the above definitions
+                is_enabled: false
+                # Rows per subarray
+                n_rows: 3
+                # Sub array element spacing (d/lambda).
+                element_vert_spacing: 0.7
+                # Sub array eletrical downtilt [deg]
+                eletrical_downtilt: 3.0
 
     ###########################################################################
     # User Equipment parameters:
@@ -320,7 +340,7 @@ imt:
         ###########################################################################
         # Regarding the distribution of active UE's over the cell area, this
         # parameter models the distance between UE's and BS.
-        # Possible values: RAYLEIGH, UNIFORM
+        # Possible values: RAYLEIGH, UNIFORM, SQRT(UNIFORM)
         distribution_distance: UNIFORM
         ###########################################################################
         # Regarding the distribution of active UE's over the cell area, this
@@ -1074,22 +1094,29 @@ metsat_ss:
 single_earth_station:
     ###########################################################################
     # Sensor center frequency [MHz]
-    frequency: 8250
+    frequency: 1
     ###########################################################################
     # Sensor bandwidth [MHz]
-    bandwidth: 100
+    bandwidth: 1
+    ###########################################################################
+    # NOTE: when using P.619 it is suggested that polarization loss = 3dB is normal
+    # also,
+    # NOTE: Verification needed:
+    # polarization mismatch between IMT BS and linear polarization = 3dB in earth P2P case?
+    # = 0 is safer choice
+    polarization_loss: 0.0
     ###########################################################################
     # System receive noise temperature [K]
-    noise_temperature: 300
+    noise_temperature: 1
     ###########################################################################
     # Peak transmit power spectral density (clear sky) [dBW/Hz]
     tx_power_density: -65
     # Adjacent channel selectivity [dB]
-    adjacent_ch_selectivity: 20.0
+    adjacent_ch_selectivity: 1.0
     geometry:
         ###########################################################################
         # Antenna height [meters]
-        height: 6
+        height: 1
         ###########################################################################
         # Azimuth angle [degrees]
         azimuth:
@@ -1325,6 +1352,107 @@ single_earth_station:
         # Value in dB of building entry loss if
         # bs_building_entry_loss_type = FIXED_VALUE
         bs_building_entry_loss_value: 35
+single_space_station:
+    ###########################################################################
+    # Sensor center frequency [MHz]
+    frequency: 1
+    ###########################################################################
+    # Sensor bandwidth [MHz]
+    bandwidth: 1
+    ###########################################################################
+    # System receive noise temperature [K]
+    noise_temperature: 1
+    ###########################################################################
+    # Peak transmit power spectral density (clear sky) [dBW/Hz]
+    tx_power_density: 1
+    # Adjacent channel selectivity [dB]
+    adjacent_ch_selectivity: 1
+    geometry:
+        ###########################################################################
+        # Satellite altitude [meters]
+        altitude: 1
+        ###########################################################################
+        # earth station altitude [meters]
+        es_altitude: 1
+        ###########################################################################
+        # earth station lat long [deg]
+        es_lat_deg: 1
+        ###########################################################################
+        # earth station lat long [deg]
+        es_long_deg: 1
+        ###########################################################################
+        # Antenna azimuth angle [degrees]
+        azimuth:
+            ###########################################################################
+            # Type of azimuth. May be "FIXED" or "POINTING_AT_IMT"
+            type: POINTING_AT_IMT
+            ###########################################################################
+            # Arbitrary value of azimuth when type == "FIXED" [deg]
+            fixed: 0
+        ###########################################################################
+        # Antenna elevation angle [degrees]
+        elevation:
+            ###########################################################################
+            # Type of elevation. May be "FIXED" or "POINTING_AT_IMT"
+            type: POINTING_AT_IMT
+            ###########################################################################
+            # Arbitrary value of elevation when type == "FIXED" [deg]
+            fixed: -90
+        ###########################################################################
+        # Station location:
+        location:
+            ###########################################################################
+            # type may be "FIXED"
+            # location.type == FIXED means that the SS will be always at SAME fixed location
+            type: FIXED
+            ###########################################################################
+            # Value of position (lat, long) when type == "FIXED" [(deg, deg)]
+            fixed:
+                lat_deg: 0
+                long_deg: 0
+    antenna:
+        ###########################################################################
+        # Choose the antenna pattern. Can be one of:
+        # "OMNI", "ITU-R F.699", "ITU-R S.465", "ITU-R S.580", "MODIFIED ITU-R S.465", "ITU-R S.1855",
+        # "ITU-R Reg. RR. Appendice 7 Annex 3"
+        pattern: ITU-R S.465
+        ###########################################################################
+        # Earth station peak receive antenna gain [dBi]
+        gain: 28
+        itu_r_f_699:
+            ###########################################################################
+            # Antenna diameter [m]
+            diameter: 1
+        itu_r_s_465:
+            ###########################################################################
+            # Antenna diameter [m]
+            diameter: 1
+        itu_r_s_580:
+            ###########################################################################
+            # Antenna diameter [m]
+            diameter: 1
+        itu_r_s_1855:
+            ###########################################################################
+            # Antenna diameter [m]
+            diameter: 1
+        itu_r_s_465_modified:
+            ###########################################################################
+            # Antenna envelope gain [dBi]
+            envelope_gain: 1
+        itu_reg_rr_a7_3:
+            ###########################################################################
+            # Antenna diameter [m]
+            # if no diameter is passed, a diameter will be assumed according to document
+            diameter: 1
+
+    ###########################################################################
+    # Selected channel model. May be "FSPL" or "P619"
+    channel_model: "P619"
+
+    ###########################################################################
+    # season - season of the year.
+    #   Useful for P.619
+    season: SUMMER
 
 mss_d2d:
     # MSS_D2D system name

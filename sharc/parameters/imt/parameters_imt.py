@@ -72,7 +72,7 @@ class ParametersImt(ParametersBase):
         ohmic_loss: float = 3.0
         body_loss: float = 4.0
         adjacent_ch_selectivity: float = 33  # Adjacent Channel Selectivity in dB
-        antenna: ParametersAntenna = field(default_factory=lambda:ParametersAntenna(
+        antenna: ParametersAntenna = field(default_factory=lambda: ParametersAntenna(
             pattern="ARRAY"
         ))
 

@@ -127,6 +127,25 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.imt.topology.central_latitude, 21.12)
         self.assertEqual(self.parameters.imt.topology.central_longitude, -12.134)
 
+        """Test ParametersSubarrayImt
+        """
+        # testing default value not enabled
+        self.assertEqual(
+            self.parameters.imt.ue.antenna.array.subarray.is_enabled, False
+        )
+        # testing a fictitious configuration
+        self.assertEqual(
+            self.parameters.imt.bs.antenna.array.subarray.is_enabled, True
+        )
+        self.assertEqual(
+            self.parameters.imt.bs.antenna.array.subarray.eletrical_downtilt, 9
+        )
+        self.assertEqual(
+            self.parameters.imt.bs.antenna.array.subarray.n_rows, 10
+        )
+        self.assertEqual(
+            self.parameters.imt.bs.antenna.array.subarray.element_vert_spacing, 0.05
+        )
         """Test ParametersHotspot
         """
         self.assertEqual(self.parameters.imt.topology.hotspot.num_hotspots_per_cell, 1)
@@ -547,6 +566,71 @@ class ParametersTest(unittest.TestCase):
             self.assertEqual(orbit_params.sats_per_plane, expected_orbit_params[i]['sats_per_plane'])
             self.assertEqual(orbit_params.long_asc_deg, expected_orbit_params[i]['long_asc_deg'])
             self.assertEqual(orbit_params.phasing_deg, expected_orbit_params[i]['phasing_deg'])
+
+    def test_parameters_single_space_station(self):
+        """Test ParametersSinglespaceStation
+        """
+        self.assertEqual(self.parameters.single_space_station.is_space_to_earth, True)
+        self.assertEqual(self.parameters.single_space_station.frequency, 1234)
+        self.assertEqual(self.parameters.single_space_station.bandwidth, 456)
+        self.assertEqual(
+            self.parameters.single_space_station.adjacent_ch_selectivity, 13.1)
+        self.assertEqual(
+            self.parameters.single_space_station.tx_power_density, -65.0)
+        self.assertEqual(
+            self.parameters.single_space_station.noise_temperature, 300)
+        self.assertEqual(
+            self.parameters.single_space_station.geometry.altitude, 6)
+        self.assertEqual(
+            self.parameters.single_space_station.geometry.es_altitude, 33)
+        self.assertEqual(
+            self.parameters.single_space_station.geometry.es_lat_deg, 11)
+        self.assertEqual(
+            self.parameters.single_space_station.geometry.es_long_deg, 3.9)
+        self.assertEqual(
+            self.parameters.single_space_station.geometry.azimuth.type,
+            "FIXED")
+        self.assertEqual(
+            self.parameters.single_space_station.geometry.azimuth.fixed, 0)
+        self.assertEqual(
+            self.parameters.single_space_station.geometry.elevation.type,
+            "FIXED")
+        self.assertEqual(
+            self.parameters.single_space_station.geometry.elevation.fixed, 60)
+        self.assertEqual(
+            self.parameters.single_space_station.geometry.location.type,
+            "FIXED")
+        self.assertEqual(
+            self.parameters.single_space_station.geometry.location.fixed.lat_deg, 10)
+        self.assertEqual(
+            self.parameters.single_space_station.geometry.location.fixed.long_deg, 100)
+        self.assertEqual(self.parameters.single_space_station.antenna.gain, 28)
+        self.assertEqual(
+            self.parameters.single_space_station.antenna.itu_r_f_699.diameter, 1.1)
+        self.assertEqual(
+            self.parameters.single_space_station.antenna.itu_r_f_699.frequency,
+            self.parameters.single_space_station.frequency)
+        self.assertEqual(
+            self.parameters.single_space_station.antenna.itu_r_f_699.antenna_gain,
+            self.parameters.single_space_station.antenna.gain)
+
+        self.assertEqual(
+            self.parameters.single_space_station.antenna.itu_reg_rr_a7_3.diameter,
+            2.12)
+        self.assertEqual(
+            self.parameters.single_space_station.antenna.itu_reg_rr_a7_3.frequency,
+            self.parameters.single_space_station.frequency)
+        self.assertEqual(
+            self.parameters.single_space_station.antenna.itu_reg_rr_a7_3.antenna_gain,
+            self.parameters.single_space_station.antenna.gain)
+
+        self.assertEqual(
+            self.parameters.single_space_station.param_p619.earth_station_alt_m, self.parameters.single_space_station.geometry.es_altitude)
+        self.assertEqual(
+            self.parameters.single_space_station.param_p619.space_station_alt_m,
+            self.parameters.single_space_station.geometry.altitude)
+        self.assertEqual(
+            self.parameters.single_space_station.param_p619.earth_station_lat_deg, self.parameters.single_space_station.geometry.es_lat_deg)
 
 
 if __name__ == '__main__':
