@@ -1,3 +1,5 @@
+"""Script to process and plot results for MSS D2D to IMT cross-border campaign."""
+
 import os
 from pathlib import Path
 from sharc.results import Results
@@ -40,11 +42,17 @@ all_results = [*results_ul, *results_dl]
 post_processor.add_results(all_results)
 
 styles = ["solid", "dot", "dash", "longdash", "dashdot", "longdashdot"]
+
+
 def linestyle_getter(result: Results):
+    """
+    Returns a line style string based on the prefix found in the result's output directory.
+    """
     for i in range(len(prefixes)):
         if prefixes[i] in result.output_directory:
             return styles[i]
     return "solid"
+
 
 post_processor.add_results_linestyle_getter(linestyle_getter)
 

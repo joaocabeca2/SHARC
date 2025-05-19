@@ -38,7 +38,16 @@ def run_campaign(campaign_name):
             ] * len(parameter_files),
         )
 
+
 def run_campaign_re(campaign_name, param_name_regex):
+    """
+    Runs a campaign by executing main_cli.py for each parameter file in the specified campaign's input directory
+    whose filename matches the given regular expression.
+
+    Args:
+        campaign_name (str): The name of the campaign.
+        param_name_regex (str): Regular expression to filter parameter file names.
+    """
     # Path to the working directory
     workfolder = os.path.dirname(os.path.abspath(__file__))
     main_cli_path = os.path.join(workfolder, "main_cli.py")
@@ -66,6 +75,7 @@ def run_campaign_re(campaign_name, param_name_regex):
                 main_cli_path,
             ] * len(parameter_files),
         )
+
 
 if __name__ == "__main__":
     # Example usage

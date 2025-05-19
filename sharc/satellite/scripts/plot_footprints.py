@@ -122,13 +122,15 @@ def plot_polygon(poly, div=1, alt=0):
     # R = EARTH_RADIUS_KM
     x, y, z = geoconv.convert_lla_to_transformed_cartesian(lat, lon, alt)
 
-    return x/div, y/div, z/div
+    return x / div, y / div, z / div
+
 
 def plot_mult_polygon(mult_poly, div=1e3):
     if mult_poly.geom_type == 'Polygon':
         return [plot_polygon(mult_poly, div=div, alt=1000)]
     elif mult_poly.geom_type == 'MultiPolygon':
         return [plot_polygon(poly, div=div, alt=1000) for poly in mult_poly.geoms]
+
 
 def plot_globe_with_borders():
     # Read the shapefile.  Creates a DataFrame object
@@ -157,22 +159,22 @@ def plot_globe_with_borders():
 
         if polys.geom_type == 'Polygon':
             x, y, z = plot_polygon(polys)
-            x_all.extend(x/1e3)
+            x_all.extend(x / 1e3)
             x_all.extend([None])  # None separates different polygons
-            y_all.extend(y/1e3)
+            y_all.extend(y / 1e3)
             y_all.extend([None])
-            z_all.extend(z/1e3)
+            z_all.extend(z / 1e3)
             z_all.extend([None])
 
         elif polys.geom_type == 'MultiPolygon':
 
             for poly in polys.geoms:
                 x, y, z = plot_polygon(poly)
-                x_all.extend(x/1e3)
+                x_all.extend(x / 1e3)
                 x_all.extend([None])  # None separates different polygons
-                y_all.extend(y/1e3)
+                y_all.extend(y / 1e3)
                 y_all.extend([None])
-                z_all.extend(z/1e3)
+                z_all.extend(z / 1e3)
                 z_all.extend([None])
 
     fig.add_trace(go.Scatter3d(x=x_all, y=y_all, z=z_all, mode='lines',
@@ -182,8 +184,8 @@ def plot_globe_with_borders():
 
 
 if __name__ == "__main__":
-    colors = ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#7f0000']
-    step = [3, 17, 20, 20] # dB
+    colors = ['#fff7ec', '#fee8c8', '#fdd49e', '#fdbb84', '#fc8d59', '#7f0000']
+    step = [3, 17, 20, 20]  # dB
     SUM_GAINS = False
     # Number of iterations (drops)
     NUM_DROPS = 1
@@ -283,7 +285,7 @@ if __name__ == "__main__":
         # Identify visible satellites
         vis_sat_idxs = np.where(mss_d2d_manager.active)[0]
 
-        options.extend([(drop, i, len(visible_positions['x'])+i)
+        options.extend([(drop, i, len(visible_positions['x']) + i)
                        for i, idx in enumerate(vis_sat_idxs)])
 
         # should be pointing at nadir
@@ -339,16 +341,16 @@ if __name__ == "__main__":
     fig.update_layout(
         scene=dict(
             zaxis=dict(
-                range=(-show_range/2, show_range/2)
+                range=(-show_range / 2, show_range / 2)
             ),
             yaxis=dict(
-                range=(-show_range/2, show_range/2)
+                range=(-show_range / 2, show_range / 2)
             ),
             xaxis=dict(
-                range=(-show_range/2, show_range/2)
+                range=(-show_range / 2, show_range / 2)
             ),
             camera=dict(
-                center=dict(x=0, y=0, z=center_of_earth.z[0]/show_range/1e3),
+                center=dict(x=0, y=0, z=center_of_earth.z[0] / show_range / 1e3),
             )
         )
     )
@@ -418,32 +420,32 @@ if __name__ == "__main__":
     mn_gain = np.min(reshaped_gain)
     rnge = mx_gain - mn_gain
     n_steps = len(step)
-    colorscale = [[0, clor], [1/n_steps/2-0.001, clor]]
+    colorscale = [[0, clor], [1 / n_steps / 2 - 0.001, clor]]
     bins = []
     at = 0
     offset = len(colors) - len(step)
 
-    for i in range(1, n_steps+1):
-        ci = offset + i-1
+    for i in range(1, n_steps + 1):
+        ci = offset + i - 1
 
         bins.append(mx_gain - at * rnge)
-        at += step[i-1]/rnge
+        at += step[i - 1] / rnge
 
-        if DISCRETIZE and i/n_steps - 1/n_steps/2 > 0:
-            colorscale.append([i/n_steps - 1/n_steps/2, "rgb(100,100,100)"])
-            colorscale.append([i/n_steps - 1/n_steps/2 + 0.001, colors[ci]])
-        colorscale.append([i/n_steps, colors[ci]])
-        if DISCRETIZE and i/n_steps + 1/n_steps/2 < 1.0:
-            colorscale.append([i/n_steps + 1/n_steps/2 - 0.001, colors[ci]])
+        if DISCRETIZE and i / n_steps - 1 / n_steps / 2 > 0:
+            colorscale.append([i / n_steps - 1 / n_steps / 2, "rgb(100,100,100)"])
+            colorscale.append([i / n_steps - 1 / n_steps / 2 + 0.001, colors[ci]])
+        colorscale.append([i / n_steps, colors[ci]])
+        if DISCRETIZE and i / n_steps + 1 / n_steps / 2 < 1.0:
+            colorscale.append([i / n_steps + 1 / n_steps / 2 - 0.001, colors[ci]])
     # bins.append(mn_gain)
     bins.reverse()
 
     if DISCRETIZE:
         surfacecolor = np.digitize(reshaped_gain, bins, right=True)
-        colorbar=dict(
+        colorbar = dict(
             tickmode='array',
             tickvals=np.arange(0, len(bins) + 1),
-            ticktext=[f"< {bins[0]:.2f} dB"] + [f"{bins[i]:.2f} to {bins[i+1]:.2f} dB" for i in range(len(bins) - 1)],
+            ticktext=[f"< {bins[0]:.2f} dB"] + [f"{bins[i]:.2f} to {bins[i + 1]:.2f} dB" for i in range(len(bins) - 1)],
             title="Gain (dB)"
         )
     else:
@@ -505,14 +507,13 @@ if __name__ == "__main__":
     )
 
     fig.add_trace(go.Scatter3d(
-        x=lim_x ,
-        y=lim_y ,
-        z=lim_z ,
+        x=lim_x,
+        y=lim_y,
+        z=lim_z,
         mode='lines',
         line=dict(color='rgb(0, 0, 255)'),
         showlegend=False
     ))
-
 
     # fig.add_trace(go.Scatter3d(
     #     x=center_of_earth.x / 1e3,

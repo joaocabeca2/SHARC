@@ -26,7 +26,6 @@ from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
 from sharc.parameters.parameters_mss_ss import ParametersMssSs
 from sharc.parameters.parameters_mss_d2d import ParametersMssD2d
-#from sharc.parameters.parameters_ngso_constellation import ParametersNgsoConstellation
 from sharc.parameters.parameters_single_space_station import ParametersSingleSpaceStation
 from sharc.parameters.constants import EARTH_RADIUS
 from sharc.station_manager import StationManager
@@ -557,7 +556,7 @@ class StationFactory(object):
         parameters: Parameters,
         topology: Topology,
         random_number_gen: np.random.RandomState,
-        geometry_converter =GeometryConverter()
+        geometry_converter=GeometryConverter()
     ):
         if parameters.imt.topology.type == 'MACROCELL':
             intersite_dist = parameters.imt.topology.macrocell.intersite_distance
@@ -1240,7 +1239,6 @@ class StationFactory(object):
 
         return space_station
 
-
     @staticmethod
     def generate_mss_ss(param_mss: ParametersMssSs):
         # We borrow the TopologyNTN geometry as it's the same for MSS_SS
@@ -1289,9 +1287,9 @@ class StationFactory(object):
                                                     param_mss.spurious_emissions,
                                                     scenario="OUTDOOR")
         elif params.spectral_mask == "MSS":
-            mss_d2d.spectral_mask = SpectralMaskMSS(params.frequency,
-                                                     params.bandwidth,
-                                                     params.spurious_emissions)
+            mss_ss.spectral_mask = SpectralMaskMSS(params.frequency,
+                                                   params.bandwidth,
+                                                   params.spurious_emissions)
         else:
             raise ValueError(f"Invalid or not implemented spectral mask - {param_mss.spectral_mask}")
         mss_ss.spectral_mask.set_mask(param_mss.tx_power_density + 10 * np.log10(param_mss.bandwidth * 1e6))
@@ -1605,9 +1603,9 @@ if __name__ == '__main__':
 
     # TODO: replace this with generate imt mss dc station
     st = StationManager(topology.num_base_stations)
-    st.x=topology.space_station_x
-    st.y=topology.space_station_y
-    st.z=topology.space_station_z
+    st.x = topology.space_station_x
+    st.y = topology.space_station_y
+    st.z = topology.space_station_z
 
     fig.add_trace(
         go.Scatter3d(
@@ -1622,7 +1620,7 @@ if __name__ == '__main__':
 
     from sharc.support.sharc_geom import polar_to_cartesian
     # Plot beam boresight vectors
-    boresight_length = 100*1e3  # Length of the boresight vectors for visualization
+    boresight_length = 100 * 1e3  # Length of the boresight vectors for visualization
     boresight_x, boresight_y, boresight_z = polar_to_cartesian(
         boresight_length,
         imt_ue.azimuth,
@@ -1644,7 +1642,7 @@ if __name__ == '__main__':
             w=[bz],
             colorscale=[[0, 'orange'], [1, 'orange']],
             sizemode='absolute',
-            sizeref=2*boresight_length/5,
+            sizeref=2 * boresight_length / 5,
             showscale=False
         ))
     for x, y, z, bx, by, bz in zip(imt_ue.x,
@@ -1679,13 +1677,13 @@ if __name__ == '__main__':
     fig.update_layout(
         scene=dict(
             zaxis=dict(
-                range=(-1e3*range_scale+ref_z, 1e3*range_scale+ ref_z)
+                range=(-1e3 * range_scale + ref_z, 1e3 * range_scale + ref_z)
             ),
             yaxis=dict(
-                range=(-1e3*range_scale+ref_y, 1e3*range_scale+ ref_y)
+                range=(-1e3 * range_scale + ref_y, 1e3 * range_scale + ref_y)
             ),
             xaxis=dict(
-                range=(-1e3*range_scale+ref_x, 1e3*range_scale+ ref_x)
+                range=(-1e3 * range_scale + ref_x, 1e3 * range_scale + ref_x)
             ),
         )
     )

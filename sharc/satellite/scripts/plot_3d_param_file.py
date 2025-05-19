@@ -80,6 +80,7 @@ def plot_front(fig, geoconv):
         lighting=dict(diffuse=0.1)
     )
 
+
 def plot_polygon(poly, geoconv):
 
     xy_coords = poly.exterior.coords.xy
@@ -94,11 +95,13 @@ def plot_polygon(poly, geoconv):
 
     return x, y, z
 
+
 def plot_mult_polygon(mult_poly, geoconv):
     if mult_poly.geom_type == 'Polygon':
         return [plot_polygon(mult_poly, geoconv)]
     elif mult_poly.geom_type == 'MultiPolygon':
         return [plot_polygon(poly, geoconv) for poly in mult_poly.geoms]
+
 
 def plot_globe_with_borders(opaque_globe: bool, geoconv):
     # Read the shapefile.  Creates a DataFrame object
@@ -149,6 +152,7 @@ def plot_globe_with_borders(opaque_globe: bool, geoconv):
                                line=dict(color='rgb(0, 0, 0)'), showlegend=False))
 
     return fig
+
 
 if __name__ == "__main__":
     geoconv = GeometryConverter()
@@ -232,9 +236,9 @@ if __name__ == "__main__":
     )
 
     fig.add_trace(go.Scatter3d(
-        x=lim_x ,
-        y=lim_y ,
-        z=lim_z ,
+        x=lim_x,
+        y=lim_y,
+        z=lim_z,
         mode='lines',
         line=dict(color='rgb(0, 0, 255)'),
         showlegend=False
@@ -242,9 +246,9 @@ if __name__ == "__main__":
 
     # Plot all satellites (red markers)
     fig.add_trace(go.Scatter3d(
-        x=system.x ,
-        y=system.y ,
-        z=system.z ,
+        x=system.x,
+        y=system.y,
+        z=system.z,
         mode='markers',
         marker=dict(size=2, color='red', opacity=0.5),
         showlegend=False
@@ -254,27 +258,27 @@ if __name__ == "__main__":
     # print(visible_positions['x'][visible_positions['x'] > 0])
     # print("vis_elevation", vis_elevation)
     fig.add_trace(go.Scatter3d(
-        x=system.x[system.active] ,
-        y=system.y[system.active] ,
-        z=system.z[system.active] ,
+        x=system.x[system.active],
+        y=system.y[system.active],
+        z=system.z[system.active],
         mode='markers',
         marker=dict(size=3, color='green', opacity=0.8),
         showlegend=False
     ))
-    
+
     fig.add_trace(go.Scatter3d(
-        x=ue.x ,
-        y=ue.y ,
-        z=ue.z ,
+        x=ue.x,
+        y=ue.y,
+        z=ue.z,
         mode='markers',
         marker=dict(size=4, color='blue', opacity=1.0),
         showlegend=False
     ))
 
     fig.add_trace(go.Scatter3d(
-        x=bs.x ,
-        y=bs.y ,
-        z=bs.z ,
+        x=bs.x,
+        y=bs.y,
+        z=bs.z,
         mode='markers',
         marker=dict(size=4, color='black', opacity=1.0),
         showlegend=False
@@ -301,16 +305,12 @@ if __name__ == "__main__":
     #     )
     # )
     print(
-        "system.x[system.active]", system.x[system.active] ,
+        "system.x[system.active]", system.x[system.active],
     )
     print(
-        "system.y[system.active]", system.y[system.active] ,
+        "system.y[system.active]", system.y[system.active],
     )
     print(
-        "system.z[system.active]", system.z[system.active] ,
+        "system.z[system.active]", system.z[system.active],
     )
     fig.show()
-
-
-
-

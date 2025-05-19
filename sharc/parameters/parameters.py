@@ -21,7 +21,6 @@ from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
 from sharc.parameters.parameters_mss_ss import ParametersMssSs
 from sharc.parameters.parameters_mss_d2d import ParametersMssD2d
-#from sharc.parameters.parameters_ngso_constellation import ParametersNgsoConstellation
 from sharc.parameters.parameters_single_space_station import ParametersSingleSpaceStation
 
 
@@ -47,8 +46,6 @@ class Parameters(object):
         self.metsat_ss = ParametersMetSatSS()
         self.mss_ss = ParametersMssSs()
         self.mss_d2d = ParametersMssD2d()
-        #self.ngso = ParametersNgsoConstellation()
-
 
     def set_file_name(self, file_name: str):
         """sets the configuration file name

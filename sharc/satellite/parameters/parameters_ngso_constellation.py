@@ -3,6 +3,7 @@ from typing import List
 
 from sharc.parameters.parameters_base import ParametersBase
 
+
 @dataclass
 class ParametersOrbit():
     n_planes: int = 8  # number of orbital planes (A.4.b.2)
@@ -14,6 +15,7 @@ class ParametersOrbit():
     pergee_alt_km: float = 1414.0  # altitude of perigee in km (A.4.b.4.e)
     apogee_alt_km: float = 1414.0  # altitude of apogee in km (A.4.b.4.d)
     initial_mean_anomaly: float = 0.0  # initial mean anomaly for first satellite of first plane, in degrees
+
 
 @dataclass
 class ParametersNgsoConstellation(ParametersBase):
@@ -30,10 +32,12 @@ class ParametersNgsoConstellation(ParametersBase):
     def get_num_of_shells(self) -> int:
         return len(self.orbits)
 
+
 @dataclass
 class ParametersConstellations(ParametersBase):
     section_name: str = "constellations"
     constellations: List[ParametersNgsoConstellation] = field(default_factory=ParametersNgsoConstellation)
+
 
 if __name__ == "__main__":
     # Adding multiple shells to this constellation

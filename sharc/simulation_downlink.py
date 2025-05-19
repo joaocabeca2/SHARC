@@ -227,7 +227,7 @@ class SimulationDownlink(Simulation):
                             )
 
                     rx_oob[::] = p_tx - self.parameters.imt.ue.adjacent_ch_selectivity
-                elif self.parameters.imt.adjacent_ch_reception ==  "OFF":
+                elif self.parameters.imt.adjacent_ch_reception == "OFF":
                     pass
                 else:
                     raise ValueError(
@@ -253,7 +253,7 @@ class SimulationDownlink(Simulation):
                         10 * np.log10(self.param_system.bandwidth * 1e6) -  \
                         self.param_system.adjacent_ch_leak_ratio + \
                         10 * np.log10(1. - weights)
-                elif self.param_system.adjacent_ch_emissions ==  "OFF":
+                elif self.param_system.adjacent_ch_emissions == "OFF":
                     pass
                 else:
                     raise ValueError(

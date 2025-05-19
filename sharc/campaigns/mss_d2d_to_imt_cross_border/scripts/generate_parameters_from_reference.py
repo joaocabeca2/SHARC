@@ -33,10 +33,10 @@ output_prefix_pattern = ul_parameters['general']['output_dir_prefix'].replace("_
 for dist in [
     0,
     country_border,
-    country_border + 111/2,
+    country_border + 111 / 2,
     country_border + 111,
-    country_border + 3*111/2,
-    country_border + 2*111
+    country_border + 3 * 111 / 2,
+    country_border + 2 * 111
 ]:
     ul_parameters["mss_d2d"]["sat_is_active_if"]["lat_long_inside_country"]["margin_from_border"] = dist
     specific = f"{dist}km_base_ul"
@@ -59,7 +59,6 @@ for dist in [
         'w'
     ) as file:
         yaml.dump(ul_parameters, file, default_flow_style=False)
-
 
     for link in ["ul", "dl"]:
         if link == "ul":
@@ -92,7 +91,6 @@ for dist in [
         ) as file:
             yaml.dump(parameters, file, default_flow_style=False)
 
-
         parameters['mss_d2d']['num_sectors'] = 1
         parameters['mss_d2d']['beams_load_factor'] = 1
 
@@ -124,4 +122,3 @@ for dist in [
             'w'
         ) as file:
             yaml.dump(parameters, file, default_flow_style=False)
-

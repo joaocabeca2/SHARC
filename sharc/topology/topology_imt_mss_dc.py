@@ -389,7 +389,7 @@ class TopologyImtMssDc(Topology):
                 elevation[i],
                 azimuth[i]
             )
-        
+
         # In SHARC each sector is treated as a separate base station, so we need to repeat the satellite positions
         # for each sector.
         space_station_x = np.repeat(space_station_x, orbit_params.num_beams)
@@ -417,10 +417,8 @@ class TopologyImtMssDc(Topology):
 
         # update indices (multiply by num_beams)
         # and make all num_beams of satellite active
-        active_satellite_idxs = np.ravel(
-            np.array(active_satellite_idxs)[:, np.newaxis] * orbit_params.num_beams +
-                np.arange(orbit_params.num_beams)
-        )
+        active_satellite_idxs = np.ravel(np.array(active_satellite_idxs)[:, np.newaxis] * orbit_params.num_beams +
+                                         np.arange(orbit_params.num_beams))
 
         return {
             "num_satellites": num_base_stations,
@@ -477,7 +475,7 @@ class TopologyImtMssDc(Topology):
         # since we expect the area to be small, we can just consider
         # the center of the topology for this translation
         rx, ry, rz = lla2ecef(self.lat[bs_i], self.lon[bs_i], 0)
-        earth_radius_at_sat_nadir = np.sqrt(rx*rx + ry*ry + rz*rz)
+        earth_radius_at_sat_nadir = np.sqrt(rx * rx + ry * ry + rz * rz)
         z += earth_radius_at_sat_nadir
 
         # get angle around y axis
@@ -728,8 +726,10 @@ if __name__ == '__main__':
     # Add circles centered at the (x, y) coordinates of the space stations
     for x, y in zip(imt_mss_dc_topology.x, imt_mss_dc_topology.y):
         circle = go.Scatter(
-            x=[x/1e3 + imt_mss_dc_topology.orbit_params.beam_radius / 1e3 * np.cos(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
-            y=[y/1e3 + imt_mss_dc_topology.orbit_params.beam_radius / 1e3 * np.sin(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
+            x=[x / 1e3 + imt_mss_dc_topology.orbit_params.beam_radius /
+               1e3 * np.cos(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
+            y=[y / 1e3 + imt_mss_dc_topology.orbit_params.beam_radius /
+               1e3 * np.sin(theta) for theta in np.linspace(0, 2 * np.pi, 100)],
             mode='lines',
             line=dict(color='blue')
         )
@@ -748,8 +748,6 @@ if __name__ == '__main__':
 
     # Show the plot
     fig_2d.show()
-
-
 
     # Print the elevation angles
     print('Elevation angles:', imt_mss_dc_topology.elevation)

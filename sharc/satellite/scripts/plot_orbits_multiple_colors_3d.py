@@ -195,4 +195,3 @@ if __name__ == "__main__":
 
     # Display the plot
     fig.show()
-

@@ -3,6 +3,7 @@ from typing import List
 from sharc.parameters.parameters_base import ParametersBase
 from parameters.parameters_orbit import ParametersOrbit
 
+
 @dataclass
 class ParametersNgsoConstellation(ParametersBase):
     section_name: str = "ngso"

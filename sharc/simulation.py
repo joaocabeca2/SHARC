@@ -499,10 +499,9 @@ class Simulation(ABC, Observable):
             self.ue.bandwidth[ue] = self.num_rb_per_ue * \
                 self.parameters.imt.rb_bandwidth
             self.ue.center_freq[ue] = np.array([
-                    self.parameters.imt.frequency
-                    + self.num_rb_per_ue * self.parameters.imt.rb_bandwidth * (i - (len(ue) - 1)/2)
-                    for i in range(len(ue))
-                ])
+                self.parameters.imt.frequency +
+                self.num_rb_per_ue * self.parameters.imt.rb_bandwidth * (i - (len(ue) - 1) / 2) for i in range(len(ue))
+            ])
 
     def calculate_gains(
         self,
@@ -643,11 +642,11 @@ class Simulation(ABC, Observable):
         -------
             K-dimentional array of weights
         """
-        ue_min_f = fc_ue - bw_ue/2
-        ue_max_f = fc_ue + bw_ue/2
+        ue_min_f = fc_ue - bw_ue / 2
+        ue_max_f = fc_ue + bw_ue / 2
 
-        sys_min_f = fc_sys - bw_sys/2
-        sys_max_f = fc_sys + bw_sys/2
+        sys_min_f = fc_sys - bw_sys / 2
+        sys_max_f = fc_sys + bw_sys / 2
 
         # print("ue_min_f", ue_min_f)
         # print("ue_max_f", ue_max_f)
