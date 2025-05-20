@@ -648,18 +648,10 @@ class Simulation(ABC, Observable):
         sys_min_f = fc_sys - bw_sys / 2
         sys_max_f = fc_sys + bw_sys / 2
 
-        # print("ue_min_f", ue_min_f)
-        # print("ue_max_f", ue_max_f)
-        # print("sys_min_f", sys_min_f)
-        # print("sys_max_f", sys_max_f)
-
         overlap = np.maximum(
             0,
             np.minimum(ue_max_f, sys_max_f) - np.maximum(ue_min_f, sys_min_f)
         ) / bw_ue
-        # print("fc_ue", fc_ue)
-        # print("overlap", overlap)
-        # exit()
 
         return overlap
 
