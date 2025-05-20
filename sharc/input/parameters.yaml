@@ -232,9 +232,6 @@ imt:
             # Base station horizontal beamsteering range. [deg]
             # The range considers the horizon as 90deg, 0 as zenith
             vertical_beamsteering_range: !!python/tuple [90., 100.]
-            # Base station horizontal beamsteering range. [deg]
-            # The range considers the BS azimuth as 0deg
-            horizontal_beamsteering_range: !!python/tuple [-60., 60.]
             ###########################################################################
             # Base station horizontal beamsteering range. [deg]
             # The range considers the horizon as 90deg, 0 as zenith
