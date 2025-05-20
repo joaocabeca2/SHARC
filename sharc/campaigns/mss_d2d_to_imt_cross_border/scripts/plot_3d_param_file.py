@@ -1,18 +1,13 @@
 # Generates a 3D plot of the Earth with the satellites positions
 # https://geopandas.org/en/stable/docs/user_guide/io.html
-import os
 import geopandas as gpd
 import numpy as np
 import plotly.graph_objects as go
+from pathlib import Path
 
 from sharc.support.sharc_geom import GeometryConverter
-from sharc.station_manager import StationManager
 from sharc.parameters.parameters import Parameters
 from sharc.topology.topology_factory import TopologyFactory
-from sharc.satellite.ngso.orbit_model import OrbitModel
-from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
-from sharc.satellite.ngso.constants import EARTH_RADIUS_KM
-from sharc.parameters.parameters_mss_d2d import ParametersOrbit, ParametersMssD2d
 from sharc.station_factory import StationFactory
 
 
@@ -105,8 +100,8 @@ def plot_mult_polygon(mult_poly, geoconv):
 
 def plot_globe_with_borders(opaque_globe: bool, geoconv):
     # Read the shapefile.  Creates a DataFrame object
-    countries_borders_shp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                              "../../data/countries/ne_110m_admin_0_countries.shp")
+    project_root = Path(__file__).resolve().parents[4]
+    countries_borders_shp_file = project_root / "sharc/data/countries/ne_110m_admin_0_countries.shp"
     gdf = gpd.read_file(countries_borders_shp_file)
     fig = go.Figure()
     # fig.update_layout(
@@ -159,9 +154,9 @@ if __name__ == "__main__":
     SELECTED_SNAPSHOT_NUMBER = 0
     OPAQUE_GLOBE = True
 
-    param_file = "sharc/campaigns/mss_d2d_to_imt_cross_border/input/parameters_mss_d2d_to_imt_cross_border_random_pointing_1beam_dl.yaml"
-    # param_file = "sharc/campaigns/mss_d2d_to_imt_cross_border/input/parameters_mss_d2d_to_imt_cross_border_activate_random_beam_5p.yaml"
-    # param_file = "sharc/campaigns/mss_d2d_to_imt_cross_border/input/parameters_mss_d2d_to_imt_cross_border_random_pointing_1beam.yaml"
+    script_dir = Path(__file__).parent
+    param_file = script_dir / "../input/parameters_mss_d2d_to_imt_cross_border_0km_random_pointing_1beam_dl.yaml"
+    param_file = param_file.resolve()
 
     parameters = Parameters()
     parameters.set_file_name(param_file)
