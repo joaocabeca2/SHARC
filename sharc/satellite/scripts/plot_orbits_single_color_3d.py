@@ -107,7 +107,7 @@ def plot_polygon(poly):
 def plot_globe_with_borders():
     # Read the shapefile.  Creates a DataFrame object
     countries_borders_shp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                              "../data/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp")
+                                              "../../data/countries/ne_110m_admin_0_countries.shp")
     gdf = gpd.read_file(countries_borders_shp_file)
     fig = go.Figure()
     fig.update_layout(
@@ -171,11 +171,12 @@ if __name__ == "__main__":
     params = ParametersMssD2d(
         name="Example-MSS-D2D",
         antenna_pattern="ITU-R-S.1528-Taylor",
-        antenna_gain=30.0,
         orbits=[orbit_1, orbit_2],
         frequency=2100,
         bandwidth=5
     )
+
+    params.antenna_s1528.antenna_gain = 30.0
 
     params.sat_is_active_if.conditions = [
         "LAT_LONG_INSIDE_COUNTRY",
@@ -185,7 +186,7 @@ if __name__ == "__main__":
     # params.sat_is_active_if.lat_long_inside_country.country_name = "Colombia"
     params.sat_is_active_if.lat_long_inside_country.margin_from_border = 0
     # params.sat_is_active_if.lat_long_inside_country.margin_from_border = 0
-    params.sat_is_active_if.lat_long_inside_country.country_name = "Brazil"
+    params.sat_is_active_if.lat_long_inside_country.country_names = ["Brazil"]
 
     params.propagate_parameters()
 

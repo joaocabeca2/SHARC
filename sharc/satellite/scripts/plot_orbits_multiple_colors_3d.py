@@ -5,8 +5,8 @@ import geopandas as gpd
 import numpy as np
 import plotly.graph_objects as go
 
-from sharc.satellite.ngso.orbit_model import OrbitModel
-from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
+from sharc.support.sharc_geom import GeometryConverter
+from sharc.satellite.utils.sat_utils import lla2ecef
 from sharc.satellite.ngso.constants import EARTH_RADIUS_KM
 from sharc.parameters.parameters_mss_d2d import ParametersOrbit, ParametersMssD2d
 from sharc.station_factory import StationFactory
@@ -62,7 +62,7 @@ def plot_polygon(poly):
 def plot_globe_with_borders():
     # Read the shapefile.  Creates a DataFrame object
     countries_borders_shp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                              "../data/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp")
+                                              "../../data/countries/ne_110m_admin_0_countries.shp")
     gdf = gpd.read_file(countries_borders_shp_file)
     fig = go.Figure()
     plot_front(fig)
@@ -103,15 +103,20 @@ if __name__ == "__main__":
     params = ParametersMssD2d(
         name="Example-MSS-D2D",
         antenna_pattern="ITU-R-S.1528-Taylor",
-        antenna_gain=30.0,
         orbits=[orbit_1, orbit_2]
     )
+    params.antenna_s1528.antenna_gain = 30.0
+    params.antenna_s1528.frequency = 2000  # MHz
+    params.antenna_s1528.bandwidth = 20  # MHz
 
     # Create a topology with a single base station
-    from sharc.topology.topology_single_base_station_spherical import TopologySingleBaseStationSpherical
-    imt_topology = TopologySingleBaseStationSpherical(
-        cell_radius=500, num_clusters=1, central_latitude=-15.7801, central_longitude=-47.9292
+    from sharc.topology.topology_single_base_station import TopologySingleBaseStation
+    imt_topology = TopologySingleBaseStation(
+        cell_radius=500, num_clusters=1
     )
+
+    geom_converter = GeometryConverter()
+    geom_converter.set_reference(ref_lat=-15.7801, ref_long=-42.9292, ref_alt=0.0)
 
     # Create a random number generator
     rng = np.random.RandomState(seed=42)
@@ -125,7 +130,7 @@ if __name__ == "__main__":
 
     for _ in range(NUM_DROPS):
         # Generate satellite positions using the StationFactory
-        mss_d2d_manager = StationFactory.generate_mss_d2d(params, rng, imt_topology)
+        mss_d2d_manager = StationFactory.generate_mss_d2d(params, rng, geom_converter)
 
         # Extract satellite positions and orbit indices
         x_vec = mss_d2d_manager.x / 1e3  # (Km)

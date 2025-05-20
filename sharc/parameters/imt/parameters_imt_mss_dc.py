@@ -134,7 +134,7 @@ class ParametersSelectActiveSatellite(ParametersBase):
     @dataclass
     class ParametersLatLongInsideCountry(ParametersBase):
         country_shapes_filename: Path = \
-            SHARC_ROOT_DIR / "sharc" / "topology" / "countries" / "ne_110m_admin_0_countries.shp"
+            SHARC_ROOT_DIR / "sharc" / "data" / "countries" / "ne_110m_admin_0_countries.shp"
 
         # may load automatically for different shapefiles
         __ALLOWED_COUNTRY_NAMES = []

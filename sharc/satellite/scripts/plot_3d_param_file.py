@@ -106,7 +106,7 @@ def plot_mult_polygon(mult_poly, geoconv):
 def plot_globe_with_borders(opaque_globe: bool, geoconv):
     # Read the shapefile.  Creates a DataFrame object
     countries_borders_shp_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                              "../data/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp")
+                                              "../../data/countries/ne_110m_admin_0_countries.shp")
     gdf = gpd.read_file(countries_borders_shp_file)
     fig = go.Figure()
     # fig.update_layout(
