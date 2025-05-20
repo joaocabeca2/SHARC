@@ -535,7 +535,7 @@ if __name__ == '__main__':
         "MINIMUM_ELEVATION_FROM_ES",
     ]
     params.sat_is_active_if.minimum_elevation_from_es = 5
-    params.sat_is_active_if.lat_long_inside_country.country_name = "Brazil"
+    params.sat_is_active_if.lat_long_inside_country.country_names = ["Brazil"]
 
     # Define the geometry converter
     geometry_converter = GeometryConverter()
@@ -612,7 +612,8 @@ if __name__ == '__main__':
     ))
 
     # Add lines between the origin and the IMT space stations
-    for x, y, z in zip(imt_mss_dc_topology.space_station_x / 1e3, imt_mss_dc_topology.space_station_y / 1e3, imt_mss_dc_topology.space_station_z / 1e3):
+    for x, y, z in zip(imt_mss_dc_topology.space_station_x / 1e3, imt_mss_dc_topology.space_station_y / 1e3,
+                       imt_mss_dc_topology.space_station_z / 1e3):
         fig.add_trace(go.Scatter3d(
             x=[0, x],
             y=[0, y],
