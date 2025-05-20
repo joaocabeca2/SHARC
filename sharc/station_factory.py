@@ -1375,8 +1375,6 @@ class StationFactory(object):
                 size=total_satellites
             ) < params.beams_load_factor
 
-        sat_altitude = mss_d2d_values["sat_alt"]
-
         # Initialize satellites antennas
         # we need to initialize them after coordinates transformation because of
         # repeated state (elevation and azimuth) inside multiple transceiver implementation
