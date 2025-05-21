@@ -153,10 +153,21 @@ if __name__ == "__main__":
     geoconv = GeometryConverter()
     SELECTED_SNAPSHOT_NUMBER = 0
     OPAQUE_GLOBE = True
+    print(f"Plotting drop {SELECTED_SNAPSHOT_NUMBER}")
+    # even when using the same drop number as in a simulation,
+    # since the random generators are not in the same state, there isn't
+    # a direct relationship between a drop in this plot and a drop in the
+    # simulation loop
+    # NOTE: if you want to plot the actual simulation scenarios for debugging,
+    # you should do so inside the simulation loop
+    print("  (not the same drop number as in simulation)")
 
     script_dir = Path(__file__).parent
-    param_file = script_dir / "../input/parameters_mss_d2d_to_imt_cross_border_0km_random_pointing_1beam_dl.yaml"
+    param_file = script_dir / "base_input.yaml"
+    # param_file = script_dir / "../input/parameters_mss_d2d_to_imt_cross_border_0km_random_pointing_1beam_dl.yaml"
     param_file = param_file.resolve()
+    print("File at:")
+    print(f"  '{param_file}'")
 
     parameters = Parameters()
     parameters.set_file_name(param_file)
@@ -168,9 +179,8 @@ if __name__ == "__main__":
         parameters.imt.topology.central_altitude,
     )
     print(
-        geoconv.ref_lat,
-        geoconv.ref_long,
-        geoconv.ref_alt,
+        "imt at (lat, lon, alt) = ",
+        (geoconv.ref_lat, geoconv.ref_long, geoconv.ref_alt),
     )
 
     import random
@@ -280,32 +290,25 @@ if __name__ == "__main__":
     ))
 
     # Display the plot
-    # fig.update_layout(
-    #     scene=dict(
-    #         zaxis=dict(
-    #             range=(-1e3*50000, 1e3*50000)
-    #         ),
-    #         yaxis=dict(
-    #             range=(-1e3*50000, 1e3*50000)
-    #         ),
-    #         xaxis=dict(
-    #             range=(-1e3*50000, 1e3*50000)
-    #         ),
-    #         # camera=dict(
-    #         #     eye=eye,   # Camera position
-    #         #     center=dict(x=0, y=0, z=center_of_earth.z[0]/1e3/10000),  # Look at Earth's center
-    #         #     # center=dict(x=0, y=0, z=0),  # Look at Earth's center
-    #         #     # up=dict(x=0, y=0, z=1)  # Ensure the up direction is correct
-    #         # )
-    #     )
-    # )
-    print(
-        "system.x[system.active]", system.x[system.active],
+    range = 3e6
+    fig.update_layout(
+        scene=dict(
+            zaxis=dict(
+                range=(-range, range)
+            ),
+            yaxis=dict(
+                range=(-range, range)
+            ),
+            xaxis=dict(
+                range=(-range, range)
+            ),
+            camera=dict(
+                center=dict(x=0, y=0, z=-geoconv.get_translation() / (2 * range)),  # Look at Earth's center
+                # eye=eye,   # Camera position
+                # center=dict(x=0, y=0, z=0),  # Look at Earth's center
+                # up=dict(x=0, y=0, z=1)  # Ensure the up direction is correct
+            )
+        )
     )
-    print(
-        "system.y[system.active]", system.y[system.active],
-    )
-    print(
-        "system.z[system.active]", system.z[system.active],
-    )
+
     fig.show()
