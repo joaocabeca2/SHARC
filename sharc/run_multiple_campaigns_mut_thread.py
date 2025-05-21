@@ -27,6 +27,11 @@ def run_campaign(campaign_name):
         ) if f.endswith('.yaml')
     ]
 
+    if len(parameter_files) == 0:
+        raise ValueError(
+            f"No parameter files were found in {campaign_folder}"
+        )
+
     # Number of threads (adjust as needed)
     num_threads = min(len(parameter_files), os.cpu_count())
 
