@@ -11,7 +11,7 @@ post_processor = PostProcessor()
 # Add a legend to results in folder that match the pattern
 # This could easily come from a config file
 
-prefixes = ["0km", "157.9km", "213.4km", "268.9km", "324.4km", "border"]
+prefixes = ["0km", "157.9km", "213.4km", "268.9km", "324.4km", "379.9km", "border"]
 for prefix in prefixes:
     if prefix == "border":
         km = "0km"
