@@ -70,7 +70,15 @@ class StationFactory(object):
         param_ant = param_ant_bs.get_antenna_parameters()
         num_bs = topology.num_base_stations
         imt_base_stations = StationManager(num_bs)
-        imt_base_stations.station_type = StationType.IMT_BS
+        
+        # NOVO: gerar tipos de estação de forma aleatória
+        wifi_ratio = 0.2  # proporção desejada de WIFI_APS (ajuste conforme quiser)
+        is_wifi = random_number_gen.rand(num_bs) < wifi_ratio
+
+        imt_base_stations.station_type = np.where(
+            is_wifi, StationType.WIFI_APS, StationType.IMT_BS
+        )
+
         if param.topology.type == "NTN":
             imt_base_stations.x = topology.space_station_x * np.ones(num_bs)
             imt_base_stations.y = topology.space_station_y * np.ones(num_bs)
@@ -195,7 +203,14 @@ class StationFactory(object):
         num_ue = num_bs * num_ue_per_bs
 
         imt_ue = StationManager(num_ue)
-        imt_ue.station_type = StationType.IMT_UE
+
+        # NOVO: gerar tipos de estação de forma aleatória
+        wifi_ratio = 0.2  # proporção desejada de WIFI_APS (ajuste conforme quiser)
+        is_wifi = random_number_gen.rand(num_ue) < wifi_ratio
+
+        imt_ue.station_type = np.where(
+            is_wifi, StationType.WIFI_STA, StationType.IMT_UE
+        )
 
         ue_x = list()
         ue_y = list()
@@ -387,7 +402,15 @@ class StationFactory(object):
         num_ue = num_bs * num_ue_per_bs
 
         imt_ue = StationManager(num_ue)
-        imt_ue.station_type = StationType.IMT_UE
+
+        # NOVO: gerar tipos de estação de forma aleatória
+        wifi_ratio = 0.2  # proporção desejada de WIFI_APS (ajuste conforme quiser)
+        is_wifi = random_number_gen.rand(num_ue) < wifi_ratio
+
+        imt_ue.station_type = np.where(
+            is_wifi, StationType.WIFI_STA, StationType.IMT_UE
+        )
+
         ue_x = list()
         ue_y = list()
         ue_z = list()
@@ -1114,22 +1137,10 @@ class StationFactory(object):
         return space_station
 
     @staticmethod
-    def generate_wifi_system(param: ParametersWifiSystem, random_number_gen: np.random.RandomState) -> StationManager:
-        """Generate a wifi system and returns the appropriate StationManager object representing
-        the WiFi stations.
-
-        Parameters
-        ----------
-        param : ParametersWifiSystem
-            WiFi system paramters
-
-        Returns
-        -------
-        StationManager
-            The WiFi Stations used in the main simulation loop
-        """
-        # Criação do sistema Wi-Fi com parâmetros fornecidos
-        return SystemWifi(param=param)
+    def generate_wifi_aps():
+        """"""
+        pass
+        
 
     @staticmethod
     def get_random_position(num_ue: int,
@@ -1246,46 +1257,26 @@ class StationFactory(object):
 
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
-    import matplotlib
-    matplotlib.use('TkAgg')
-    from sharc.parameters.wifi.parameters_antenna_wifi import \
-        ParametersAntennaWifi
-    from sharc.parameters.wifi.parameters_wifi_topology import \
-        ParametersHotspot
-    from sharc.topology.topology_hotspot import TopologyHotspot
-    from sharc.parameters.parameters_fss_es import ParametersFssEs
-    from sharc.parameters.imt.parameters_imt import ParametersImt
-    from sharc.parameters.parameters import Parameters
-    from sharc.parameters.parameters_base import ParametersBase
-    from sharc.parameters.imt.parameters_hotspot import ParametersHotspot
-    import os
+
+    # plot uniform distribution in macrocell scenario
+
+    factory = StationFactory()
+    topology = TopologyMacrocell(1000, 1)
+    topology.calculate_coordinates()
+
+    params = ParametersImt()
+
+    bs_ant_param = ParametersAntennaImt()
+
+    ue_ant_param = ParametersAntennaImt()
 
     rnd = np.random.RandomState(1)
-    factory = StationFactory()
-    params = Parameters()
-    params.set_file_name(os.path.join(os.path.dirname(os.path.abspath(__file__)), "input", "parameters.yaml"))
-    params.read_params()
-    '''
-    hots = ParametersHotspot()
-    #plot centrall singles_es
-    topology = TopologyHotspot(hots, 1000, 1)
-    topology.calculate_coordinates()
-    bs_ant_param = ParametersAntennaImt()
-    ue_ant_param = ParametersAntennaImt()
-    
-    #params = ParametersFssEs()
-    #hotspot_param = ParametersHotspot()
 
-    
-    imt_ue = factory.generate_imt_ue(params.imt, ue_ant_param, topology, rnd)
-    fss_es = factory.generate_single_earth_station(params.single_earth_station, rnd, topology=topology)
+    imt_ue = factory.generate_imt_ue(params, ue_ant_param, topology, rnd)
+    imt_bs = factory.generate_imt_base_stations(params, bs_ant_param, topology, rnd)
 
-    fig = plt.figure(
-        figsize=(8, 8), facecolor='w',
-        edgecolor='k',
-    )  # create a figure object
-    ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
-
+    fig = plt.figure(figsize=(8, 8), facecolor='w', edgecolor='k')
+    ax = fig.add_subplot(1, 1, 1)
     topology.plot(ax)
 
     plt.axis('image')
@@ -1293,62 +1284,28 @@ if __name__ == '__main__':
     plt.xlabel("x-coordinate [m]")
     plt.ylabel("y-coordinate [m]")
 
-    plt.plot(imt_ue.x, imt_ue.y, "r.")
-    plt.plot(fss_es.x, fss_es.y, "b.")
+    # Separar por tipo de estação
+    # Base stations
+    imt_bs_x = imt_bs.x[np.array(imt_bs.station_type) == StationType.IMT_BS]
+    imt_bs_y = imt_bs.y[np.array(imt_bs.station_type) == StationType.IMT_BS]
 
-    plt.tight_layout()
-    plt.show()'''
+    wifi_aps_x = imt_bs.x[np.array(imt_bs.station_type) == StationType.WIFI_APS]
+    wifi_aps_y = imt_bs.y[np.array(imt_bs.station_type) == StationType.WIFI_APS]
 
- 
-    wifi = factory.generate_wifi_system(params.wifi, rnd)
-    wifi.generate_stas(rnd)
-    wifi.generate_aps(rnd)
-    fig = plt.figure(
-        figsize=(8, 8), facecolor='w',
-        edgecolor='k',
-    )  # create a figure object
-    ax = fig.add_subplot(1, 1, 1)  # create an axes object in the figure
-    wifi.topology.plot(ax)
-    plt.axis('image')
-    plt.title("topology")
-    
-    # For 2D scatter plot with height represented by marker size
-    plt.scatter(wifi.sta.x, wifi.sta.y, s=20,  cmap='viridis', label="STAs")
-    plt.scatter(wifi.ap.x, wifi.ap.y, s=40, cmap='viridis', label="APs")
+    # User equipments
+    imt_ue_x = imt_ue.x[np.array(imt_ue.station_type) == StationType.IMT_UE]
+    imt_ue_y = imt_ue.y[np.array(imt_ue.station_type) == StationType.IMT_UE]
 
-    # Remove the zlabel since this is a 2D plot
-    plt.xlabel("x-coordinate [m]")
-    plt.ylabel("y-coordinate [m]")
+    wifi_sta_x = imt_ue.x[np.array(imt_ue.station_type) == StationType.WIFI_STA]
+    wifi_sta_y = imt_ue.y[np.array(imt_ue.station_type) == StationType.WIFI_STA]
 
+    # Plotagem diferenciada
+    ax.plot(imt_bs_x, imt_bs_y, "bs", label="IMT BS")       # azul, quadrado
+    ax.plot(wifi_aps_x, wifi_aps_y, "go", label="WiFi AP")  # verde, círculo
+    ax.plot(imt_ue_x, imt_ue_y, "r^", label="IMT UE")        # vermelho, triângulo
+    ax.plot(wifi_sta_x, wifi_sta_y, "m.", label="WiFi STA") # magenta, ponto
 
+    plt.legend(loc="best")
     plt.tight_layout()
     plt.show()
-
-
-    # Criar figura 3D
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(111, projection='3d')
-    
-    # Plotar STAs em vermelho
-    ax.scatter(wifi.sta.x, wifi.sta.y, wifi.sta.height, 
-              c='red', marker='o', s=40, label='STAs')
-    
-    # Plotar APs em azul
-    ax.scatter(wifi.ap.x, wifi.ap.y, wifi.ap.height, 
-              c='blue', marker='^', s=40, label='APs')
-    
-    # Configurar rótulos e título
-    ax.set_xlabel('X [m]')
-    ax.set_ylabel('Y [m]')
-    ax.set_zlabel('Z [m]')
-    ax.set_title('Distribuição 3D de STAs e APs')
-    
-    # Adicionar legenda
-    ax.legend()
-    
-    # Ajustar visualização
-    plt.tight_layout()
-    plt.show()
-
-
 

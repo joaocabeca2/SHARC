@@ -43,19 +43,12 @@ class SimulationDownlink(Simulation):
             self.topology, random_number_gen,
         )
         
+        
         # Create the other system (FSS, HAPS, etc...)
         self.system = StationFactory.generate_system(
             self.parameters, self.topology, random_number_gen,
         )
-        if self.parameters.general.system == "WIFI":
-            # Geração inicial das estações Wi-Fi
-            self.system.generate_aps(random_number_gen)
-            self.system.generate_stas(random_number_gen)
-
-            self.system.connect_aps_to_stas()
-            self.system.select_sta(random_number_gen)
-
-            coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(self.system.ap, self.system.sta)
+        
 
         # Create IMT user equipments
         self.ue = StationFactory.generate_imt_ue(

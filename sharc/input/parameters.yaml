@@ -30,7 +30,7 @@ imt:
     interfered_with: FALSE
     ###########################################################################
     # IMT center frequency [MHz]
-    frequency: 24360
+    frequency: 7000
     ###########################################################################
     # IMT bandwidth [MHz]
     bandwidth: 20
@@ -528,7 +528,7 @@ fss_es:
     # NETWORK - random within whole network
     # UNIFORM_DIST - uniform distance from cluster centre,
     #                between min_dist_to_bs and max_dist_to_bs
-    location: CELL
+    location: FIXED
     ###########################################################################
     # x-y coordinates [m] (only if FIXED location is chosen)
     x: 10000
