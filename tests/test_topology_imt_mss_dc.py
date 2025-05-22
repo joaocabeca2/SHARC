@@ -116,10 +116,8 @@ class TestTopologyImtMssDc(unittest.TestCase):
         )
 
     def test_visible_satellites(self):
-        self.imt_mss_dc_topology.calculate_coordinates()
+        self.imt_mss_dc_topology.calculate_coordinates(random_number_gen=np.random.RandomState(8))
         min_elevation_angle = 5.0
-        idxs = np.arange(self.imt_mss_dc_topology.num_base_stations // self.imt_mss_dc_topology.num_sectors) *\
-            self.imt_mss_dc_topology.num_sectors
 
         # calculate the elevation angles with respect to the x-y plane
         xy_plane_elevations = np.degrees(
@@ -128,8 +126,9 @@ class TestTopologyImtMssDc(unittest.TestCase):
                 np.sqrt(self.imt_mss_dc_topology.space_station_x**2 + self.imt_mss_dc_topology.space_station_y**2),
             ),
         )
-
-        npt.assert_array_less(min_elevation_angle, xy_plane_elevations)
+        # Add a tolerance to the elevation angle because of the Earth oblateness
+        expected_atol = 2e-2
+        npt.assert_array_less(min_elevation_angle - expected_atol, xy_plane_elevations)
 
 
 if __name__ == '__main__':
