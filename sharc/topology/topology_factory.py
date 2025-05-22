@@ -8,17 +8,19 @@ import sys
 
 from sharc.topology.topology import Topology
 from sharc.topology.topology_macrocell import TopologyMacrocell
+from sharc.topology.topology_imt_mss_dc import TopologyImtMssDc
 from sharc.topology.topology_hotspot import TopologyHotspot
 from sharc.topology.topology_indoor import TopologyIndoor
 from sharc.topology.topology_ntn import TopologyNTN
 from sharc.topology.topology_single_base_station import TopologySingleBaseStation
 from sharc.parameters.parameters import Parameters
+from sharc.support.sharc_geom import GeometryConverter
 
 
 class TopologyFactory(object):
 
     @staticmethod
-    def createTopology(parameters: Parameters) -> Topology:
+    def createTopology(parameters: Parameters, geometry_converter: GeometryConverter) -> Topology:
         if parameters.imt.topology.type == "SINGLE_BS":
             return TopologySingleBaseStation(
                 parameters.imt.topology.single_bs.cell_radius,
@@ -45,6 +47,11 @@ class TopologyFactory(object):
                 parameters.imt.topology.ntn.bs_azimuth,
                 parameters.imt.topology.ntn.bs_elevation,
                 parameters.imt.topology.ntn.num_sectors,
+            )
+        elif parameters.imt.topology.type == "MSS_DC":
+            return TopologyImtMssDc(
+                parameters.imt.topology.mss_dc,
+                geometry_converter
             )
         else:
             sys.stderr.write(

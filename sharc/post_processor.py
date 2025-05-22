@@ -2,10 +2,12 @@ from sharc.results import Results
 
 from dataclasses import dataclass, field
 import plotly.graph_objects as go
+from plotly.colors import DEFAULT_PLOTLY_COLORS
 import os
 import numpy as np
 import scipy
 import typing
+import pathlib
 import pathlib
 
 
@@ -178,6 +180,10 @@ class PostProcessor:
             "x_label": "Path Loss [dB]",
             "title": "[SYS] IMT to system path loss",
         },
+        "sys_to_imt_coupling_loss": {
+            "x_label": "Coupling Loss [dB]",
+            "title": "[SYS] IMT to system coupling loss",
+        },
         "system_dl_interf_power": {
             "x_label": "Interference Power [dBm/BMHz]",
             "title": "[SYS] system interference power from IMT DL",
@@ -234,6 +240,14 @@ class PostProcessor:
             "x_label": "Transmit power [dBm]",
             "title": "[IMT] DL transmit power",
         },
+        "imt_dl_pfd_external": {
+            "title": "[IMT] DL external Power Flux Density (PFD) ",
+            "x_label": "PFD [dBW/m²/MHz]",
+        },
+        "imt_dl_pfd_external_aggregated": {
+            "title": "[IMT] Aggregated DL external Power Flux Density (PFD)",
+            "x_label": "PFD [dBW/m²/MHz]",
+        },
         # these ones were not plotted already, so will continue to not be plotted:
         "imt_dl_tx_power_density": IGNORE_FIELD,
         "system_ul_coupling_loss": IGNORE_FIELD,
@@ -243,6 +257,7 @@ class PostProcessor:
 
     plot_legend_patterns: list = field(default_factory=list)
     legends_generator = None
+    linestyle_getter = None
 
     plots: list[go.Figure] = field(default_factory=list)
     results: list[Results] = field(default_factory=list)
@@ -257,6 +272,17 @@ class PostProcessor:
         if self.legends_generator is not None:
             raise ValueError("Can only have one legends generator at a time")
         self.legends_generator = generator
+
+    def add_results_linestyle_getter(
+        self, getter
+    ) -> None:
+        """
+        When plotting, this function will be called for each result to decide
+        on the linestyle used
+        """
+        if self.linestyle_getter is not None:
+            raise ValueError("You are trying to set PostProcessor.linestyle_getter twice!")
+        self.linestyle_getter = getter
 
     def add_plot_legend_pattern(
         self, *, dir_name_contains: str, legend: str
@@ -292,8 +318,21 @@ class PostProcessor:
         self, results: list[Results], *, n_bins=200
     ) -> list[go.Figure]:
         figs: dict[str, list[go.Figure]] = {}
+        COLORS = DEFAULT_PLOTLY_COLORS
 
+        linestyle_color = {}
+
+        # Sort based on path name - TODO: sort alphabeticaly by legend
+        results.sort(key=lambda r: r.output_directory)
         for res in results:
+            if self.linestyle_getter is not None:
+                linestyle = self.linestyle_getter(res)
+            else:
+                linestyle = "solid"
+
+            if linestyle not in linestyle_color:
+                linestyle_color[linestyle] = 0
+
             possible_legends_mapping = self.get_results_possible_legends(res)
 
             if len(possible_legends_mapping):
@@ -341,8 +380,13 @@ class PostProcessor:
                         y=y,
                         mode="lines",
                         name=f"{legend}",
+                        line=dict(color=COLORS[linestyle_color[linestyle]], dash=linestyle)
                     ),
                 )
+
+            linestyle_color[linestyle] += 1
+            if linestyle_color[linestyle] >= len(COLORS):
+                linestyle_color[linestyle] = 0
 
         return figs.values()
 

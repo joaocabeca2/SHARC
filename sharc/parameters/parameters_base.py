@@ -1,5 +1,6 @@
 import yaml
 from dataclasses import dataclass
+from copy import deepcopy
 
 
 # Register a tuple constructor with PyYAML
@@ -36,6 +37,14 @@ class ParametersBase:
             a for a in dir(self) if not a.startswith('_') and not callable(getattr(self, a)) and a not in
                     ["section_name", "nested_parameters_enabled",]]
 
+        params_keys = params.keys()
+
+        for k in params_keys:
+            if k not in attr_list:
+                raise ValueError(
+                    f"The parameter {ctx}.{k} was passed, but it doesn't exist on parameters definitions!"
+                )
+
         for attr_name in attr_list:
             default_attr_value = getattr(self, attr_name)
 
@@ -56,6 +65,33 @@ class ParametersBase:
                 default_attr_value.load_subparameters(
                     f"{ctx}.{attr_name}", params[attr_name],
                 )
+            elif isinstance(default_attr_value, list):
+                if not isinstance(params[attr_name], list):
+                    raise ValueError(
+                        f"ERROR: Cannot parse parameter {ctx}.{attr_name}, is \
+                            {params[attr_name]} instead of a list",
+                    )
+                loaded_attr_vals = list()
+                default_item = default_attr_value[0]
+
+                if isinstance(default_item, ParametersBase):
+                    for prm in params[attr_name]:
+                        new_item = deepcopy(default_item)
+                        new_item.load_subparameters(
+                            f"{self.section_name}.{attr_name}", prm,
+                        )
+                        loaded_attr_vals.append(new_item)
+                else:
+                    for prm in params[attr_name]:
+                        if not isinstance(prm, type(default_item)):
+                            raise ValueError(
+                                f"ERROR: Cannot parse section {ctx}.{attr_name}\n"
+                                f"List item does not respect expected type of {type(default_item)}\n"
+                                f"{prm} has type of {type(prm)}"
+                            )
+                        loaded_attr_vals.append(prm)
+
+                setattr(self, attr_name, loaded_attr_vals)
             else:
                 setattr(self, attr_name, params[attr_name])
 
@@ -105,6 +141,14 @@ class ParametersBase:
             callable(getattr(self, a)) and a != "section_name"
         ]
 
+        params_keys = config[self.section_name].keys()
+
+        for k in params_keys:
+            if k not in attr_list:
+                raise ValueError(
+                    f"The parameter {self.section_name}.{k} was passed, but it doesn't exist on parameters definitions!"
+                )
+
         for attr_name in attr_list:
             try:
                 attr_val = getattr(self, attr_name)
@@ -143,6 +187,24 @@ class ParametersBase:
                     attr_val.load_subparameters(
                         f"{self.section_name}.{attr_name}", config[self.section_name][attr_name],
                     )
+                elif isinstance(attr_val, list):
+                    if not self.nested_parameters_enabled:
+                        continue
+                    if not isinstance(config[self.section_name][attr_name], list):
+                        raise ValueError(
+                            f"ERROR: Cannot parse section {self.section_name}.{attr_name}, is \
+                                {config[self.section_name][attr_name]} instead of a list",
+                        )
+                    loaded_attr_vals = list()
+                    default_item = attr_val[0]
+                    for params in config[self.section_name][attr_name]:
+                        new_item = deepcopy(default_item)
+                        new_item.load_subparameters(
+                            f"{self.section_name}.{attr_name}", params,
+                        )
+                        loaded_attr_vals.append(new_item)
+                    setattr(self, attr_name, loaded_attr_vals)
+
                 else:
                     setattr(
                         self, attr_name,

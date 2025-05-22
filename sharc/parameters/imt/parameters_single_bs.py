@@ -27,3 +27,15 @@ class ParametersSingleBS(ParametersBase):
 
         if self.num_clusters not in [1, 2]:
             raise ValueError(f"{ctx}.num_clusters should either be 1 or 2")
+
+
+if __name__ == "__main__":
+    # Run validation for input parameters
+    import os
+    import pprint
+
+    # Load default simulator parameters
+    yaml_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../input/parameters.yaml")
+    params = ParametersSingleBS()
+    params.load_parameters_from_file(yaml_file_path, quiet=False)
+    pprint.pprint(params)

@@ -61,6 +61,8 @@ class Results(object):
         self.imt_system_build_entry_loss = SampleList()
         # System diffraction loss [dB]
         self.imt_system_diffraction_loss = SampleList()
+        # System to IMT coupling loss
+        self.sys_to_imt_coupling_loss = SampleList()
 
         self.imt_dl_tx_power_density = SampleList()
         # Transmit power [dBm]
@@ -77,6 +79,10 @@ class Results(object):
         self.imt_dl_tput_ext = SampleList()
         # Throughput [bits/s/Hz]
         self.imt_dl_tput = SampleList()
+
+        # PFD
+        self.imt_dl_pfd_external = SampleList()
+        self.imt_dl_pfd_external_aggregated = SampleList()
 
         self.system_ul_coupling_loss = SampleList()
         self.system_ul_interf_power = SampleList()

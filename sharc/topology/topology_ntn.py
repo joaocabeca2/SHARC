@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.axes
 import geopandas as gpd
 from shapely.geometry import Polygon, MultiPolygon
+from pathlib import Path
 
 
 class TopologyNTN(Topology):
@@ -48,54 +49,55 @@ class TopologyNTN(Topology):
         self.num_sectors = num_sectors
 
         # Calculate the base station coordinates
-
-        self.space_station_x = self.bs_radius * \
-            np.cos(self.bs_elevation) * np.cos(self.bs_azimuth)
-        self.space_station_y = self.bs_radius * \
-            np.cos(self.bs_elevation) * np.sin(self.bs_azimuth)
+        self.space_station_x = self.bs_radius * np.cos(self.bs_elevation) * np.cos(self.bs_azimuth)
+        self.space_station_y = self.bs_radius * np.cos(self.bs_elevation) * np.sin(self.bs_azimuth)
         self.space_station_z = bs_height
 
         self.calculate_coordinates()
+
+    @staticmethod
+    def get_sectors_xy(*, num_sectors, intersite_distance) -> (np.array, np.array):
+        d = intersite_distance
+        x = [0.]
+        y = [0.]
+        # First ring (6 points)
+        if num_sectors == 7 or num_sectors == 19:
+
+            for k in range(6):
+                angle = k * 60
+                x.append(d * np.cos(np.radians(angle)))
+                y.append(d * np.sin(np.radians(angle)))
+
+        if num_sectors == 19:
+            # Coordinates with 19 sectors
+            # Second ring (12 points)
+            for k in range(6):
+                angle = k * 60
+                x.append(2 * d * np.cos(np.radians(angle)))
+                y.append(2 * d * np.sin(np.radians(angle)))
+                x.append(
+                    d * np.cos(np.radians(angle)) +
+                    d * np.cos(np.radians(angle + 60)),
+                )
+                y.append(
+                    d * np.sin(np.radians(angle)) +
+                    d * np.sin(np.radians(angle + 60)),
+                )
+
+        return (np.array(x), np.array(y))
 
     def calculate_coordinates(self, random_number_gen=np.random.RandomState()):
         """
         Computes the coordinates of each site. This is where the actual layout calculation would be implemented.
         """
 
-        d = self.intersite_distance
-
-        self.x = [0]
-        self.y = [0]
-
-        # First ring (6 points)
-        if self.num_sectors == 7 or self.num_sectors == 19:
-
-            for k in range(6):
-                angle = k * 60
-                self.x.append(d * np.cos(np.radians(angle)))
-                self.y.append(d * np.sin(np.radians(angle)))
-
-        if self.num_sectors == 19:
-            # Coordinates with 19 sectors
-            # Second ring (12 points)
-            for k in range(6):
-                angle = k * 60
-                self.x.append(2 * d * np.cos(np.radians(angle)))
-                self.y.append(2 * d * np.sin(np.radians(angle)))
-                self.x.append(
-                    d * np.cos(np.radians(angle)) +
-                    d * np.cos(np.radians(angle + 60)),
-                )
-                self.y.append(
-                    d * np.sin(np.radians(angle)) +
-                    d * np.sin(np.radians(angle + 60)),
-                )
-
-        self.x = np.array(self.x)
-        self.y = np.array(self.y)
+        self.x, self.y = self.get_sectors_xy(
+            num_sectors=self.num_sectors,
+            intersite_distance=self.intersite_distance
+        )
 
         # Assuming all points are at ground level
-        self.z = np.zeros(len(self.x))
+        self.z = np.zeros_like(self.x)
 
         # Rotate the anchor points by 30 degrees
         theta = np.radians(30)
@@ -124,11 +126,11 @@ class TopologyNTN(Topology):
         self.x = self.x_rotated
         self.y = self.y_rotated
 
-    def plot(self, axis: matplotlib.axes.Axes):
-        r = self.cell_radius / 1000  # Convert to kilometers
+    def plot(self, axis: matplotlib.axes.Axes, scale=1000):
+        r = self.cell_radius / scale  # Convert to kilometers
 
         # Plot each sector
-        for x, y in zip(self.x / 1000, self.y / 1000):  # Convert to kilometers
+        for x, y in zip(self.x / scale, self.y / scale):  # Convert to kilometers
             hexagon = []
             for a in range(6):
                 angle_rad = math.radians(a * 60)
@@ -144,7 +146,7 @@ class TopologyNTN(Topology):
 
         # Plot base stations
         axis.scatter(
-            self.x / 1000, self.y / 1000, s=200, marker='v', c='k', edgecolor='k', linewidth=1, alpha=1,
+            self.x / scale, self.y / scale, s=200, marker='v', c='k', edgecolor='k', linewidth=1, alpha=1,
             label="Anchor Points",
         )
 
@@ -160,8 +162,9 @@ class TopologyNTN(Topology):
 
         if map:
             # Load the map of Brazil using GeoPandas
+            workspace_root = Path(__file__).resolve().parent.parent.parent
             brazil = gpd.read_file(
-                "${workspaceFolder}\\sharc\\topology\\countries\\ne_110m_admin_0_countries.shp",
+                workspace_root / "sharc" / "data" / "countries" / "ne_110m_admin_0_countries.shp",
             )
             brazil = brazil[brazil['NAME'] == "Brazil"]
 
@@ -262,9 +265,9 @@ if __name__ == '__main__':
     bs_elevation = 45  # degrees
     beamwidth = 10
     cell_radius = bs_height * \
-        math.tan(np.radians(beamwidth)) / math.cos(bs_elevation)
+        math.tan(np.radians(beamwidth)) / math.cos(np.radians(bs_elevation))
     intersite_distance = cell_radius * np.sqrt(3)  # meters
-    map = False
+    map = True
 
     # Test for 1 sector
     ntn_topology_1 = TopologyNTN(

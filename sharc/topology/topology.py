@@ -26,6 +26,7 @@ class Topology(object):
         # is equivalent to a sector (hexagon) in the macrocell topology
         self.x = np.empty(0)
         self.y = np.empty(0)
+        self.z = np.empty(0)
         self.azimuth = np.empty(0)
         self.indoor = np.empty(0)
         self.is_space_station = False
@@ -38,6 +39,14 @@ class Topology(object):
         Calculates the coordinates of the stations according to the class
         atributes.
         """
+
+    # by default, a sharc topology will translate the UE distribution by the BS position
+    def transform_ue_xyz(self, bs_i: int, x: np.array, y: np.array, z: np.array):
+        return (
+            x + self.x[bs_i],
+            y + self.y[bs_i],
+            z + self.z[bs_i],
+        )
 
     @abstractmethod
     def plot(self, ax: matplotlib.axes.Axes):

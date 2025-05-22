@@ -19,6 +19,8 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
+from sharc.parameters.parameters_mss_ss import ParametersMssSs
+from sharc.parameters.parameters_mss_d2d import ParametersMssD2d
 from sharc.parameters.parameters_single_space_station import ParametersSingleSpaceStation
 
 
@@ -42,6 +44,8 @@ class Parameters(object):
         self.single_earth_station = ParametersSingleEarthStation()
         self.single_space_station = ParametersSingleSpaceStation()
         self.metsat_ss = ParametersMetSatSS()
+        self.mss_ss = ParametersMssSs()
+        self.mss_d2d = ParametersMssD2d()
 
     def set_file_name(self, file_name: str):
         """sets the configuration file name
@@ -107,7 +111,20 @@ class Parameters(object):
         #######################################################################
         self.eess_ss.load_parameters_from_file(self.file_name)
 
+        #######################################################################
+        # Single Earth Station
+        #######################################################################
         self.single_earth_station.load_parameters_from_file(self.file_name)
+
+        #######################################################################
+        # MSS_SS
+        #######################################################################
+        self.mss_ss.load_parameters_from_file(self.file_name)
+
+        #######################################################################
+        # MSS_D2d
+        #######################################################################
+        self.mss_d2d.load_parameters_from_file(self.file_name)
 
         self.single_space_station.load_parameters_from_file(self.file_name)
 

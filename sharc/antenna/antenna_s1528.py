@@ -12,6 +12,8 @@ import math
 import numpy as np
 from scipy.special import jn, jn_zeros
 
+NUM_OF_BESSEL_ROOTS = 3
+
 
 class AntennaS1528Taylor(Antenna):
     """
@@ -23,47 +25,50 @@ class AntennaS1528Taylor(Antenna):
     """
 
     def __init__(self, param: ParametersAntennaS1528):
+        super().__init__()
         # Gmax
         self.peak_gain = param.antenna_gain
         self.frequency_mhz = param.frequency
         self.bandwidth_mhz = param.bandwidth
+
         # Wavelength of the lowest frequency of the band of interest (in meters).
         self.lamb = (SPEED_OF_LIGHT / 1e6) / (self.frequency_mhz - self.bandwidth_mhz / 2)
+
         # SLR is the side-lobe ratio of the pattern (dB), the difference in gain between the maximum
         # gain and the gain at the peak of the first side lobe.
         self.slr = param.slr
+
         # Number of secondary lobes considered in the diagram (coincide with the roots of the Bessel function)
         self.n_side_lobes = param.n_side_lobes
-        # Radial and transverse sizes of the effective radiating area of the satellite transmit antenna (m).
+
+        # Radial (l_r) and transverse (l_t) sizes of the effective radiating area of the satellite transmitt antenna (m)
         self.l_r = param.l_r
         self.l_t = param.l_t
 
-        self.roll_off = param.roll_off
-
-        # Beam roll-off (difference between the maximum gain and the gain at the edge of the illuminated beam)
-        # Possible values are 3, 5, and 7
-        if int(self.roll_off) not in [3, 5, 7]:
-            raise ValueError(
-                f"AntennaS1528Taylor: Invalid value for roll_off factor {self.roll_off}")
-        self.roll_off = int(self.roll_off)
+        # Intermediary variables
+        self.A = (1 / np.pi) * np.arccosh(10 ** (self.slr / 20))
+        self.j1_roots = jn_zeros(1, self.n_side_lobes) / np.pi
+        self.sigma = self.j1_roots[-1] / np.sqrt(self.A ** 2 + (self.n_side_lobes - 1 / 2) ** 2)
+        self.mu = jn_zeros(1, NUM_OF_BESSEL_ROOTS) / np.pi
 
     def calculate_gain(self, *args, **kwargs) -> np.array:
-        phi = np.abs(np.radians(kwargs.get('phi', 0)))
-        theta = np.abs(np.radians(kwargs.get('theta', 0)))
+        # The reference angles for the simulator and the antenna realisation are switched.
+        # Local theta is simulator off_axis_angle and local phi is simulator theta_vec
+        if 'off_axis_angle_vec' not in kwargs:
+            raise ValueError("off_axis_angle_vec vector must be given")
+        if 'theta_vec' not in kwargs:
+            raise ValueError("theta vector must be given")
+        theta = np.abs(np.radians(kwargs.get('off_axis_angle_vec', 0)))
+        phi = np.abs(np.radians(kwargs.get('theta_vec', 0)))
 
-        # Intermediary variables
-        A = (1 / np.pi) * np.arccosh(10 ** (self.slr / 20))
-        j1_roots = jn_zeros(1, self.n_side_lobes) / np.pi
-        sigma = j1_roots[-1] / np.sqrt(A ** 2 + (self.n_side_lobes - 1 / 2) ** 2)
         u = (np.pi / self.lamb) * np.sqrt((self.l_r * np.sin(theta) * np.cos(phi)) ** 2 +
                                           (self.l_t * np.sin(theta) * np.sin(phi)) ** 2)
 
-        mu = jn_zeros(1, self.n_side_lobes - 1) / np.pi
-        v = np.ones(u.shape + (self.n_side_lobes - 1,))
+        v = np.ones(u.shape + (NUM_OF_BESSEL_ROOTS,))
 
-        for i, ui in enumerate(mu):
-            v[..., i] = (1 - u ** 2 / (np.pi ** 2 * sigma ** 2 *
-                                       (A ** 2 + (i + 1 - 0.5) ** 2))) / (1 - (u / (np.pi * ui)) ** 2)
+        for i, ui in enumerate(self.mu):
+            v[..., i] = (1 - u ** 2 / (np.pi ** 2 * self.sigma ** 2 *
+                                       (self.A ** 2 + (i + 1 - 0.5) ** 2))) / (1 - (u / (np.pi * ui)) ** 2)
 
         # Take care of divide-by-zero
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -72,6 +77,9 @@ class AntennaS1528Taylor(Antenna):
 
         # Replace undefined values with -inf (or other desired value)
         gain = np.nan_to_num(gain, nan=-np.inf)
+        # Replace values that were substituded specifically
+        # because u == 0 with Lim (gain)_(u -> 0) = peak_gain
+        gain[u == 0] = self.peak_gain
 
         return gain
 
@@ -86,7 +94,7 @@ class AntennaS1528Leo(Antenna):
     def __init__(self, param: ParametersAntennaS1528):
         super().__init__()
         self.peak_gain = param.antenna_gain
-        self.psi_b = param.antenna_3_dB / 2
+        self.psi_b = param.antenna_3_dB_bw / 2
         # near-in-side-lobe level (dB) relative to the peak gain required by
         # the system design
         self.l_s = -6.75
@@ -156,7 +164,7 @@ class AntennaS1528(Antenna):
             self.peak_gain + 5 * math.log10(self.z),
         )
         # one-half the 3 dB beamwidth in the plane of interest
-        self.psi_b = param.antenna_3_dB / 2
+        self.psi_b = param.antenna_3_dB_bw / 2
 
         if self.l_s == -15:
             self.a = 2.58 * math.sqrt(1 - 1.4 * math.log10(self.z))
@@ -215,11 +223,12 @@ if __name__ == '__main__':
     ## Plot gains for ITU-R-S.1528-SECTION1.2
     # initialize antenna parameters
     param = ParametersAntennaS1528()
-    param.antenna_gain = 30
+    param.antenna_gain = 37
     param.antenna_pattern = "ITU-R-S.1528-SECTION1.2"
-    param.antenna_3_dB = 4.4127
+    param.antenna_3_dB_bw = 4.4127
 
-    psi = np.linspace(0, 30, num=1000)
+    max_psi = 30 * param.antenna_3_dB_bw / 2
+    psi = np.linspace(0, max_psi, num=100)
 
     param.antenna_l_s = -15
     antenna = AntennaS1528(param)
@@ -238,12 +247,7 @@ if __name__ == '__main__':
     gain30 = antenna.calculate_gain(off_axis_angle_vec=psi)
 
     ## Plot gains for ITU-R-S.1528-LEO
-    # initialize antenna parameters
-    param = ParametersAntennaS1528()
-    param.antenna_gain = 30
     param.antenna_pattern = "ITU-R-S.1528-LEO"
-    param.antenna_3_dB = 1.6
-    psi = np.linspace(0, 20, num=1000)
 
     param.antenna_l_s = -6.75
     antenna = AntennaS1528Leo(param)
@@ -252,7 +256,7 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(8, 7), facecolor='w',
                      edgecolor='k')  # create a figure object
 
-    psi_norm = psi / (param.antenna_3_dB / 2)
+    psi_norm = psi / (param.antenna_3_dB_bw / 2)
     plt.plot(psi_norm, gain15 - param.antenna_gain, "-b", label="$L_S = -15$ dB")
     plt.plot(psi_norm, gain20 - param.antenna_gain, "-r", label="$L_S = -20$ dB")
     plt.plot(psi_norm, gain25 - param.antenna_gain, "-g", label="$L_S = -25$ dB")
@@ -260,8 +264,9 @@ if __name__ == '__main__':
     plt.plot(psi_norm, gain_leo - param.antenna_gain, "-c", label="$L_S = -6.75$ dB (R1.3 - LEO)")
 
     plt.ylim((-40, 10))
+    plt.yticks(np.arange(-40, 11, 5))
     plt.xlim((0, np.max(psi_norm)))
-    plt.xticks(np.arange(np.floor(np.max(psi_norm))))
+    plt.xticks(np.arange(0, 35, 5))
     plt.title("ITU-R S.1528-0 antenna radiation pattern")
     plt.xlabel(r"Relative off-axis angle, $\psi/\psi_{3dB}$")
     plt.ylabel(r"Gain relative to $G_{max}$ [dB]")
@@ -273,7 +278,7 @@ if __name__ == '__main__':
     param = ParametersAntennaS1528()
     param.antenna_gain = 35
     param.antenna_pattern = "ITU-R-S.1528-LEO"
-    param.antenna_3_dB = 1.6
+    param.antenna_3_dB_bw = 1.6
     psi = np.linspace(0, 20, num=1000)
 
     param.antenna_l_s = -6.75
@@ -281,7 +286,7 @@ if __name__ == '__main__':
     gain_leo = antenna.calculate_gain(off_axis_angle_vec=psi)
 
     fig = plt.figure(figsize=(8, 7), facecolor='w', edgecolor='k')  # create a figure object
-    psi_norm = psi / (param.antenna_3_dB / 2)
+    psi_norm = psi / (param.antenna_3_dB_bw / 2)
     plt.plot(psi_norm, gain_leo, "-b", label="$L_S = -6.75$ dB")
 
     # plt.ylim((-40, 10))
@@ -293,34 +298,86 @@ if __name__ == '__main__':
     plt.legend(loc="upper right")
     plt.grid()
 
-    # Section 1.4 (Taylor)
-    params = ParametersAntennaS1528(
+    # Section 1.4 (Taylor) - Compare to Fig 6
+    frequency = 12000  # MHz
+    bandwidth = 10  # MHz
+    antenna_gain = 0  # dBi
+    slr = 20  # dB
+    n_side_lobes = 4
+    lamb = (SPEED_OF_LIGHT / 1e6) / (frequency - bandwidth / 2)
+    beam_radius = 350  # km
+    sat_altitude = 1446  # km
+    a = np.arctan(beam_radius / (sat_altitude))  # radians
+    l_r = 0.74 * lamb / np.sin(a)
+    l_t = l_r
+    params_rolloff_7 = ParametersAntennaS1528(
         antenna_gain=0,
-        frequency=6000,
-        bandwidth=500,
+        frequency=12000,
+        bandwidth=10,
         slr=20,
         n_side_lobes=4,
-        l_r=0.5,
-        l_t=0.5,
-        roll_off=3
+        l_r=l_r,
+        l_t=l_t,
     )
 
     # Create an instance of AntennaS1528Taylor
-    antenna = AntennaS1528Taylor(params)
-    print(f"Taylor antenna.lamb = {antenna.lamb}")
+    antenna_rolloff_7 = AntennaS1528Taylor(params_rolloff_7)
 
     # Define phi angles from 0 to 60 degrees for plotting
-    theta_angles = np.linspace(0, 60, 600)
+    theta_angles = np.arange(0, 60.1, 0.1)
 
     # Calculate gains for each phi angle at a fixed theta angle (e.g., theta=0)
-    gain = antenna.calculate_gain(theta=theta_angles, phi=np.zeros_like(theta_angles))
+    gain_rolloff_7 = antenna_rolloff_7.calculate_gain(off_axis_angle_vec=theta_angles,
+                                                      theta_vec=np.zeros_like(theta_angles))
+
+    l_r = 0.64 * lamb / np.sin(a)
+    l_t = l_r
+    params_rolloff_5 = ParametersAntennaS1528(
+        antenna_gain=0,
+        frequency=12000,
+        bandwidth=10,
+        slr=20,
+        n_side_lobes=4,
+        l_r=l_r,
+        l_t=l_t,
+    )
+
+    # Create an instance of AntennaS1528Taylor
+    antenna_rolloff_5 = AntennaS1528Taylor(params_rolloff_5)
+
+    gain_rolloff_5 = antenna_rolloff_5.calculate_gain(off_axis_angle_vec=theta_angles,
+                                                      theta_vec=np.zeros_like(theta_angles))
+
+    l_r = 0.51 * lamb / np.sin(a)
+    l_t = l_r
+    params_rolloff_3 = ParametersAntennaS1528(
+        antenna_gain=0,
+        frequency=12000,
+        bandwidth=10,
+        slr=20,
+        n_side_lobes=4,
+        l_r=l_r,
+        l_t=l_t,
+    )
+
+    # Create an instance of AntennaS1528Taylor
+    antenna_rolloff_3 = AntennaS1528Taylor(params_rolloff_3)
+
+    gain_rolloff_3 = antenna_rolloff_3.calculate_gain(off_axis_angle_vec=theta_angles,
+                                                      theta_vec=np.zeros_like(theta_angles))
 
     # Plot the antenna gain as a function of phi angle
     plt.figure(figsize=(10, 6))
-    plt.plot(theta_angles, gain)
+    plt.plot(theta_angles, gain_rolloff_3, label='roll_off=3')
+    plt.plot(theta_angles, gain_rolloff_5, label='roll_off=5')
+    plt.plot(theta_angles, gain_rolloff_7, label='roll_off=7')
     plt.xlabel('Theta (degrees)')
     plt.ylabel('Gain (dB)')
     plt.title('Normalized Antenna - Section 1.4')
-    plt.grid(True)
+    plt.legend()
+    plt.xticks(np.arange(0, 60, 10))
+    plt.minorticks_on()
+    plt.gca().xaxis.set_minor_locator(plt.MultipleLocator(2))
+    plt.grid(True, which='both')
 
     plt.show()

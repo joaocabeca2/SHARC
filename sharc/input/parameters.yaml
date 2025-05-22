@@ -52,8 +52,29 @@ imt:
     # the lower
     guard_band_ratio: 0.14
     ###########################################################################
+    # Adjacent Interference model used when IMT is victim. Possible values are ACIR or SPECTRAL_MASK.
+    # When using ACIR the interfence power from the other system is calculted by using the ACLR and ACS.
+    # Whith the SPECTRAL_MASK the the interference power from the other system is calculated from it's spectral mask.
+    adjacent_interf_model: ACIR
+    ###########################################################################
     # Network topology parameters.
     topology:
+        ###########################################################################
+        # This parameter is only used when other system has satellite that needs
+        # a reference point
+        # The latitude position of center of topology [deg]
+        central_latitude: -15.7801  # Brasília
+        ###########################################################################
+        # This parameter is only used when other system has satellite that needs
+        # a reference point
+        # The longitude position of center of topology [deg]
+        central_longitude: -47.9292  # Brasília
+        ###########################################################################
+        # This parameter is only used when other system has satellite that needs
+        # a reference point
+        # The altitude of center of topology [m]
+        central_altitude: 1200 # Brasília
+
         ###########################################################################
         # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
         # "INDOOR"
@@ -83,6 +104,7 @@ imt:
             # Number of clusters in single base station topology
             # You can simulate 1 or 2 BS's with this topology
             num_clusters: 2
+
         ###########################################################################
         # Hotspot Topology parameters. Relevant when imt.topology.type == "HOTSPOT"
         hotspot:
@@ -206,6 +228,10 @@ imt:
             # Base station horizontal beamsteering range. [deg]
             # The range considers the BS azimuth as 0deg
             horizontal_beamsteering_range: !!python/tuple [-60., 60.]
+            ###########################################################################
+            # Base station horizontal beamsteering range. [deg]
+            # The range considers the horizon as 90deg, 0 as zenith
+            vertical_beamsteering_range: !!python/tuple [90., 100.]
             ###########################################################################
             # Base station horizontal beamsteering range. [deg]
             # The range considers the horizon as 90deg, 0 as zenith
@@ -349,6 +375,10 @@ imt:
         ###########################################################################
         # User equipment body loss [dB]
         body_loss: 4
+        ###########################################################################
+        # Adjacent Channel Selectivity in dB
+        adjacent_ch_selectivity: 33
+        ###########################################################################
         antenna:
             ###########################################################################
             # If normalization of M2101 should be applied for UE
@@ -828,3 +858,65 @@ single_space_station:
     #   Useful for P.619
     season: SUMMER
 
+mss_d2d:
+    # MSS_D2D system name
+    name: SystemA
+    # MSS_D2D system center frequency in MHz
+    frequency: 2170.0
+    # MSS_D2d system bandwidth in MHz
+    bandwidth: 5.0
+    # MSS_D2D cell radius in network topology [m]
+    cell_radius: 19000
+    # Satellite power density in dBW/Hz
+    tx_power_density: -30
+    # Satellite Tx max Gain in dBi
+    antenna_gain: 30.0
+    # Number of sectors
+    num_sectors: 19
+    # Satellite antenna pattern
+    # Antenna pattern from ITU-R S.1528
+    # Possible values: "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO"
+    antenna_pattern: ITU-R-S.1528-Taylor
+    # Radius of the antenna's circular aperture in meters
+    antenna_diamter: 1.0
+    # The required near-in-side-lobe level (dB) relative to peak gain
+    antenna_l_s: -6.75
+    # 3 dB beamwidth angle (3 dB below maximum gain) [degrees]
+    antenna_3_dB_bw: 4.4127
+    # channel model, possible values are "FSPL" (free-space path loss),
+    #                                    "SatelliteSimple" (FSPL + 4 + clutter loss)
+    #                                    "P619"
+    channel_model: P619
+    ###########################################################################
+    # P619 parameters
+    param_p619:
+        ###########################################################################
+        # altitude of ES system [m]
+        earth_station_alt_m: 0
+        ###########################################################################
+        # latitude of ES system [m]
+        earth_station_lat_deg: 0
+        ###########################################################################
+        # difference between longitudes of IMT-NTN station and FSS-ES system [deg]
+        #   (positive if space-station is to the East of earth-station)
+        earth_station_long_diff_deg: 0.75
+        ###########################################################################
+        # year season: SUMMER of WINTER
+        season: SUMMER
+
+    # Orbit parameters
+    orbit:
+        # Number of planes
+        n_planes: 20
+        # Inclination in degrees
+        inclination_deg: 54.5
+        # Perigee in km
+        perigee_alt_km: 525.0
+        # Apogee in km
+        apogee_alt_km: 525.0
+        # Number of satellites per plane
+        sats_per_plane: 32
+        # Longitude of the first ascending node in degrees
+        long_asc_deg: 18.0
+        # Phasing in degrees
+        phasing_deg: 3.9

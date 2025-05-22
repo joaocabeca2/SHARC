@@ -7,6 +7,7 @@ import typing
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_p619 import ParametersP619
 from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
+from sharc.parameters.parameters_antenna import ParametersAntenna
 from sharc.parameters.imt.parameters_imt_topology import ParametersImtTopology
 
 
@@ -26,22 +27,29 @@ class ParametersImt(ParametersBase):
     spectral_mask: str = "IMT-2020"
     spurious_emissions: float = -13.0
     guard_band_ratio: float = 0.1
+    # Adjacent Interference filter reception used when IMT is victim. Possible values is ACS and OFF
+    adjacent_ch_reception: str = "OFF"
 
     @dataclass
     class ParametersBS(ParametersBase):
+        """Dataclass containing the IMT Base Station (BS) parameters."""
+
         load_probability = 0.2
         conducted_power = 10.0
         height: float = 6.0
         noise_figure: float = 10.0
         ohmic_loss: float = 3.0
-        antenna: ParametersAntennaImt = field(default_factory=ParametersAntennaImt)
-
+        antenna: ParametersAntenna = field(default_factory=lambda: ParametersAntenna(
+            pattern="ARRAY", array=ParametersAntennaImt(downtilt=0.0)
+        ))
     bs: ParametersBS = field(default_factory=ParametersBS)
 
     topology: ParametersImtTopology = field(default_factory=ParametersImtTopology)
 
     @dataclass
     class ParametersUL(ParametersBase):
+        """Dataclass containing the IMT Uplink (UL) parameters."""
+
         attenuation_factor: float = 0.4
         sinr_min: float = -10.0
         sinr_max: float = 22.0
@@ -52,6 +60,8 @@ class ParametersImt(ParametersBase):
 
     @dataclass
     class ParametersUE(ParametersBase):
+        """Dataclass containing the IMT User Equipment (UE) parameters."""
+
         k: int = 3
         k_m: int = 1
         indoor_percent: int = 5.0
@@ -68,11 +78,15 @@ class ParametersImt(ParametersBase):
         noise_figure: float = 10.0
         ohmic_loss: float = 3.0
         body_loss: float = 4.0
-        antenna: ParametersAntennaImt = field(default_factory=lambda: ParametersAntennaImt(downtilt=0.0,))
+        adjacent_ch_selectivity: float = 33  # Adjacent Channel Selectivity in dB
+        antenna: ParametersAntenna = field(default_factory=lambda: ParametersAntenna(
+            pattern="ARRAY"
+        ))
 
         def validate(self, ctx: str):
-            if self.antenna.horizontal_beamsteering_range != (-180., 180.)\
-                    or self.antenna.vertical_beamsteering_range != (0., 180.):
+            """Validate the UE antenna beamsteering range parameters."""
+            if self.antenna.array.horizontal_beamsteering_range != (-180., 180.)\
+                    or self.antenna.array.vertical_beamsteering_range != (0., 180.):
                 raise NotImplementedError(
                     "UE antenna beamsteering limit has not been implemented. Default values of\n"
                     "horizontal = (-180., 180.), vertical = (0., 180.) should not be changed"
@@ -136,6 +150,10 @@ class ParametersImt(ParametersBase):
             raise ValueError(
                 f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
             )
+        if self.adjacent_ch_reception not in ["ACS", "OFF"]:
+            raise ValueError(
+                f"""ParametersImt: Invalid Adjacent Channel Reception model {self.adjacent_ch_reception}""",
+            )
 
         if self.channel_model not in ["FSPL", "CI", "UMa", "UMi", "TVRO-URBAN", "TVRO-SUBURBAN", "ABG", "P619"]:
             raise ValueError(f"ParamtersImt: \
@@ -164,11 +182,15 @@ class ParametersImt(ParametersBase):
         )
 
         self.bs.antenna.set_external_parameters(
-            adjacent_antenna_model=self.adjacent_antenna_model
+            adjacent_antenna_model=self.adjacent_antenna_model,
+            frequency=self.frequency,
+            bandwidth=self.bandwidth,
         )
 
         self.ue.antenna.set_external_parameters(
-            adjacent_antenna_model=self.adjacent_antenna_model
+            adjacent_antenna_model=self.adjacent_antenna_model,
+            frequency=self.frequency,
+            bandwidth=self.bandwidth,
         )
 
         self.validate("imt")

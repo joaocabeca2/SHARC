@@ -9,7 +9,7 @@ class StationTest(unittest.TestCase):
             None,
             True,
             output_dir="output",
-            output_dir_prefix="out"
+            output_dir_prefix="out",
         )
 
     def test_flush_to_and_load_from_file(self):
@@ -43,7 +43,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(results_recuperated_from_file.imt_bs_antenna_gain, results_arr)
 
         results_recuperated_from_file = Results().load_from_dir(
-            self.results.output_directory, only_samples=["imt_bs_antenna_gain"]
+            self.results.output_directory, only_samples=["imt_bs_antenna_gain"],
         )
 
         self.assertEqual(results_recuperated_from_file.imt_coupling_loss, [])

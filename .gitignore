@@ -1,4 +1,5 @@
 /sharc/output/*.txt
+/sharc/output/*.csv
 /sharc/output/*.png
 /sharc/output_*/*
 /sharc/campaigns/*/output/
@@ -99,3 +100,4 @@ SYS_*.txt
 /sharc/campaigns/imt_*/output/output_imt*/*.csv
 /sharc/campaigns/imt_*/output/output_imt*/*.yaml
 /sharc/campaigns/imt_*/output/Figs/*.png
+sharc/campaigns/mss_d2d_to_imt/output/*.yaml

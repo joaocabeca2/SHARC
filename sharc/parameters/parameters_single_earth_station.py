@@ -17,6 +17,11 @@ class ParametersSingleEarthStation(ParametersBase):
     section_name: str = "single_earth_station"
     nested_parameters_enabled: bool = True
 
+    # for when other system needs it
+    central_latitude: float = None
+    central_altitude: float = None
+    central_longitude: float = None
+
     # NOTE: when using P.619 it is suggested that polarization loss = 3dB is normal
     # also,
     # NOTE: Verification needed:
@@ -35,6 +40,9 @@ class ParametersSingleEarthStation(ParametersBase):
 
     # Adjacent channel selectivity [dB]
     adjacent_ch_selectivity: float = None
+
+    # Adjacent channel selectivity [dB]
+    adjacent_ch_emissions: float = None
 
     # Peak transmit power spectral density (clear sky) [dBW/Hz]
     tx_power_density: float = None

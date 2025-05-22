@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass, field
+import numpy as np
 
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_p619 import ParametersP619
@@ -99,4 +100,8 @@ class ParametersFssSs(ParametersBase):
                              Invalid value for paramter channel_model = {self.channel_model}. \
                              Possible values are \"FSPL\", \"SatelliteSimple\", \"P619\".")
         self.param_p619.load_from_paramters(self)
-        self.antenna_s1528.set_external_parameters(self.frequency, self.bandwidth, self.antenna_gain, self.antenna_l_s)
+        self.antenna_s1528.set_external_parameters(frequency=self.frequency,
+                                                   bandwidth=self.bandwidth,
+                                                   antenna_gain=self.antenna_gain,
+                                                   antenna_l_s=self.antenna_l_s,
+                                                   antenna_3_dB_bw=self.antenna_3_dB,)

@@ -88,6 +88,7 @@ class TopologyMacrocell(Topology):
 
             self.x = np.repeat(self.x, 3)
             self.y = np.repeat(self.y, 3)
+            self.z = np.zeros_like(self.x)
             self.azimuth = np.tile(self.AZIMUTH, 19 * self.num_clusters)
 
             # In the end, we have to update the number of base stations
@@ -118,7 +119,7 @@ class TopologyMacrocell(Topology):
 
 
 if __name__ == '__main__':
-    intersite_distance = 500
+    intersite_distance = 1500
     num_clusters = 1
     topology = TopologyMacrocell(intersite_distance, num_clusters)
     topology.calculate_coordinates()
