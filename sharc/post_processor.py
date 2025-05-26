@@ -109,6 +109,10 @@ class ResultsStatistics:
 
 @dataclass
 class PostProcessor:
+    """
+    PostProcessor provides utilities for plotting, aggregating, and analyzing simulation results,
+    including CDF/CCDF plot generation, statistics calculation, and plot saving.
+    """
     IGNORE_FIELD = {
         "title": "ANTES NAO PLOTAVAMOS ISSO, ENTÃO CONTINUA SEM PLOTAR",
         "x_label": "",
@@ -315,8 +319,25 @@ class PostProcessor:
         return possible
 
     def generate_cdf_plots_from_results(
-        self, results: list[Results], *, n_bins=200
+        self, results: list[Results], *, n_bins=None
     ) -> list[go.Figure]:
+        """
+        Generates CDF (Cumulative Distribution Function) plots from a list of Results objects.
+
+        This method processes each Results object, extracts relevant attributes, and generates
+        CDF plots for each attribute using Plotly. Each plot is configured with appropriate
+        titles, axis labels, and legends. The method supports custom line styles and colors
+        for different result sets.
+
+        Args:
+            results (list[Results]): A list of Results objects containing data to plot.
+            n_bins (Optional[int], optional): Number of bins to use for the CDF calculation.
+                If None, a default binning strategy is used.
+
+        Returns:
+            list[go.Figure]: A list of Plotly Figure objects, each representing a CDF plot
+                for a relevant attribute found in the Results objects.
+        """
         figs: dict[str, list[go.Figure]] = {}
         COLORS = DEFAULT_PLOTLY_COLORS
 
@@ -391,11 +412,25 @@ class PostProcessor:
         return figs.values()
 
     def generate_ccdf_plots_from_results(
-        self, results: list[Results], *, n_bins=200, cutoff_percentage=0.001, logy=True
+        self, results: list[Results], *, n_bins=None, cutoff_percentage=0.001, logy=True
     ) -> list[go.Figure]:
         """
-        Generates ccdf plots for results added to instance, in log scale
-        cutoff_percentage: useful for cutting off
+        Generates CCDF (Complementary Cumulative Distribution Function) plots from a list of Results objects.
+
+        This method processes each Results object, extracts relevant attributes, and generates
+        CCDF plots for each attribute using Plotly. Each plot is configured with appropriate
+        titles, axis labels, and legends. The method supports log-scale y-axes and custom cutoff percentages.
+
+        Args:
+            results (list[Results]): A list of Results objects containing data to plot.
+            n_bins (Optional[int], optional): Number of bins to use for the CCDF calculation.
+                If None, a default binning strategy is used.
+            cutoff_percentage (float, optional): The minimum probability to display on the y-axis.
+            logy (bool, optional): Whether to use a logarithmic scale for the y-axis.
+
+        Returns:
+            list[go.Figure]: A list of Plotly Figure objects, each representing a CCDF plot
+                for a relevant attribute found in the Results objects.
         """
         figs: dict[str, list[go.Figure]] = {}
 
@@ -597,13 +632,13 @@ class PostProcessor:
         return aggregate_samples
 
     @staticmethod
-    def cdf_from(data: list[float], *, n_bins=200) -> (list[float], list[float]):
+    def cdf_from(data: list[float], *, n_bins=None) -> (list[float], list[float]):
         """
         Takes a dataset and returns both axis of a cdf (x, y)
         """
         values, base = np.histogram(
             data,
-            bins=n_bins,
+            bins=n_bins if n_bins is not None else "auto",
         )
         cumulative = np.cumsum(values)
         x = base[:-1]
@@ -612,7 +647,7 @@ class PostProcessor:
         return (x, y)
 
     @staticmethod
-    def ccdf_from(data: list[float], *, n_bins=200) -> (list[float], list[float]):
+    def ccdf_from(data: list[float], *, n_bins=None) -> (list[float], list[float]):
         """
         Takes a dataset and returns both axis of a ccdf (x, y)
         """
