@@ -102,11 +102,11 @@ class TestSatUtils(unittest.TestCase):
             (0.0, -30.0),
         ]
 
-        space_station_alts_km = [
-            1414,
-            525,
-            340,
-            35786,
+        space_station_alts = [
+            1414 * 1e3,
+            525 * 1e3,
+            340 * 1e3,
+            35786 * 1e3,
         ]
 
         expected_elevations = [
@@ -122,7 +122,8 @@ class TestSatUtils(unittest.TestCase):
                 space_station_coords[i][0],
                 earth_station_coords[i][1],
                 space_station_coords[i][1],
-                space_station_alts_km[i],
+                sat_height=space_station_alts[i],
+                es_height=0
             )
             npt.assert_almost_equal(e, expected_elevations[i], 1)
 

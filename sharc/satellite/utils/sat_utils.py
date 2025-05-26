@@ -71,7 +71,10 @@ def calc_elevation(Le: np.ndarray,
                    Ls: np.ndarray,
                    le: np.ndarray,
                    ls: np.ndarray,
-                   sat_height: np.ndarray) -> np.ndarray:
+                   *,
+                   sat_height: np.ndarray,
+                   es_height: np.ndarray,
+               ) -> np.ndarray:
     """Calculates the elevation angle from the earth station
     to space station, given earth and space station coordinates.
     Negative elevation angles means the space stations is not visible from Earth station.
@@ -87,7 +90,9 @@ def calc_elevation(Le: np.ndarray,
     ls : (ndarray)
         latitudes of the space station
     sat_height : (ndarray)
-        space station altitudes
+        space station altitudes in meters
+    es_height : (ndarray)
+        earth station altitudes in meters
 
     Returns
     -------
@@ -101,10 +106,11 @@ def calc_elevation(Le: np.ndarray,
     gamma = np.arccos(
         np.cos(Le) * np.cos(Ls) * np.cos(ls - le) + np.sin(Le) * np.sin(Ls)
     )
-    rs = EARTH_RADIUS_KM + sat_height
-    slant = np.sqrt(rs**2 + EARTH_RADIUS_KM**2 - 2 * rs * EARTH_RADIUS_KM * np.cos(gamma))
-    elev_angle = np.arccos((slant**2 + EARTH_RADIUS_KM**2 - rs**2) / \
-                           (2 * slant * EARTH_RADIUS_KM)) - np.pi / 2
+    rs = EARTH_RADIUS + sat_height
+    re = EARTH_RADIUS + es_height
+    slant = np.sqrt(rs**2 + re**2 - 2 * rs * re * np.cos(gamma))
+    elev_angle = np.arccos((slant**2 + re**2 - rs**2) / \
+                           (2 * slant * re)) - np.pi / 2
 
     return np.degrees(elev_angle)
 
