@@ -391,7 +391,7 @@ class PostProcessor:
         return figs.values()
 
     def generate_ccdf_plots_from_results(
-        self, results: list[Results], *, n_bins=200, cutoff_percentage=0.01
+        self, results: list[Results], *, n_bins=200, cutoff_percentage=0.001, logy=True
     ) -> list[go.Figure]:
         """
         Generates ccdf plots for results added to instance, in log scale
@@ -457,6 +457,20 @@ class PostProcessor:
                         name=f"{legend}",
                     ),
                 )
+                # A trick to plog semi-logy plots with better scientific aspect.
+                # I should have left it to the user to decide if they want logy or not,
+                # but I think it is better to have it by default.
+                if logy:
+                    fig.update_yaxes(type="log")
+                    yticks = []
+                    n_right_zeros = -int(np.floor(np.log10(cutoff_percentage)))
+                    for i in range(n_right_zeros, 0, -1):
+                        for j in range(1, 10):
+                            yticks.append(j * (10**(-i)))
+                    yticks = yticks + [1.0]
+                    major_yticks = [10**(-i) for i in range(4)]
+                    ytick_text = [str(v) if v in major_yticks else "" for v in yticks]
+                    fig.update_yaxes(tickvals=yticks, ticktext=ytick_text)
 
         return figs.values()
 
