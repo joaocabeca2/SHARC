@@ -281,7 +281,7 @@ class ParametersImtMssDc(ParametersBase):
 
     sat_is_active_if: ParametersSelectActiveSatellite = field(default_factory=ParametersSelectActiveSatellite)
 
-    center_beam_positioning: ParametersSectorPositioning = field(default_factory=ParametersSectorPositioning)
+    beam_positioning: ParametersSectorPositioning = field(default_factory=ParametersSectorPositioning)
 
     def validate(self, ctx: str):
         """

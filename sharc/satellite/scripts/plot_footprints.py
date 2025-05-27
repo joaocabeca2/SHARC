@@ -239,12 +239,12 @@ if __name__ == "__main__":
     params.sat_is_active_if.minimum_elevation_from_es = 5.0
     params.sat_is_active_if.lat_long_inside_country.country_names = ["Brazil"]
     # params.beams_load_factor = 0.1
-    # params.center_beam_positioning.type = "ANGLE_AND_DISTANCE_FROM_SUBSATELLITE"
-    # params.center_beam_positioning.angle_from_subsatellite_phi.type = "~U(MIN,MAX)"
-    # params.center_beam_positioning.angle_from_subsatellite_phi.distribution.min = -60.0
-    # params.center_beam_positioning.angle_from_subsatellite_phi.distribution.max = 60.0
-    # params.center_beam_positioning.distance_from_subsatellite.type = "~SQRT(U(0,1))*MAX"
-    # params.center_beam_positioning.distance_from_subsatellite.distribution.max = 1111000.0
+    # params.beam_positioning.type = "ANGLE_AND_DISTANCE_FROM_SUBSATELLITE"
+    # params.beam_positioning.angle_from_subsatellite_phi.type = "~U(MIN,MAX)"
+    # params.beam_positioning.angle_from_subsatellite_phi.distribution.min = -60.0
+    # params.beam_positioning.angle_from_subsatellite_phi.distribution.max = 60.0
+    # params.beam_positioning.distance_from_subsatellite.type = "~SQRT(U(0,1))*MAX"
+    # params.beam_positioning.distance_from_subsatellite.distribution.max = 1111000.0
 
     print("instantiating stations")
     # Create a topology with a single base station

@@ -33,7 +33,7 @@ class ParametersMssD2d(ParametersBase):
     beams_load_factor: float = 1.0
 
     # Central beam positioning
-    center_beam_positioning: ParametersSectorPositioning = field(default_factory=ParametersSectorPositioning)
+    beam_positioning: ParametersSectorPositioning = field(default_factory=ParametersSectorPositioning)
 
     # Adjacent channel emissions type
     # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
