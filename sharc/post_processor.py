@@ -383,7 +383,7 @@ class PostProcessor:
                     figs[attr_name].update_layout(
                         title=f'CDF Plot for {attr_plot_info["title"]}',
                         xaxis_title=attr_plot_info["x_label"],
-                        yaxis_title="CDF",
+                        yaxis_title="P(X <= x)",
                         yaxis=dict(tickmode="array", tickvals=[0, 0.25, 0.5, 0.75, 1]),
                         xaxis=dict(tickmode="linear", dtick=5),
                         legend_title="Labels",
@@ -472,7 +472,7 @@ class PostProcessor:
                     figs[attr_name].update_layout(
                         title=f'CCDF Plot for {attr_plot_info["title"]}',
                         xaxis_title=attr_plot_info["x_label"],
-                        yaxis_title="$\\text{P } I > X$",
+                        yaxis_title="P(X > x)",
                         yaxis=dict(tickmode="array", tickvals=ticks_at, type="log", range=[np.log10(cutoff_percentage), 0]),
                         xaxis=dict(tickmode="linear", dtick=5),
                         legend_title="Labels",
