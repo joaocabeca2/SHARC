@@ -27,6 +27,7 @@ class ParametersWifiSystem(ParametersBase):
     spurious_emissions: float = -13.0
     guard_band_ratio: float = 0.1
     antenna_pattern: str = "Modified ITU-R S.465"
+    max_dist_hotspot_ue: float = 70
 
     @dataclass
     class ParametersAP(ParametersBase):

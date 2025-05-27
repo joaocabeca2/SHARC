@@ -57,7 +57,7 @@ imt:
         ###########################################################################
         # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
         # "INDOOR"
-        type: MACROCELL
+        type: HOTSPOT
         ###########################################################################
         # Macrocell Topology parameters. Relevant when imt.topology.type == "MACROCELL"
         macrocell:
@@ -288,12 +288,12 @@ imt:
         #                                   given distributions for angle and
         #                                   distance. In this case, these must be
         #                                   defined later.
-        distribution_type: CELL
+        distribution_type: ANGLE_AND_DISTANCE
         ###########################################################################
         # Regarding the distribution of active UE's over the cell area, this
         # parameter models the distance between UE's and BS.
         # Possible values: RAYLEIGH, UNIFORM
-        distribution_distance: RAYLEIGH
+        distribution_distance: UNIFORM
         ###########################################################################
         # Regarding the distribution of active UE's over the cell area, this
         # parameter models the azimuth between UE and BS (within ±60° range).

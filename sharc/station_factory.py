@@ -129,12 +129,21 @@ class StationFactory(object):
         imt_base_stations.antenna = np.empty(
             num_bs, dtype=AntennaBeamformingImt,
         )
-
+        
         for i in range(num_bs):
-            imt_base_stations.antenna[i] = \
-                AntennaBeamformingImt(
+            if imt_base_stations.station_type[i] == StationType.IMT_BS:
+                imt_base_stations.antenna[i] = AntennaBeamformingImt(
                     param_ant, imt_base_stations.azimuth[i],
-                    imt_base_stations.elevation[i],)
+                    imt_base_stations.elevation[i],
+                )
+            elif imt_base_stations.station_type[i] == StationType.WIFI_APS:
+                imt_base_stations.antenna[i] = AntennaOmni()
+                
+            else:
+                sys.stderr.write(
+                    "ERROR\nInvalid station type for BS: " + str(imt_base_stations.station_type[i]),
+                )
+                sys.exit(1)
 
         # imt_base_stations.antenna = [AntennaOmni(0) for bs in range(num_bs)]
         imt_base_stations.bandwidth = param.bandwidth * np.ones(num_bs)
@@ -354,10 +363,19 @@ class StationFactory(object):
         # TODO: this piece of code works only for uplink
         par = ue_param_ant.get_antenna_parameters()
         for i in range(num_ue):
-            imt_ue.antenna[i] = AntennaBeamformingImt(
-                par, imt_ue.azimuth[i],
-                imt_ue.elevation[i],
-            )
+            if imt_ue.station_type[i] == StationType.IMT_UE:
+                imt_ue.antenna[i] = AntennaBeamformingImt(
+                    par, imt_ue.azimuth[i],
+                    imt_ue.elevation[i],
+                )
+            elif imt_ue.station_type[i] == StationType.WIFI_STA:
+                imt_ue.antenna[i] = AntennaOmni()
+                
+            else:
+                sys.stderr.write(
+                    "ERROR\nInvalid station type for UE: " + str(imt_ue.station_type[i]),
+                )
+                sys.exit(1)
 
         # imt_ue.antenna = [AntennaOmni(0) for bs in range(num_ue)]
         imt_ue.bandwidth = param.bandwidth * np.ones(num_ue)
@@ -519,10 +537,19 @@ class StationFactory(object):
         # TODO: this piece of code works only for uplink
         par = ue_param_ant.get_antenna_parameters()
         for i in range(num_ue):
-            imt_ue.antenna[i] = AntennaBeamformingImt(
-                par, imt_ue.azimuth[i],
-                imt_ue.elevation[i],
-            )
+            if imt_ue.station_type[i] == StationType.IMT_UE:
+                imt_ue.antenna[i] = AntennaBeamformingImt(
+                    par, imt_ue.azimuth[i],
+                    imt_ue.elevation[i],
+                )
+            elif imt_ue.station_type[i] == StationType.WIFI_STA:
+                imt_ue.antenna[i] = AntennaOmni()
+                
+            else:
+                sys.stderr.write(
+                    "ERROR\nInvalid station type for UE: " + str(imt_ue.station_type[i]),
+                )
+                sys.exit(1)
 
         # imt_ue.antenna = [AntennaOmni(0) for bs in range(num_ue)]
         imt_ue.bandwidth = param.bandwidth * np.ones(num_ue)
@@ -1257,11 +1284,15 @@ class StationFactory(object):
 
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
+    from sharc.parameters.wifi.parameters_hotspot import ParametersHotspot
 
     # plot uniform distribution in macrocell scenario
 
     factory = StationFactory()
-    topology = TopologyMacrocell(1000, 1)
+
+    t_param = ParametersHotspot()
+    #topology = TopologyMacrocell(1000, 1)
+    topology = TopologyHotspot(t_param, 321, 1)
     topology.calculate_coordinates()
 
     params = ParametersImt()
