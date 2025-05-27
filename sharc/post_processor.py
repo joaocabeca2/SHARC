@@ -433,8 +433,20 @@ class PostProcessor:
                 for a relevant attribute found in the Results objects.
         """
         figs: dict[str, list[go.Figure]] = {}
+        COLORS = DEFAULT_PLOTLY_COLORS
 
+        linestyle_color = {}
+
+        results.sort(key=lambda r: r.output_directory)
         for res in results:
+            if self.linestyle_getter is not None:
+                linestyle = self.linestyle_getter(res)
+            else:
+                linestyle = "solid"
+
+            if linestyle not in linestyle_color:
+                linestyle_color[linestyle] = 0
+
             possible_legends_mapping = self.get_results_possible_legends(res)
 
             if len(possible_legends_mapping):
@@ -490,6 +502,7 @@ class PostProcessor:
                         y=y,
                         mode="lines",
                         name=f"{legend}",
+                        line=dict(color=COLORS[linestyle_color[linestyle]], dash=linestyle)
                     ),
                 )
                 # A trick to plog semi-logy plots with better scientific aspect.
@@ -506,6 +519,10 @@ class PostProcessor:
                     major_yticks = [10**(-i) for i in range(n_right_zeros)]
                     ytick_text = [str(v) if v in major_yticks else "" for v in yticks]
                     fig.update_yaxes(tickvals=yticks, ticktext=ytick_text)
+
+            linestyle_color[linestyle] += 1
+            if linestyle_color[linestyle] >= len(COLORS):
+                linestyle_color[linestyle] = 0
 
         return figs.values()
 

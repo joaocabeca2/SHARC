@@ -52,9 +52,11 @@ styles = ["solid", "dot", "dash", "longdash", "dashdot", "longdashdot"]
 def linestyle_getter(result: Results):
     """Return a line style string based on the prefix found in the result's output directory."""
     for link in ["dl", "ul"]:
-        for prefix, style in zip(prefixes[:len(styles)], styles):
+        # for prefix, style in zip(prefixes[:len(styles)], styles):
+        for i, prefix in enumerate(prefixes):
             if prefix in result.output_directory and link in result.output_directory:
-                return style
+                return styles[i % len(styles)]  # Cycle through styles if there are more prefixes than styles
+    # Default line style if no prefix matches
     return "solid"
 
 
