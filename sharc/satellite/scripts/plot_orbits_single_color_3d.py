@@ -219,7 +219,7 @@ if __name__ == "__main__":
     vis_elevation = []
     for _ in range(NUM_DROPS):
         # Generate satellite positions using the StationFactory
-        mss_d2d_manager = StationFactory.generate_mss_d2d(params, rng, geoconv)
+        mss_d2d_manager = StationFactory.generate_mss_d2d(params, rng, geoconv, also_generate_inactive=True)
 
         # Extract satellite positions
         x_vec = mss_d2d_manager.x / 1e3  # (Km)
