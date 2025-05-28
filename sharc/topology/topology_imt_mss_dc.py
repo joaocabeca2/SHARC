@@ -13,10 +13,10 @@ The visible Space Stations are then used to generate the IMT Base Stations.
 
 import numpy as np
 import geopandas as gpd
-import shapely as shp
-import pyproj
 import functools
 
+from collections import defaultdict
+from sharc.support.sharc_utils import to_scalar
 from sharc.topology.topology import Topology
 from sharc.parameters.imt.parameters_imt_mss_dc import ParametersImtMssDc
 from sharc.parameters.parameters_orbit import ParametersOrbit
@@ -220,28 +220,36 @@ class TopologyImtMssDc(Topology):
                 )
         # We have the list of visible satellites, now create a Topolgy of this subset and move the coordinate system
         # reference.
+        all_space_station_x = np.ravel(np.array(all_positions['sx'])) * 1e3  # Convert X-coordinates to meters
+        all_space_station_y = np.ravel(np.array(all_positions['sy'])) * 1e3  # Convert Y-coordinates to meters
+        all_space_station_z = np.ravel(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
+        all_elevation = np.ravel(np.array(all_elevations))  # Elevation angles
+        all_azimuth = np.ravel(np.array(all_azimuths))  # Azimuth angles
+        all_lat = np.ravel(np.array(all_positions['lat']))
+        all_lon = np.ravel(np.array(all_positions['lon']))
+        all_sat_altitude = np.ravel(np.array(all_positions['alt'])) * 1e3
         if only_active:
             total_active_satellites = len(active_satellite_idxs)
-            space_station_x = np.squeeze(np.array(all_positions['sx']))[active_satellite_idxs] * 1e3  # Convert X-coordinates to meters
-            space_station_y = np.squeeze(np.array(all_positions['sy']))[active_satellite_idxs] * 1e3  # Convert Y-coordinates to meters
-            space_station_z = np.squeeze(np.array(all_positions['sz']))[active_satellite_idxs] * 1e3  # Convert Z-coordinates to meters
-            elevation = np.squeeze(np.array(all_elevations))[active_satellite_idxs]  # Elevation angles
-            azimuth = np.squeeze(np.array(all_azimuths))[active_satellite_idxs]  # Azimuth angles
-            # Store the latitude and longitude of the visible satellites for later use
-            lat = np.squeeze(np.array(all_positions['lat']))[active_satellite_idxs]
-            lon = np.squeeze(np.array(all_positions['lon']))[active_satellite_idxs]
-            sat_altitude = np.squeeze(np.array(all_positions['alt']))[active_satellite_idxs] * 1e3
+            space_station_x = all_space_station_x[active_satellite_idxs]
+            space_station_y = all_space_station_y[active_satellite_idxs]
+            space_station_z = all_space_station_z[active_satellite_idxs]
+            elevation = all_elevation[active_satellite_idxs]
+            azimuth = all_azimuth[active_satellite_idxs]
+            lat = all_lat[active_satellite_idxs]
+            lon = all_lon[active_satellite_idxs]
+            sat_altitude = all_sat_altitude[active_satellite_idxs]
+            sat_altitude = all_sat_altitude[active_satellite_idxs]
         else:
             total_active_satellites = total_satellites
-            space_station_x = np.squeeze(np.array(all_positions['sx'])) * 1e3  # Convert X-coordinates to meters
-            space_station_y = np.squeeze(np.array(all_positions['sy'])) * 1e3  # Convert Y-coordinates to meters
-            space_station_z = np.squeeze(np.array(all_positions['sz'])) * 1e3  # Convert Z-coordinates to meters
-            elevation = np.squeeze(np.array(all_elevations))  # Elevation angles
-            azimuth = np.squeeze(np.array(all_azimuths))  # Azimuth angles
-            # Store the latitude and longitude of the visible satellites for later use
-            lat = np.squeeze(np.array(all_positions['lat']))
-            lon = np.squeeze(np.array(all_positions['lon']))
-            sat_altitude = np.squeeze(np.array(all_positions['alt'])) * 1e3
+            space_station_x = all_space_station_x
+            space_station_y = all_space_station_y
+            space_station_z = all_space_station_z
+            elevation = all_elevation
+            azimuth = all_azimuth
+            lat = all_lat
+            lon = all_lon
+            sat_altitude = all_sat_altitude
+            sat_altitude = all_sat_altitude
 
         # Convert the ECEF coordinates to the transformed cartesian coordinates and set the Space Station positions
         # used to generetate the IMT Base Stations
@@ -251,20 +259,22 @@ class TopologyImtMssDc(Topology):
         # Rotate the azimuth and elevation angles off the center beam the new transformed cartesian coordinates
         r = 1
         # transform pointing vectors, without considering geodesical earth coord system
-        pointing_vec_x, pointing_vec_y, pointing_vec_z = polar_to_cartesian(r, azimuth, elevation)
+        pointing_vec_x, pointing_vec_y, pointing_vec_z = polar_to_cartesian(r, all_azimuth, all_elevation)
         pointing_vec_x, pointing_vec_y, pointing_vec_z = \
             geometry_converter.convert_cartesian_to_transformed_cartesian(
                 pointing_vec_x, pointing_vec_y, pointing_vec_z, translate=0)
-        _, azimuth, elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
+        _, all_azimuth, all_elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
 
         beams_elev, beams_azim, sx, sy = TopologyImtMssDc.get_satellite_pointing(
             random_number_gen,
+            geometry_converter,
             orbit_params,
             total_active_satellites,
-            space_station_x, space_station_y, space_station_z,
-            azimuth,
-            elevation,
-            sat_altitude,
+            all_space_station_x, all_space_station_y, all_space_station_z,
+            all_azimuth,
+            all_elevation,
+            all_lat, all_lon, all_sat_altitude,
+            active_satellite_idxs
         )
 
         # In SHARC each sector is treated as a separate base station, so we need to repeat the satellite positions
@@ -323,11 +333,13 @@ class TopologyImtMssDc(Topology):
     @staticmethod
     def get_satellite_pointing(
         random_number_gen: np.random.RandomState,
+        geometry_converter: GeometryConverter,
         orbit_params: ParametersImtMssDc,
         total_active_satellites: int,
-        sat_x: np.ndarray, sat_y: np.ndarray, sat_z: np.ndarray,
-        nadir_azim: np.ndarray, nadir_elev: np.ndarray,
-        sat_altitude: np.ndarray,
+        all_sat_x: np.ndarray, all_sat_y: np.ndarray, all_sat_z: np.ndarray,
+        all_nadir_azim: np.ndarray, all_nadir_elev: np.ndarray,
+        all_sat_lat: np.ndarray, all_sat_lon: np.ndarray, all_sat_altitude: np.ndarray,
+        active_satellite_idxs: np.ndarray
     ):
         """
         Parameters:
@@ -336,6 +348,97 @@ class TopologyImtMssDc(Topology):
             raw_positions: {"lat": [[0.5, ...] where idx == orbit_number], "lon", "sx", "sy", "sz"}
                 (before sharc's coordinate transformation, with distances in km)
         """
+        if orbit_params.beam_positioning.type == "SERVICE_GRID":
+            orbit_params.beam_positioning.service_grid.validate("service_grid")
+
+            # 2xN, (lon, lat)
+            grid = orbit_params.beam_positioning.service_grid.lon_lat_grid
+            grid_lon = grid[0]
+            grid_lat = grid[1]
+            grid_ecef = orbit_params.beam_positioning.service_grid.ecef_grid
+            grid_x = grid_ecef[0]
+            grid_y = grid_ecef[1]
+            grid_z = grid_ecef[2]
+
+            eligible_sats_polygon = orbit_params.beam_positioning.service_grid.eligibility_polygon
+            minx, miny, maxx, maxy = eligible_sats_polygon.bounds
+
+            eligible_sats_msk = np.ones_like(all_sat_lat, dtype=bool)
+
+            # create points(lon, lat) to compare to country
+            sats_points = gpd.points_from_xy(all_sat_lon[eligible_sats_msk], all_sat_lat[eligible_sats_msk], crs="EPSG:4326")
+
+            # Check if the satellite is inside the country polygon
+            polygon_mask = np.zeros_like(eligible_sats_msk, dtype=bool)
+            polygon_mask[eligible_sats_msk] = sats_points.within(
+                eligible_sats_polygon
+            )
+
+            eligible_sats_msk &= polygon_mask
+            eligible_sats_idx = np.where(eligible_sats_msk)[0]
+
+            elev = calc_elevation(
+                grid_lat[:, np.newaxis],
+                all_sat_lat[eligible_sats_msk][np.newaxis, :],
+                grid_lon[:, np.newaxis],
+                all_sat_lon[eligible_sats_msk][np.newaxis, :],
+                sat_height=all_sat_altitude[eligible_sats_msk][np.newaxis, :],
+                es_height=0,
+            )
+
+            best_sats = elev.argmax(axis=-1)
+
+            best_sats_true = eligible_sats_idx[best_sats]
+            
+            x = grid_x - all_sat_x[best_sats_true]
+            y = grid_y - all_sat_y[best_sats_true]
+            z = grid_z - all_sat_z[best_sats_true]
+            norm = np.sqrt(x * x + y * y + z * z)
+
+            azim = np.array(
+                np.rad2deg(
+                    np.arctan2(
+                        y, x,
+                    ),
+                ),
+            )
+            elev = 90 - np.rad2deg(np.arccos(np.clip(z / norm, -1., 1.)))
+
+            # Rotate the azimuth and elevation angles off the center beam the new transformed cartesian coordinates
+            r = 1
+            # transform pointing vectors, without considering geodesical earth coord system
+            pointing_vec_x, pointing_vec_y, pointing_vec_z = polar_to_cartesian(r, azim, elev)
+            pointing_vec_x, pointing_vec_y, pointing_vec_z = \
+                geometry_converter.convert_cartesian_to_transformed_cartesian(
+                    pointing_vec_x, pointing_vec_y, pointing_vec_z, translate=0)
+            _, azim, elev = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
+
+            sat_points_towards = defaultdict(list)
+
+            for i, sat in enumerate(best_sats_true):
+                sat_points_towards[sat].append(i)
+
+            # now only return the angles that
+            # the caller asked with the active_sat_idxs parameter
+            beams_azim = []
+            beams_elev = []
+            n = 0
+
+            for act_sat in active_satellite_idxs:
+                if act_sat in sat_points_towards:
+                    n += len(sat_points_towards[act_sat])
+                    beams_azim.append(azim[sat_points_towards[act_sat]])
+                    beams_elev.append(elev[sat_points_towards[act_sat]])
+                else:
+                    beams_azim.append([])
+                    beams_elev.append([])
+
+            # FIXME: change either this or the transform_ue_xyz to make this correct
+            # we don't currently care
+            sx = np.zeros(n)
+            sy = np.zeros(n)
+
+            return beams_elev, beams_azim, sx, sy
         # We borrow the TopologyNTN method to calculate the sectors azimuth and elevation angles from their
         # respective x and y boresight coordinates
         sx, sy = TopologyNTN.get_sectors_xy(
@@ -393,6 +496,7 @@ class TopologyImtMssDc(Topology):
                     f"mss_d2d_params.beam_positioning.angle_from_subsatellite_theta.type = \n"
                     f"'{orbit_params.beam_positioning.angle_from_subsatellite_theta.type}' is not recognized!"
                 )
+            sat_altitude = all_sat_altitude[active_satellite_idxs]
             subsatellite_distance_add = sat_altitude * np.tan(off_nadir_add)
 
             azim_add = TopologyImtMssDc.get_distr(
@@ -435,6 +539,9 @@ class TopologyImtMssDc(Topology):
         )
 
         # Rotate and set the each beam azimuth and elevation angles - only for the visible satellites
+        nadir_elev = all_nadir_elev[active_satellite_idxs]
+        nadir_azim = all_nadir_azim[active_satellite_idxs]
+
         for i in range(total_active_satellites):
             # Rotate the azimuth and elevation angles based on the new nadir point
             beams_elev[i], beams_azim[i] = rotate_angles_based_on_new_nadir(
@@ -500,6 +607,10 @@ class TopologyImtMssDc(Topology):
 
     # We can factor this out if another topology also ends up needing this
     def transform_ue_xyz(self, bs_i, x, y, z):
+        convert_to_scalar = False
+        if not isinstance(x, np.ndarray):
+            convert_to_scalar = True
+
         x, y, z = super().transform_ue_xyz(bs_i, x, y, z)
 
         # translate by earth radius on the lat long passed
@@ -539,6 +650,8 @@ class TopologyImtMssDc(Topology):
         # translate ue back so other system is in (0,0,0)
         z -= self.geometry_converter.get_translation()
 
+        if convert_to_scalar:
+            return (to_scalar(x), to_scalar(y), to_scalar(z))
         return (x, y, z)
 
 
@@ -565,16 +678,20 @@ if __name__ == '__main__':
     )
     params.sat_is_active_if.conditions = [
         "LAT_LONG_INSIDE_COUNTRY",
-        "MINIMUM_ELEVATION_FROM_ES",
+        # "MINIMUM_ELEVATION_FROM_ES",
     ]
     params.sat_is_active_if.minimum_elevation_from_es = 5
     params.sat_is_active_if.lat_long_inside_country.country_names = ["Brazil"]
+    # params.beam_positioning.type = "SERVICE_GRID"
     # params.beam_positioning.type = "ANGLE_FROM_SUBSATELLITE"
     # params.beam_positioning.angle_from_subsatellite_phi.type = "~U(MIN,MAX)"
     # params.beam_positioning.angle_from_subsatellite_phi.distribution.min = -180.
     # params.beam_positioning.angle_from_subsatellite_phi.distribution.max = -180.
     # params.beam_positioning.angle_from_subsatellite_theta.type = "FIXED"
     # params.beam_positioning.angle_from_subsatellite_theta.fixed = 0
+
+    params.propagate_parameters()
+    params.validate("validando")
 
     # Define the geometry converter
     geometry_converter = GeometryConverter()
@@ -763,8 +880,14 @@ if __name__ == '__main__':
     # Plot the IMT MSS-DC space stations in a 2D plane
     fig_2d = go.Figure()
 
-    # Add circles centered at the (x, y) coordinates of the space stations
-    for x, y in zip(imt_mss_dc_topology.x, imt_mss_dc_topology.y):
+    # Add circles centered at the (x, y) coordinates of the sectors
+    for bs_i in range(imt_mss_dc_topology.num_base_stations):
+        x, y, z = imt_mss_dc_topology.transform_ue_xyz(
+            bs_i,
+            imt_mss_dc_topology.x[bs_i],
+            imt_mss_dc_topology.y[bs_i],
+            imt_mss_dc_topology.z[bs_i],
+        )
         circle = go.Scatter(
             x=[x / 1e3 + imt_mss_dc_topology.orbit_params.beam_radius /
                1e3 * np.cos(theta) for theta in np.linspace(0, 2 * np.pi, 100)],

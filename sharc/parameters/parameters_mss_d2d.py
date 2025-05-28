@@ -150,6 +150,12 @@ class ParametersMssD2d(ParametersBase):
                                                    bandwidth=self.bandwidth,
                                                    antenna_l_s=self.antenna_l_s,
                                                    antenna_3_dB_bw=self.antenna_3_dB_bw,)
+        if self.beam_positioning.service_grid.beam_radius is None:
+            self.beam_positioning.service_grid.beam_radius = self.cell_radius
+
+        self.beam_positioning.service_grid.load_from_active_sat_conditions(
+            self.sat_is_active_if,
+        )
 
         if self.channel_model == "P619":
             # mean station altitude in meters

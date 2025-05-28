@@ -1,7 +1,9 @@
 import numpy as np
 import shapely as shp
+import shapely.vectorized
 import pyproj
 import scipy.spatial.transform
+import typing
 
 from sharc.satellite.utils.sat_utils import lla2ecef, ecef2lla
 from sharc.station_manager import StationManager
@@ -447,6 +449,83 @@ def shrink_countries_by_km(
     return [
         poly for poly in polys if poly.is_valid and not poly.is_empty and poly.area > 0
     ]
+
+
+def generate_grid_in_polygon(
+    polygon: shp.geometry.Polygon,
+    hexagon_radius: float,
+):
+    """
+    Projects a Polygon in "EPSG:4326" to Lambert Azimuthal Equal Area projection,
+    creates a hexagonal grid inside the polygon,
+    where the points are in the heaxagon center,
+    projects the points back to EPSG:4326.
+    Returns:
+        np.array with dimension 2 x N,
+        with lon's along 1st dimension and lat's along 2nd
+    """
+    # Lambert is more precise, but could prob. get UTM projection
+    # Didn't see any practical difference for current use cases
+    proj_crs = get_lambert_equal_area_crs(polygon)
+
+    # Create transformer objects
+    # NOTE: important always_xy=True to not mix lat lon up order
+    to_proj = pyproj.Transformer.from_crs("EPSG:4326", proj_crs, always_xy=True).transform
+    from_proj = pyproj.Transformer.from_crs(proj_crs, "EPSG:4326", always_xy=True).transform
+
+    # Transform to projection where unit is meters
+    polygon_proj = shp.ops.transform(to_proj, polygon)
+
+    # create a bounding box, afterwards we filter to polygon site
+    minx, miny, maxx, maxy = polygon_proj.bounds
+    x_spacing = 3 * hexagon_radius
+    y_spacing = hexagon_radius * np.sqrt(3) / 2
+
+    x_vals = np.arange(minx, maxx + hexagon_radius, x_spacing)
+
+    y_vals = np.arange(miny, maxy + hexagon_radius, y_spacing)
+
+    x_vals, y_vals = np.meshgrid(x_vals, y_vals)
+
+    # dislocate every i%2==0 row to create a hexagonal grid
+    x_vals[::2] += x_spacing / 2
+
+    x_vals = x_vals.ravel()
+    y_vals = y_vals.ravel()
+
+    msk = shp.vectorized.contains(polygon_proj, x_vals, y_vals)
+    x_vals = x_vals[msk]
+    y_vals = y_vals[msk]
+
+    # Return to EPSG:4326
+    xt, yt = from_proj(x_vals, y_vals)
+
+    return np.stack((xt, yt))
+
+
+def generate_grid_in_multipolygon(
+    poly: typing.Union[shp.geometry.MultiPolygon, shp.geometry.Polygon],
+    km: float
+) -> list[shp.geometry.MultiPolygon]:
+    """
+    Receives a MultiPolygon containing multiple countries
+    and creates a grid for each of them
+    Returns a single 2xN grid of lon's lat's
+    """
+    lons = []
+    lats = []
+
+    if poly.geom_type == 'Polygon':
+        x, y = generate_grid_in_polygon(poly, km)
+        lons.extend(x)
+        lats.extend(y)
+    elif poly.geom_type == 'MultiPolygon':
+        for p in poly.geoms:
+            x, y = generate_grid_in_polygon(poly, km)
+            lons.extend(x)
+            lats.extend(y)
+
+    return np.stack((lons, lats))
 
 
 if __name__ == "__main__":
