@@ -1,9 +1,9 @@
 import numpy as np
-from sharc.satellite.ngso.constants import EARTH_RADIUS
+from sharc.satellite.ngso.constants import EARTH_RADIUS_M
 
 
 def ecef2lla(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
-    """Coverts ECEF cartesian coordinates to lat long in WSG84 CRS.
+    """Coverts ECEF cartesian coordinates to lat long in spherical earth model.
 
     Parameters
     ----------
@@ -17,7 +17,7 @@ def ecef2lla(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
     Returns
     -------
     tuple (lat, long, alt)
-        lat long and altitude in WSG84 format
+        lat long and altitude in spherical earth model
     """
     x = np.atleast_1d(x)
     y = np.atleast_1d(y)
@@ -30,7 +30,7 @@ def ecef2lla(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
     lat = np.arctan2(z, xy)
 
     xyz = np.sqrt(x**2 + y**2 + z**2)
-    alt = xyz - EARTH_RADIUS
+    alt = xyz - EARTH_RADIUS_M
 
     lat = np.rad2deg(lat)
     lon = np.rad2deg(lon)
@@ -39,7 +39,7 @@ def ecef2lla(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
 
 
 def lla2ecef(lat: np.ndarray, lon: np.ndarray, alt: np.ndarray) -> tuple:
-    """Converts from geodetic WSG84 to ECEF coordinates
+    """Converts from spherical earth model lla to ECEF coordinates
 
     Parameters
     ----------
@@ -59,7 +59,7 @@ def lla2ecef(lat: np.ndarray, lon: np.ndarray, alt: np.ndarray) -> tuple:
     lon = np.atleast_1d(lon)
     alt = np.atleast_1d(alt)
 
-    r = (alt + EARTH_RADIUS)
+    r = (alt + EARTH_RADIUS_M)
     x = r * np.cos(np.deg2rad(lat)) * np.cos(np.deg2rad(lon))
     y = r * np.cos(np.deg2rad(lat)) * np.sin(np.deg2rad(lon))
     z = r * np.sin(np.deg2rad(lat))
@@ -106,8 +106,8 @@ def calc_elevation(Le: np.ndarray,
     gamma = np.arccos(
         np.cos(Le) * np.cos(Ls) * np.cos(ls - le) + np.sin(Le) * np.sin(Ls)
     )
-    rs = EARTH_RADIUS + sat_height
-    re = EARTH_RADIUS + es_height
+    rs = EARTH_RADIUS_M + sat_height
+    re = EARTH_RADIUS_M + es_height
     slant = np.sqrt(rs**2 + re**2 - 2 * rs * re * np.cos(gamma))
     elev_angle = np.arccos((slant**2 + re**2 - rs**2) / \
                            (2 * slant * re)) - np.pi / 2
