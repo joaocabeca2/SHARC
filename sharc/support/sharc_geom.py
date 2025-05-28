@@ -6,7 +6,7 @@ import scipy.spatial.transform
 from sharc.satellite.utils.sat_utils import lla2ecef, ecef2lla
 from sharc.station_manager import StationManager
 from sharc.support.sharc_utils import to_scalar
-from sharc.satellite.ngso.constants import EARTH_RADIUS
+from sharc.satellite.ngso.constants import EARTH_RADIUS_M
 
 
 def cartesian_to_polar(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
@@ -171,7 +171,7 @@ class GeometryConverter():
         self.rotation = None
 
     def get_translation(self):
-        return self.ref_alt + EARTH_RADIUS
+        return self.ref_alt + EARTH_RADIUS_M
 
     def validate(self):
         if None in [self.ref_lat, self.ref_long, self.ref_alt]:

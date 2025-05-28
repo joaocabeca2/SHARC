@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 import sharc.satellite.utils.sat_utils as sat_utils
-from sharc.satellite.ngso.constants import EARTH_RADIUS
+from sharc.satellite.ngso.constants import EARTH_RADIUS_M
 
 
 class TestSatUtils(unittest.TestCase):
@@ -12,16 +12,16 @@ class TestSatUtils(unittest.TestCase):
 
     def test_ecef2lla(self):
         # Object is over the meridional plane at 1414km of altitude
-        sx1 = EARTH_RADIUS + 1414e3
+        sx1 = EARTH_RADIUS_M + 1414e3
         sy1 = 0.0
         sz1 = 0.0
         lat, lng, alt = sat_utils.ecef2lla(sx1, sy1, sz1)
         npt.assert_almost_equal(lat, 0.0, 2)
         npt.assert_almost_equal(lng, 0.0, 2)
-        npt.assert_almost_equal(alt, sx1 - EARTH_RADIUS, 1)
+        npt.assert_almost_equal(alt, sx1 - EARTH_RADIUS_M, 1)
 
         # Object is over the meridional plane at sea level
-        sx2 = EARTH_RADIUS
+        sx2 = EARTH_RADIUS_M
         sy2 = 0.0
         sz2 = 0.0
         lat, lng, alt = sat_utils.ecef2lla(sx2, sy2, sz2)
@@ -29,7 +29,7 @@ class TestSatUtils(unittest.TestCase):
         npt.assert_almost_equal(lng, 0.0, 2)
         npt.assert_almost_equal(alt, 0.0, 1)
 
-        r = EARTH_RADIUS + 4209582
+        r = EARTH_RADIUS_M + 4209582
         expected_lat = 18.0316
         expected_lon = 39.30153
         sx3 = r * np.cos(np.deg2rad(expected_lat)) * np.cos(np.deg2rad(expected_lon))
@@ -39,7 +39,7 @@ class TestSatUtils(unittest.TestCase):
         lat, lng, alt = sat_utils.ecef2lla(sx3, sy3, sz3)
         npt.assert_almost_equal(lat, expected_lat, 3)
         npt.assert_almost_equal(lng, expected_lon, 3)
-        npt.assert_almost_equal(alt, r - EARTH_RADIUS, 1)
+        npt.assert_almost_equal(alt, r - EARTH_RADIUS_M, 1)
 
         # test the array form
         sx = [sx1, sx2, sx3]
@@ -57,7 +57,7 @@ class TestSatUtils(unittest.TestCase):
         alt = 1414000.0
         sx, sy, sz = sat_utils.lla2ecef(lat, lng, alt)
 
-        npt.assert_almost_equal(sx, alt + EARTH_RADIUS, 1)
+        npt.assert_almost_equal(sx, alt + EARTH_RADIUS_M, 1)
         npt.assert_almost_equal(sy, 0.0, 1)
         npt.assert_almost_equal(sz, 0.0, 1)
 
@@ -66,7 +66,7 @@ class TestSatUtils(unittest.TestCase):
         lng = 0.0
         alt = 0.0
         sx, sy, sz = sat_utils.lla2ecef(lat, lng, alt)
-        npt.assert_almost_equal(sx, EARTH_RADIUS, 1)
+        npt.assert_almost_equal(sx, EARTH_RADIUS_M, 1)
         npt.assert_almost_equal(sy, 0.0, 1)
         npt.assert_almost_equal(sz, 0.0, 1)
 
@@ -83,7 +83,7 @@ class TestSatUtils(unittest.TestCase):
         lng = [0.0, 0.0, 46.839308]
         alt = [1414000.0, 0.0, 141400.0]
         sx, sy, sz = sat_utils.lla2ecef(lat, lng, alt)
-        npt.assert_almost_equal(sx, [1414000.0 + EARTH_RADIUS, EARTH_RADIUS, 3259772.4], 1)
+        npt.assert_almost_equal(sx, [1414000.0 + EARTH_RADIUS_M, EARTH_RADIUS_M, 3259772.4], 1)
         npt.assert_almost_equal(sy, [0.0, 0.0, 3476081.0], 1)
         npt.assert_almost_equal(sz, [0.0, 0.0, 4449180.9], 1)
 
