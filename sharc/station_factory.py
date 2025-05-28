@@ -66,6 +66,7 @@ class StationFactory(object):
         param_ant_bs: ParametersAntennaImt,
         topology: Topology,
         random_number_gen: np.random.RandomState,
+        is_ap: bool = False,
     ):
         param_ant = param_ant_bs.get_antenna_parameters()
         num_bs = topology.num_base_stations
@@ -181,12 +182,13 @@ class StationFactory(object):
         ue_param_ant: ParametersAntennaImt,
         topology: Topology,
         random_number_gen: np.random.RandomState,
+        is_sta: bool = False
     ) -> StationManager:
 
         if param.topology == "INDOOR":
-            return StationFactory.generate_imt_ue_indoor(param, ue_param_ant, random_number_gen, topology)
+            return StationFactory.generate_imt_ue_indoor(param, ue_param_ant, random_number_gen, topology, is_sta)
         else:
-            return StationFactory.generate_imt_ue_outdoor(param, ue_param_ant, random_number_gen, topology)
+            return StationFactory.generate_imt_ue_outdoor(param, ue_param_ant, random_number_gen, topology, is_sta)
 
     @staticmethod
     def generate_ras_station(
@@ -205,6 +207,7 @@ class StationFactory(object):
         ue_param_ant: ParametersAntennaImt,
         random_number_gen: np.random.RandomState,
         topology: Topology,
+        is_sta: bool = False
     ) -> StationManager:
         num_bs = topology.num_base_stations
         num_ue_per_bs = param.ue.k * param.ue.k_m
@@ -414,6 +417,7 @@ class StationFactory(object):
         ue_param_ant: ParametersAntennaImt,
         random_number_gen: np.random.RandomState,
         topology: Topology,
+        is_sta: bool = False
     ) -> StationManager:
         num_bs = topology.num_base_stations
         num_ue_per_bs = param.ue.k * param.ue.k_m
@@ -1281,6 +1285,18 @@ class StationFactory(object):
 
         return x, y, theta, distance
 
+    @staticmethod
+    def separate_imt_from_wifi(self, station):
+        for i in range(len(station)):
+            if station[i].station_type == StationType.WIFI_APS:
+                station[i].station_type = StationType.WIFI_STA
+            elif station[i].station_type == StationType.IMT_BS:
+                station[i].station_type = StationType.WIFI_APS
+            else:
+                sys.stderr.write(
+                    "ERROR\nInvalid station type for separation: " + str(station[i].station_type),
+                )
+                sys.exit(1)
 
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
@@ -1295,7 +1311,7 @@ if __name__ == '__main__':
     topology = TopologyHotspot(t_param, 321, 1)
     topology.calculate_coordinates()
 
-    params = ParametersImt()
+    params = Parameters()
 
     bs_ant_param = ParametersAntennaImt()
 
@@ -1303,8 +1319,10 @@ if __name__ == '__main__':
 
     rnd = np.random.RandomState(1)
 
-    imt_ue = factory.generate_imt_ue(params, ue_ant_param, topology, rnd)
-    imt_bs = factory.generate_imt_base_stations(params, bs_ant_param, topology, rnd)
+    imt_ue = factory.generate_imt_ue(params.imt, ue_ant_param, topology, rnd)
+    imt_bs = factory.generate_imt_base_stations(params.imt, bs_ant_param, topology, rnd)
+    wifi_aps = factory.generate_imt_base_stations(params.wifi, bs_ant_param, topology, rnd, is_ap=True)
+    wifi_sta = factory.generate_imt_ue(params.wifi, bs_ant_param, topology, rnd)
 
     fig = plt.figure(figsize=(8, 8), facecolor='w', edgecolor='k')
     ax = fig.add_subplot(1, 1, 1)
@@ -1315,26 +1333,12 @@ if __name__ == '__main__':
     plt.xlabel("x-coordinate [m]")
     plt.ylabel("y-coordinate [m]")
 
-    # Separar por tipo de estação
-    # Base stations
-    imt_bs_x = imt_bs.x[np.array(imt_bs.station_type) == StationType.IMT_BS]
-    imt_bs_y = imt_bs.y[np.array(imt_bs.station_type) == StationType.IMT_BS]
-
-    wifi_aps_x = imt_bs.x[np.array(imt_bs.station_type) == StationType.WIFI_APS]
-    wifi_aps_y = imt_bs.y[np.array(imt_bs.station_type) == StationType.WIFI_APS]
-
-    # User equipments
-    imt_ue_x = imt_ue.x[np.array(imt_ue.station_type) == StationType.IMT_UE]
-    imt_ue_y = imt_ue.y[np.array(imt_ue.station_type) == StationType.IMT_UE]
-
-    wifi_sta_x = imt_ue.x[np.array(imt_ue.station_type) == StationType.WIFI_STA]
-    wifi_sta_y = imt_ue.y[np.array(imt_ue.station_type) == StationType.WIFI_STA]
 
     # Plotagem diferenciada
-    ax.plot(imt_bs_x, imt_bs_y, "bs", label="IMT BS")       # azul, quadrado
-    ax.plot(wifi_aps_x, wifi_aps_y, "go", label="WiFi AP")  # verde, círculo
-    ax.plot(imt_ue_x, imt_ue_y, "r^", label="IMT UE")        # vermelho, triângulo
-    ax.plot(wifi_sta_x, wifi_sta_y, "m.", label="WiFi STA") # magenta, ponto
+    ax.plot(imt_bs.x, imt_bs.y, "bs", label="IMT BS")       # azul, quadrado
+    ax.plot(wifi_aps.x, wifi_aps.y, "go", label="WiFi AP")  # verde, círculo
+    ax.plot(imt_ue.x, imt_ue.y, "r^", label="IMT UE")        # vermelho, triângulo
+    ax.plot(wifi_sta.x, wifi_sta.y, "m.", label="WiFi STA") # magenta, ponto
 
     plt.legend(loc="best")
     plt.tight_layout()

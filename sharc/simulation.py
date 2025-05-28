@@ -599,12 +599,13 @@ class Simulation(ABC, Observable):
         Calculates the gains of antennas in station_1 in the direction of
         station_2
         """
+    
         station_1_active = np.where(station_1.active)[0]
         station_2_active = np.where(station_2.active)[0]
 
         # Initialize variables (phi, theta, beams_idx)
-        if (station_1.station_type is StationType.IMT_BS):
-            if (station_2.station_type is StationType.IMT_UE):
+        if np.isin(station_1.station_type, [StationType.IMT_BS, StationType.WIFI_APS]).any():
+            if np.isin(station_2.station_type, [StationType.IMT_UE, StationType.WIFI_STA]).any():
                 phi = self.bs_to_ue_phi
                 theta = self.bs_to_ue_theta
                 beams_idx = self.bs_to_ue_beam_rbs[station_2_active]
@@ -615,30 +616,18 @@ class Simulation(ABC, Observable):
                 beams_idx = np.tile(
                     np.arange(self.parameters.imt.ue.k), self.bs.num_stations,
                 )
-
-        elif (station_1.station_type is StationType.IMT_UE):
+        else:
             phi, theta = station_1.get_pointing_vector_to(station_2)
             beams_idx = np.zeros(len(station_2_active), dtype=int)
-        
-        elif station_1.station_type  is StationType.WIFI_APS:
-            if station_2.station_type is StationType.WIFI_STA:
-                phi = self.system.ap_to_sta_phi
-                theta = self.system.ap_to_sta_theta
-                beams_idx = self.system.ap_to_sta_beam_rbs[station_2_active]
-            elif station_2 not in(StationType.WIFI_APS, StationType.WIFI_STA):
-                phi, theta = station_1.get_pointing_vector_to(station_2)
-                #phi = np.repeat(phi, self.parameters.wifi.sta.k, 0)
-                #theta = np.repeat(theta, self.parameters.wifi.sta.k, 0)
-                beams_idx = np.zeros(len(station_2_active), dtype=int)
                 
-        elif not station_1.is_imt_station():
+        '''elif not station_1.is_imt_station():
             phi, theta = station_1.get_pointing_vector_to(station_2)
-            beams_idx = np.zeros(len(station_2_active), dtype=int)
+            beams_idx = np.zeros(len(station_2_active), dtype=int)'''
 
         # Calculate gains
         gains = np.zeros(phi.shape)
-        if station_1.station_type is StationType.IMT_BS and not station_2.is_imt_station()\
-            and station_2.station_type not in (StationType.WIFI_APS, StationType.WIFI_STA):
+        if (np.isin(station_1.station_type, [StationType.IMT_BS, StationType.WIFI_APS]).any()) and not station_2.is_imt_station()\
+            and not(np.isin(station_2.station_type, [StationType.IMT_UE, StationType.WIFI_STA]).any()):
             for k in station_1_active:
                 for b in range(k * self.parameters.imt.ue.k, (k + 1) * self.parameters.imt.ue.k):
                     gains[b, station_2_active] = station_1.antenna[k].calculate_gain(
@@ -687,22 +676,22 @@ class Simulation(ABC, Observable):
                 theta_vec=theta[0, station_2_active],
             )
 
-        elif not station_1.is_imt_station() and \
-                   (station_1.station_type is not StationType.WIFI_APS and \
-                    station_1.station_type is not StationType.WIFI_STA) :
+            '''elif not station_1.is_imt_station() and \
+                        (station_1.station_type is not StationType.WIFI_APS and \
+                        station_1.station_type is not StationType.WIFI_STA) :
 
-            off_axis_angle = station_1.get_off_axis_angle(station_2)
-            distance = station_1.get_distance_to(station_2)
-            theta = np.degrees(
-                np.arctan2(
-                    (station_1.height - station_2.height), distance,
-                ),
-            ) + station_1.elevation
-            gains[0, station_2_active] = \
-                station_1.antenna[0].calculate_gain(
-                    off_axis_angle_vec=off_axis_angle[0, station_2_active],
-                    theta_vec=theta[0, station_2_active],
-            )
+                off_axis_angle = station_1.get_off_axis_angle(station_2)
+                distance = station_1.get_distance_to(station_2)
+                theta = np.degrees(
+                    np.arctan2(
+                        (station_1.height - station_2.height), distance,
+                    ),
+                ) + station_1.elevation
+                gains[0, station_2_active] = \
+                    station_1.antenna[0].calculate_gain(
+                        off_axis_angle_vec=off_axis_angle[0, station_2_active],
+                        theta_vec=theta[0, station_2_active],
+            )'''
         else:  # for IMT <-> IMT / WIFI <-> WIFI
             for k in station_1_active:
                 gains[k, station_2_active] = station_1.antenna[k].calculate_gain(
