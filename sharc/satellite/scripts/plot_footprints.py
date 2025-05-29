@@ -482,9 +482,9 @@ if __name__ == "__main__":
         x, y, z = geoconv.convert_lla_to_transformed_cartesian(lat, lon, 1e3)
 
         fig.add_trace(go.Scatter3d(
-            x=x/1e3,
-            y=y/1e3,
-            z=z/1e3,
+            x=x / 1e3,
+            y=y / 1e3,
+            z=z / 1e3,
             mode='markers',
             marker=dict(size=1, color='blue', opacity=1.0),
             showlegend=False

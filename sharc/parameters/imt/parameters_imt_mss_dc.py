@@ -266,7 +266,7 @@ class ParametersSelectActiveSatellite(ParametersBase):
                 filtered_gdf.geometry.values, self.margin_from_border
             ))
 
-            assert self.filter_polygon.is_valid, shapely.validation.explain_validity(self.filter_polygon)
+            assert self.filter_polygon.is_valid, shp.validation.explain_validity(self.filter_polygon)
 
     __ALLOWED_CONDITIONS = [
         "LAT_LONG_INSIDE_COUNTRY",

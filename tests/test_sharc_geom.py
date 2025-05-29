@@ -20,12 +20,12 @@ class TestSharcGeom(unittest.TestCase):
         # approx a square
         # good only for small (lon, lat) values
         mx = 0.001
-        border = np.linspace(-mx/2, mx/2, 100)
+        border = np.linspace(-mx / 2, mx / 2, 100)
         poly = shp.Polygon(
-            [(-mx/2, x) for x in border] +
-            [(x, mx/2) for x in border] +
-            [(mx/2, x) for x in border[::-1]] +
-            [(x, -mx/2) for x in border[::-1]]
+            [(-mx / 2, x) for x in border] +
+            [(x, mx / 2) for x in border] +
+            [(mx / 2, x) for x in border[::-1]] +
+            [(x, -mx / 2) for x in border[::-1]]
         )
         # when passing too large values, the grid will have no points
         # hexagon radius = x means square has at least side
@@ -47,7 +47,10 @@ class TestSharcGeom(unittest.TestCase):
             grid = generate_grid_in_multipolygon(poly, hx_r)
             npt.assert_allclose(len(grid[0]), pol_A / hx_A, rtol=0.05, atol=10)
 
-        gdf = load_epsg4326_gdf(self.countries_shapefile, { "NAME": ["Brazil", "Chile"] })
+        gdf = load_epsg4326_gdf(
+            self.countries_shapefile,
+            {"NAME": ["Brazil", "Chile"]}
+        )
         poly = gdf[gdf["NAME"] == "Brazil"]["geometry"].values[0]
 
         # 10km hexagon radius

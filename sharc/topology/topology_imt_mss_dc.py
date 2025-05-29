@@ -389,7 +389,7 @@ class TopologyImtMssDc(Topology):
             best_sats = elev.argmax(axis=-1)
 
             best_sats_true = eligible_sats_idx[best_sats]
-            
+
             x = grid_x - all_sat_x[best_sats_true]
             y = grid_y - all_sat_y[best_sats_true]
             z = grid_z - all_sat_z[best_sats_true]
