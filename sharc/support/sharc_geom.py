@@ -464,6 +464,8 @@ def generate_grid_in_polygon(
         np.array with dimension 2 x N,
         with lon's along 1st dimension and lat's along 2nd
     """
+    if hexagon_radius < 0:
+        raise ValueError("generate_grid_in_polygon.hexagon radius must be positive")
     # Lambert is more precise, but could prob. get UTM projection
     # Didn't see any practical difference for current use cases
     proj_crs = get_lambert_equal_area_crs(polygon)
@@ -481,9 +483,9 @@ def generate_grid_in_polygon(
     x_spacing = 3 * hexagon_radius
     y_spacing = hexagon_radius * np.sqrt(3) / 2
 
-    x_vals = np.arange(minx, maxx + hexagon_radius, x_spacing)
+    x_vals = np.arange(minx, maxx + x_spacing, x_spacing)
 
-    y_vals = np.arange(miny, maxy + hexagon_radius, y_spacing)
+    y_vals = np.arange(miny, maxy + y_spacing, y_spacing)
 
     x_vals, y_vals = np.meshgrid(x_vals, y_vals)
 
@@ -493,12 +495,15 @@ def generate_grid_in_polygon(
     x_vals = x_vals.ravel()
     y_vals = y_vals.ravel()
 
-    msk = shp.vectorized.contains(polygon_proj, x_vals, y_vals)
-    x_vals = x_vals[msk]
-    y_vals = y_vals[msk]
-
     # Return to EPSG:4326
     xt, yt = from_proj(x_vals, y_vals)
+
+    # we buffer the polygon very slightly to include points
+    # right on the border of the polygon
+    polygon = polygon.buffer(1e-9)
+    msk = shp.vectorized.contains(polygon, xt, yt)
+    xt = xt[msk]
+    yt = yt[msk]
 
     return np.stack((xt, yt))
 
@@ -521,7 +526,7 @@ def generate_grid_in_multipolygon(
         lats.extend(y)
     elif poly.geom_type == 'MultiPolygon':
         for p in poly.geoms:
-            x, y = generate_grid_in_polygon(poly, km)
+            x, y = generate_grid_in_polygon(p, km)
             lons.extend(x)
             lats.extend(y)
 
