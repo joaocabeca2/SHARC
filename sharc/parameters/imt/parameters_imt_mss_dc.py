@@ -102,7 +102,7 @@ class ParametersSectorPositioning(ParametersBase):
         # margin from inside of border [km]
         # if positive, makes border smaller by x km
         # if negative, makes border bigger by x km
-        eligible_sats_margin_from_border: float = -2
+        eligible_sats_margin_from_border: float = None
 
         beam_radius: float = None
 
@@ -136,8 +136,10 @@ class ParametersSectorPositioning(ParametersBase):
             self,
             sat_is_active_if: "ParametersSelectActiveSatellite",
         ):
-            self.country_names = sat_is_active_if.lat_long_inside_country.country_names
-            self.eligible_sats_margin_from_border = sat_is_active_if.lat_long_inside_country.margin_from_border
+            if len(self.country_names) == 0 or self.country_names[0] == "":
+                self.country_names = sat_is_active_if.lat_long_inside_country.country_names
+            if self.eligible_sats_margin_from_border is None:
+                self.eligible_sats_margin_from_border = sat_is_active_if.lat_long_inside_country.margin_from_border
 
         def reset_grid(self, ctx: str, force_update=False):
             """

@@ -231,6 +231,15 @@ class ParametersTest(unittest.TestCase):
             self.parameters.imt.topology.mss_dc.sat_is_active_if.conditions,
             ["LAT_LONG_INSIDE_COUNTRY", "MINIMUM_ELEVATION_FROM_ES", "MAXIMUM_ELEVATION_FROM_ES"],
         )
+
+        self.parameters.imt.topology.mss_dc.validate("test_imt")
+        self.assertEqual(self.parameters.imt.topology.mss_dc.beam_positioning.service_grid.beam_radius, 19000)
+        self.assertEqual(self.parameters.imt.topology.mss_dc.beam_positioning.service_grid.grid_margin_from_border, 0.11)
+        self.assertEqual(self.parameters.imt.topology.mss_dc.beam_positioning.service_grid.eligible_sats_margin_from_border, -2.1)
+        self.assertEqual(len(self.parameters.imt.topology.mss_dc.beam_positioning.service_grid.country_names), 2)
+        self.assertEqual(self.parameters.imt.topology.mss_dc.beam_positioning.service_grid.country_names[0], "Brazil")
+        self.assertEqual(self.parameters.imt.topology.mss_dc.beam_positioning.service_grid.country_names[1], "Chile")
+
         self.assertEqual(len(self.parameters.imt.topology.mss_dc.sat_is_active_if.lat_long_inside_country.country_names), 2)
         self.assertEqual(self.parameters.imt.topology.mss_dc.sat_is_active_if.lat_long_inside_country.country_names[0], "Brazil")
         self.assertEqual(len(self.parameters.imt.topology.mss_dc.sat_is_active_if.lat_long_inside_country.country_names), 2)
@@ -507,7 +516,8 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.mss_d2d.name, 'SystemA')
         self.assertEqual(self.parameters.mss_d2d.frequency, 2170.0)
         self.assertEqual(self.parameters.mss_d2d.bandwidth, 5.0)
-        self.assertEqual(self.parameters.mss_d2d.cell_radius, 19000)
+        self.assertEqual(self.parameters.mss_d2d.cell_radius, 19001)
+        self.assertEqual(self.parameters.mss_d2d.beam_radius, 19001)
         self.assertEqual(self.parameters.mss_d2d.tx_power_density, -30)
         self.assertEqual(self.parameters.mss_d2d.num_sectors, 19)
         self.assertEqual(self.parameters.mss_d2d.antenna_diamter, 1.0)
@@ -524,6 +534,13 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(self.parameters.mss_d2d.param_p619.earth_station_alt_m, 0.0)
         self.assertEqual(self.parameters.mss_d2d.param_p619.earth_station_lat_deg, 0.0)
         self.assertEqual(self.parameters.mss_d2d.param_p619.earth_station_long_diff_deg, 0.0)
+
+        self.assertEqual(self.parameters.mss_d2d.beam_positioning.service_grid.beam_radius, 19001)
+        self.assertEqual(self.parameters.mss_d2d.beam_positioning.service_grid.grid_margin_from_border, 0.11)
+        self.assertEqual(self.parameters.mss_d2d.beam_positioning.service_grid.eligible_sats_margin_from_border, -2.1)
+        self.assertEqual(len(self.parameters.mss_d2d.beam_positioning.service_grid.country_names), 2)
+        self.assertEqual(self.parameters.mss_d2d.beam_positioning.service_grid.country_names[0], "Brazil")
+        self.assertEqual(self.parameters.mss_d2d.beam_positioning.service_grid.country_names[1], "Chile")
 
         self.assertEqual(
             self.parameters.mss_d2d.sat_is_active_if.conditions,
