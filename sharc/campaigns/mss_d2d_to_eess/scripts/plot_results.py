@@ -36,20 +36,23 @@ post_processor.add_plots(plots)
 # post_processor.add_plots(plots)
 
 # Add a protection criteria line:
-# protection_criteria = -6
-system_inr = post_processor.get_plot_by_results_attribute_name("system_inr", plot_type="cdf")
-# system_inr.add_vline(protection_criteria, line_dash="dash", annotation=dict(
-#     text="Protection Criteria: " + str(protection_criteria) + " dB",
-#     xref="x", yref="y",
-#     x=protection_criteria + 0.5, y=0.8,
-#     font=dict(size=12, color="red")
-# ))
+protection_criteria = -154.0  # dB[W/MHz]
+perc_time = 0.01
+system_dl_interf_power_per_mhz = post_processor.get_plot_by_results_attribute_name("system_dl_interf_power_per_mhz",
+                                                                                   plot_type="cdf")
+system_dl_interf_power_per_mhz.add_vline(protection_criteria, line_dash="dash", annotation=dict(
+    text="Protection Criteria: " + str(protection_criteria) + " dB",
+    xref="x", yref="y",
+    x=protection_criteria + 0.5, y=0.8,
+    font=dict(size=12, color="red")
+))
+system_dl_interf_power_per_mhz.add_hline(perc_time, line_dash="dash", annotation=dict(
+    text="Time Percentage: " + str(perc_time * 100) + "%",
+    xref="x", yref="y",
+    x=protection_criteria + 0.5, y=perc_time + 0.01,
+    font=dict(size=12, color="blue")
+))
 
-# Update layout if needed
-system_inr.update_layout(title_text="CDF Plot EESS(s-E) INR",
-                         xaxis_title="INR [dB]",
-                         yaxis_title="Cumulative Probability",
-                         legend_title="Legend")
 
 attributes_to_plot = [
     "imt_system_antenna_gain",
