@@ -1,15 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 24 18:41:17 2017
-
-@author: edgar
-"""
-
 from sharc.antenna.antenna import Antenna
-from sharc.parameters.parameters_fss_es import ParametersFssEs
 
 import numpy as np
-import math
 
 
 class AntennaMSSAdjacent(Antenna):
@@ -63,7 +55,7 @@ if __name__ == '__main__':
         ax1.set_xlabel(r"Off-axis angle $\theta$ [deg]")
         ax1.set_ylabel(ylabel)
 
-        label = f"$f = {frequency/1e3 : .3f}$ GHz"
+        label = f"$f = {frequency / 1e3: .3f}$ GHz"
         if chn != -1:
             label += f", channel {chn}"
         # ax1.semilogx(
