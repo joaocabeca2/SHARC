@@ -38,44 +38,33 @@ post_processor.add_plots(plots)
 # Add a protection criteria line:
 # protection_criteria = -6
 system_inr = post_processor.get_plot_by_results_attribute_name("system_inr", plot_type="cdf")
-# imt_dl_inr.add_vline(protection_criteria, line_dash="dash", annotation=dict(
+# system_inr.add_vline(protection_criteria, line_dash="dash", annotation=dict(
 #     text="Protection Criteria: " + str(protection_criteria) + " dB",
 #     xref="x", yref="y",
 #     x=protection_criteria + 0.5, y=0.8,
 #     font=dict(size=12, color="red")
 # ))
-# imt_dl_inr.update_layout(template="plotly_white")
-# imt_ul_inr = post_processor.get_plot_by_results_attribute_name("imt_ul_inr", plot_type="cdf")
-# imt_ul_inr.add_vline(protection_criteria, line_dash="dash")
-
-# Combine INR plots into one:
-
-# for trace in imt_ul_inr.data:
-#     imt_dl_inr.add_trace(trace)
 
 # Update layout if needed
 system_inr.update_layout(title_text="CDF Plot EESS(s-E) INR",
-                         xaxis_title="IMT INR [dB]",
+                         xaxis_title="INR [dB]",
                          yaxis_title="Cumulative Probability",
                          legend_title="Legend")
 
-file = os.path.join(campaign_base_dir, "output", "system_inr.html")
-system_inr.write_html(file=file, include_plotlyjs="cdn", auto_open=auto_open)
+attributes_to_plot = [
+    "imt_system_antenna_gain",
+    "imt_system_path_loss",
+    "system_dl_interf_power",
+    "system_dl_interf_power_per_mhz",
+    "system_imt_antenna_gain",
+    "system_inr",
+]
 
-# file = os.path.join(campaign_base_dir, "output", "imt_system_antenna_gain.html")
-# imt_system_antenna_gain = post_processor.get_plot_by_results_attribute_name("imt_system_antenna_gain")
-# imt_system_antenna_gain.write_html(file=file, include_plotlyjs="cdn", auto_open=auto_open)
+# for attr in attributes_to_plot:
+#     post_processor.get_plot_by_results_attribute_name(attr).show()
 
-# file = os.path.join(campaign_base_dir, "output", "system_imt_antenna_gain.html")
-# system_imt_antenna_gain = post_processor.get_plot_by_results_attribute_name("system_imt_antenna_gain")
-# system_imt_antenna_gain.write_html(file=file, include_plotlyjs="cdn", auto_open=auto_open)
-
-# file = os.path.join(campaign_base_dir, "output", "sys_to_imt_coupling_loss.html")
-# imt_system_path_loss = post_processor.get_plot_by_results_attribute_name("imt_system_path_loss")
-# imt_system_path_loss.write_html(file=file, include_plotlyjs="cdn", auto_open=auto_open)
-
-# for result in many_results:
-#     # This generates the mean, median, variance, etc
-#     stats = PostProcessor.generate_statistics(
-#         result=result
-#     ).write_to_results_dir()
+for attr in attributes_to_plot:
+    file = os.path.join(campaign_base_dir, "output", f"{attr}.html")
+    post_processor\
+        .get_plot_by_results_attribute_name(attr)\
+        .write_html(file=file, include_plotlyjs="cdn", auto_open=auto_open)

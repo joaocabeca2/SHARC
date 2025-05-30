@@ -438,7 +438,7 @@ single_earth_station:
     elevation:
       # Type of elevation.
       type: FIXED
-      fixed: 5
+      fixed: 90
     # Station 2d location [meters]:
     location:
       type: FIXED
