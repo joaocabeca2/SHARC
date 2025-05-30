@@ -13,8 +13,6 @@ The visible Space Stations are then used to generate the IMT Base Stations.
 
 import numpy as np
 import geopandas as gpd
-import shapely as shp
-import pyproj
 
 from sharc.topology.topology import Topology
 from sharc.parameters.imt.parameters_imt_mss_dc import ParametersImtMssDc

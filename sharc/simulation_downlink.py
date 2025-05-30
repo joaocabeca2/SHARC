@@ -376,19 +376,33 @@ class SimulationDownlink(Simulation):
                 ) / 10**(acs / 10.)
 
             if self.adjacent_channel:
-
                 # The unwanted emission is calculated in terms of TRP (after
                 # antenna). In SHARC implementation, ohmic losses are already
                 # included in coupling loss. Then, care has to be taken;
                 # otherwise ohmic loss will be included twice.
-                oob_power = self.bs.spectral_mask.power_calc(self.param_system.frequency, self.system.bandwidth) \
-                    + self.parameters.imt.bs.ohmic_loss
 
-                oob_interference = oob_power \
-                    - self.coupling_loss_imt_system_adjacent[active_beams[0]] \
-                    + 10 * np.log10(
-                        (self.param_system.bandwidth - self.overlapping_bandwidth) /
-                        self.param_system.bandwidth,
+                if self.parameters.imt.adjacent_ch_emissions == "SPECTRAL_MASK":
+
+                    oob_power = self.bs.spectral_mask.power_calc(self.param_system.frequency, self.system.bandwidth) \
+                        + self.parameters.imt.bs.ohmic_loss
+
+                    oob_interference = oob_power \
+                        - self.coupling_loss_imt_system_adjacent[active_beams[0]] \
+                        + 10 * np.log10(
+                            (self.param_system.bandwidth - self.overlapping_bandwidth) /
+                            self.param_system.bandwidth,
+                        )
+                elif self.parameters.imt.adjacent_ch_emissions == "ACLR":
+                    oob_power = self.parameters.imt.bs.conducted_power + \
+                        self.parameters.imt.adjacent_ch_leak_ratio + self.parameters.imt.bs.ohmic_loss
+
+                    oob_interference = oob_power - \
+                        self.coupling_loss_imt_system_adjacent[active_beams[0]]
+                elif self.parameters.imt.adjacent_ch_emissions == "OFF":
+                    oob_interference = 0
+                else:
+                    raise ValueError(
+                        f"No implementation for parameters.imt.adjacent_ch_reception == {self.parameters.imt.adjacent_ch_reception}"
                     )
 
                 rx_interference += math.pow(10, 0.1 * oob_interference)

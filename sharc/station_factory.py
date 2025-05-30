@@ -33,7 +33,7 @@ from sharc.mask.spectral_mask_imt import SpectralMaskImt
 from sharc.antenna.antenna import Antenna
 from sharc.antenna.antenna_factory import AntennaFactory
 from sharc.antenna.antenna_fss_ss import AntennaFssSs
-from sharc.antenna.antenna_mss_adjacent import AntennaMSSAdjacent
+# from sharc.antenna.antenna_mss_adjacent import AntennaMSSAdjacent
 from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.antenna.antenna_f699 import AntennaF699
 from sharc.antenna.antenna_f1891 import AntennaF1891
@@ -1509,7 +1509,7 @@ class StationFactory(object):
             distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2)
         else:
             theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
-            distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs.height)**2)
+            distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (cell_z)**2)
 
         return x, y, z, theta, distance
 
