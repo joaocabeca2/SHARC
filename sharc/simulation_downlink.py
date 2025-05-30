@@ -393,7 +393,7 @@ class SimulationDownlink(Simulation):
                             self.param_system.bandwidth,
                         )
                 elif self.parameters.imt.adjacent_ch_emissions == "ACLR":
-                    oob_power = self.parameters.imt.bs.conducted_power + \
+                    oob_power = self.parameters.imt.bs.conducted_power - \
                         self.parameters.imt.adjacent_ch_leak_ratio
 
                     oob_interference = oob_power - \
