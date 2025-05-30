@@ -33,6 +33,7 @@ from sharc.mask.spectral_mask_imt import SpectralMaskImt
 from sharc.antenna.antenna import Antenna
 from sharc.antenna.antenna_factory import AntennaFactory
 from sharc.antenna.antenna_fss_ss import AntennaFssSs
+from sharc.antenna.antenna_mss_adjacent import AntennaMSSAdjacent
 from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.antenna.antenna_f699 import AntennaF699
 from sharc.antenna.antenna_f1891 import AntennaF1891
@@ -1385,6 +1386,8 @@ class StationFactory(object):
             antenna_pattern = AntennaS1528(params.antenna_s1528)
         elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
             antenna_pattern = AntennaS1528Taylor(params.antenna_s1528)
+        elif params.antenna_pattern == "MSS Adjacent":
+            antenna_pattern = AntennaMSSAdjacent(params.frequency)
         else:
             raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
 
