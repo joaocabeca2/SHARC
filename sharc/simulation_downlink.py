@@ -394,7 +394,7 @@ class SimulationDownlink(Simulation):
                         )
                 elif self.parameters.imt.adjacent_ch_emissions == "ACLR":
                     oob_power = self.parameters.imt.bs.conducted_power + \
-                        self.parameters.imt.adjacent_ch_leak_ratio + self.parameters.imt.bs.ohmic_loss
+                        self.parameters.imt.adjacent_ch_leak_ratio
 
                     oob_interference = oob_power - \
                         self.coupling_loss_imt_system_adjacent[active_beams[0]]
