@@ -8,7 +8,7 @@ general:
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS, SINGLE_EARTH_STATION
-    system  : FSS_SS
+    system  : FSS_ES
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel  : FALSE
@@ -23,7 +23,7 @@ imt:
     ###########################################################################
     # Network topology. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
     # "INDOOR"
-    topology  : MACROCELL
+    topology  : HOTSPOT
     ###########################################################################
     # Enable wrap around. Available only for "MACROCELL" and "HOTSPOT" topologies
     wrap_around  : FALSE
@@ -124,12 +124,12 @@ imt:
     # Regarding the distribution of active UE's over the cell area, this
     # parameter models the distance between UE's and BS.
     # Possible values: RAYLEIGH, UNIFORM
-    ue_distribution_distance  : RAYLEIGH
+    ue_distribution_distance  : SQRT(UNIFORM)
     ###########################################################################
     # Regarding the distribution of active UE's over the cell area, this
     # parameter models the azimuth between UE and BS (within ±60° range).
     # Possible values: NORMAL, UNIFORM
-    ue_distribution_azimuth  : NORMAL
+    ue_distribution_azimuth  : UNIFORM
     ###########################################################################
     # Power control algorithm
     # ue_tx_power_control = "ON",power control On
