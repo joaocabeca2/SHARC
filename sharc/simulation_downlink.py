@@ -402,7 +402,7 @@ class SimulationDownlink(Simulation):
                     oob_interference = 0
                 else:
                     raise ValueError(
-                        f"No implementation for parameters.imt.adjacent_ch_reception == {self.parameters.imt.adjacent_ch_reception}"
+                        f"No implementation for self.parameters.imt.adjacent_ch_emissions == {self.parameters.imt.adjacent_ch_emissions}"
                     )
 
                 rx_interference += math.pow(10, 0.1 * oob_interference)
