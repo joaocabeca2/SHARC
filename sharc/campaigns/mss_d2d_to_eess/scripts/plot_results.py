@@ -13,12 +13,30 @@ post_processor = PostProcessor()
 many_results = Results.load_many_from_dir(os.path.join(campaign_base_dir, "output"),
                                           filter_fn=lambda x: "mss_d2d_to_eess" in x,
                                           only_latest=True)
-post_processor\
-    .add_plot_legend_pattern(
-        dir_name_contains="mss_d2d_to_eess",
-        legend="IMT-MSS-D2D-DL to EESS(s-E)"
-    )
 
+readable_name = {
+    "system_d": "System D",
+    "system_b": "System B",
+}
+def linestyle_getter(results):
+    if "system_d" in results.output_directory:
+        return "dash"
+    return "solid"
+
+post_processor.add_results_linestyle_getter(linestyle_getter)
+
+for sys_name in ["system_d", "system_b"]:
+    for elev in [5, 30, 60, 90, "uniform_"]:
+        if elev == "uniform_":
+            readable_elev = "Elev = Unif. Dist."
+        else:
+            readable_elev = f"Elev = {elev}º"
+        # IMT-MSS-D2D-DL to EESS
+        post_processor\
+            .add_plot_legend_pattern(
+                dir_name_contains=f"{elev}elev_{sys_name}",
+                legend=f"{readable_name[sys_name]}, {readable_elev}"
+            )
 # ^: typing.List[Results]
 
 post_processor.add_results(many_results)

@@ -23,7 +23,7 @@ general:
     output_dir: campaigns/mss_d2d_to_eess/output/
     ###########################################################################
     # output folder prefix
-    output_dir_prefix: output_mss_d2d_to_eess
+    output_dir_prefix: output_mss_d2d_to_eess_base
 imt:
     ###########################################################################
     # Minimum 2D separation distance from BS to UE [m]
@@ -301,7 +301,7 @@ imt:
                 subarray:
                     ###########################################################################
                     # to use subarray, set this to true
-                    is_enabled: True
+                    is_enabled: false
                     ###########################################################################
                     # Number of rows in subarray
                     n_rows: 3
@@ -527,7 +527,6 @@ single_earth_station:
     location:
       type: FIXED
       fixed:
-        # Boundary: 2.5 * ISD + protection 1.5 km
         x: 0
         y: 0
   antenna:
@@ -543,3 +542,4 @@ single_earth_station:
       itu_r_s_465:
         # Diameter [m]
         diameter: 12  # derived with efficiency 0.5
+
