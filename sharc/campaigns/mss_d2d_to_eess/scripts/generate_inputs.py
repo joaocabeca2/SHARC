@@ -70,14 +70,13 @@ with open(parameter_file_name, 'r') as file:
 output_prefix_pattern = gen_parameters['general']['output_dir_prefix'].replace("_base", "_<specific>")
 
 freq = 2200
-bw = 4  # in MHz TODO: change depending on system
 
 system_B = ESParams(
     name="system_b",
     antenna_gain=45.8,
     receive_temperature=190,
     frequency=freq,
-    bandwidth=bw,
+    bandwidth=4,  # MHz
 )
 
 system_D = ESParams(
@@ -85,7 +84,7 @@ system_D = ESParams(
     antenna_gain=39,
     receive_temperature=120,
     frequency=freq,
-    bandwidth=bw,
+    bandwidth=6,  # MHz
 )
 
 for sys in [
