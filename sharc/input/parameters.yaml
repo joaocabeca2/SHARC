@@ -572,7 +572,7 @@ fss_es:
     # Antenna pattern of the FSS Earth station
     # Possible values: "ITU-R S.1855", "ITU-R S.465", "ITU-R S.580", "OMNI",
     #                  "Modified ITU-R S.465"
-    antenna_pattern: Modified ITU-R S.465
+    antenna_pattern: ITU-R S.465
     ###########################################################################
     # Diameter of antenna [m]
     diameter: 1.8

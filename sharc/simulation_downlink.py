@@ -94,7 +94,7 @@ class SimulationDownlink(Simulation):
             # Execute this piece of code if IMT generates interference into
             # the other system
             self.calculate_sinr()
-            #self.calculate_external_interference()
+            self.calculate_external_interference()
 
         self.collect_results(write_to_file, snapshot_number)
 
