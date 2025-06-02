@@ -230,9 +230,20 @@ class Simulation(ABC, Observable):
         )
 
         if hasattr(self.param_system, "polarization_loss"):
-            self.polarization_loss = self.param_system.polarization_loss
+            if self.param_system.polarization_loss is not None:
+                # if polarization loss is defined, use it
+                # otherwise, raise an error.
+                self.polarization_loss = self.param_system.polarization_loss
+            else:
+                raise ValueError(
+                    "Polarization loss is not initialized in the system parameters. "
+                    "Please initialized it in the system parameters file."
+                )
         else:
-            self.polarization_loss = 3.0
+            raise ValueError(
+                "Polarization loss is not defined in the system parameters. "
+                "Please define it in the system parameters file."
+            )
 
     def finalize(self, *args, **kwargs):
         """
