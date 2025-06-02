@@ -1324,8 +1324,22 @@ if __name__ == '__main__':
 
     imt_ue = factory.generate_imt_ue(params.imt, ue_ant_param, topology, rnd)
     imt_bs = factory.generate_imt_base_stations(params.imt, bs_ant_param, topology, rnd)
-    wifi_aps = factory.generate_imt_base_stations(params.wifi, bs_ant_param, topology, rnd, is_ap=True)
-    wifi_sta = factory.generate_imt_ue(params.wifi, bs_ant_param, topology, rnd)
+
+
+    # Separar por tipo de estação
+    # Base stations
+    imt_bs_x = imt_bs.x[np.array(imt_bs.station_type) == StationType.IMT_BS]
+    imt_bs_y = imt_bs.y[np.array(imt_bs.station_type) == StationType.IMT_BS]
+
+    wifi_aps_x = imt_bs.x[np.array(imt_bs.station_type) == StationType.WIFI_APS]
+    wifi_aps_y = imt_bs.y[np.array(imt_bs.station_type) == StationType.WIFI_APS]
+
+    # User equipments
+    imt_ue_x = imt_ue.x[np.array(imt_ue.station_type) == StationType.IMT_UE]
+    imt_ue_y = imt_ue.y[np.array(imt_ue.station_type) == StationType.IMT_UE]
+
+    wifi_sta_x = imt_ue.x[np.array(imt_ue.station_type) == StationType.WIFI_STA]
+    wifi_sta_y = imt_ue.y[np.array(imt_ue.station_type) == StationType.WIFI_STA]
 
     fig = plt.figure(figsize=(8, 8), facecolor='w', edgecolor='k')
     ax = fig.add_subplot(1, 1, 1)
@@ -1336,14 +1350,14 @@ if __name__ == '__main__':
     plt.xlabel("x-coordinate [m]")
     plt.ylabel("y-coordinate [m]")
 
-
     # Plotagem diferenciada
-    ax.plot(imt_bs.x, imt_bs.y, "bs", label="IMT BS")       # azul, quadrado
-    ax.plot(wifi_aps.x, wifi_aps.y, "go", label="WiFi AP")  # verde, círculo
-    ax.plot(imt_ue.x, imt_ue.y, "r^", label="IMT UE")        # vermelho, triângulo
-    ax.plot(wifi_sta.x, wifi_sta.y, "m.", label="WiFi STA") # magenta, ponto
+    ax.plot(imt_bs_x, imt_bs_y, "bs", label="IMT BS")       # azul, quadrado
+    ax.plot(wifi_aps_x, wifi_aps_y, "go", label="WiFi AP")  # verde, círculo
+    ax.plot(imt_ue_x, imt_ue_y, "r^", label="IMT UE")        # vermelho, triângulo
+    ax.plot(wifi_sta_x, wifi_sta_y, "m.", label="WiFi STA") # magenta, ponto
 
     plt.legend(loc="best")
     plt.tight_layout()
     plt.show()
+
 
