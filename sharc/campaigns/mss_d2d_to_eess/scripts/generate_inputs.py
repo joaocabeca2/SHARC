@@ -12,6 +12,18 @@ from sharc.parameters.parameters_base import tuple_constructor
 
 @dataclass
 class ESParams():
+    """
+    Data class representing Earth Station parameters for scenario generation.
+
+    Attributes:
+        name (str): Name of the earth station system.
+        antenna_gain (float): Antenna gain in dBi.
+        receive_temperature (float): Receiver noise temperature in K.
+        frequency (float): Operating frequency in MHz.
+        bandwidth (float): Bandwidth in MHz.
+        antenna_diameter (float, optional): Antenna diameter in meters.
+        antenna_pattern (Literal): Antenna pattern type.
+    """
     name: str
     # [dBi]
     antenna_gain: float
@@ -32,8 +44,8 @@ class ESParams():
         if self.antenna_diameter is None:
             # antenna efficiency:
             n = 0.5
-            lmbda = 3e8/(self.frequency * 1e6)
-            G = 10**(self.antenna_gain/10)
+            lmbda = 3e8 / (self.frequency * 1e6)
+            G = 10**(self.antenna_gain / 10)
             self.antenna_diameter = float(np.round(
                 lmbda * np.sqrt(G / n) / np.pi, decimals=2
             ))
@@ -41,6 +53,7 @@ class ESParams():
                 f"Earth station {self.name} antenna diameter of {self.antenna_diameter} "
                 f"has been assumed for an efficiency of {n}."
             )
+
 
 yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple', tuple_constructor)
 
@@ -57,7 +70,7 @@ with open(parameter_file_name, 'r') as file:
 output_prefix_pattern = gen_parameters['general']['output_dir_prefix'].replace("_base", "_<specific>")
 
 freq = 2200
-bw = 4 # TODO: change depending on system
+bw = 4  # in MHz TODO: change depending on system
 
 system_B = ESParams(
     name="system_b",
@@ -123,4 +136,3 @@ for sys in [
         'w'
     ) as file:
         yaml.dump(parameters, file, default_flow_style=False)
-
