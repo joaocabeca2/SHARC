@@ -131,6 +131,7 @@ class SimulationUplinkTest(unittest.TestCase):
         self.param.fss_ss.time_ratio = 0.5
         self.param.fss_ss.antenna_l_s = -20
         self.param.fss_ss.acs = 0
+        self.param.fss_ss.polarization_loss = 3.0
 
         self.param.fss_es.x = -5000
         self.param.fss_es.y = 0
@@ -148,6 +149,7 @@ class SimulationUplinkTest(unittest.TestCase):
         self.param.fss_es.channel_model = "FSPL"
         self.param.fss_es.line_of_sight_prob = 1
         self.param.fss_es.acs = 0
+        self.param.fss_es.polarization_loss = 3.0
 
         self.param.ras.geometry.location.type = "FIXED"
         self.param.ras.geometry.location.fixed.x = -5000
@@ -167,9 +169,7 @@ class SimulationUplinkTest(unittest.TestCase):
         self.param.ras.antenna.pattern = "OMNI"
         self.param.ras.channel_model = "FSPL"
         self.param.ras.line_of_sight_prob = 1
-        self.param.ras.BOLTZMANN_CONSTANT = 1.38064852e-23
-        self.param.ras.EARTH_RADIUS = 6371000
-        self.param.ras.SPEED_OF_LIGHT = 299792458
+        self.param.ras.polarization_loss = 0.0
 
     def test_simulation_2bs_4ue_ss(self):
         self.param.general.system = "FSS_SS"
