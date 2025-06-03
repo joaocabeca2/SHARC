@@ -44,14 +44,8 @@ class SimulationDownlink(Simulation):
             self.topology, random_number_gen,
         )
         
-        #Create WIFI acess points
-        '''self.aps = StationFactory.generate_imt_base_stations(
-            self.parameters.wifi,
-            self.parameters.wifi.ap.antenna
-            self.topology, random_number_gen,
-            is_ap=True,
-        )'''
-
+        #set wifi parameters for the base stations
+        self.set_wifi_parameters(is_ap=True)
         # Create the other system (FSS, HAPS, etc...)
         self.system = StationFactory.generate_system(
             self.parameters, self.topology, random_number_gen,
@@ -64,12 +58,6 @@ class SimulationDownlink(Simulation):
             self.parameters.imt.ue.antenna,
             self.topology, random_number_gen,
         )
-
-        # Create WIFI stas
-        '''self.stas = StationFactory.generate_imt_ue(
-            self.parameters.wifi.sta,
-            self.parameters.wifi.sta.antenna,
-            self.topology, random_number_gen,)'''
 
         # self.plot_scenario()
 
@@ -400,3 +388,29 @@ class SimulationDownlink(Simulation):
         if write_to_file:
             self.results.write_files(snapshot_number)
             self.notify_observers(source=__name__, results=self.results)
+
+    def set_wifi_parameters(self, is_ap):
+        """Set the WiFi parameters for the stations
+
+        Parameters
+        ----------
+        parameters : ParametersWifi
+            The parameters to set for the WiFi stations
+        """
+        if is_ap:
+            for i in range(self.bs.num_stations):
+                if self.bs.station_type[i] == StationType.WIFI_APS:
+                    self.bs.bandwidth[i] = self.parameters.wifi.bandwidth
+                    self.bs.center_freq[i] = self.parameters.wifi.frequency
+                    self.bs.height[i] = self.parameters.wifi.ap.height
+        
+        else:
+            for i in range(self.ue.num_stations):
+                if self.ue.station_type[i] == StationType.WIFI_STATIONS:
+                    self.ue.bandwidth[i] = self.parameters.wifi.bandwidth
+                    self.ue.center_freq[i] = self.parameters.wifi.frequency
+                    self.ue.height[i] = self.parameters.wifi.sta.height
+
+                
+
+                    
