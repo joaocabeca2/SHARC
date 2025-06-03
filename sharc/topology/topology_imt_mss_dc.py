@@ -79,7 +79,6 @@ class TopologyImtMssDc(Topology):
         geometry_converter: GeometryConverter,
         orbit_params: ParametersImtMssDc,
         random_number_gen=np.random.RandomState(),
-        only_active=True,
     ):
         """
         Computes the coordintates of the visible space stations
@@ -228,28 +227,17 @@ class TopologyImtMssDc(Topology):
         all_lat = np.ravel(np.array(all_positions['lat']))
         all_lon = np.ravel(np.array(all_positions['lon']))
         all_sat_altitude = np.ravel(np.array(all_positions['alt'])) * 1e3
-        if only_active:
-            total_active_satellites = len(active_satellite_idxs)
-            space_station_x = all_space_station_x[active_satellite_idxs]
-            space_station_y = all_space_station_y[active_satellite_idxs]
-            space_station_z = all_space_station_z[active_satellite_idxs]
-            elevation = all_elevation[active_satellite_idxs]
-            azimuth = all_azimuth[active_satellite_idxs]
-            lat = all_lat[active_satellite_idxs]
-            lon = all_lon[active_satellite_idxs]
-            sat_altitude = all_sat_altitude[active_satellite_idxs]
-            sat_altitude = all_sat_altitude[active_satellite_idxs]
-        else:
-            total_active_satellites = total_satellites
-            space_station_x = all_space_station_x
-            space_station_y = all_space_station_y
-            space_station_z = all_space_station_z
-            elevation = all_elevation
-            azimuth = all_azimuth
-            lat = all_lat
-            lon = all_lon
-            sat_altitude = all_sat_altitude
-            sat_altitude = all_sat_altitude
+
+        total_active_satellites = len(active_satellite_idxs)
+        space_station_x = all_space_station_x[active_satellite_idxs]
+        space_station_y = all_space_station_y[active_satellite_idxs]
+        space_station_z = all_space_station_z[active_satellite_idxs]
+        elevation = all_elevation[active_satellite_idxs]
+        azimuth = all_azimuth[active_satellite_idxs]
+        lat = all_lat[active_satellite_idxs]
+        lon = all_lon[active_satellite_idxs]
+        sat_altitude = all_sat_altitude[active_satellite_idxs]
+        sat_altitude = all_sat_altitude[active_satellite_idxs]
 
         # Convert the ECEF coordinates to the transformed cartesian coordinates and set the Space Station positions
         # used to generetate the IMT Base Stations
@@ -507,7 +495,6 @@ class TopologyImtMssDc(Topology):
                 max=orbit_params.beam_positioning.angle_from_subsatellite_phi.distribution.max,
                 fixed=orbit_params.beam_positioning.angle_from_subsatellite_phi.fixed,
             )
-            # print("azim_add", np.unique(azim_add))
             if azim_add is None:
                 raise ValueError(
                     f"mss_d2d_params.beam_positioning.angle_from_subsatellite_phi.type = \n"
@@ -691,7 +678,7 @@ if __name__ == '__main__':
     # params.beam_positioning.angle_from_subsatellite_theta.fixed = 0
 
     params.propagate_parameters()
-    params.validate("validando")
+    params.validate("validation_at_main")
 
     # Define the geometry converter
     geometry_converter = GeometryConverter()
