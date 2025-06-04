@@ -1,7 +1,7 @@
 general:
     ###########################################################################
     # Number of simulation snapshots
-    num_snapshots: 1000
+    num_snapshots: 10000
     ###########################################################################
     # IMT link that will be simulated (DOWNLINK or UPLINK)
     imt_link: DOWNLINK
@@ -46,7 +46,7 @@ imt:
     ###########################################################################
     adjacent_ch_reception: ACS
     ###########################################################################
-    adjacent_ch_emissions: ACLR
+    adjacent_ch_emissions: SPECTRAL_MASK
     adjacent_ch_leak_ratio: 25.0  # dB
     ###########################################################################
     # IMT spectrum emission mask. Options are:
@@ -509,6 +509,9 @@ single_earth_station:
   tx_power_density: -200
   # also just so simulator runs
   noise_temperature: 190
+  # This is based in pratical data found in other documents.
+  # 35-45dBs are generally assumed. We take 35 as a worst case.
+  adjacent_ch_selectivity: 35
   # Channel model
   channel_model: FSPL
   # Earth Station parameters
