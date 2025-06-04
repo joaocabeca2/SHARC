@@ -262,7 +262,6 @@ class SimulationDownlink(Simulation):
 
                 # Out of band power
                 # sum linearly power leaked into band and power received in the adjacent band
-
                 oob_power = 10 * np.log10(
                     10 ** (0.1 * tx_oob) + 10 ** (0.1 * rx_oob)
                 )
@@ -376,36 +375,55 @@ class SimulationDownlink(Simulation):
                 ) / 10**(acs / 10.)
 
             if self.adjacent_channel:
-                # The unwanted emission is calculated in terms of TRP (after
-                # antenna). In SHARC implementation, ohmic losses are already
-                # included in coupling loss. Then, care has to be taken;
-                # otherwise ohmic loss will be included twice.
-
+                # These are in dB. Turn to zero linear.
+                tx_oob = -np.inf
+                rx_oob = -np.inf
+                # Calculate how much power is emitted in the adjacent channel:
                 if self.parameters.imt.adjacent_ch_emissions == "SPECTRAL_MASK":
-
-                    oob_power = self.bs.spectral_mask.power_calc(self.param_system.frequency, self.system.bandwidth) \
+                    # The unwanted emission is calculated in terms of TRP (after
+                    # antenna). In SHARC implementation, ohmic losses are already
+                    # included in coupling loss. Then, care has to be taken;
+                    # otherwise ohmic loss will be included twice.
+                    tx_oob = self.bs.spectral_mask.power_calc(self.param_system.frequency, self.system.bandwidth) \
                         + self.parameters.imt.bs.ohmic_loss
 
-                    oob_interference = oob_power \
-                        - self.coupling_loss_imt_system_adjacent[active_beams[0]] \
-                        + 10 * np.log10(
-                            (self.param_system.bandwidth - self.overlapping_bandwidth) /
-                            self.param_system.bandwidth,
-                        )
                 elif self.parameters.imt.adjacent_ch_emissions == "ACLR":
-                    oob_power = self.parameters.imt.bs.conducted_power - \
+                    tx_oob = self.parameters.imt.bs.conducted_power - \
                         self.parameters.imt.adjacent_ch_leak_ratio
 
-                    oob_interference = oob_power - \
-                        self.coupling_loss_imt_system_adjacent[active_beams[0]]
                 elif self.parameters.imt.adjacent_ch_emissions == "OFF":
-                    oob_interference = 0
+                    # OFF means no power is emitted in the adjacent band.
+                    pass
                 else:
                     raise ValueError(
                         f"No implementation for self.parameters.imt.adjacent_ch_emissions == {self.parameters.imt.adjacent_ch_emissions}"
                     )
 
-                rx_interference += math.pow(10, 0.1 * oob_interference)
+                # Calculate how much power is received in the adjacent channel
+                if self.parameters.imt.adjacent_ch_reception == "ACS":
+                    if self.overlapping_bandwidth:
+                        if not hasattr(self, "ALREADY_WARNED_ABOUT_ACS_WHEN_OVERLAPPING_BAND"):
+                            print(
+                                "[WARNING]: You're trying to use ACS on a partially overlapping band. "
+                                "Verify the code implements the behavior you expect"
+                            )
+                            self.ALREADY_WARNED_ABOUT_ACS_WHEN_OVERLAPPING_BAND = True
+
+                    # Received out-of-band power at the receiver input - ACS
+                    rx_oob = tx_oob - self.coupling_loss_imt_system_adjacent[active_beams[0]] - \
+                        self.param_system.adjacent_ch_selectivity
+                elif self.parameters.imt.adjacent_ch_reception == "OFF":
+                    # OFF means no power is received in the adjacent band.
+                    if self.parameters.imt.adjacent_ch_emissions == "OFF":
+                        raise ValueError("parameters.imt.adjacent_ch_emissions and parameters.imt.adjacent_ch_reception"
+                                         " cannot be both set to \"OFF\"")
+                    pass
+                else:
+                    raise ValueError(
+                        f"No implementation for parameters.imt.adjacent_ch_reception == {self.parameters.imt.adjacent_ch_reception}"
+                    )
+
+                rx_interference += math.pow(10, 0.1 * rx_oob)
 
         # Total received interference - dBW
         self.system.rx_interference = 10 * np.log10(rx_interference)
@@ -414,7 +432,7 @@ class SimulationDownlink(Simulation):
             10 * math.log10(BOLTZMANN_CONSTANT * self.system.noise_temperature * 1e3) + \
             10 * math.log10(self.param_system.bandwidth * 1e6)
 
-        # Calculate INR at the system - dBm/MHz
+        # Calculate INR at the system - dBm
         self.system.inr = np.array(
             [self.system.rx_interference - self.system.thermal_noise],
         )
