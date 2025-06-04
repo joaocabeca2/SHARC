@@ -53,7 +53,7 @@ imt:
     #   "IMT-2020" : for mmWave as described in ITU-R TG 5/1 Contribution 36
     #   "3GPP E-UTRA" : for E-UTRA bands > 1 GHz as described in
     #                   TS 36.104 v11.2.0 (BS) and TS 36.101 v11.2.0 (UE)
-    spectral_mask: IMT-2020
+    spectral_mask: MSS
     ###########################################################################
     # level of spurious emissions [dBm/MHz]
     spurious_emissions: -13.0
@@ -276,10 +276,10 @@ imt:
                 element_theta_3db: 65
                 ###########################################################################
                 # BS/UE number of rows in antenna array
-                n_rows: 4
+                n_rows: 1
                 ###########################################################################
                 # BS/UE number of columns in antenna array
-                n_columns: 8
+                n_columns: 1
                 ###########################################################################
                 # BS/UE array horizontal element spacing (d/lambda)
                 element_horiz_spacing: 0.5
