@@ -392,7 +392,6 @@ class SimulationDownlink(Simulation):
                         self.parameters.imt.adjacent_ch_leak_ratio
 
                 elif self.parameters.imt.adjacent_ch_emissions == "OFF":
-                    # OFF means no power is emitted in the adjacent band.
                     pass
                 else:
                     raise ValueError(
@@ -409,11 +408,17 @@ class SimulationDownlink(Simulation):
                             )
                             self.ALREADY_WARNED_ABOUT_ACS_WHEN_OVERLAPPING_BAND = True
 
-                    # Received out-of-band power at the receiver input - ACS
-                    rx_oob = tx_oob - self.coupling_loss_imt_system_adjacent[active_beams[0]] - \
-                        self.param_system.adjacent_ch_selectivity
+                    if self.parameters.imt.adjacent_antenna_model == "SINGLE_ELEMENT":
+                        rx_oob = tx_oob - self.coupling_loss_imt_system_adjacent[active_beams[0], sys_active] - \
+                            self.param_system.adjacent_ch_selectivity
+                    elif self.parameters.imt.adjacent_antenna_model == "BEAMFORMING":
+                        rx_oob = tx_oob - self.coupling_loss_imt_system_adjacent[active_beams, sys_active] - \
+                            self.param_system.adjacent_ch_selectivity
+                        rx_oob = 10 * np.log10(np.sum(10**(rx_oob / 10), axis=0))
+                    else:
+                        raise ValueError("Invalid parameters.imt.adjacent_antenna_model type")
+
                 elif self.parameters.imt.adjacent_ch_reception == "OFF":
-                    # OFF means no power is received in the adjacent band.
                     if self.parameters.imt.adjacent_ch_emissions == "OFF":
                         raise ValueError("parameters.imt.adjacent_ch_emissions and parameters.imt.adjacent_ch_reception"
                                          " cannot be both set to \"OFF\"")
