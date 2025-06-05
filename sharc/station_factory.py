@@ -9,7 +9,7 @@ import sys
 from warnings import warn
 
 import numpy as np
-
+import copy
 from sharc.antenna.antenna import Antenna
 from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 from sharc.antenna.antenna_f699 import AntennaF699
@@ -72,13 +72,10 @@ class StationFactory(object):
         num_bs = topology.num_base_stations
         imt_base_stations = StationManager(num_bs)
         
-        # NOVO: gerar tipos de estação de forma aleatória
-        wifi_ratio = 0.2  # proporção desejada de WIFI_APS (ajuste conforme quiser)
-        is_wifi = random_number_gen.rand(num_bs) < wifi_ratio
-
-        imt_base_stations.station_type = np.where(
-            is_wifi, StationType.WIFI_APS, StationType.IMT_BS
-        )
+        if is_ap:
+            imt_base_stations.station_type = StationType.WIFI.APS
+        else:
+            imt_base_stations.station_type = StationType.IMT_BS
 
         if param.topology.type == "NTN":
             imt_base_stations.x = topology.space_station_x * np.ones(num_bs)
@@ -132,19 +129,7 @@ class StationFactory(object):
         )
         
         for i in range(num_bs):
-            if imt_base_stations.station_type[i] == StationType.IMT_BS:
-                imt_base_stations.antenna[i] = AntennaBeamformingImt(
-                    param_ant, imt_base_stations.azimuth[i],
-                    imt_base_stations.elevation[i],
-                )
-            elif imt_base_stations.station_type[i] == StationType.WIFI_APS:
-                imt_base_stations.antenna[i] = AntennaOmni()
-                
-            else:
-                sys.stderr.write(
-                    "ERROR\nInvalid station type for BS: " + str(imt_base_stations.station_type[i]),
-                )
-                sys.exit(1)
+            imt_base_stations.antenna[i] = AntennaBeamformingImt()
 
         # imt_base_stations.antenna = [AntennaOmni(0) for bs in range(num_bs)]
         imt_base_stations.bandwidth = param.bandwidth * np.ones(num_bs)
@@ -1170,10 +1155,70 @@ class StationFactory(object):
 
         return space_station
 
-    @staticmethod
-    def generate_wifi_aps():
-        """"""
-        pass
+    def generate_wifi_aps(
+        param: ParametersWifiSystem,
+        param_ant_ap: ParametersAntennaImt,
+        topology: Topology,
+        random_number_gen: np.random.RandomState,
+    ):
+        param_ant = param_ant_ap.get_antenna_parameters()
+        num_aps = topology.num_base_stations
+        wifi_aps = StationManager(num_aps)
+        wifi_aps.station_type = StationType.WIFI.APS
+
+        wifi_aps.x = topology.x
+        wifi_aps.y = topology.y
+        wifi_aps.elevation = -param_ant.downtilt * np.ones(num_aps)
+        wifi_aps.height = param.ap.height * np.ones(num_aps)
+
+        wifi_aps.azimuth = topology.azimuth
+        wifi_aps.active = random_number_gen.rand(
+            num_aps,
+        ) < param.bs.load_probability
+        wifi_aps.tx_power = param.bs.conducted_power * np.ones(num_aps)
+        wifi_aps.rx_power = dict(
+            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
+        )
+        wifi_aps.rx_interference = dict(
+            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
+        )
+        wifi_aps.ext_interference = dict(
+            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
+        )
+        wifi_aps.total_interference = dict(
+            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
+        )
+
+        wifi_aps.snr = dict(
+            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
+        )
+        wifi_aps.sinr = dict(
+            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
+        )
+        wifi_aps.sinr_ext = dict(
+            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
+        )
+        wifi_aps.inr = dict(
+            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
+        )
+
+        wifi_aps.antenna = np.empty(
+            num_aps, dtype=AntennaOmni,
+        )
+
+        for i in range(num_aps):
+            wifi_aps.antenna[i] = AntennaOmni()
+     
+        wifi_aps.bandwidth = param.bandwidth * np.ones(num_aps)
+        wifi_aps.center_freq = param.frequency * np.ones(num_aps)
+        wifi_aps.noise_figure = param.bs.noise_figure * np.ones(num_aps)
+        wifi_aps.thermal_noise = -500 * np.ones(num_aps)
+
+
+        if param.topology.type == 'HOTSPOT':
+            wifi_aps.intersite_dist = param.topology.hotspot.intersite_distance
+
+        return wifi_aps
         
 
     @staticmethod
@@ -1289,17 +1334,24 @@ class StationFactory(object):
         return x, y, theta, distance
 
     @staticmethod
-    def separate_imt_from_wifi(self, station):
-        for i in range(len(station)):
-            if station[i].station_type == StationType.WIFI_APS:
-                station[i].station_type = StationType.WIFI_STA
-            elif station[i].station_type == StationType.IMT_BS:
-                station[i].station_type = StationType.WIFI_APS
-            else:
-                sys.stderr.write(
-                    "ERROR\nInvalid station type for separation: " + str(station[i].station_type),
-                )
-                sys.exit(1)
+    def filter_station_manager(sm, target_type):
+        mask = sm.station_type == target_type
+
+        def filter_array(arr):
+            return np.array(arr)[mask]
+
+        # Cria uma cópia do objeto original (opcional, pode ser StationManager() vazio também)
+        filtered = copy.deepcopy(sm)
+
+        filtered.active = filter_array(sm.active)
+        filtered.antenna = filter_array(sm.antenna)
+        filtered.azimuth = filter_array(sm.azimuth)
+        filtered.bandwidth = filter_array(sm.bandwidth)
+        filtered.center_freq = filter_array(sm.center_freq)
+        filtered.elevation = filter_array(sm.elevation)
+        filtered.station_type = filter_array(sm.station_type)
+
+        return filtered 
 
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
@@ -1324,7 +1376,6 @@ if __name__ == '__main__':
 
     imt_ue = factory.generate_imt_ue(params.imt, ue_ant_param, topology, rnd)
     imt_bs = factory.generate_imt_base_stations(params.imt, bs_ant_param, topology, rnd)
-
 
     # Separar por tipo de estação
     # Base stations

@@ -43,9 +43,17 @@ class SimulationDownlink(Simulation):
             self.parameters.imt.bs.antenna,
             self.topology, random_number_gen,
         )
+
+        self.wifi_ap = StationFactory.generate_wifi_aps(
+            self.parameters.wifi,
+            self.parameters.wifi.ap.antenna,
+            self.topology, random_number_gen,
+        )
+        #Create instance of wifi aps
+        #self.wifi_ap = StationFactory.filter_station_manager(self.bs, StationType.WIFI_APS)
+        #self.bs = StationFactory.filter_station_manager(self.bs, StationType.IMT_BS)
         
-        #set wifi parameters for the base stations
-        self.set_wifi_parameters(is_ap=True)
+
         # Create the other system (FSS, HAPS, etc...)
         self.system = StationFactory.generate_system(
             self.parameters, self.topology, random_number_gen,
@@ -59,17 +67,30 @@ class SimulationDownlink(Simulation):
             self.topology, random_number_gen,
         )
 
+        self.wifi_ap = StationFactory.generate_imt_ue(
+            self.parameters.imt,
+            self.parameters.wifi.sta.antenna,
+            self.topology, random_number_gen,
+        )
+        #Create instance of wifi stations
+        #self.wifi_sta = StationFactory.filter_station_manager(self.ue, StationType.WIFI_STA)
+        #self.ue = StationFactory.filter_station_manager(self.ue, StationType.IMT_UE)
+
         # self.plot_scenario()
 
         self.connect_ue_to_bs()
+        self.connect_wifi_sta_to_ap()
         self.select_ue(random_number_gen)
 
         # Calculate coupling loss after beams are created
-
-
         self.coupling_loss_imt = self.calculate_intra_imt_coupling_loss(
             self.ue, self.bs,
         )
+
+        #Calculate intra wifi coupling loss 
+        self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(
+            self.wifi_sta, self.wifi_ap,)
+
         self.scheduler()
         self.power_control()
 
@@ -406,7 +427,7 @@ class SimulationDownlink(Simulation):
         
         else:
             for i in range(self.ue.num_stations):
-                if self.ue.station_type[i] == StationType.WIFI_STATIONS:
+                if self.ue.station_type[i] == StationType.WIFI_STA:
                     self.ue.bandwidth[i] = self.parameters.wifi.bandwidth
                     self.ue.center_freq[i] = self.parameters.wifi.frequency
                     self.ue.height[i] = self.parameters.wifi.sta.height

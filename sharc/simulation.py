@@ -97,6 +97,7 @@ class Simulation(ABC, Observable):
         self.system = np.empty(0)
 
         self.link = dict()
+        self.wifi_link = dict()
 
         self.num_rb_per_bs = 0
         self.num_rb_per_ue = 0
@@ -461,6 +462,21 @@ class Simulation(ABC, Observable):
             ]
             self.link[bs] = ue_list
 
+    def connect_wifi_sta_to_ap(self):
+        """
+        Link the Wi-Fi STA's to the serving AP. It is assumed that each group of K
+        user equipments are distributed and pointed to a certain access point
+        """
+        num_sta_per_ap = self.parameters.wifi.sta.k * self.parameters.wifi.sta.k_m
+        ap_active = np.where(self.wifi_ap.active)[0]
+        for ap in ap_active:
+            sta_list = [
+                i for i in range(
+                    ap * num_sta_per_ap, ap * num_sta_per_ap + num_sta_per_ap,
+                )
+            ]
+            self.wifi_link[ap] = sta_list
+
     def select_ue(self, random_number_gen: np.random.RandomState):
         """
         Select K UEs randomly from all the UEs linked to one BS as “chosen”
@@ -565,6 +581,7 @@ class Simulation(ABC, Observable):
         ) + additional_loss
 
         return coupling_loss
+    
     def scheduler(self):
         """
         This scheduler divides the available resource blocks among UE's for
