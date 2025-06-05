@@ -155,7 +155,7 @@ class ParametersImt(ParametersBase):
         """
         super().load_parameters_from_file(config_file)
 
-        if self.spectral_mask not in ["IMT-2020", "3GPP E-UTRA"]:
+        if self.spectral_mask not in ["IMT-2020", "3GPP E-UTRA", "MSS"]:
             raise ValueError(
                 f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
             )
