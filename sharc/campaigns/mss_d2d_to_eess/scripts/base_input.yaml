@@ -47,7 +47,7 @@ imt:
     adjacent_ch_reception: ACS
     ###########################################################################
     adjacent_ch_emissions: SPECTRAL_MASK
-    adjacent_ch_leak_ratio: 25.0  # dB
+    adjacent_ch_leak_ratio: 50.0  # dB
     ###########################################################################
     # IMT spectrum emission mask. Options are:
     #   "IMT-2020" : for mmWave as described in ITU-R TG 5/1 Contribution 36
@@ -519,8 +519,10 @@ single_earth_station:
     height: 7
     azimuth:
       # Type of elevation.
-      type: FIXED
-      fixed: 180
+      type: UNIFORM_DIST
+      uniform_dist:
+        max: 180
+        min: -180
     # Elevation angle [degrees]
     elevation:
       # Type of elevation.
