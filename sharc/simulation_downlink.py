@@ -385,10 +385,10 @@ class SimulationDownlink(Simulation):
                     # included in coupling loss. Then, care has to be taken;
                     # otherwise ohmic loss will be included twice.
                     tx_oob = self.bs.spectral_mask.power_calc(self.param_system.frequency, self.system.bandwidth) \
-                        + self.parameters.imt.bs.ohmic_loss
+                        + self.parameters.imt.bs.ohmic_loss - 30  # mask output is in dBm
 
                 elif self.parameters.imt.adjacent_ch_emissions == "ACLR":
-                    tx_oob = self.parameters.imt.bs.conducted_power - \
+                    tx_oob = self.bs.tx_power[bs] - \
                         self.parameters.imt.adjacent_ch_leak_ratio
 
                 elif self.parameters.imt.adjacent_ch_emissions == "OFF":
@@ -408,15 +408,10 @@ class SimulationDownlink(Simulation):
                             )
                             self.ALREADY_WARNED_ABOUT_ACS_WHEN_OVERLAPPING_BAND = True
 
-                    if self.parameters.imt.adjacent_antenna_model == "SINGLE_ELEMENT":
-                        rx_oob = tx_oob - self.coupling_loss_imt_system_adjacent[active_beams[0], sys_active] - \
-                            self.param_system.adjacent_ch_selectivity
-                    elif self.parameters.imt.adjacent_antenna_model == "BEAMFORMING":
-                        rx_oob = tx_oob - self.coupling_loss_imt_system_adjacent[active_beams, sys_active] - \
-                            self.param_system.adjacent_ch_selectivity
-                        rx_oob = 10 * np.log10(np.sum(10**(rx_oob / 10), axis=0))
-                    else:
-                        raise ValueError("Invalid parameters.imt.adjacent_antenna_model type")
+                    # only apply ACS over non overlapping bw
+                    p_tx = self.bs.tx_power[bs] * ((self.parameters.imt.bandwidth - self.overlapping_bandwidth) /
+                                                   self.parameters.imt.bandwidth)
+                    rx_oob = p_tx - self.param_system.adjacent_ch_selectivity
 
                 elif self.parameters.imt.adjacent_ch_reception == "OFF":
                     if self.parameters.imt.adjacent_ch_emissions == "OFF":
@@ -428,7 +423,15 @@ class SimulationDownlink(Simulation):
                         f"No implementation for parameters.imt.adjacent_ch_reception == {self.parameters.imt.adjacent_ch_reception}"
                     )
 
-                rx_interference += math.pow(10, 0.1 * rx_oob)
+                # Out of band power
+                # sum linearly power leaked into band and power received in the adjacent band
+                oob_power = 10 * np.log10(
+                    10 ** (0.1 * tx_oob) + 10 ** (0.1 * rx_oob)
+                )
+                # oob_power per beam
+                oob_power -= self.coupling_loss_imt_system_adjacent[active_beams, sys_active]
+
+                rx_interference += np.power(10, 0.1 * oob_power)
 
         # Total received interference - dBW
         self.system.rx_interference = 10 * np.log10(rx_interference)
