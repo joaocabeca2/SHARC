@@ -167,6 +167,14 @@ class StationFactory(object):
                 param.bandwidth,
                 param.spurious_emissions,
             )
+        elif param.spectral_mask == "MSS":
+            imt_base_stations.spectral_mask = SpectralMaskMSS(
+                param.frequency,
+                param.bandwidth,
+                param.spurious_emissions
+            )
+        else:
+            raise ValueError(f"Invalid IMT-BS spectral mask {param.spectral_mask}")
 
         if param.topology.type == 'MACROCELL':
             imt_base_stations.intersite_dist = param.topology.macrocell.intersite_distance
@@ -374,7 +382,9 @@ class StationFactory(object):
         imt_ue.center_freq = param.frequency * np.ones(num_ue)
         imt_ue.noise_figure = param.ue.noise_figure * np.ones(num_ue)
 
-        if param.spectral_mask == "IMT-2020":
+        if param.spectral_mask == "IMT-2020" or param.spectral_mask == "MSS":
+            # MSS mask is applied only to MSS-DC IMT space station. Default the UE mask to IMT-2020.
+            # TODO: The user shall be warned about this.
             imt_ue.spectral_mask = SpectralMaskImt(
                 StationType.IMT_UE,
                 param.frequency,
@@ -390,6 +400,8 @@ class StationFactory(object):
                 param.bandwidth,
                 param.spurious_emissions,
             )
+        else:
+            raise ValueError(f"Invalid spectral mask {param.spectral_mask}")
 
         imt_ue.spectral_mask.set_mask()
 
