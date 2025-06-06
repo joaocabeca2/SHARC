@@ -456,12 +456,12 @@ class SimulationDownlink(Simulation):
 
     def collect_results(self, write_to_file: bool, snapshot_number: int):
         if not self.parameters.imt.interfered_with and np.any(self.bs.active):
-            self.results.system_inr.extend(self.system.inr.tolist())
+            self.results.system_inr.extend(self.system.inr.flatten())
             self.results.system_dl_interf_power.extend(
-                [self.system.rx_interference],
+                self.system.rx_interference.flatten(),
             )
             self.results.system_dl_interf_power_per_mhz.extend(
-                [self.system.rx_interference - 10 * math.log10(self.system.bandwidth)],
+                self.system.rx_interference.flatten() - 10 * math.log10(self.system.bandwidth),
             )
             # TODO: generalize this a bit more if needed (same conditional as above)
             if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
