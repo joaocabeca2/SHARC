@@ -67,8 +67,8 @@ class SimulationDownlink(Simulation):
             self.topology, random_number_gen,
         )
 
-        self.wifi_ap = StationFactory.generate_imt_ue(
-            self.parameters.imt,
+        self.wifi_sta = StationFactory.generate_wifi_sta(
+            self.parameters.wifi,
             self.parameters.wifi.sta.antenna,
             self.topology, random_number_gen,
         )

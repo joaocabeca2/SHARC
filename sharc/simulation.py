@@ -138,6 +138,13 @@ class Simulation(ABC, Observable):
             random_number_gen,
         )
 
+        self.propagation_wifi = PropagationFactory.create_propagation(
+            self.parameters.wifi.channel_model,
+            self.parameters,
+            self.parameters.wifi,
+            random_number_gen,
+        )
+
     def add_observer_list(self, observers: list):
         for o in observers:
             self.add_observer(o)
@@ -558,11 +565,11 @@ class Simulation(ABC, Observable):
 
         # Note on the array dimensions for coupling loss calculations:
         # The function get_loss returns an array station_a x station_b
-        path_loss = self.propagation_system.get_loss(
+        path_loss = self.propagation_wifi.get_loss(
             self.parameters,
-            self.system.parameters.frequency,
-            self.system.sta,
-            self.system.ap,
+            self.parameters.wifi.frequency,
+            wifi_sta_station,
+            wifi_ap_station,
             ant_gain_sta_to_ap,
             ant_gain_ap_to_sta,
         )
