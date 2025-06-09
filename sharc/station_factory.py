@@ -1300,7 +1300,6 @@ class StationFactory(object):
         params: ParametersMssD2d,
         random_number_gen: np.random.RandomState,
         geometry_converter: GeometryConverter,
-        also_generate_inactive: bool = False
     ):
         """
         Generate the MSS D2D constellation with support for multiple orbits and base station visibility.
@@ -1326,7 +1325,6 @@ class StationFactory(object):
             geometry_converter,
             params,
             random_number_gen,
-            not also_generate_inactive
         )
 
         total_satellites = mss_d2d_values["num_satellites"]
