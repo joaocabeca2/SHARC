@@ -172,8 +172,9 @@ class SimulationUplink(Simulation):
         if self.co_channel:
             if self.overlapping_bandwidth > 0:
                 # Inteferer transmit power in dBm over the overlapping band (MHz)
+                # [dB]
                 in_band_interf = self.param_system.tx_power_density + \
-                    10 * np.log10(self.overlapping_bandwidth * 1e6) + 30
+                    10 * np.log10(self.overlapping_bandwidth * 1e6)
 
         oob_power = -500
         oob_interf_lin = 0
@@ -184,38 +185,20 @@ class SimulationUplink(Simulation):
 
             # emissions outside of rx bw and inside of tx bw
             # due to non ideal filtering on rx side
-            # will be the same for all UE's, only considering
             rx_oob = -500
 
-            # TODO: M.2101 states that:
-            # "The ACIR value should be calculated based on per UE allocated number of resource blocks"
-
-            # should we actually implement that for ACS since the receiving filter is fixed?
-
-            # or maybe ignore ACS altogether (ACS = inf)? If we consider only allocated RB, it makes
-            # no sense to use ACS.
-            # At the same time, ignoring ACS doesn't seem correct since the interference
-            # could DECREASE when it would make sense for it to increase.
-            # e.g. adjacent systems -> slightly co-channel with ACS = inf
-            # should interfer ^        less than this ^
-
-            # Unless we never use ACS..?
             if self.parameters.imt.adjacent_ch_reception == "ACS":
-                if self.overlapping_bandwidth:
-                    if not hasattr(self, "ALREADY_WARNED_ABOUT_ACS_WHEN_OVERLAPPING_BAND"):
-                        print(
-                            "[WARNING]: You're trying to use ACS on a partially overlapping band"
-                            "with UEs. Verify the code implements the behavior you expect"
-                        )
-                        self.ALREADY_WARNED_ABOUT_ACS_WHEN_OVERLAPPING_BAND = True
-                # only apply ACS over non overlapping bw
-                p_tx = self.param_system.tx_power_density \
-                        + 10 * np.log10(
-                            (self.param_system.bandwidth - self.overlapping_bandwidth) * 1e6
-                        )
+                if self.param_system.bandwidth != self.overlapping_bandwidth:
+                    # only apply ACS over non overlapping bw
+                    p_tx = self.param_system.tx_power_density \
+                            + 10 * np.log10(
+                                (self.param_system.bandwidth - self.overlapping_bandwidth) * 1e6
+                            )
 
-                rx_oob = p_tx - self.parameters.imt.bs.adjacent_ch_selectivity
+                    rx_oob = p_tx - self.parameters.imt.bs.adjacent_ch_selectivity
             elif self.parameters.imt.adjacent_ch_reception == "OFF":
+                pass
+            elif self.parameters.imt.adjacent_ch_reception is False:
                 pass
             else:
                 raise ValueError(
@@ -224,19 +207,19 @@ class SimulationUplink(Simulation):
 
             # for tx oob we accept ACLR and spectral mask
             if self.param_system.adjacent_ch_emissions == "SPECTRAL_MASK":
+                # mask returns dBm
+                # so we convert to [dB]
                 tx_oob = self.system.spectral_mask.power_calc(
                     self.parameters.imt.frequency,
-                    self.parameters.imt.bandwidth * (
-                        1 - self.parameters.imt.guard_band_ratio
-                    )
+                    self.parameters.imt.bandwidth
                 ) - 30
             elif self.param_system.adjacent_ch_emissions == "ACLR":
-                # consider ACLR only over non co-channel RBs
-                # This should diminish some of the ACLR interference
-                # in a way that make sense
+                # consider ACLR only over non overlapping band
+                # [dB]
                 tx_oob = self.param_system.tx_power_density + \
-                    10 * np.log10(self.param_system.bandwidth * 1e6) -  \
-                    self.param_system.adjacent_ch_leak_ratio
+                    10 * np.log10(
+                        (self.param_system.bandwidth - self.overlapping_bandwidth) * 1e6
+                    ) - self.param_system.adjacent_ch_leak_ratio
             elif self.param_system.adjacent_ch_emissions == "OFF":
                 pass
             else:
@@ -247,13 +230,15 @@ class SimulationUplink(Simulation):
             # Out of band power
             # sum linearly power leaked into band and power received in the adjacent band
 
+            # linear [W]:
+            oob_interf_lin = 10 ** (0.1 * tx_oob) + 10 ** (0.1 * rx_oob)
+            # dB
             oob_power = 10 * np.log10(
-                10 ** (0.1 * tx_oob) + 10 ** (0.1 * rx_oob)
+                oob_interf_lin
             )
-            # repeat ue received power for each coupling loss
-            oob_interf_lin = np.power(10, 0.1 * oob_power)
 
-        ext_interference = 10 * np.log10(np.power(10, 0.1 * in_band_interf) + oob_interf_lin)
+        # [dBm]
+        ext_interference = 10 * np.log10(np.power(10, 0.1 * in_band_interf) + oob_interf_lin) + 30
 
         bs_active = np.where(self.bs.active)[0]
         sys_active = np.where(self.system.active)[0]
