@@ -410,7 +410,7 @@ class SimulationDownlink(Simulation):
 
                     # only apply ACS over non overlapping bw
                     p_tx = self.bs.tx_power[bs] * ((self.parameters.imt.bandwidth - self.overlapping_bandwidth) /
-                                                   self.parameters.imt.bandwidth)
+                                                   self.parameters.imt.bandwidth) - 30  # tx_power is in dBm
                     rx_oob = p_tx - self.param_system.adjacent_ch_selectivity
 
                 elif self.parameters.imt.adjacent_ch_reception == "OFF":
