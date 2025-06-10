@@ -38,6 +38,7 @@ readable_name = {
     "system_b": "System B",
 }
 
+
 def linestyle_getter(results):
     if "system_d" in results.output_directory:
         return "dash"

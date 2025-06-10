@@ -18,4 +18,3 @@ class ParametersAntennaWithFreq(ParametersBase):
 
         if not isinstance(self.frequency, int) and not isinstance(self.frequency, float):
             raise ValueError(f"{ctx}.frequency needs to be a number")
-

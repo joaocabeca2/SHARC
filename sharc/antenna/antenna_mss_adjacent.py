@@ -75,4 +75,3 @@ if __name__ == '__main__':
     create_plot_adj_channel(frequency, theta, 2, ax)
     create_plot_adj_channel(frequency, theta, 3, ax)
     plt.show()
-
