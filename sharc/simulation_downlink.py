@@ -428,9 +428,11 @@ class SimulationDownlink(Simulation):
                     10 ** (0.1 * tx_oob) + 10 ** (0.1 * rx_oob)
                 )
                 # oob_power per beam
-                oob_power -= self.coupling_loss_imt_system_adjacent[active_beams, sys_active]
+                oob_power = oob_power - self.coupling_loss_imt_system_adjacent[active_beams, sys_active]
 
-                rx_interference += np.power(10, 0.1 * oob_power)
+                rx_interference += np.sum(
+                    np.power(10, 0.1 * oob_power)
+                )
 
         # Total received interference - dBW
         self.system.rx_interference = 10 * np.log10(rx_interference)
@@ -528,7 +530,7 @@ class SimulationDownlink(Simulation):
                     self.coupling_loss_imt_system[np.array(ue)[:, np.newaxis], sys_active].flatten())
             else:  # IMT is the interferer
                 self.results.system_imt_antenna_gain.extend(
-                    self.system_imt_antenna_gain[sys_active[:, np.newaxis], bs * self.parameters.imt.ue.k].flatten(),
+                    self.system_imt_antenna_gain[sys_active[:, np.newaxis], ue].flatten(),
                 )
                 self.results.imt_system_antenna_gain.extend(
                     self.imt_system_antenna_gain[sys_active[:, np.newaxis], ue].flatten(),
