@@ -271,7 +271,7 @@ class SimulationAdjacentTest(unittest.TestCase):
             rx_oob = tx_pow - self.param.fss_ss.adjacent_ch_selectivity
             oob_interferece = 10 * np.log10(10**(0.1 * tx_oob) + 10**(0.1 * rx_oob)) - \
                 coupling_loss_imt_system_adj[active_beams].flatten()
-            expected_rx_interference += 10**(0.1 * oob_interferece)
+            expected_rx_interference += np.sum(10**(0.1 * oob_interferece))
         expected_rx_interference = 10 * np.log10(expected_rx_interference)
         npt.assert_almost_equal(
             self.simulation.system.rx_interference,
