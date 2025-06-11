@@ -160,8 +160,6 @@ class SimulationDownlink(Simulation):
 
         # applying a bandwidth scaling factor since UE transmits on a portion
         # of the satellite's bandwidth
-        # calculate interference only to active UE's
-        ue = np.where(self.ue.active)[0]
         active_sys = np.where(self.system.active)[0]
 
         # All UEs are active on an active BS
@@ -388,7 +386,7 @@ class SimulationDownlink(Simulation):
                     # included in coupling loss. Then, care has to be taken;
                     # otherwise ohmic loss will be included twice.
                     tx_oob = self.bs.spectral_mask.power_calc(self.param_system.frequency, self.system.bandwidth) \
-                        + self.parameters.imt.bs.ohmic_loss - 30  # mask output is in dBm
+                        + self.parameters.imt.bs.ohmic_loss
 
                 elif self.parameters.imt.adjacent_ch_emissions == "ACLR":
                     tx_oob = self.bs.tx_power[bs] - \
@@ -402,7 +400,7 @@ class SimulationDownlink(Simulation):
                     )
 
                 # Calculate how much power is received in the adjacent channel
-                if self.parameters.imt.adjacent_ch_reception == "ACS":
+                if self.param_system.adjacent_ch_reception == "ACS":
                     if self.overlapping_bandwidth:
                         if not hasattr(self, "ALREADY_WARNED_ABOUT_ACS_WHEN_OVERLAPPING_BAND"):
                             print(
@@ -413,17 +411,17 @@ class SimulationDownlink(Simulation):
 
                     # only apply ACS over non overlapping bw
                     p_tx = self.bs.tx_power[bs] * ((self.parameters.imt.bandwidth - self.overlapping_bandwidth) /
-                                                   self.parameters.imt.bandwidth) - 30  # tx_power is in dBm
+                                                   self.parameters.imt.bandwidth)
                     rx_oob = p_tx - self.param_system.adjacent_ch_selectivity
 
-                elif self.parameters.imt.adjacent_ch_reception == "OFF":
+                elif self.param_system.adjacent_ch_reception == "OFF":
                     if self.parameters.imt.adjacent_ch_emissions == "OFF":
                         raise ValueError("parameters.imt.adjacent_ch_emissions and parameters.imt.adjacent_ch_reception"
                                          " cannot be both set to \"OFF\"")
                     pass
                 else:
                     raise ValueError(
-                        f"No implementation for parameters.imt.adjacent_ch_reception == {self.parameters.imt.adjacent_ch_reception}"
+                        f"No implementation for self.param_system.adjacent_ch_reception == {self.param_system.adjacent_ch_reception}"
                     )
 
                 # Out of band power
