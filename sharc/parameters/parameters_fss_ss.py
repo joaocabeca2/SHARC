@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass, field
-import numpy as np
+import typing
 
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_p619 import ParametersP619
@@ -31,6 +31,8 @@ class ParametersFssSs(ParametersBase):
     azimuth: float = 0.0
     # System receive noise temperature [K]
     noise_temperature: float = 950.0
+    # Adjacent channel reception type.
+    adjacent_ch_reception: typing.Literal["ACS", "OFF"] = "ACS"
     # Adjacent channel selectivity (dB)
     adjacent_ch_selectivity: float = 0.0
 
