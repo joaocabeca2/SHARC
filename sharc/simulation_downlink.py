@@ -354,7 +354,6 @@ class SimulationDownlink(Simulation):
 
             if self.co_channel:
                 if self.overlapping_bandwidth:
-                    acs = 0
                     ue = self.link[bs]
                     weights = self.calculate_bw_weights(
                         self.ue.bandwidth[ue],
@@ -363,7 +362,6 @@ class SimulationDownlink(Simulation):
                         self.param_system.frequency,
                     )
                 else:
-                    acs = self.param_system.adjacent_ch_selectivity
                     weights = np.ones(self.parameters.imt.ue.k)
 
                 interference = self.bs.tx_power[bs] - \
@@ -373,7 +371,7 @@ class SimulationDownlink(Simulation):
                         10,
                         0.1 * interference,
                     ),
-                ) / 10**(acs / 10.)
+                )
 
             if self.adjacent_channel:
                 # These are in dB. Turn to zero linear.
