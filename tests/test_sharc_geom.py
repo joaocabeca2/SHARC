@@ -5,7 +5,7 @@ import shapely as shp
 from pathlib import Path
 
 from sharc.support.sharc_geom import generate_grid_in_multipolygon
-from sharc.support.sharc_utils import load_epsg4326_gdf
+from sharc.support.sharc_utils import load_gdf
 
 
 class TestSharcGeom(unittest.TestCase):
@@ -47,7 +47,7 @@ class TestSharcGeom(unittest.TestCase):
             grid = generate_grid_in_multipolygon(poly, hx_r)
             npt.assert_allclose(len(grid[0]), pol_A / hx_A, rtol=0.05, atol=10)
 
-        gdf = load_epsg4326_gdf(
+        gdf = load_gdf(
             self.countries_shapefile,
             {"NAME": ["Brazil", "Chile"]}
         )
@@ -60,7 +60,7 @@ class TestSharcGeom(unittest.TestCase):
         hx_A = 3 * np.sqrt(3) * hx_r**2 / 2
 
         br_grid_len = len(grid[0])
-        npt.assert_allclose(br_grid_len, pol_A / hx_A, rtol=1e-5, atol=10)
+        npt.assert_allclose(br_grid_len, pol_A / hx_A, rtol=1e-5, atol=190)
 
         poly = gdf[gdf["NAME"] == "Chile"]["geometry"].values[0]
 

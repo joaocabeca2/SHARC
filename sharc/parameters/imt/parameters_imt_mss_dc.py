@@ -6,7 +6,7 @@ from pathlib import Path
 import geopandas as gpd
 import shapely as shp
 
-from sharc.support.sharc_utils import load_epsg4326_gdf
+from sharc.support.sharc_utils import load_gdf
 from sharc.support.sharc_geom import shrink_countries_by_km, generate_grid_in_multipolygon
 from sharc.satellite.utils.sat_utils import lla2ecef
 from sharc.parameters.parameters_base import ParametersBase
@@ -149,7 +149,7 @@ class ParametersSectorPositioning(ParametersBase):
             """
             if self.lon_lat_grid is not None and not force_update:
                 return
-            filtered_gdf = load_epsg4326_gdf(
+            filtered_gdf = load_gdf(
                 self.country_shapes_filename,
                 {
                     "NAME": self.country_names
@@ -254,7 +254,7 @@ class ParametersSelectActiveSatellite(ParametersBase):
             if self.filter_polygon is not None and not force_update:
                 return
 
-            filtered_gdf = load_epsg4326_gdf(
+            filtered_gdf = load_gdf(
                 self.country_shapes_filename,
                 {
                     "NAME": self.country_names
