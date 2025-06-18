@@ -41,20 +41,21 @@ class TopologyHotspotTest(unittest.TestCase):
             s_diff = np.abs(sr - s)
 
             c1 = (q_diff > r_diff) & (q_diff > s_diff)
-            qr[c1] = -rr[c1] -sr[c1]
+            qr[c1] = -rr[c1] - sr[c1]
 
-            c2 = (r_diff > s_diff) &  (~c1)
-            rr[c2] = -qr[c2] -sr[c2]
+            c2 = (r_diff > s_diff) & (~c1)
+            rr[c2] = -qr[c2] - sr[c2]
 
             c3 = (~c1) & (~c2)
-            sr[c3] = -qr[c3] -rr[c3]
+            sr[c3] = -qr[c3] - rr[c3]
 
             return qr, rr, sr
 
         def cube_to_axial(q, r, s):
             return q, r
+
         def axial_to_cube(q, r):
-            return q, r, -q -r
+            return q, r, -q - r
 
         def axial_round(q, r):
             return cube_to_axial(*cube_round(*axial_to_cube(q, r)))
@@ -72,6 +73,7 @@ class TopologyHotspotTest(unittest.TestCase):
 
             return axial_round(q, r)
 
+        # Test for 1 hotspot in 1 cluster grid
         n_hexagons = 19 * 3
 
         rng = np.random.RandomState(11111)
@@ -103,7 +105,7 @@ class TopologyHotspotTest(unittest.TestCase):
         self.assertEqual(len(count), n_hexagons)
         npt.assert_array_equal(list(count.values()), 1)
 
-
+        # Test for 3 hotspots in 1 cluster grid
         param.num_hotspots_per_cell = 3
         topology = TopologyHotspot(
             param, intersite_distance, num_clusters,
@@ -126,7 +128,7 @@ class TopologyHotspotTest(unittest.TestCase):
         self.assertEqual(len(count), n_hexagons)
         npt.assert_array_equal(list(count.values()), 3)
 
-
+        # Test for 3 hotspots in 7 cluster grid
         n_hexagons = 19 * 3 * 7
         num_clusters = 7
         topology = TopologyHotspot(
