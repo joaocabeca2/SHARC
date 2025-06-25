@@ -25,6 +25,7 @@ from sharc.support.sharc_geom import GeometryConverter, rotate_angles_based_on_n
 from sharc.topology.topology_ntn import TopologyNTN
 from sharc.satellite.utils.sat_utils import calc_elevation
 from sharc.support.sharc_geom import lla2ecef, cartesian_to_polar, polar_to_cartesian
+from sharc.satellite.ngso.constants import EARTH_DEFAULT_CRS
 
 
 class TopologyImtMssDc(Topology):
@@ -194,7 +195,7 @@ class TopologyImtMssDc(Topology):
                     flat_active_lat = pos_vec["lat"].flatten()[active_sats_mask]
 
                     # create points(lon, lat) to compare to country
-                    sats_points = gpd.points_from_xy(flat_active_lon, flat_active_lat, crs="EPSG:4326")
+                    sats_points = gpd.points_from_xy(flat_active_lon, flat_active_lat, crs=EARTH_DEFAULT_CRS)
 
                     # Check if the satellite is inside the country polygon
                     polygon_mask = np.zeros_like(active_sats_mask)
@@ -354,7 +355,7 @@ class TopologyImtMssDc(Topology):
             eligible_sats_msk = np.ones_like(all_sat_lat, dtype=bool)
 
             # create points(lon, lat) to compare to country
-            sats_points = gpd.points_from_xy(all_sat_lon[eligible_sats_msk], all_sat_lat[eligible_sats_msk], crs="EPSG:4326")
+            sats_points = gpd.points_from_xy(all_sat_lon[eligible_sats_msk], all_sat_lat[eligible_sats_msk], crs=EARTH_DEFAULT_CRS)
 
             # Check if the satellite is inside the country polygon
             polygon_mask = np.zeros_like(eligible_sats_msk, dtype=bool)

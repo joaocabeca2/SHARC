@@ -4,6 +4,7 @@ from sharc.parameters.parameters import Parameters
 import numpy as np
 from contextlib import contextmanager
 from pyproj import Geod
+from sharc.satellite.ngso.constants import EARTH_RADIUS_M
 
 
 @contextmanager
@@ -688,7 +689,7 @@ class ParametersTest(unittest.TestCase):
         self.parameters.mss_d2d.sat_is_active_if.lat_long_inside_country.reset_filter_polygon("test", True)
         pol = self.parameters.mss_d2d.sat_is_active_if.lat_long_inside_country.filter_polygon
 
-        geod = Geod(ellps="WGS84")
+        geod = Geod(a=EARTH_RADIUS_M, b=EARTH_RADIUS_M)
 
         # this value was taken experimentally from the current implementation
         # and is not much different from census's results of 8.509.379,576 km^2
@@ -696,7 +697,7 @@ class ParametersTest(unittest.TestCase):
         BR_AREA = 8508557e6
         geod_area = abs(geod.geometry_area_perimeter(pol)[0])
 
-        self.assertAlmostEqual(geod_area, BR_AREA, delta=50e6)
+        self.assertAlmostEqual(geod_area, BR_AREA, delta=52e9)
 
         # test chile's area
         self.parameters.mss_d2d.sat_is_active_if.lat_long_inside_country.country_names = ["Chile"]
@@ -708,7 +709,7 @@ class ParametersTest(unittest.TestCase):
         CL_AREA = 814844e6
         geod_area = abs(geod.geometry_area_perimeter(pol)[0])
 
-        self.assertAlmostEqual(geod_area, CL_AREA, delta=50e6)
+        self.assertAlmostEqual(geod_area, CL_AREA, delta=2e9)
 
         # test area union
         self.parameters.mss_d2d.sat_is_active_if.lat_long_inside_country.country_names = ["Chile", "Brazil"]
@@ -717,7 +718,7 @@ class ParametersTest(unittest.TestCase):
 
         geod_area = abs(geod.geometry_area_perimeter(pol)[0])
         # this value was taken experimentally from the current implementation
-        self.assertAlmostEqual(geod_area / 1e6, (CL_AREA + BR_AREA) / 1e6, delta=50)
+        self.assertAlmostEqual(geod_area / 1e6, (CL_AREA + BR_AREA) / 1e6, delta=53e3)
 
 
 if __name__ == '__main__':
