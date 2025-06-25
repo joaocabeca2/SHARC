@@ -8,7 +8,7 @@ import typing
 from sharc.satellite.utils.sat_utils import lla2ecef, ecef2lla
 from sharc.station_manager import StationManager
 from sharc.support.sharc_utils import to_scalar
-from sharc.satellite.ngso.constants import EARTH_RADIUS_M
+from sharc.satellite.ngso.constants import EARTH_RADIUS_M, EARTH_DEFAULT_CRS, EARTH_SPHERICAL_CRS
 
 
 def cartesian_to_polar(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
@@ -381,9 +381,13 @@ class GeometryConverter():
 
 
 def get_lambert_equal_area_crs(polygon: shp.geometry.Polygon):
+    if EARTH_DEFAULT_CRS == "EPSG:4326":
+        datum = "+datum=WGS84"
+    elif EARTH_DEFAULT_CRS == EARTH_SPHERICAL_CRS:
+        datum = f"+a={EARTH_RADIUS_M} +b={EARTH_RADIUS_M}"
     centroid = polygon.centroid
     return pyproj.CRS.from_user_input(
-        f"+proj=laea +lat_0={centroid.y} +lon_0={centroid.x} +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
+        f"+proj=laea +lat_0={centroid.y} +lon_0={centroid.x} +x_0=0 +y_0=0 {datum} +units=m +no_defs"
     )
 
 
@@ -391,9 +395,9 @@ def shrink_country_polygon_by_km(
     polygon: shp.geometry.Polygon, km: float
 ) -> shp.geometry.Polygon:
     """
-    Projects a Polygon in "EPSG:4326" to Lambert Azimuthal Equal Area projection,
+    Projects a Polygon in EARTH_DEFAULT_CRS to Lambert Azimuthal Equal Area projection,
     shrinks the polygon by x km,
-    projects the polygon back to EPSG:4326.
+    projects the polygon back to EARTH_DEFAULT_CRS.
 
     Hint:
         Check for polygon validity after transformation:
@@ -407,8 +411,8 @@ def shrink_country_polygon_by_km(
 
     # Create transformer objects
     # NOTE: important always_xy=True to not mix lat lon up order
-    to_proj = pyproj.Transformer.from_crs("EPSG:4326", proj_crs, always_xy=True).transform
-    from_proj = pyproj.Transformer.from_crs(proj_crs, "EPSG:4326", always_xy=True).transform
+    to_proj = pyproj.Transformer.from_crs(EARTH_DEFAULT_CRS, proj_crs, always_xy=True).transform
+    from_proj = pyproj.Transformer.from_crs(proj_crs, EARTH_DEFAULT_CRS, always_xy=True).transform
 
     # Transform to projection where unit is meters
     polygon_proj = shp.ops.transform(to_proj, polygon)
@@ -416,7 +420,7 @@ def shrink_country_polygon_by_km(
     # Shrink (negative buffer in meters)
     polygon_proj_shrunk = polygon_proj.buffer(-km * 1000)
 
-    # Return to EPSG:4326
+    # Return to EARTH_DEFAULT_CRS
     return shp.ops.transform(from_proj, polygon_proj_shrunk)
 
 
@@ -456,10 +460,10 @@ def generate_grid_in_polygon(
     hexagon_radius: float,
 ):
     """
-    Projects a Polygon in "EPSG:4326" to Lambert Azimuthal Equal Area projection,
+    Projects a Polygon in EARTH_DEFAULT_CRS to Lambert Azimuthal Equal Area projection,
     creates a hexagonal grid inside the polygon,
     where the points are in the heaxagon center,
-    projects the points back to EPSG:4326.
+    projects the points back to EARTH_DEFAULT_CRS.
     Returns:
         np.array with dimension 2 x N,
         with lon's along 1st dimension and lat's along 2nd
@@ -472,8 +476,8 @@ def generate_grid_in_polygon(
 
     # Create transformer objects
     # NOTE: important always_xy=True to not mix lat lon up order
-    to_proj = pyproj.Transformer.from_crs("EPSG:4326", proj_crs, always_xy=True).transform
-    from_proj = pyproj.Transformer.from_crs(proj_crs, "EPSG:4326", always_xy=True).transform
+    to_proj = pyproj.Transformer.from_crs(EARTH_DEFAULT_CRS, proj_crs, always_xy=True).transform
+    from_proj = pyproj.Transformer.from_crs(proj_crs, EARTH_DEFAULT_CRS, always_xy=True).transform
 
     # Transform to projection where unit is meters
     polygon_proj = shp.ops.transform(to_proj, polygon)
@@ -495,7 +499,7 @@ def generate_grid_in_polygon(
     x_vals = x_vals.ravel()
     y_vals = y_vals.ravel()
 
-    # Return to EPSG:4326
+    # Return to EARTH_DEFAULT_CRS
     xt, yt = from_proj(x_vals, y_vals)
 
     # we buffer the polygon very slightly to include points
