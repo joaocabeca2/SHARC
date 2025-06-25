@@ -25,10 +25,10 @@ class FootPrintOpts:
     # e.g. [3, 3, x] means that 1st clr will be for 0 to -3 dB, 2nd for -3 to -6dB and 3rd for < -6dB
     # from normalized gains
     # FIXME: at the moment the last step is ignored
-    step: list[float] = field(default_factory=lambda:[3, 4, 14])  # dB
+    step: list[float] = field(default_factory=lambda: [3, 4, 14])  # dB
 
     # colors to be used for each step
-    colors: list[str] = field(default_factory=lambda:['#fff7ec', '#fee8c8', '#fdd49e', '#fdbb84', '#fc8d59', '#7f0000'])
+    colors: list[str] = field(default_factory=lambda: ['#fff7ec', '#fee8c8', '#fdd49e', '#fdbb84', '#fc8d59', '#7f0000'])
 
     # choose if colors appear continuously or in discrete steps
     discretize: bool = True
@@ -47,7 +47,7 @@ class FootPrintOpts:
 def plot_fp(
     params,
     geoconv,
-    opts = FootPrintOpts(seed=32)
+    opts=FootPrintOpts(seed=32)
 ):
     colors = opts.colors
     step = opts.step
@@ -322,6 +322,7 @@ def plot_fp(
     # ))
 
     return fig
+
 
 if __name__ == "__main__":
     # Define the orbit parameters for two satellite constellations

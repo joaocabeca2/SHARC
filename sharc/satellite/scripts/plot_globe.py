@@ -34,7 +34,7 @@ def plot_back(fig, geoconv, in_km):
         # Ensure your converter function can handle vectorized (numpy array) inputs.
         x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
         if in_km:
-            x_flat, y_flat, z_flat = x_flat/1e3, y_flat/1e3, z_flat/1e3
+            x_flat, y_flat, z_flat = x_flat / 1e3, y_flat / 1e3, z_flat / 1e3
 
     # Reshape the converted coordinates back to the 2D grid shape.
     x = x_flat.reshape(lat.shape)
@@ -81,7 +81,7 @@ def plot_front(fig, geoconv, in_km):
         # Ensure your converter function can handle vectorized (numpy array) inputs.
         x_flat, y_flat, z_flat = geoconv.convert_lla_to_transformed_cartesian(lat_flat, lon_flat, 0)
         if in_km:
-            x_flat, y_flat, z_flat = x_flat/1e3, y_flat/1e3, z_flat/1e3
+            x_flat, y_flat, z_flat = x_flat / 1e3, y_flat / 1e3, z_flat / 1e3
 
     # Reshape the converted coordinates back to the 2D grid shape.
     x = x_flat.reshape(lat.shape)
@@ -118,7 +118,7 @@ def plot_polygon(poly, geoconv, in_km, alt=0):
     else:
         x, y, z = geoconv.convert_lla_to_transformed_cartesian(lat, lon, alt * (1e3 if in_km else 1))
         if in_km:
-            x, y, z = x/1e3, y/1e3, z/1e3
+            x, y, z = x / 1e3, y / 1e3, z / 1e3
 
     return x, y, z
 
@@ -179,5 +179,3 @@ def plot_globe_with_borders(opaque_globe: bool, geoconv, in_km: bool):
                                line=dict(color='rgb(0, 0, 0)'), showlegend=False))
 
     return fig
-
-
