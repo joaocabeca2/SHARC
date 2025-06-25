@@ -47,7 +47,7 @@ class SimulationAdjacentTest(unittest.TestCase):
         self.param.imt.spurious_emissions = -13
         self.param.imt.rb_bandwidth = 0.180
         self.param.imt.guard_band_ratio = 0.1
-        self.param.imt.ho_margin = 3
+        self.param.imt.adjacent_ch_emissions = "ACLR"
         self.param.imt.bs.load_probability = 1
 
         self.param.imt.bs.conducted_power = 10
