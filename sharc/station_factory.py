@@ -1573,8 +1573,8 @@ if __name__ == '__main__':
         topology
     )
 
-    from sharc.satellite.scripts.plot_3d_param_file import plot_globe_with_borders
-    fig = plot_globe_with_borders(True, geometry_converter)
+    from sharc.satellite.scripts.plot_globe import plot_globe_with_borders
+    fig = plot_globe_with_borders(True, geometry_converter, False)
 
     import plotly.graph_objects as go
 
