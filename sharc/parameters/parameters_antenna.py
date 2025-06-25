@@ -2,6 +2,7 @@ from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_antenna_with_diameter import ParametersAntennaWithDiameter
 from sharc.parameters.parameters_antenna_with_envelope_gain import ParametersAntennaWithEnvelopeGain
 from sharc.parameters.antenna.parameters_antenna_s1528 import ParametersAntennaS1528
+from sharc.parameters.antenna.parameters_antenna_with_freq import ParametersAntennaWithFreq
 from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
 
 from dataclasses import dataclass, field
@@ -14,18 +15,22 @@ class ParametersAntenna(ParametersBase):
     __SUPPORTED_ANTENNA_PATTERNS = [
         "OMNI", "ITU-R F.699", "ITU-R S.465", "ITU-R S.580", "MODIFIED ITU-R S.465", "ITU-R S.1855",
         "ITU-R Reg. RR. Appendice 7 Annex 3", "ARRAY", "ITU-R-S.1528-Taylor",
-        "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO"
+        "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO", "MSS Adjacent"
     ]
 
     # chosen antenna radiation pattern
     pattern: typing.Literal[
         "OMNI", "ITU-R F.699", "ITU-R S.465", "ITU-R S.580", "MODIFIED ITU-R S.465", "ITU-R S.1855",
         "ITU-R Reg. RR. Appendice 7 Annex 3", "ARRAY", "ITU-R-S.1528-Taylor",
-        "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO"
+        "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO", "MSS Adjacent"
     ] = None
 
     # antenna gain [dBi]
     gain: float = None
+
+    mss_adjacent: ParametersAntennaWithFreq = field(
+        default_factory=ParametersAntennaWithFreq,
+    )
 
     itu_r_f_699: ParametersAntennaWithDiameter = field(
         default_factory=ParametersAntennaWithDiameter,
@@ -125,6 +130,8 @@ class ParametersAntenna(ParametersBase):
                 self.itu_r_s_1528.validate(f"{ctx}.itu_r_s_1528")
             case "ITU-R-S.1528-LEO":
                 self.itu_r_s_1528.validate(f"{ctx}.itu_r_s_1528")
+            case "MSS Adjacent":
+                self.mss_adjacent.validate(f"{ctx}.mss_adjacent")
             case _:
                 raise NotImplementedError(
                     "ParametersAntenna.validate does not implement this antenna validation!",

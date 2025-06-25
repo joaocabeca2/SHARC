@@ -33,6 +33,7 @@ from sharc.mask.spectral_mask_imt import SpectralMaskImt
 from sharc.antenna.antenna import Antenna
 from sharc.antenna.antenna_factory import AntennaFactory
 from sharc.antenna.antenna_fss_ss import AntennaFssSs
+from sharc.antenna.antenna_mss_adjacent import AntennaMSSAdjacent
 from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.antenna.antenna_f699 import AntennaF699
 from sharc.antenna.antenna_f1891 import AntennaF1891
@@ -166,6 +167,14 @@ class StationFactory(object):
                 param.bandwidth,
                 param.spurious_emissions,
             )
+        elif param.spectral_mask == "MSS":
+            imt_base_stations.spectral_mask = SpectralMaskMSS(
+                param.frequency,
+                param.bandwidth,
+                param.spurious_emissions
+            )
+        else:
+            raise ValueError(f"Invalid IMT-BS spectral mask {param.spectral_mask}")
 
         if param.topology.type == 'MACROCELL':
             imt_base_stations.intersite_dist = param.topology.macrocell.intersite_distance
@@ -382,7 +391,9 @@ class StationFactory(object):
         imt_ue.center_freq = param.frequency * np.ones(num_ue)
         imt_ue.noise_figure = param.ue.noise_figure * np.ones(num_ue)
 
-        if param.spectral_mask == "IMT-2020":
+        if param.spectral_mask == "IMT-2020" or param.spectral_mask == "MSS":
+            # MSS mask is applied only to MSS-DC IMT space station. Default the UE mask to IMT-2020.
+            # TODO: The user shall be warned about this.
             imt_ue.spectral_mask = SpectralMaskImt(
                 StationType.IMT_UE,
                 param.frequency,
@@ -398,6 +409,8 @@ class StationFactory(object):
                 param.bandwidth,
                 param.spurious_emissions,
             )
+        else:
+            raise ValueError(f"Invalid spectral mask {param.spectral_mask}")
 
         imt_ue.spectral_mask.set_mask()
 
@@ -1392,6 +1405,8 @@ class StationFactory(object):
             antenna_pattern = AntennaS1528(params.antenna_s1528)
         elif params.antenna_pattern == "ITU-R-S.1528-Taylor":
             antenna_pattern = AntennaS1528Taylor(params.antenna_s1528)
+        elif params.antenna_pattern == "MSS Adjacent":
+            antenna_pattern = AntennaMSSAdjacent(params.frequency)
         else:
             raise ValueError("generate_mss_ss: Invalid antenna type: {param_mss.antenna_pattern}")
 
@@ -1513,7 +1528,7 @@ class StationFactory(object):
             distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2)
         else:
             theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
-            distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs.height)**2)
+            distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (cell_z)**2)
 
         return x, y, z, theta, distance
 

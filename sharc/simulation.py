@@ -282,9 +282,9 @@ class Simulation(ABC, Observable):
         """
         # Set the frequency and other parameters for the propagation model
         if self.parameters.imt.interfered_with:
-            freq = self.param_system.frequency
+            freq = float(self.param_system.frequency)
         else:
-            freq = self.parameters.imt.frequency
+            freq = float(self.parameters.imt.frequency)
 
         # Calculate the antenna gains of the IMT station with respect to the system's station
         if imt_station.station_type is StationType.IMT_UE:

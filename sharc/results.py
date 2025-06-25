@@ -205,7 +205,7 @@ class Results(object):
         only_samples: list[str] = None,
         filter_fn=None
     ) -> list["Results"]:
-        output_dirs = list(glob.glob(f"{root_dir}/output_*"))
+        output_dirs = sorted(list(glob.glob(f"{root_dir}/output_*")))
 
         if len(output_dirs) == 0:
             print("[WARNING]: Results.load_many_from_dir did not find any results")
