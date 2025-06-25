@@ -31,7 +31,7 @@ class ParametersImt(ParametersBase):
 
     # Adjacent channel emissions type
     # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
-    adjacent_ch_emissions: str = "ACLR"
+    adjacent_ch_emissions: str = "OFF"
 
     # Adjacent channel leakage ratio in dB used if adjacent_ch_emissions is set to "ACLR"
     adjacent_ch_leak_ratio: float = 45.0

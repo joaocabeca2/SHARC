@@ -353,16 +353,13 @@ class SimulationDownlink(Simulation):
             ]
 
             if self.co_channel:
-                if self.overlapping_bandwidth:
-                    ue = self.link[bs]
-                    weights = self.calculate_bw_weights(
-                        self.ue.bandwidth[ue],
-                        self.ue.center_freq[ue],
-                        self.param_system.bandwidth,
-                        self.param_system.frequency,
-                    )
-                else:
-                    weights = np.ones(self.parameters.imt.ue.k)
+                ue = self.link[bs]
+                weights = self.calculate_bw_weights(
+                    self.ue.bandwidth[ue],
+                    self.ue.center_freq[ue],
+                    self.param_system.bandwidth,
+                    self.param_system.frequency,
+                )
 
                 interference = self.bs.tx_power[bs] - \
                     self.coupling_loss_imt_system[active_beams, sys_active]
