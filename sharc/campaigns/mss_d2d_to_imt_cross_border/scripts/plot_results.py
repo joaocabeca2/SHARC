@@ -91,6 +91,9 @@ post_processor\
         x=protection_criteria + 1.0,  # Offset for visibility
         y=0.95
     ))
+post_processor\
+    .get_plot_by_results_attribute_name("imt_ul_inr", plot_type="ccdf")\
+    .add_hline(perc_of_time, line_dash="dash")
 
 # Add a protection criteria line:
 pfd_protection_criteria = -109
