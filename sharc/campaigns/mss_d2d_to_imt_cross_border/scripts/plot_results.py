@@ -14,7 +14,7 @@ auto_open = False
 # Add a legend to results in folder that match the pattern
 # This could easily come from a config file
 
-prefixes = ["0km", "157.9km", "213.4km", "268.9km", "324.4km", "379.9km", "border"]
+prefixes = ["0km", "30km", "50km", "60km", "70km", "80km", "border"]
 for link in ["dl", "ul"]:
     for prefix in prefixes:
         if prefix == "border":
@@ -50,13 +50,12 @@ styles = ["solid", "dot", "dash", "longdash", "dashdot", "longdashdot"]
 
 
 def linestyle_getter(result: Results):
-    """Return a line style string based on the prefix found in the result's output directory."""
-    for link in ["dl", "ul"]:
-        # for prefix, style in zip(prefixes[:len(styles)], styles):
-        for i, prefix in enumerate(prefixes):
-            if prefix in result.output_directory and link in result.output_directory:
-                return styles[i % len(styles)]  # Cycle through styles if there are more prefixes than styles
-    # Default line style if no prefix matches
+    """
+    Returns a line style string based on the prefix found in the result's output directory.
+    """
+    for i in range(len(prefixes)):
+        if "_" + prefixes[i] in result.output_directory:
+            return styles[i]
     return "solid"
 
 
@@ -79,7 +78,10 @@ post_processor\
         x=protection_criteria + 1.0,  # Offset for visibility
         y=0.95
     ))
-
+perc_of_time = 0.01
+post_processor\
+    .get_plot_by_results_attribute_name("imt_dl_inr", plot_type="ccdf")\
+    .add_hline(perc_of_time, line_dash="dash")
 post_processor\
     .get_plot_by_results_attribute_name("imt_ul_inr", plot_type='ccdf')\
     .add_vline(protection_criteria, line_dash="dash", annotation=dict(

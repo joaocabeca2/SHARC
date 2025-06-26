@@ -23,7 +23,8 @@ dl_parameters['general']['output_dir'] = ul_parameters['general']['output_dir'].
 dl_parameters['general']['output_dir_prefix'] = ul_parameters['general']['output_dir_prefix'].replace("_ul", "_dl")
 dl_parameters['general']['imt_link'] = "DOWNLINK"
 
-country_border = 4 * ul_parameters["mss_d2d"]["cell_radius"] / 1e3
+#country_border = 4 * ul_parameters["mss_d2d"]["cell_radius"] / 1e3
+country_border = 30
 print("country_border", country_border)
 
 # doesn't matter from which, both will give same result
@@ -33,10 +34,10 @@ output_prefix_pattern = ul_parameters['general']['output_dir_prefix'].replace("_
 for dist in [
     0,
     country_border,
-    country_border + 111 / 2,
-    country_border + 111,
-    country_border + 3 * 111 / 2,
-    country_border + 2 * 111
+    country_border + 20,
+    country_border + 30,
+    country_border + 40,
+    country_border + 50
 ]:
     ul_parameters["mss_d2d"]["sat_is_active_if"]["lat_long_inside_country"]["margin_from_border"] = dist
     specific = f"{dist}km_base_ul"
