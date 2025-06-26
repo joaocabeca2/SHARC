@@ -1,6 +1,7 @@
 from sharc.parameters.parameters_antenna import ParametersAntenna
 
 from sharc.antenna.antenna_fss_ss import AntennaFssSs
+from sharc.antenna.antenna_mss_adjacent import AntennaMSSAdjacent
 from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.antenna.antenna_f699 import AntennaF699
 from sharc.antenna.antenna_f1891 import AntennaF1891
@@ -53,6 +54,8 @@ class AntennaFactory():
                 return AntennaS1855(antenna_params.itu_r_s_1855)
             case "ITU-R Reg. RR. Appendice 7 Annex 3":
                 return AntennaReg_RR_A7_3(antenna_params.itu_reg_rr_a7_3)
+            case "MSS Adjacent":
+                return AntennaMSSAdjacent(antenna_params.mss_adjacent.frequency)
             case "ARRAY":
                 return AntennaBeamformingImt(
                     antenna_params.array.get_antenna_parameters(),

@@ -230,9 +230,20 @@ class Simulation(ABC, Observable):
         )
 
         if hasattr(self.param_system, "polarization_loss"):
-            self.polarization_loss = self.param_system.polarization_loss
+            if self.param_system.polarization_loss is not None:
+                # if polarization loss is defined, use it
+                # otherwise, raise an error.
+                self.polarization_loss = self.param_system.polarization_loss
+            else:
+                raise ValueError(
+                    "Polarization loss is not initialized in the system parameters. "
+                    "Please initialized it in the system parameters file."
+                )
         else:
-            self.polarization_loss = 3.0
+            raise ValueError(
+                "Polarization loss is not defined in the system parameters. "
+                "Please define it in the system parameters file."
+            )
 
     def finalize(self, *args, **kwargs):
         """
@@ -271,9 +282,9 @@ class Simulation(ABC, Observable):
         """
         # Set the frequency and other parameters for the propagation model
         if self.parameters.imt.interfered_with:
-            freq = self.param_system.frequency
+            freq = float(self.param_system.frequency)
         else:
-            freq = self.parameters.imt.frequency
+            freq = float(self.parameters.imt.frequency)
 
         # Calculate the antenna gains of the IMT station with respect to the system's station
         if imt_station.station_type is StationType.IMT_UE:
@@ -494,7 +505,7 @@ class Simulation(ABC, Observable):
         bs_active = np.where(self.bs.active)[0]
         for bs in bs_active:
             ue = self.link[bs]
-            self.bs.bandwidth[bs] = self.num_rb_per_ue * \
+            self.bs.bandwidth[bs] = self.num_rb_per_bs * \
                 self.parameters.imt.rb_bandwidth
             self.ue.bandwidth[ue] = self.num_rb_per_ue * \
                 self.parameters.imt.rb_bandwidth

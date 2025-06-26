@@ -189,7 +189,7 @@ class PostProcessor:
             "title": "[SYS] IMT to system coupling loss",
         },
         "system_dl_interf_power": {
-            "x_label": "Interference Power [dBm/BMHz]",
+            "x_label": "Interference Power [dB]",
             "title": "[SYS] system interference power from IMT DL",
         },
         "imt_system_diffraction_loss": {
@@ -230,11 +230,11 @@ class PostProcessor:
         },
         "system_dl_interf_power_per_mhz": {
             "title": "[SYS] system interference PSD from IMT DL",
-            "x_label": "Interference Power [dBm/MHz]",
+            "x_label": "Interference Power [dB/MHz]",
         },
         "system_inr": {
             "title": "[SYS] system INR",
-            "x_label": "INR [dB]",
+            "x_label": "INR [dBm]",
         },
         "system_pfd": {
             "title": "[SYS] system PFD",

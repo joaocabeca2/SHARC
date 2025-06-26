@@ -27,7 +27,7 @@ class ParametersSingleEarthStation(ParametersBase):
     # NOTE: Verification needed:
     # polarization mismatch between IMT BS and linear polarization = 3dB in earth P2P case?
     # = 0 is safer choice
-    polarization_loss: float = 3.0
+    polarization_loss: float | None = None
 
     # Sensor center frequency [MHz]
     frequency: float = None  # Center frequency of the sensor in MHz
@@ -38,11 +38,25 @@ class ParametersSingleEarthStation(ParametersBase):
     # System receive noise temperature [K]
     noise_temperature: float = None
 
+    # Adjacent channel emission type [dB]
+    # Adjacent Interference filter reception used when this system
+    # is victim. Possible values is ACS and OFF
+    adjacent_ch_reception: typing.Literal[
+        "ACS", "OFF"
+    ] = "OFF"
+
     # Adjacent channel selectivity [dB]
     adjacent_ch_selectivity: float = None
 
-    # Adjacent channel selectivity [dB]
-    adjacent_ch_emissions: float = None
+    # Adjacent channel emissions type
+    # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
+    adjacent_ch_emissions: str = "OFF"
+
+    # Adjacent channel leakage ratio in dB used if adjacent_ch_emissions is set to "ACLR"
+    adjacent_ch_leak_ratio: float | None = None
+
+    # Spectral mask used for the system when adjacent_ch_emissions is set to "SPECTRAL_MASK"
+    spectral_mask: str | None = None
 
     # Peak transmit power spectral density (clear sky) [dBW/Hz]
     tx_power_density: float = None

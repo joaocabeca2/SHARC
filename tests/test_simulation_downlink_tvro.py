@@ -23,12 +23,13 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
 
         self.param.general.imt_link = "DOWNLINK"
         self.param.system = "FSS_ES"
-        self.param.general.enable_cochannel = True
-        self.param.general.enable_adjacent_channel = False
+        self.param.general.enable_cochannel = False
+        self.param.general.enable_adjacent_channel = True
         self.param.general.seed = 101
         self.param.general.overwrite_output = True
 
         self.param.imt.topology.type = "SINGLE_BS"
+        self.param.imt.adjacent_ch_emissions = "OFF"
         self.param.imt.topology.single_bs.num_clusters = 2
         self.param.imt.topology.single_bs.intersite_distance = 150
         self.param.imt.topology.single_bs.cell_radius = 100
@@ -122,6 +123,7 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
         self.param.fss_es.frequency = 3628
         self.param.fss_es.bandwidth = 6
         self.param.fss_es.noise_temperature = 100
+        self.param.fss_es.adjacent_ch_reception = "ACS"
         self.param.fss_es.adjacent_ch_selectivity = 0
         self.param.fss_es.tx_power_density = -60
         self.param.fss_es.antenna_gain = 32
@@ -130,6 +132,7 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
         self.param.fss_es.antenna_envelope_gain = 0
         self.param.fss_es.channel_model = "FSPL"
         self.param.fss_es.line_of_sight_prob = 1
+        self.param.fss_es.polarization_loss = 3.0
 
     def test_simulation_1bs_1ue_tvro(self):
         self.param.general.system = "FSS_ES"
@@ -138,7 +141,8 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
         self.simulation.initialize()
         random_number_gen = np.random.RandomState(self.param.general.seed)
 
-        self.assertTrue(self.simulation.co_channel)
+        self.assertTrue(self.simulation.adjacent_channel)
+        self.assertFalse(self.simulation.co_channel)
 
         self.simulation.bs = StationFactory.generate_imt_base_stations(
             self.param.imt,
@@ -297,7 +301,7 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
             + self.param.imt.bs.ohmic_loss
 
         npt.assert_allclose(
-            self.simulation.coupling_loss_imt_system,
+            self.simulation.coupling_loss_imt_system_adjacent,
             coupling_loss_imt_system.reshape(-1, 1),
             atol=1e-1,
         )

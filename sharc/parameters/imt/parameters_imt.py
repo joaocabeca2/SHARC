@@ -24,11 +24,20 @@ class ParametersImt(ParametersBase):
     frequency: float = 24350.0
     bandwidth: float = 200.0
     rb_bandwidth: float = 0.180
-    spectral_mask: str = "IMT-2020"
     spurious_emissions: float = -13.0
     guard_band_ratio: float = 0.1
     # Adjacent Interference filter reception used when IMT is victim. Possible values is ACS and OFF
     adjacent_ch_reception: str = "OFF"
+
+    # Adjacent channel emissions type
+    # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
+    adjacent_ch_emissions: str = "OFF"
+
+    # Adjacent channel leakage ratio in dB used if adjacent_ch_emissions is set to "ACLR"
+    adjacent_ch_leak_ratio: float = 45.0
+
+    # Spectral mask used for the IMT system when adjacent_ch_emissions is set to "SPECTRAL_MASK"
+    spectral_mask: str = "IMT-2020"
 
     @dataclass
     class ParametersBS(ParametersBase):
@@ -39,6 +48,8 @@ class ParametersImt(ParametersBase):
         height: float = 6.0
         noise_figure: float = 10.0
         ohmic_loss: float = 3.0
+        # Adjacent Channel Selectivity in dB
+        adjacent_ch_selectivity: float = None
         antenna: ParametersAntenna = field(default_factory=lambda: ParametersAntenna(
             pattern="ARRAY", array=ParametersAntennaImt(downtilt=0.0)
         ))
@@ -146,7 +157,7 @@ class ParametersImt(ParametersBase):
         """
         super().load_parameters_from_file(config_file)
 
-        if self.spectral_mask not in ["IMT-2020", "3GPP E-UTRA"]:
+        if self.spectral_mask not in ["IMT-2020", "3GPP E-UTRA", "MSS"]:
             raise ValueError(
                 f"""ParametersImt: Inavlid Spectral Mask Name {self.spectral_mask}""",
             )
