@@ -314,7 +314,7 @@ class SimulationDownlink(Simulation):
         # Convert PFD from dB to linear scale (W/m²/MHz)
         pfd_linear = 10 ** (self.ue.pfd_external / 10)
         # Sum PFDs from all transmitters for each UE (axis=0 assumes shape [n_tx, n_ue])
-        pfd_agg_linear = np.sum(pfd_linear[active_sys][:, ue], axis=0)
+        pfd_agg_linear = np.sum(pfd_linear[active_sys][:, self.ue.active], axis=0)
         # Convert back to dBW
         self.ue.pfd_external_aggregated = 10 * np.log10(pfd_agg_linear)
 
