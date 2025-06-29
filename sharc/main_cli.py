@@ -6,6 +6,7 @@ Created on Fri Aug 11 13:17:14 2017
 """
 
 from sharc.support.sharc_logger import Logging
+from sharc.support.sharc_logger import SimulationLogger
 from sharc.controller import Controller
 from sharc.gui.view_cli import ViewCli
 from sharc.model import Model
@@ -36,6 +37,10 @@ def main(argv):
             elif opt == "-p":
                 param_file = param_file = os.path.join(os.getcwd(), arg)
 
+    output_dir = os.path.dirname(param_file)
+    sim_logger = SimulationLogger(output_dir)
+    sim_logger.start()
+
     Logging.setup_logging()
 
     model = Model()
@@ -46,7 +51,10 @@ def main(argv):
     controller.set_model(model)
     model.add_observer(view_cli)
 
-    view_cli.initialize(param_file)
+    try:
+        view_cli.initialize(param_file)
+    finally:
+        sim_logger.end()
 
 
 if __name__ == "__main__":
