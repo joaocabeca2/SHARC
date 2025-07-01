@@ -52,6 +52,23 @@ class AntennaS1528Taylor(Antenna):
         self.mu = jn_zeros(1, NUM_OF_BESSEL_ROOTS) / np.pi
 
     def calculate_gain(self, *args, **kwargs) -> np.array:
+        """
+        Calculate the antenna gain for given off-axis and theta angles using the S.1528 model.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments (unused).
+        **kwargs : dict
+            Keyword arguments containing:
+                - off_axis_angle_vec: off-axis angles (degrees)
+                - theta_vec: theta angles (degrees)
+
+        Returns
+        -------
+        np.array
+            Calculated gain values for the given angles.
+        """
         # The reference angles for the simulator and the antenna realisation are switched.
         # Local theta is simulator off_axis_angle and local phi is simulator theta_vec
         if 'off_axis_angle_vec' not in kwargs:
@@ -188,7 +205,24 @@ class AntennaS1528(Antenna):
         self.y = self.b * self.psi_b * \
             math.pow(10, 0.04 * (self.peak_gain + self.l_s - self.l_f))
 
+
     def calculate_gain(self, *args, **kwargs) -> np.array:
+        """
+        Calculate the antenna gain for given off-axis angles using the alternative S.1528 model.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments (unused).
+        **kwargs : dict
+            Keyword arguments containing:
+                - off_axis_angle_vec: off-axis angles (degrees)
+
+        Returns
+        -------
+        np.array
+            Calculated gain values for the given angles.
+        """
         psi = np.absolute(kwargs["off_axis_angle_vec"])
 
         gain = np.zeros(len(psi))

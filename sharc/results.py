@@ -112,6 +112,19 @@ class Results(object):
         output_dir="output",
         output_dir_prefix="output",
     ):
+        """Prepare the output directory and filenames for writing results.
+
+        Parameters
+        ----------
+        parameters_filename : str
+            Name of the parameters file.
+        overwrite_output : bool
+            Whether to overwrite existing output.
+        output_dir : str, optional
+            Parent output directory. Default is "output".
+        output_dir_prefix : str, optional
+            Prefix for output directory. Default is "output".
+        """
         self.output_dir_parent = output_dir
 
         if not overwrite_output:
@@ -205,6 +218,18 @@ class Results(object):
         only_samples: list[str] = None,
         filter_fn=None
     ) -> list["Results"]:
+        """
+        Load multiple Results objects from a directory containing output folders.
+
+        Args:
+            root_dir (str): The root directory to search for output folders.
+            only_latest (bool, optional): If True, only load the most recent output for each prefix. Defaults to True.
+            only_samples (list[str], optional): List of sample names to load. If None, load all samples. Defaults to None.
+            filter_fn (callable, optional): Function to filter output directories. Defaults to None.
+
+        Returns:
+            list[Results]: A list of loaded Results objects.
+        """
         output_dirs = sorted(list(glob.glob(f"{root_dir}/output_*")))
 
         if len(output_dirs) == 0:
@@ -225,6 +250,16 @@ class Results(object):
         return all_res
 
     def load_from_dir(self, abs_path: str, *, only_samples: list[str] = None) -> "Results":
+        """
+        Load results from a specified directory, optionally loading only specified samples.
+
+        Args:
+            abs_path (str): Absolute path to the output directory.
+            only_samples (list[str], optional): List of sample names to load. If None, load all samples. Defaults to None.
+
+        Returns:
+            Results: The Results object with loaded data.
+        """
         self.output_directory = abs_path
 
         self_dict = self.__dict__
@@ -272,11 +307,13 @@ class Results(object):
     @staticmethod
     def get_most_recent_outputs_for_each_prefix(dirnames: list[str]) -> list[str]:
         """
-        Input:
-            A list of output directories.
+        Get the most recent output directory for each output prefix.
+
+        Args:
+            dirnames (list[str]): A list of output directory names.
+
         Returns:
-            A list containing the most recent output dirname for each output_prefix.
-            Note that if full paths are provided, full paths are returned
+            list[str]: A list containing the most recent output dirname for each output_prefix.
         """
         res = {}
 
@@ -294,7 +331,16 @@ class Results(object):
         return list(map(lambda x: x["dirname"], res.values()))
 
     @staticmethod
-    def get_prefix_date_and_id(dirname: str) -> (str, str, str):
+    def get_prefix_date_and_id(dirname: str) -> tuple[str, str, str]:
+        """
+        Extract the prefix, date, and id from a directory name.
+
+        Args:
+            dirname (str): The directory name to parse.
+
+        Returns:
+            tuple: A tuple containing the prefix, date, and id as strings.
+        """
         mtch = re.search("(.*)(20[2-9][0-9]-[0-1][0-9]-[0-3][0-9])_([0-9]{2})", dirname)
         prefix, date, id = mtch.group(1), mtch.group(2), mtch.group(3)
         return prefix, date, id

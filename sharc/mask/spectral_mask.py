@@ -9,15 +9,35 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 
+
 class SpectralMask(ABC):
+    """
+    Abstract base class for defining spectral emission masks.
+
+    This class provides the interface and common functionality for spectral mask
+    implementations, including mask definition and out-of-band power calculation.
+    """
 
     def __init__(self) -> None:
+        """
+        Initialize the SpectralMask base class.
+
+        Sets default values for mask_dbm, freq_lim, and p_tx attributes.
+        """
         self.mask_dbm = None
         self.freq_lim = None
         self.p_tx = None
 
     @abstractmethod
     def set_mask(self, p_tx=0):
+        """
+        Set the spectral mask for the given transmit power.
+
+        Parameters
+        ----------
+        p_tx : float, optional
+            Transmit power in dBm (default is 0).
+        """
         pass
 
     def power_calc(self, center_f: float, band: float):

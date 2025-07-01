@@ -23,6 +23,13 @@ class SimulationUplink(Simulation):
         super().__init__(parameters, parameter_file)
 
     def snapshot(self, *args, **kwargs):
+        """
+        Execute a simulation snapshot for the uplink scenario.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments. Should include 'write_to_file', 'snapshot_number', and 'seed'.
+        """
         write_to_file = kwargs["write_to_file"]
         snapshot_number = kwargs["snapshot_number"]
         seed = kwargs["seed"]
@@ -348,6 +355,13 @@ class SimulationUplink(Simulation):
                 )
 
     def collect_results(self, write_to_file: bool, snapshot_number: int):
+        """
+        Collect and store results for the current uplink simulation snapshot.
+
+        Args:
+            write_to_file (bool): Whether to write results to file.
+            snapshot_number (int): The current snapshot number.
+        """
         if not self.parameters.imt.interfered_with and np.any(self.bs.active):
             self.results.system_inr.extend(self.system.inr.tolist())
             self.results.system_ul_interf_power.extend(

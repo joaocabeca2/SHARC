@@ -111,6 +111,12 @@ class ParametersSpaceStation(ParametersBase):
         self.set_derived_parameters()
 
     def set_derived_parameters(self):
+        """
+        Set derived parameters for the space station.
+
+        This method sets the derived parameters such as space station altitude and nadir angle
+        based on the current configuration. It also updates the P619 parameters if applicable.
+        """
         self.space_station_alt_m = self.altitude
 
         if self.param_p619:

@@ -1,3 +1,5 @@
+
+"""Antenna factory module for creating antenna instances based on parameters."""
 from sharc.parameters.parameters_antenna import ParametersAntenna
 
 from sharc.antenna.antenna_fss_ss import AntennaFssSs

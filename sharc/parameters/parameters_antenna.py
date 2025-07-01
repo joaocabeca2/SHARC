@@ -11,6 +11,9 @@ import typing
 
 @dataclass
 class ParametersAntenna(ParametersBase):
+    """
+    Parameters for antenna configuration, including pattern, gain, and sub-parameters for different antenna models.
+    """
     # available antenna radiation patterns
     __SUPPORTED_ANTENNA_PATTERNS = [
         "OMNI", "ITU-R F.699", "ITU-R S.465", "ITU-R S.580", "MODIFIED ITU-R S.465", "ITU-R S.1855",
@@ -64,6 +67,14 @@ class ParametersAntenna(ParametersBase):
     )
 
     def set_external_parameters(self, **kwargs):
+        """
+        Set external parameters for all sub-parameters of the antenna.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            External parameters to set on sub-parameters.
+        """
         attr_list = [
             a for a in dir(self) if not a.startswith('__') and isinstance(getattr(self, a), ParametersBase)
         ]
@@ -79,10 +90,33 @@ class ParametersAntenna(ParametersBase):
                 param.antenna_gain = self.gain
 
     def load_parameters_from_file(self, config_file):
-        # should not be loaded except as subparameter
+        """
+        Not implemented for ParametersAntenna. Should only be loaded as a subparameter.
+
+        Parameters
+        ----------
+        config_file : str
+            Path to the configuration file.
+        Raises
+        ------
+        NotImplementedError
+            Always raised for this method.
+        """
         raise NotImplementedError()
 
     def validate(self, ctx):
+        """
+        Validate the antenna parameters for correctness.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        Raises
+        ------
+        ValueError
+            If any parameter is invalid.
+        """
         if None in [self.pattern]:
             raise ValueError(
                 f"{ctx}.pattern should be set. Is None instead",

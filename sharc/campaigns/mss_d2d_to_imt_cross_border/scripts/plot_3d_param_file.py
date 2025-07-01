@@ -1,4 +1,7 @@
 # Generates a 3D plot of the Earth with the satellites positions
+"""
+Script to generate a 3D plot of the Earth with satellite positions for the MSS D2D to IMT cross-border scenario.
+"""
 # https://geopandas.org/en/stable/docs/user_guide/io.html
 import geopandas as gpd
 import numpy as np

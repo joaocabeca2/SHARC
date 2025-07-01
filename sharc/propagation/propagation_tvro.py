@@ -179,6 +179,24 @@ class PropagationTvro(Propagation):
         indoor_stations: np.array,
         shadowing,
     ) -> np.array:
+        """Calculate the microcell path loss for TVRO-IMT scenarios.
+
+        Parameters
+        ----------
+        distance_3D : np.array
+            3D distance array between stations.
+        frequency : np.array
+            Frequency array for the links.
+        indoor_stations : np.array
+            Boolean array indicating indoor stations.
+        shadowing : bool
+            Whether to include shadow fading.
+
+        Returns
+        -------
+        np.array
+            Path loss values for the microcell scenario.
+        """
         pl_los = 102.93 + 20 * np.log10(distance_3D / 1000)
         pl_nlos = 153.5 + 40 * np.log10(distance_3D / 1000)
         pr_los = self.get_los_probability(distance_3D)
@@ -210,6 +228,26 @@ class PropagationTvro(Propagation):
         indoor_stations: np.array,
         shadowing: bool,
     ) -> np.array:
+        """Calculate the macrocell path loss for TVRO-IMT scenarios.
+
+        Parameters
+        ----------
+        distance_3D : np.array
+            3D distance array between stations.
+        frequency : np.array
+            Frequency array for the links.
+        height : np.array
+            Height array for the user equipment.
+        indoor_stations : np.array
+            Boolean array indicating indoor stations.
+        shadowing : bool
+            Whether to include shadow fading.
+
+        Returns
+        -------
+        np.array
+            Path loss values for the macrocell scenario.
+        """
 
         free_space_path_loss = self.free_space_path_loss.get_free_space_loss(
             distance=distance_3D,

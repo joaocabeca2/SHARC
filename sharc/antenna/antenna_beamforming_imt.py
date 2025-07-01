@@ -415,12 +415,25 @@ class PlotAntennaPattern(object):
     def __init__(self, figs_dir):
         self.figs_dir = figs_dir
 
+
     def plot_element_pattern(
         self,
         antenna: AntennaBeamformingImt,
         sta_type: str,
         plot_type: str,
     ):
+        """
+        Plot the element or array pattern for a given antenna.
+
+        Parameters
+        ----------
+        antenna : AntennaBeamformingImt
+            The antenna object to plot.
+        sta_type : str
+            The station type (e.g., 'BS', 'UE').
+        plot_type : str
+            The type of pattern to plot ('ELEMENT' or 'ARRAY').
+        """
 
         phi_escan = 0
         theta_tilt = 90

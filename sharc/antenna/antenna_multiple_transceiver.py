@@ -1,3 +1,5 @@
+
+"""Antenna model for multiple transceiver systems."""
 from sharc.antenna.antenna import Antenna
 
 import numpy as np
@@ -5,6 +7,9 @@ import math
 
 
 class AntennaMultipleTransceiver(Antenna):
+    """
+    Antenna class for systems with multiple transceivers, each with its own orientation.
+    """
     def __init__(
         self,
         *,

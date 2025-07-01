@@ -126,6 +126,18 @@ class ParametersMssD2d(ParametersBase):
         self.num_beams = self.num_sectors
 
     def validate(self, ctx):
+        """
+        Validate the MSS D2D parameters for correctness.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        Raises
+        ------
+        ValueError
+            If any parameter is invalid.
+        """
         # Now do the sanity check for some parameters
         if self.num_sectors not in [1, 7, 19]:
             raise ValueError(f"ParametersMssD2d: Invalid number of sectors {self.num_sectors}")
@@ -152,6 +164,9 @@ class ParametersMssD2d(ParametersBase):
         super().validate(ctx)
 
     def propagate_parameters(self):
+        """
+        Propagate relevant parameters to nested antenna and beam positioning objects.
+        """
         self.antenna_s1528.set_external_parameters(antenna_pattern=self.antenna_pattern,
                                                    frequency=self.frequency,
                                                    bandwidth=self.bandwidth,

@@ -53,6 +53,20 @@ class PropagationFreeSpace(Propagation):
 
     @dispatch(np.ndarray, np.ndarray)
     def get_loss(self, distance_3D: np.array, frequency: float) -> np.array:
+        """Calculate the free-space loss for the given 3D distance and frequency.
+
+        Parameters
+        ----------
+        distance_3D : np.array
+            3D distance array between stations.
+        frequency : float
+            Frequency value(s).
+
+        Returns
+        -------
+        np.array
+            Path loss array with shape distance_3D.shape.
+        """
         return self.get_free_space_loss(np.unique(frequency), distance_3D)
 
     def get_free_space_loss(self, frequency: float, distance: np.array) -> np.array:

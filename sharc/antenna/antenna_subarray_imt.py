@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Implements a Subarray "Element" for IMT antenna, as defined in R23-WP5D-C-0413, Annex 4.2, Table 8.
+Provides subarray pattern calculations for use in SHARC simulations.
+"""
+# -*- coding: utf-8 -*-
 import numpy as np
 import typing
 

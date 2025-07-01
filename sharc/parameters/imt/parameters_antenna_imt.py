@@ -93,14 +93,43 @@ class ParametersAntennaImt(ParametersBase):
 
     def load_subparameters(self, ctx: str, params: dict, quiet=True):
         """
-        Loads the parameters when is placed as subparameter
+        Load parameters when this class is used as a subparameter.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        params : dict
+            Dictionary of parameters to load.
+        quiet : bool, optional
+            If True, suppress output (default is True).
         """
         super().load_subparameters(ctx, params, quiet)
 
     def set_external_parameters(self, *, adjacent_antenna_model: typing.Literal["BEAMFORMING", "SINGLE_ELEMENT"]):
+        """
+        Set the adjacent antenna model parameter.
+
+        Parameters
+        ----------
+        adjacent_antenna_model : Literal["BEAMFORMING", "SINGLE_ELEMENT"]
+            The adjacent antenna model to use.
+        """
         self.adjacent_antenna_model = adjacent_antenna_model
 
     def validate(self, ctx: str):
+        """
+        Validate the antenna parameters for correctness.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        Raises
+        ------
+        ValueError
+            If any parameter is invalid.
+        """
         # Additional sanity checks specific to antenna parameters can be implemented here
 
         # Sanity check for adjacent_antenna_model
@@ -139,7 +168,7 @@ class ParametersAntennaImt(ParametersBase):
             )
         if not all(map(
                 lambda x: x >= -180. and x <= 180., self.horizontal_beamsteering_range
-            )):
+        )):
             raise ValueError(
                 f"Invalid {ctx}.horizontal_beamsteering_range={self.horizontal_beamsteering_range}\n"
                 "Horizontal beamsteering limit angles must be in the range [-180, 180]"
@@ -167,13 +196,21 @@ class ParametersAntennaImt(ParametersBase):
             )
         if not all(map(
                 lambda x: x >= 0. and x <= 180., self.vertical_beamsteering_range
-            )):
+        )):
             raise ValueError(
                 f"Invalid {ctx}.vertical_beamsteering_range={self.vertical_beamsteering_range}\n"
                 "vertical beamsteering limit angles must be in the range [0, 180]"
             )
 
     def get_antenna_parameters(self) -> AntennaPar:
+        """
+        Get the antenna parameters as an AntennaPar object.
+
+        Returns
+        -------
+        AntennaPar
+            The antenna parameters object constructed from the current configuration.
+        """
         if self.normalization:
             # Load data, save it in dict and close it
             data = load(self.normalization_file)

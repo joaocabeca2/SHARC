@@ -39,7 +39,21 @@ readable_name = {
 }
 
 
+
 def linestyle_getter(results):
+    """
+    Determine the line style for plotting based on the results' output directory.
+
+    Parameters
+    ----------
+    results : Results
+        The results object containing the output directory information.
+
+    Returns
+    -------
+    str
+        The line style to use for plotting (e.g., 'dash' or 'solid').
+    """
     if "system_d" in results.output_directory:
         return "dash"
     return "solid"

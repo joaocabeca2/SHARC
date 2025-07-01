@@ -5,11 +5,30 @@ from sharc.parameters.parameters_base import ParametersBase
 
 @dataclass
 class ParametersSingleBS(ParametersBase):
+    """
+    Parameters for single base station topology simulation.
+    """
     intersite_distance: int = None
     cell_radius: int = None
     num_clusters: int = 1
 
     def load_subparameters(self, ctx: str, params: dict, quiet=True):
+        """
+        Load and validate subparameters for single base station configuration.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        params : dict
+            Parameters to load.
+        quiet : bool, optional
+            If True, suppress warnings.
+        Raises
+        ------
+        ValueError
+            If both intersite_distance and cell_radius are set.
+        """
         super().load_subparameters(ctx, params, quiet)
 
         if self.intersite_distance is not None and self.cell_radius is not None:
@@ -21,6 +40,18 @@ class ParametersSingleBS(ParametersBase):
             self.intersite_distance = self.cell_radius * 3 / 2
 
     def validate(self, ctx):
+        """
+        Validate the single base station parameters for correctness.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        Raises
+        ------
+        ValueError
+            If any parameter is invalid.
+        """
         if None in [self.intersite_distance, self.cell_radius]:
             raise ValueError(f"{ctx}.intersite_distance and cell_radius should be set.\
                                 One of them through the parameters, the other inferred")

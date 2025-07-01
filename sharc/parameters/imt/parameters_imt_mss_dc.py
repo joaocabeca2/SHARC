@@ -48,6 +48,16 @@ class ParametersSectorPositioning(ParametersBase):
         distribution: ParametersSectorValueDistribution = field(default_factory=ParametersSectorValueDistribution)
 
         def validate(self, ctx):
+            """
+            Validate the sector value parameters.
+
+            Ensures that the type and value constraints are satisfied for the sector value.
+
+            Parameters
+            ----------
+            ctx : str
+                Context string for error messages.
+            """
             if self.type not in self.__ALLOWED_TYPES:
                 raise ValueError(
                     f"{ctx}.type = {self.type} is not one of the accepted values:\n{self.__ALLOWED_TYPES}"
@@ -112,6 +122,16 @@ class ParametersSectorPositioning(ParametersBase):
         eligibility_polygon: typing.Union[shp.MultiPolygon, shp.Polygon] = None
 
         def validate(self, ctx: str):
+            """
+            Validate the service grid parameters.
+
+            Ensures that country names and beam radius are set and valid, and sets grid margin if needed.
+
+            Parameters
+            ----------
+            ctx : str
+                Context string for error messages.
+            """
             # conditional is weird due to suboptimal way of working with nested array parameters
             if len(self.country_names) == 0 or (len(self.country_names) == 1 and self.country_names[0] == ""):
                 raise ValueError(f"You need to pass at least one country name to {ctx}.country_names")
@@ -136,6 +156,14 @@ class ParametersSectorPositioning(ParametersBase):
             self,
             sat_is_active_if: "ParametersSelectActiveSatellite",
         ):
+            """
+            Load grid parameters from active satellite selection conditions.
+
+            Parameters
+            ----------
+            sat_is_active_if : ParametersSelectActiveSatellite
+                The object containing satellite selection and country information.
+            """
             if len(self.country_names) == 0 or self.country_names[0] == "":
                 self.country_names = sat_is_active_if.lat_long_inside_country.country_names
             if self.eligible_sats_margin_from_border is None:
@@ -208,6 +236,16 @@ class ParametersSectorPositioning(ParametersBase):
     service_grid: ParametersServiceGrid = field(default_factory=ParametersServiceGrid)
 
     def validate(self, ctx):
+        """
+        Validate the sector positioning parameters.
+
+        Ensures that the type and nested parameters are valid for the sector positioning configuration.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        """
         if self.type not in self.__ALLOWED_TYPES:
             raise ValueError(
                 f"{ctx}.type = {self.type} is not one of the accepted values:\n{self.__ALLOWED_TYPES}"
@@ -228,8 +266,14 @@ class ParametersSectorPositioning(ParametersBase):
 
 @dataclass
 class ParametersSelectActiveSatellite(ParametersBase):
+    """
+    Parameters for selecting active satellites based on geographic and elevation criteria.
+    """
     @dataclass
     class ParametersLatLongInsideCountry(ParametersBase):
+        """
+        Parameters for checking if a location is inside a given country.
+        """
         country_shapes_filename: Path = \
             SHARC_ROOT_DIR / "sharc" / "data" / "countries" / "ne_110m_admin_0_countries.shp"
 
@@ -244,6 +288,14 @@ class ParametersSelectActiveSatellite(ParametersBase):
         filter_polygon: typing.Union[shp.MultiPolygon, shp.Polygon] = None
 
         def validate(self, ctx: str):
+            """
+            Validate the country names and filter polygon for the location check.
+
+            Parameters
+            ----------
+            ctx : str
+                Context string for error messages.
+            """
             # conditional is weird due to suboptimal way of working with nested array parameters
             if len(self.country_names) == 0 or (len(self.country_names) == 1 and self.country_names[0] == ""):
                 raise ValueError(f"You need to pass at least one country name to {ctx}.country_names")
@@ -251,6 +303,16 @@ class ParametersSelectActiveSatellite(ParametersBase):
             self.reset_filter_polygon(ctx)
 
         def reset_filter_polygon(self, ctx: str, force_update=False):
+            """
+            Reset the filter polygon for country boundaries, optionally forcing update.
+
+            Parameters
+            ----------
+            ctx : str
+                Context string for error messages.
+            force_update : bool, optional
+                If True, force update even if already set (default is False).
+            """
             if self.filter_polygon is not None and not force_update:
                 return
 
@@ -289,6 +351,14 @@ class ParametersSelectActiveSatellite(ParametersBase):
     lat_long_inside_country: ParametersLatLongInsideCountry = field(default_factory=ParametersLatLongInsideCountry)
 
     def validate(self, ctx):
+        """
+        Validate the satellite selection conditions and their parameters.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        """
         if "LAT_LONG_INSIDE_COUNTRY" in self.conditions:
             self.lat_long_inside_country.validate(f"{ctx}.lat_long_inside_country")
 
@@ -367,7 +437,18 @@ class ParametersImtMssDc(ParametersBase):
 
     def validate(self, ctx: str):
         """
+        Validate the IMT MSS DC parameters for correctness.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+
         Raises
+        ------
+        ValueError
+            If a parameter is not valid.
+        """
         ------
         ValueError
             If a parameter is not valid.

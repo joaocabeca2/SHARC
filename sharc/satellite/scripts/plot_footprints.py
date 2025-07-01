@@ -1,3 +1,8 @@
+# """
+Script to generate a 3D plot of the Earth with satellite positions and footprints.
+
+This module uses geopandas and plotly to visualize satellite footprints and related data for SHARC simulations.
+"""
 # Generates a 3D plot of the Earth with the satellites positions
 # https://geopandas.org/en/stable/docs/user_guide/io.html
 import os

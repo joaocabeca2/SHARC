@@ -27,6 +27,7 @@ def is_float(s: str) -> bool:
 
 
 def to_scalar(x):
+    """Convert a numpy scalar or array to a Python scalar if possible."""
     if isinstance(x, np.ndarray):
         return x.item()  # Works for 0-D or 1-element arrays
     return x

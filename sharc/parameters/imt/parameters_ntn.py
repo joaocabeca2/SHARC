@@ -48,6 +48,9 @@ class ParametersNTN(ParametersBase):
     bs_n_columns_layer2: int = 2
 
     def load_subparameters(self, ctx: str, params: dict, quiet=True):
+        """
+        Load and validate NTN-specific subparameters, updating intersite distance and cell radius as needed.
+        """
         super().load_subparameters(ctx, params, quiet)
 
         if self.cell_radius is not None and self.intersite_distance is not None:
@@ -61,13 +64,28 @@ class ParametersNTN(ParametersBase):
 
     def set_external_parameters(self, *, bs_height: float):
         """
-            This method is used to "propagate" parameters from external context
-            to the values required by ntn topology. It's not ideal, but it's done
-            this way until we decide on a better way to model context.
+        Propagate parameters from external context to NTN topology values.
+
+        Parameters
+        ----------
+        bs_height : float
+            Base station height to set.
         """
         self.bs_height = bs_height
 
     def validate(self, ctx: str):
+        """
+        Validate the NTN parameters for correctness.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        Raises
+        ------
+        ValueError
+            If any parameter is invalid.
+        """
         # Now do the sanity check for some parameters
         if self.num_sectors not in [1, 7, 19]:
             raise ValueError(

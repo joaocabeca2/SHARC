@@ -82,18 +82,27 @@ class ParametersSingleEarthStation(ParametersBase):
     class EarthStationGeometry(ParametersBase):
         height: float = None
 
+        def __post_init__(self):
+            """Post-initialization for EarthStationGeometry."""
+            pass
+
         @dataclass
         class FixedOrUniformDist(ParametersBase):
+            """Represents a value that can be fixed or uniformly distributed."""
+
             __EXISTING_TYPES = ["UNIFORM_DIST", "FIXED"]
             type: typing.Literal["UNIFORM_DIST", "FIXED"] = None
             fixed: float = None
 
             @dataclass
             class UniformDistParams(ParametersBase):
+                """Parameters for a uniform distribution."""
+
                 min: float = None
                 max: float = None
 
                 def validate(self, ctx):
+                    """Validate the min and max values for the uniform distribution."""
                     if not isinstance(self.min, int) and not isinstance(self.min, float):
                         raise ValueError(
                             f"{ctx}.min parameter should be a number",
@@ -111,6 +120,7 @@ class ParametersSingleEarthStation(ParametersBase):
             )
 
             def validate(self, ctx):
+                """Validate the parameters for uniform or fixed distributions."""
                 if self.type not in self.__EXISTING_TYPES:
                     raise ValueError(
                         f"Invalid value for {ctx}.type. Should be one of {self.__EXISTING_TYPES}",
@@ -134,6 +144,8 @@ class ParametersSingleEarthStation(ParametersBase):
 
         @dataclass
         class Location(ParametersBase):
+            """Represents a location that can be fixed, cell-based, network-based, or uniformly distributed."""
+
             __EXISTING_TYPES = ["FIXED", "CELL", "NETWORK", "UNIFORM_DIST"]
             type: typing.Literal[
                 "FIXED", "CELL",
@@ -142,10 +154,13 @@ class ParametersSingleEarthStation(ParametersBase):
 
             @dataclass
             class LocationFixed(ParametersBase):
+                """Fixed location with x and y coordinates."""
+
                 x: float = None
                 y: float = None
 
                 def validate(self, ctx):
+                    """Validate the x and y coordinates for the fixed location."""
                     if not isinstance(self.x, int) and not isinstance(self.x, float):
                         raise ValueError(f"{ctx}.x needs to be a number")
                     if not isinstance(self.y, int) and not isinstance(self.y, float):
@@ -153,9 +168,12 @@ class ParametersSingleEarthStation(ParametersBase):
 
             @dataclass
             class LocationDistributed(ParametersBase):
+                """Distributed location with minimum distance to base station."""
+
                 min_dist_to_bs: float = None
 
                 def validate(self, ctx):
+                    """Validate the minimum distance to base station."""
                     if not isinstance(self.min_dist_to_bs, int) and not isinstance(self.min_dist_to_bs, float):
                         raise ValueError(
                             f"{ctx}.min_dist_to_bs needs to be a number",
@@ -163,10 +181,13 @@ class ParametersSingleEarthStation(ParametersBase):
 
             @dataclass
             class LocationDistributedWithinCircle(ParametersBase):
+                """Distributed location within a circle defined by min and max distance to center."""
+
                 min_dist_to_center: float = None
                 max_dist_to_center: float = None
 
                 def validate(self, ctx):
+                    """Validate the min and max distance to center for the distributed location."""
                     if not isinstance(self.min_dist_to_center, int) and not isinstance(self.min_dist_to_center, float):
                         raise ValueError(
                             f"{ctx}.min_dist_to_center needs to be a number",
@@ -188,6 +209,9 @@ class ParametersSingleEarthStation(ParametersBase):
             )
 
             def validate(self, ctx):
+                """
+                Validate the location parameters based on the selected type.
+                """
                 match self.type:
                     case "FIXED":
                         self.fixed.validate(f"{ctx}.fixed")
@@ -245,6 +269,18 @@ class ParametersSingleEarthStation(ParametersBase):
             self.validate(self.section_name)
 
     def validate(self, ctx="single_earth_station"):
+        """
+        Validate the single earth station parameters for correctness.
+
+        Parameters
+        ----------
+        ctx : str, optional
+            Context string for error messages. Default is "single_earth_station".
+        Raises
+        ------
+        ValueError
+            If any parameter is invalid.
+        """
         super().validate(ctx)
 
         if None in [self.frequency, self.bandwidth, self.channel_model]:

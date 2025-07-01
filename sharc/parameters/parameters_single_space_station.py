@@ -61,11 +61,17 @@ class ParametersSingleSpaceStation(ParametersBase):
 
         @dataclass
         class PointingParam(ParametersBase):
+            """
+            Defines pointing parameters for the space station geometry.
+            """
             __EXISTING_TYPES = ["FIXED", "POINTING_AT_IMT"]
             type: typing.Literal["FIXED", "POINTING_AT_IMT"] = None
             fixed: float = None
 
             def validate(self, ctx):
+                """
+                Validate the PointingParam parameters for correctness.
+                """
                 if self.type not in self.__EXISTING_TYPES:
                     raise ValueError(
                         f"Invalid value for {ctx}.type. Should be one of {self.__EXISTING_TYPES}",
@@ -97,11 +103,17 @@ class ParametersSingleSpaceStation(ParametersBase):
 
             @dataclass
             class LocationFixed(ParametersBase):
+                """
+                Represents a fixed location with latitude and longitude differences between the space station and earth station.
+                """
                 # This should be the difference between SS lat/long and ES lat/long
                 lat_deg: float = None
                 long_deg: float = None
 
                 def validate(self, ctx):
+                    """
+                    Validate the LocationFixed parameters for correctness.
+                    """
                     if not isinstance(self.lat_deg, int) and not isinstance(self.lat_deg, float):
                         raise ValueError(f"{ctx}.lat_deg needs to be a number")
                     if not isinstance(self.long_deg, int) and not isinstance(self.long_deg, float):
@@ -110,6 +122,9 @@ class ParametersSingleSpaceStation(ParametersBase):
             fixed: LocationFixed = field(default_factory=LocationFixed)
 
             def validate(self, ctx):
+                """
+                Validate the Location parameters for correctness.
+                """
                 match self.type:
                     case "FIXED":
                         self.fixed.validate(f"{ctx}.fixed")
@@ -127,16 +142,6 @@ class ParametersSingleSpaceStation(ParametersBase):
     def load_parameters_from_file(self, config_file: str):
         """
         Load the parameters from a file and run a sanity check.
-
-        Parameters
-        ----------
-        config_file : str
-            The path to the configuration file.
-
-        Raises
-        ------
-        ValueError
-            If a parameter is not valid.
         """
         super().load_parameters_from_file(config_file)
 
@@ -154,6 +159,9 @@ class ParametersSingleSpaceStation(ParametersBase):
             self.validate(self.section_name)
 
     def propagate_parameters(self):
+        """
+        Propagate relevant parameters to nested P619 and antenna objects.
+        """
         if self.channel_model == "P619":
             if self.param_p619.earth_station_alt_m != ParametersP619.earth_station_alt_m:
                 raise ValueError(
@@ -194,6 +202,9 @@ class ParametersSingleSpaceStation(ParametersBase):
         self.antenna_pattern = self.antenna.pattern
 
     def validate(self, ctx="single_space_station"):
+        """
+        Validate the single space station parameters for correctness.
+        """
         super().validate(ctx)
 
         if None in [self.frequency, self.bandwidth, self.channel_model, self.tx_power_density]:

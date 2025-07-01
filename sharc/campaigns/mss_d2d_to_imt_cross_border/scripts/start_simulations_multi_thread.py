@@ -1,3 +1,5 @@
+
+"""Script to start MSS D2D to IMT cross-border campaign simulations in multi-threaded mode."""
 from sharc.run_multiple_campaigns_mut_thread import run_campaign
 
 # Set the campaign name

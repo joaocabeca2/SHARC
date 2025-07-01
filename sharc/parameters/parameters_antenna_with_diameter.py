@@ -5,6 +5,9 @@ from dataclasses import dataclass
 
 @dataclass
 class ParametersAntennaWithDiameter(ParametersBase):
+    """
+    Parameters for antennas that require diameter, gain, and frequency.
+    """
     antenna_gain: float = None
     frequency: float = None
     diameter: float = None
@@ -13,6 +16,18 @@ class ParametersAntennaWithDiameter(ParametersBase):
     # since parser is a bit hacky, this is created without acces to system freq and antenna gain
     # so validation needs to happen manually afterwards
     def validate(self, ctx):
+        """
+        Validate the antenna with diameter parameters for correctness.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        Raises
+        ------
+        ValueError
+            If any parameter is invalid.
+        """
         if None in [
             self.antenna_gain,
             self.diameter,

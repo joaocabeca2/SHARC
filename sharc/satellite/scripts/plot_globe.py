@@ -100,6 +100,18 @@ def plot_front(fig, geoconv, in_km):
 
 
 def plot_polygon(poly, geoconv, in_km, alt=0):
+    """
+    Convert a polygon's coordinates to 3D Cartesian coordinates for plotting on a globe.
+
+    Args:
+        poly: The polygon object with exterior coordinates.
+        geoconv: Geodetic converter object or None.
+        in_km (bool): Whether to use kilometers for the output coordinates.
+        alt (float, optional): Altitude to add to the radius. Defaults to 0.
+
+    Returns:
+        tuple: Arrays of x, y, z coordinates for the polygon.
+    """
 
     xy_coords = poly.exterior.coords.xy
     lon = np.array(xy_coords[0])
@@ -124,6 +136,18 @@ def plot_polygon(poly, geoconv, in_km, alt=0):
 
 
 def plot_mult_polygon(mult_poly, geoconv, in_km: bool, alt=0):
+    """
+    Convert a MultiPolygon or Polygon to a list of 3D Cartesian coordinate arrays for plotting.
+
+    Args:
+        mult_poly: The MultiPolygon or Polygon object.
+        geoconv: Geodetic converter object or None.
+        in_km (bool): Whether to use kilometers for the output coordinates.
+        alt (float, optional): Altitude to add to the radius. Defaults to 0.
+
+    Returns:
+        list: A list of tuples containing arrays of x, y, z coordinates for each polygon.
+    """
     if mult_poly.geom_type == 'Polygon':
         return [plot_polygon(mult_poly, geoconv, in_km, alt)]
     elif mult_poly.geom_type == 'MultiPolygon':
@@ -131,6 +155,17 @@ def plot_mult_polygon(mult_poly, geoconv, in_km: bool, alt=0):
 
 
 def plot_globe_with_borders(opaque_globe: bool, geoconv, in_km: bool):
+    """
+    Plot a 3D globe with country borders using Plotly.
+
+    Args:
+        opaque_globe (bool): Whether to plot the globe as opaque.
+        geoconv: Geodetic converter object or None.
+        in_km (bool): Whether to use kilometers for the output coordinates.
+
+    Returns:
+        go.Figure: A Plotly Figure object with the globe and borders.
+    """
     # Read the shapefile.  Creates a DataFrame object
     project_root = Path(__file__).resolve().parents[3]
     countries_borders_shp_file = project_root / "sharc/data/countries/ne_110m_admin_0_countries.shp"

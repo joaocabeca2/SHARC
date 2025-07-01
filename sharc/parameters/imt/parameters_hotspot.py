@@ -3,8 +3,14 @@ from dataclasses import dataclass
 from sharc.parameters.parameters_base import ParametersBase
 
 
+
 @dataclass
 class ParametersHotspot(ParametersBase):
+    """
+    Data class for hotspot topology parameters.
+
+    Stores configuration for intersite distance, cluster count, hotspot count, and distances.
+    """
     intersite_distance: int = None
     # Enable wrap around
     wrap_around: bool = False
@@ -19,6 +25,16 @@ class ParametersHotspot(ParametersBase):
     min_dist_bs_hotspot: float = 0.0
 
     def validate(self, ctx):
+        """
+        Validate the hotspot topology parameters.
+
+        Ensures that all attributes are set to valid values and types.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        """
         if not isinstance(self.intersite_distance, int) and not isinstance(self.intersite_distance, float):
             raise ValueError(f"{ctx}.intersite_distance should be a number")
 

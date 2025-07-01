@@ -12,8 +12,21 @@ import os
 num_spaces_ident = 4
 
 
-def convert_ini_to_yaml(input_file, output_file):
 
+def convert_ini_to_yaml(input_file, output_file):
+    """
+    Convert a .ini file to a .yaml file.
+
+    Read the contents of the input .ini file, parse its sections and key-value pairs,
+    and write them in YAML format to the output file. Note: Lists in .ini files are not parsed.
+
+    Parameters
+    ----------
+    input_file : str
+        Path to the input .ini file.
+    output_file : str
+        Path to the output .yaml file.
+    """
     print("Reading from file: ", input_file)
     print("Writing to file: ", output_file)
 

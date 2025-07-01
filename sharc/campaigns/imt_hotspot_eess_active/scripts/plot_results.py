@@ -1,3 +1,7 @@
+"""
+Script for post-processing and plotting IMT Hotspot EESS Active simulation results.
+Adds legends to result folders and generates plots using SHARC's PostProcessor.
+"""
 import os
 from pathlib import Path
 from sharc.results import Results

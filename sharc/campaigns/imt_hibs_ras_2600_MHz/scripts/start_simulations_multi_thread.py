@@ -1,3 +1,6 @@
+"""
+Script to start IMT HIBS RAS 2600 MHz simulations in multi-threaded mode using SHARC.
+"""
 from sharc.run_multiple_campaigns_mut_thread import run_campaign
 
 # Set the campaign name

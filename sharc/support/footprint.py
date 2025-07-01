@@ -198,9 +198,33 @@ class Footprint(object):
         return earthArea(obj) * 1e-6
 
     def cot(self, angle):
+        """Return the cotangent of the given angle (in radians).
+
+        Parameters
+        ----------
+        angle : float
+            Angle in radians.
+
+        Returns
+        -------
+        float
+            Cotangent of the angle.
+        """
         return tan(pi / 2 - angle)
 
     def arccot(self, x):
+        """Return the inverse cotangent (arccot) of x, in radians.
+
+        Parameters
+        ----------
+        x : float
+            Value to compute arccot for.
+
+        Returns
+        -------
+        float
+            Arccotangent of x, in radians.
+        """
         return pi / 2 - arctan(x)
 
 

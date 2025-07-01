@@ -25,6 +25,7 @@ from sharc.propagation.propagation_hdfss import PropagationHDFSS
 
 
 class PropagationFactory(object):
+    """Factory class for creating propagation model objects based on the specified channel model."""
 
     @staticmethod
     def create_propagation(
@@ -33,28 +34,28 @@ class PropagationFactory(object):
         param_system: ParametersBase,
         random_number_gen: rnd.RandomState,
     ) -> Propagation:
-        """Creates a propagation model object
+        """Create and return a propagation model object.
 
         Parameters
         ----------
         channel_model : str
-            The channel model
+            The channel model.
         param : Parameters
-            The simulation paramters.
+            The simulation parameters.
         param_system : ParametersBase
-            Specific system paramters. It can be either ParametersIMT or other system parameters.
+            Specific system parameters. It can be either ParametersIMT or other system parameters.
         random_number_gen : rnd.RandomState
-            Random number generator
+            Random number generator.
 
         Returns
         -------
         Propagation
-            Propagation object
+            Propagation object.
 
         Raises
         ------
         ValueError
-            Raises ValueError if the channel model is not implemented.
+            If the channel model is not implemented.
         """
         if channel_model == "FSPL":
             return PropagationFreeSpace(random_number_gen)

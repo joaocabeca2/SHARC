@@ -67,7 +67,11 @@ from sharc.support.sharc_geom import rotate_angles_based_on_new_nadir, GeometryC
 from sharc.parameters.constants import SPEED_OF_LIGHT
 
 
+
 class StationFactory(object):
+    """
+    Factory class for creating and configuring station objects for various scenarios.
+    """
 
     @staticmethod
     def generate_imt_base_stations(
@@ -76,6 +80,24 @@ class StationFactory(object):
         topology: Topology,
         random_number_gen: np.random.RandomState,
     ):
+        """Generate IMT base stations for the given topology and parameters.
+
+        Parameters
+        ----------
+        param : ParametersImt
+            IMT parameters.
+        param_ant_bs : ParametersAntennaImt
+            Antenna parameters for base stations.
+        topology : Topology
+            Topology object containing station positions.
+        random_number_gen : np.random.RandomState
+            Random number generator instance.
+
+        Returns
+        -------
+        StationManager
+            IMT base stations manager object.
+        """
         param_ant = param_ant_bs.get_antenna_parameters()
         num_bs = topology.num_base_stations
         imt_base_stations = StationManager(num_bs)
@@ -190,7 +212,24 @@ class StationFactory(object):
         topology: Topology,
         random_number_gen: np.random.RandomState,
     ) -> StationManager:
+        """Generate IMT user equipment (UE) stations for the given topology and parameters.
 
+        Parameters
+        ----------
+        param : ParametersImt
+            IMT parameters.
+        ue_param_ant : ParametersAntennaImt
+            Antenna parameters for UEs.
+        topology : Topology
+            Topology object containing station positions.
+        random_number_gen : np.random.RandomState
+            Random number generator instance.
+
+        Returns
+        -------
+        StationManager
+            IMT UE stations manager object.
+        """
         if param.topology.type == "INDOOR":
             return StationFactory.generate_imt_ue_indoor(param, ue_param_ant, random_number_gen, topology)
         else:
@@ -202,6 +241,22 @@ class StationFactory(object):
         random_number_gen: np.random.RandomState,
         topology: Topology,
     ) -> StationManager:
+        """Generate a Radio Astronomy Station (RAS) as a single earth station.
+
+        Parameters
+        ----------
+        param : ParametersRas
+            Parameters for the RAS station.
+        random_number_gen : np.random.RandomState
+            Random number generator instance.
+        topology : Topology
+            Topology object containing station positions.
+
+        Returns
+        -------
+        StationManager
+            RAS station manager object.
+        """
         return StationFactory.generate_single_earth_station(
             param, random_number_gen,
             StationType.RAS, topology
@@ -214,6 +269,24 @@ class StationFactory(object):
         random_number_gen: np.random.RandomState,
         topology: Topology,
     ) -> StationManager:
+        """Generate IMT user equipment (UE) stations for outdoor scenarios.
+
+        Parameters
+        ----------
+        param : ParametersImt
+            IMT parameters.
+        ue_param_ant : ParametersAntennaImt
+            Antenna parameters for UEs.
+        random_number_gen : np.random.RandomState
+            Random number generator instance.
+        topology : Topology
+            Topology object containing station positions.
+
+        Returns
+        -------
+        StationManager
+            IMT UE stations manager object for outdoor deployment.
+        """
         num_bs = topology.num_base_stations
         num_ue_per_bs = param.ue.k * param.ue.k_m
 
@@ -428,6 +501,24 @@ class StationFactory(object):
         random_number_gen: np.random.RandomState,
         topology: Topology,
     ) -> StationManager:
+        """Generate IMT user equipment (UE) stations for indoor scenarios.
+
+        Parameters
+        ----------
+        param : ParametersImt
+            IMT parameters.
+        ue_param_ant : ParametersAntennaImt
+            Antenna parameters for UEs.
+        random_number_gen : np.random.RandomState
+            Random number generator instance.
+        topology : Topology
+            Topology object containing station positions.
+
+        Returns
+        -------
+        StationManager
+            IMT UE stations manager object for indoor deployment.
+        """
         num_bs = topology.num_base_stations
         num_ue_per_bs = param.ue.k * param.ue.k_m
         num_ue = num_bs * num_ue_per_bs
@@ -580,6 +671,24 @@ class StationFactory(object):
         random_number_gen: np.random.RandomState,
         geometry_converter=GeometryConverter()
     ):
+        """Generate the system based on the provided parameters and topology.
+
+        Parameters
+        ----------
+        parameters : Parameters
+            System parameters including all subsystems.
+        topology : Topology
+            Topology object containing station positions.
+        random_number_gen : np.random.RandomState
+            Random number generator instance.
+        geometry_converter : GeometryConverter, optional
+            Converter for coordinate transformations (default is GeometryConverter()).
+
+        Returns
+        -------
+        StationManager
+            Station manager object for the selected system type.
+        """
         if parameters.imt.topology.type == 'MACROCELL':
             intersite_dist = parameters.imt.topology.macrocell.intersite_distance
         elif parameters.imt.topology.type == 'HOTSPOT':
@@ -619,9 +728,19 @@ class StationFactory(object):
 
     @staticmethod
     def generate_single_space_station(param: ParametersSingleSpaceStation, simplify_dist_to_y=True):
-        """
-        Creates a single satellite based on parameters.
-        In case simplify_dist_to_y == True (default) satellite will be only on y axis
+        """Create a single space station (satellite) based on the provided parameters.
+
+        Parameters
+        ----------
+        param : ParametersSingleSpaceStation
+            Parameters for the single space station.
+        simplify_dist_to_y : bool, optional
+            If True (default), places the satellite only on the y axis.
+
+        Returns
+        -------
+        StationManager
+            Space station manager object.
         """
         space_station = StationManager(1)
         space_station.station_type = StationType.SINGLE_SPACE_STATION
@@ -702,6 +821,18 @@ class StationFactory(object):
 
     @staticmethod
     def generate_fss_space_station(param: ParametersFssSs):
+        """Generate a Fixed Satellite Service (FSS) space station with the given parameters.
+
+        Parameters
+        ----------
+        param : ParametersFssSs
+            Parameters for the FSS space station.
+
+        Returns
+        -------
+        StationManager
+            FSS space station manager object.
+        """
         fss_space_station = StationManager(1)
         fss_space_station.station_type = StationType.FSS_SS
         fss_space_station.is_space_station = True
@@ -773,18 +904,23 @@ class StationFactory(object):
 
     @staticmethod
     def generate_fss_earth_station(param: ParametersFssEs, random_number_gen: np.random.RandomState, *args):
-        """
-        @deprecated
+        """[DEPRECATED] Generate a Fixed Satellite Service (FSS) Earth Station.
 
-        Since this creates a Single Earth Station, you should use StationFactory.generate_single_earth_station instead.
-        This will be deleted in the future.
-        ----------------------------------
-        Generates FSS Earth Station.
+        This method is deprecated. Use StationFactory.generate_single_earth_station instead.
 
-        Arguments:
-            param: ParametersFssEs
-            random_number_gen: np.random.RandomState
-            topology (optional): Topology
+        Parameters
+        ----------
+        param : ParametersFssEs
+            Parameters for the FSS Earth Station.
+        random_number_gen : np.random.RandomState
+            Random number generator instance.
+        args : tuple
+            Optional topology argument.
+
+        Returns
+        -------
+        StationManager
+            FSS Earth Station manager object.
         """
         warn(
             "This is deprecated, use StationFactory.generate_single_earth_station() instead; date=2024-10-11",
@@ -896,13 +1032,23 @@ class StationFactory(object):
         param: ParametersSingleEarthStation, random_number_gen: np.random.RandomState,
         station_type=StationType.SINGLE_EARTH_STATION, topology=None,
     ):
-        """
-        Generates a Single Earth Station.
+        """Generate a single earth station with the given parameters.
 
-        Arguments:
-            param: ParametersSingleEarthStation
-            random_number_gen: np.random.RandomState
-            topology (optional): Topology
+        Parameters
+        ----------
+        param : ParametersSingleEarthStation
+            Parameters for the single earth station.
+        random_number_gen : np.random.RandomState
+            Random number generator instance.
+        station_type : StationType, optional
+            Type of the station (default is SINGLE_EARTH_STATION).
+        topology : Topology, optional
+            Topology object containing station positions.
+
+        Returns
+        -------
+        StationManager
+            Single earth station manager object.
         """
         single_earth_station = StationManager(1)
         single_earth_station.station_type = StationType.SINGLE_EARTH_STATION
@@ -1049,10 +1195,19 @@ class StationFactory(object):
 
     @staticmethod
     def generate_fs_station(param: ParametersFs):
-        """
-        @deprecated
-        Since this creates a Single Earth Station, you should use StationFactory.generate_single_earth_station instead.
-        This will be deleted in the future
+        """[DEPRECATED] Generate a Fixed Service (FS) station.
+
+        This method is deprecated. Use StationFactory.generate_single_earth_station instead.
+
+        Parameters
+        ----------
+        param : ParametersFs
+            Parameters for the FS station.
+
+        Returns
+        -------
+        StationManager
+            FS station manager object.
         """
         warn(
             "This is deprecated, use StationFactory.generate_single_earth_station() instead; date=2024-10-11",
@@ -1094,6 +1249,22 @@ class StationFactory(object):
 
     @staticmethod
     def generate_haps(param: ParametersHaps, intersite_distance: int, random_number_gen: np.random.RandomState):
+        """Generate HAPS (High Altitude Platform Station) with given parameters.
+
+        Parameters
+        ----------
+        param : ParametersHaps
+            HAPS parameters.
+        intersite_distance : int
+            Intersite distance for HAPS deployment.
+        random_number_gen : np.random.RandomState
+            Random number generator instance.
+
+        Returns
+        -------
+        StationManager
+            HAPS station manager object.
+        """
         num_haps = 1
         haps = StationManager(num_haps)
         haps.station_type = StationType.HAPS
@@ -1137,6 +1308,20 @@ class StationFactory(object):
 
     @staticmethod
     def generate_rns(param: ParametersRns, random_number_gen: np.random.RandomState):
+        """Generate a Radio Navigation Satellite (RNS) station with the given parameters.
+
+        Parameters
+        ----------
+        param : ParametersRns
+            Parameters for the RNS station.
+        random_number_gen : np.random.RandomState
+            Random number generator instance.
+
+        Returns
+        -------
+        StationManager
+            RNS station manager object.
+        """
         num_rns = 1
         rns = StationManager(num_rns)
         rns.station_type = StationType.RNS
@@ -1180,6 +1365,18 @@ class StationFactory(object):
 
     @staticmethod
     def generate_eess_space_station(param: ParametersEessSS):
+        """Generate an Earth Exploration Satellite Service (EESS) space station.
+
+        Parameters
+        ----------
+        param : ParametersEessSS
+            Parameters for the EESS space station.
+
+        Returns
+        -------
+        StationManager
+            EESS space station manager object.
+        """
         if param.distribution_enable:
             if param.distribution_type == "UNIFORM":
                 param.nadir_angle = np.random.uniform(
@@ -1191,10 +1388,36 @@ class StationFactory(object):
 
     @staticmethod
     def generate_metsat_ss(param: ParametersMetSatSS):
+        """Generate a Meteorological Satellite (MetSat) space station.
+
+        Parameters
+        ----------
+        param : ParametersMetSatSS
+            Parameters for the MetSat space station.
+
+        Returns
+        -------
+        StationManager
+            MetSat space station manager object.
+        """
         return StationFactory.generate_space_station(param, StationType.METSAT_SS)
 
     @staticmethod
     def generate_space_station(param: ParametersSpaceStation, station_type: StationType):
+        """Generate a generic space station using off-nadir angle and altitude.
+
+        Parameters
+        ----------
+        param : ParametersSpaceStation
+            Parameters for the space station.
+        station_type : StationType
+            Type of the space station (e.g., METSAT_SS, EESS_SS).
+
+        Returns
+        -------
+        StationManager
+            Space station manager object.
+        """
         # this method uses off-nadir angle and altitude to infer the entire geometry
         # TODO: make this usable on more space station cases (initially only works for metsat and eess)
         space_station = StationManager(1)
@@ -1263,6 +1486,18 @@ class StationFactory(object):
 
     @staticmethod
     def generate_mss_ss(param_mss: ParametersMssSs):
+        """Generate a Mobile Satellite Service (MSS) space station.
+
+        Parameters
+        ----------
+        param_mss : ParametersMssSs
+            Parameters for the MSS space station.
+
+        Returns
+        -------
+        StationManager
+            MSS space station manager object.
+        """
         # We borrow the TopologyNTN geometry as it's the same for MSS_SS
         ntn_topology = TopologyNTN(param_mss.intersite_distance,
                                    param_mss.cell_radius,

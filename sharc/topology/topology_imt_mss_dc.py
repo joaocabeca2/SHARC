@@ -29,15 +29,20 @@ from sharc.satellite.ngso.constants import EARTH_DEFAULT_CRS
 
 
 class TopologyImtMssDc(Topology):
+    """IMT Mobile Satellite Service (MSS) for Direct Connectivity (D2D) topology class.
+
+    This class generates and manages the positions and attributes of space stations
+    for direct connectivity scenarios using NGSO satellites.
+    """
     def __init__(self, params: ParametersImtMssDc, geometry_converter: GeometryConverter):
-        """Implements a IMT Mobile Satellite Service (MSS) for Direct Connectivity (D2D) topology.
+        """Initialize the IMT MSS-DC topology with parameters and geometry converter.
 
         Parameters
         ----------
         params : ParametersImtMssDc
-            Input parameters for the IMT MSS-DC topology
+            Input parameters for the IMT MSS-DC topology.
         geometry_converter : GeometryConverter
-            GeometryConverter object that converts the ECEF coordintate system to one
+            GeometryConverter object that converts the ECEF coordinate system to one
             centered at GeometryConverter.reference.
         """
         # That means the we need to pass the groud reference points to the base stations generator
@@ -81,9 +86,7 @@ class TopologyImtMssDc(Topology):
         orbit_params: ParametersImtMssDc,
         random_number_gen=np.random.RandomState(),
     ):
-        """
-        Computes the coordintates of the visible space stations
-        """
+        """Compute the coordinates of the visible space stations."""
         orbit_params.sat_is_active_if.validate("orbit_params.sat_is_active_if")
         # Calculate the total number of satellites across all orbits
         total_satellites = sum(orbit.n_planes * orbit.sats_per_plane for orbit in orbit_params.orbits)
@@ -549,9 +552,23 @@ class TopologyImtMssDc(Topology):
         n_samples: int,
         **kwargs
     ):
-        """
-        Creates `n_samples` number of samples following distribution defined in `name`
-        kwargs may have `min`, `max`, `fixed` or other parameters for distributions
+        """Create samples following the specified distribution and parameters.
+
+        Parameters
+        ----------
+        random_number_gen : np.random.RandomState
+            Random number generator instance to use for sampling.
+        name : str
+            Name of the distribution. Supported values: "FIXED", "~U(MIN,MAX)", "~SQRT(U(0,1))*MAX".
+        n_samples : int
+            Number of samples to generate.
+        **kwargs
+            Additional parameters required by the distribution, such as 'min', 'max', or 'fixed'.
+
+        Returns
+        -------
+        np.ndarray or None
+            Array of samples drawn from the specified distribution, or None if the distribution name is not recognized.
         """
         match name:
             case "FIXED":
@@ -559,17 +576,16 @@ class TopologyImtMssDc(Topology):
             case "~U(MIN,MAX)":
                 return random_number_gen.uniform(kwargs["min"], kwargs["max"], n_samples)
             case "~SQRT(U(0,1))*MAX":
-                return random_number_gen.uniform(
-                    0, 1,
-                    n_samples
-                ) * kwargs["max"]
+                return (
+                    np.sqrt(
+                        random_number_gen.uniform(0, 1, n_samples)
+                    ) * kwargs["max"]
+                )
             case _:
                 return None
 
     def calculate_coordinates(self, random_number_gen=np.random.RandomState()):
-        """
-        Computes the coordintates of the visible space stations
-        """
+        """Compute the coordinates of the visible space stations."""
         self.geometry_converter.validate()
 
         sat_values = self.get_coordinates(self.geometry_converter, self.orbit_params, random_number_gen)
@@ -596,6 +612,7 @@ class TopologyImtMssDc(Topology):
 
     # We can factor this out if another topology also ends up needing this
     def transform_ue_xyz(self, bs_i, x, y, z):
+        """Transform UE coordinates to the satellite-centric coordinate system."""
         convert_to_scalar = False
         if not isinstance(x, np.ndarray):
             convert_to_scalar = True

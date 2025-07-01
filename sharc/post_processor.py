@@ -12,6 +12,9 @@ import pathlib
 
 
 class FieldStatistics:
+    """
+    Stores statistical properties of a data field, such as mean, median, and variance.
+    """
     field_name: str
     median: float
     mean: float
@@ -22,6 +25,9 @@ class FieldStatistics:
     def load_from_sample(
         self, field_name: str, sample: list[float], *, confidence=0.95
     ) -> "FieldStatistics":
+        """
+        Compute statistics from a sample and store them in the object.
+        """
         self.field_name = field_name
         self.median = np.median(sample)
         self.mean = np.mean(sample)
@@ -53,13 +59,13 @@ class FieldStatistics:
 
 
 class ResultsStatistics:
+    """Class that stores and computes statistics for results fields."""
+
     fields_statistics: list[FieldStatistics]
     results_output_dir: str = "default_output"
 
     def load_from_results(self, result: Results) -> "ResultsStatistics":
-        """
-        Loads all relevant attributes from result and generates their statistics
-        """
+        """Load all relevant attributes from result and generate their statistics."""
         self.results_output_dir = result.output_directory
         self.fields_statistics = []
         attr_names = result.get_relevant_attributes()
@@ -74,22 +80,14 @@ class ResultsStatistics:
         return self
 
     def write_to_results_dir(self, filename="stats.txt") -> "ResultsStatistics":
-        """
-        Writes statistics file to the same directory of the results loaded into this class
-        """
+        """Write statistics file to the same directory of the results loaded into this class."""
         with open(os.path.join(self.results_output_dir, filename), "w") as f:
             f.write(str(self))
 
         return self
 
     def get_stat_by_name(self, field_name: str) -> typing.Union[None, FieldStatistics]:
-        """
-        Gets a single field's statistics by its name.
-        E.g.: get_stat_by_name("system_dl_interf_power")
-        Returns
-            None if not found
-            FieldStatistics if found only one match
-        """
+        """Get a single field's statistics by its name."""
         stats_found = filter(lambda field_stat: field_stat.field_name == field_name, self.fields_statistics)
 
         if len(stats_found) > 1:
@@ -104,6 +102,7 @@ class ResultsStatistics:
         return stats_found[0]
 
     def __str__(self):
+        """Return a string representation of the ResultsStatistics object."""
         return f"[{self.results_output_dir}]\n{'\n'.join(list(map(str, self.fields_statistics)))}"
 
 
@@ -291,6 +290,7 @@ class PostProcessor:
     def add_plot_legend_pattern(
         self, *, dir_name_contains: str, legend: str
     ) -> "PostProcessor":
+        """Add a plot legend pattern for directory name matching and return self."""
         self.plot_legend_patterns.append(
             {"dir_name_contains": dir_name_contains, "legend": legend}
         )
@@ -527,12 +527,18 @@ class PostProcessor:
         return figs.values()
 
     def add_plots(self, plots: list[go.Figure]) -> None:
+        """Add a list of plotly Figure objects to the PostProcessor."""
         self.plots.extend(plots)
 
     def add_results(self, results: list[Results]) -> None:
+        """Add a list of Results objects to the PostProcessor."""
         self.results.extend(results)
 
     def get_results_by_output_dir(self, dir_name_contains: str, *, single_result=True):
+        """
+        Get results whose output directory contains the given string.
+        If single_result is True, return the first match; otherwise, return all matches.
+        """
         filtered_results = list(
             filter(
                 lambda res: dir_name_contains in os.path.basename(res.output_directory),
@@ -710,8 +716,10 @@ class PostProcessor:
 
     @staticmethod
     def generate_statistics(result: Results) -> ResultsStatistics:
+        """Generate statistics for a Results object."""
         return ResultsStatistics().load_from_results(result)
 
     @staticmethod
     def generate_sample_statistics(fieldname: str, sample: list[float]) -> ResultsStatistics:
+        """Generate statistics for a sample field."""
         return FieldStatistics().load_from_sample(fieldname, sample)

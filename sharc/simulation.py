@@ -23,6 +23,11 @@ from sharc.propagation.propagation_factory import PropagationFactory
 
 
 class Simulation(ABC, Observable):
+    """
+    Abstract base class for running a simulation in the SHARC framework.
+
+    This class manages the simulation parameters, system selection, and provides the interface for simulation execution and result handling.
+    """
 
     def __init__(self, parameters: Parameters, parameter_file: str):
         ABC.__init__(self)
@@ -157,14 +162,20 @@ class Simulation(ABC, Observable):
         )
 
     def add_observer_list(self, observers: list):
+        """
+        Add a list of observers to the simulation.
+
+        Args:
+            observers (list): List of observer objects to add.
+        """
         for o in observers:
             self.add_observer(o)
 
     def initialize_topology_dependant_variables(self):
         """
-        This method 'could' be called on every snapshot to re-initialize variables.
-        However, it'll probably be used to re-initialize variables only on demand,
-        when needed.
+        Initialize or re-initialize topology-dependent variables.
+
+        This method can be called on every snapshot to re-initialize variables, but is typically used on demand.
         """
         num_bs = self.topology.num_base_stations
         num_ue = num_bs * self.parameters.imt.ue.k * self.parameters.imt.ue.k_m
@@ -620,6 +631,18 @@ class Simulation(ABC, Observable):
         sinr_max: float,
         attenuation_factor: float,
     ) -> np.array:
+        """
+        Calculate IMT throughput based on SINR and attenuation factor.
+
+        Args:
+            sinr (np.array): Array of SINR values.
+            sinr_min (float): Minimum SINR threshold.
+            sinr_max (float): Maximum SINR threshold.
+            attenuation_factor (float): Attenuation factor for throughput calculation.
+
+        Returns:
+            np.array: Array of throughput values.
+        """
         tput_min = 0
         tput_max = attenuation_factor * \
             math.log2(1 + math.pow(10, 0.1 * sinr_max))
@@ -667,6 +690,9 @@ class Simulation(ABC, Observable):
         return overlap
 
     def plot_scenario(self):
+        """
+        Plot the current simulation scenario, including network topology and user equipments.
+        """
         fig = plt.figure(figsize=(8, 8), facecolor='w', edgecolor='k')
         ax = fig.gca()
 

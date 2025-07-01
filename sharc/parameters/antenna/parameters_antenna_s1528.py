@@ -89,6 +89,16 @@ class ParametersAntennaS1528(ParametersBase):
         self.validate("S.1528")
 
     def validate(self, ctx: str):
+        """
+        Validate the parameters for the S.1528 antenna configuration.
+
+        Checks that required attributes are set and that the antenna pattern is valid.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        """
         # Now do the sanity check for some parameters
         if None in [self.frequency, self.bandwidth]:
             raise ValueError(

@@ -20,9 +20,27 @@ class SimulationDownlink(Simulation):
     """
 
     def __init__(self, parameters: Parameters, parameter_file: str):
+        """Initialize the SimulationDownlink with parameters and parameter file.
+
+        Parameters
+        ----------
+        parameters : Parameters
+            Simulation parameters object.
+        parameter_file : str
+            Path to the parameter file.
+        """
         super().__init__(parameters, parameter_file)
 
     def snapshot(self, *args, **kwargs):
+        """Run a simulation snapshot for the downlink scenario.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments (unused).
+        **kwargs : dict
+            Keyword arguments, must include 'write_to_file', 'snapshot_number', and 'seed'.
+        """
         write_to_file = kwargs["write_to_file"]
         snapshot_number = kwargs["snapshot_number"]
         seed = kwargs["seed"]
@@ -88,11 +106,21 @@ class SimulationDownlink(Simulation):
         self.collect_results(write_to_file, snapshot_number)
 
     def finalize(self, *args, **kwargs):
+        """
+        Finalize the simulation and notify observers with the results.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments (unused).
+        **kwargs : dict
+            Keyword arguments (unused).
+        """
         self.notify_observers(source=__name__, results=self.results)
 
     def power_control(self):
         """
-        Apply downlink power control algorithm
+        Apply downlink power control algorithm to distribute power among selected UEs.
         """
         # Currently, the maximum transmit power of the base station is equaly
         # divided among the selected UEs
@@ -453,6 +481,13 @@ class SimulationDownlink(Simulation):
                 )
 
     def collect_results(self, write_to_file: bool, snapshot_number: int):
+        """
+        Collect and store results for the current downlink simulation snapshot.
+
+        Args:
+            write_to_file (bool): Whether to write results to file.
+            snapshot_number (int): The current snapshot number.
+        """
         if not self.parameters.imt.interfered_with and np.any(self.bs.active):
             self.results.system_inr.extend(self.system.inr.flatten())
             self.results.system_dl_interf_power.extend(

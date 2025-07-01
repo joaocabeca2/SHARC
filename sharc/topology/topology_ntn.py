@@ -56,18 +56,30 @@ class TopologyNTN(Topology):
         self.calculate_coordinates()
 
     @staticmethod
-    def get_sectors_xy(*, num_sectors, intersite_distance) -> (np.array, np.array):
+    def get_sectors_xy(*, num_sectors, intersite_distance) -> tuple[np.ndarray, np.ndarray]:
+        """Compute the (x, y) coordinates for sector anchor points in the NTN topology.
+
+        Parameters
+        ----------
+        num_sectors : int
+            Number of sectors (allowed: 1, 7, or 19).
+        intersite_distance : float
+            Distance between adjacent sites in meters.
+
+        Returns
+        -------
+        tuple of np.ndarray
+            Arrays of x and y coordinates for each sector anchor point.
+        """
         d = intersite_distance
         x = [0.]
         y = [0.]
         # First ring (6 points)
         if num_sectors == 7 or num_sectors == 19:
-
             for k in range(6):
                 angle = k * 60
                 x.append(d * np.cos(np.radians(angle)))
                 y.append(d * np.sin(np.radians(angle)))
-
         if num_sectors == 19:
             # Coordinates with 19 sectors
             # Second ring (12 points)
@@ -83,37 +95,35 @@ class TopologyNTN(Topology):
                     d * np.sin(np.radians(angle)) +
                     d * np.sin(np.radians(angle + 60)),
                 )
-
         return (np.array(x), np.array(y))
 
     def calculate_coordinates(self, random_number_gen=np.random.RandomState()):
-        """
-        Computes the coordinates of each site. This is where the actual layout calculation would be implemented.
-        """
+        """Compute and set the coordinates and angles for each NTN sector anchor point.
 
+        Parameters
+        ----------
+        random_number_gen : np.random.RandomState, optional
+            Random number generator (not used in this implementation).
+        """
         self.x, self.y = self.get_sectors_xy(
             num_sectors=self.num_sectors,
             intersite_distance=self.intersite_distance
         )
-
         # Assuming all points are at ground level
         self.z = np.zeros_like(self.x)
-
         # Rotate the anchor points by 30 degrees
         theta = np.radians(30)
         cos_theta = np.cos(theta)
         sin_theta = np.sin(theta)
         self.x_rotated = self.x * cos_theta - self.y * sin_theta
         self.y_rotated = self.x * sin_theta + self.y * cos_theta
-
         # Calculate azimuth and elevation for each point
         self.azimuth = np.arctan2(
             self.y_rotated - self.space_station_y,
             self.x_rotated - self.space_station_x,
         ) * 180 / np.pi
         distance_xy = np.sqrt(
-            (self.x_rotated - self.space_station_x) **
-            2 + (self.y_rotated - self.space_station_y)**2,
+            (self.x_rotated - self.space_station_x) ** 2 + (self.y_rotated - self.space_station_y) ** 2,
         )
         self.elevation = np.arctan2(
             self.z - self.space_station_z, distance_xy,
@@ -127,8 +137,16 @@ class TopologyNTN(Topology):
         self.y = self.y_rotated
 
     def plot(self, axis: matplotlib.axes.Axes, scale=1000):
-        r = self.cell_radius / scale  # Convert to kilometers
+        """Plot the NTN sector layout in 2D using matplotlib.
 
+        Parameters
+        ----------
+        axis : matplotlib.axes.Axes
+            Matplotlib axis to plot on.
+        scale : float, optional
+            Scale factor to convert coordinates to kilometers (default: 1000).
+        """
+        r = self.cell_radius / scale  # Convert to kilometers
         # Plot each sector
         for x, y in zip(self.x / scale, self.y / scale):  # Convert to kilometers
             hexagon = []
@@ -140,16 +158,13 @@ class TopologyNTN(Topology):
                 ])
             hexagon.append(hexagon[0])  # Close the hexagon
             hexagon = np.array(hexagon)
-
             sector = plt.Polygon(hexagon, fill=None, edgecolor='k')
             axis.add_patch(sector)
-
         # Plot base stations
         axis.scatter(
             self.x / scale, self.y / scale, s=200, marker='v', c='k', edgecolor='k', linewidth=1, alpha=1,
             label="Anchor Points",
         )
-
         # Add labels and title
         axis.set_xlabel("x-coordinate [km]")
         axis.set_ylabel("y-coordinate [km]")
@@ -158,8 +173,16 @@ class TopologyNTN(Topology):
         plt.tight_layout()
 
     def plot_3d(self, axis: matplotlib.axes.Axes, map=False):
-        r = self.cell_radius / 1000  # Convert to kilometers
+        """Plot the NTN sector layout and satellite in 3D using matplotlib.
 
+        Parameters
+        ----------
+        axis : matplotlib.axes.Axes
+            Matplotlib 3D axis to plot on.
+        map : bool, optional
+            If True, plot a map of Brazil for reference (default: False).
+        """
+        r = self.cell_radius / 1000  # Convert to kilometers
         if map:
             # Load the map of Brazil using GeoPandas
             workspace_root = Path(__file__).resolve().parent.parent.parent
@@ -167,23 +190,18 @@ class TopologyNTN(Topology):
                 workspace_root / "sharc" / "data" / "countries" / "ne_110m_admin_0_countries.shp",
             )
             brazil = brazil[brazil['NAME'] == "Brazil"]
-
             # Coordinates of the Federal District (Brasília)
             federal_district_coords = (-47.9292, -15.7801)
-
             # Approximate conversion factors (1 degree latitude = 111 km, 1 degree longitude = 111 km)
             lat_to_km = 111
             lon_to_km = 111
-
             # Convert Federal District coordinates to kilometers
             federal_district_coords_km = (
                 federal_district_coords[0] * lon_to_km, federal_district_coords[1] * lat_to_km,
             )
-
             # Calculate the shift required to move the Federal District to (0, 0)
             x_shift = federal_district_coords_km[0]
             y_shift = federal_district_coords_km[1]
-
             # Manually plot the map of Brazil on the xy-plane
             for geom in brazil.geometry:
                 if isinstance(geom, Polygon):
@@ -197,11 +215,9 @@ class TopologyNTN(Topology):
                         x = np.array(lon) * lon_to_km - x_shift
                         y = np.array(lat) * lat_to_km - y_shift
                         axis.plot(x, y, zs=0, zdir='z', color='lightgray')
-
             # Add the Federal District location to the plot
             axis.scatter(0, 0, 0, color='red', zorder=5)
             axis.text(0, 0, 0, 'Federal District', fontsize=12, ha='right')
-
         # Plot each sector
         for x, y in zip(self.x / 1000, self.y / 1000):  # Convert to kilometers
             hexagon = []
@@ -213,41 +229,35 @@ class TopologyNTN(Topology):
                 ])
             hexagon.append(hexagon[0])  # Close the hexagon
             hexagon = np.array(hexagon)
-
             # 3D hexagon
             axis.plot(
                 hexagon[:, 0], hexagon[:, 1],
                 np.zeros_like(hexagon[:, 0]), 'k-',
             )
-
         # Plot base stations
         axis.scatter(
             self.x / 1000, self.y / 1000, np.zeros_like(self.x), s=75, marker='v', c='k', edgecolor='k',
             linewidth=1, alpha=1,
             label="Anchor Points",
         )
-
         # Plot the satellite
         axis.scatter(
             self.space_station_x / 1000, self.space_station_y / 1000, self.space_station_z / 1000, s=75, c='r',
             marker='^', edgecolor='k', linewidth=1, alpha=1,
             label=f"Satellite (φ={np.degrees(self.bs_azimuth):.1f}°, θ={np.degrees(self.bs_elevation):.1f}°)",
         )
-
         # Plot the height line
         axis.plot(
             [self.space_station_x / 1000, self.space_station_x / 1000],
             [self.space_station_y / 1000, self.space_station_y / 1000],
             [0, self.space_station_z / 1000], 'b-', label=f'Height = {self.space_station_z / 1000:.1f} km',
         )
-
         # Plot the slant range line
         axis.plot(
             [0, self.space_station_x / 1000],
             [0, self.space_station_y / 1000],
             [0, self.space_station_z / 1000], 'g--', label=f'Slant range = {self.bs_radius / 1000:.1f} km',
         )
-
         # Add labels and title
         axis.set_xlabel("x-coordinate [km]")
         axis.set_ylabel("y-coordinate [km]")

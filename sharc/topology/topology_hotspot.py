@@ -242,6 +242,7 @@ class TopologyHotspot(Topology):
         return len(occ) == 0
 
     def plot(self, ax: matplotlib.axes.Axes):
+        """Plot the macrocell and hotspot topology on the given axis."""
         # plot macrocells
         self.macrocell.plot(ax)
 

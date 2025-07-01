@@ -1,4 +1,6 @@
+
 # -*- coding: utf-8 -*-
+"""Antenna model for ITU-R RA.7-3 recommendations."""
 
 from sharc.antenna.antenna import Antenna
 from sharc.parameters.parameters_antenna_with_diameter import ParametersAntennaWithDiameter
@@ -45,6 +47,21 @@ class AntennaReg_RR_A7_3(Antenna):
             raise ValueError(f"Recommendation doesn't specify what to do when phi_m ({self.phi_m}) >= phi_r ({self.phi_r})")
 
     def calculate_gain(self, *args, **kwargs) -> np.array:
+        """
+        Calculate the antenna gain for the given off-axis angles.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments (not used).
+        **kwargs : dict
+            Keyword arguments, expects 'off_axis_angle_vec'.
+
+        Returns
+        -------
+        np.array
+            Calculated antenna gain values.
+        """
         phi = np.absolute(kwargs["off_axis_angle_vec"])
 
         gain = np.zeros(phi.shape)
