@@ -1,7 +1,8 @@
 # Generates a 3D plot of the Earth with the satellites positions
 # https://geopandas.org/en/stable/docs/user_guide/io.html
-import os
-import geopandas as gpd
+from sharc.satellite.scripts.plot_globe import plot_globe_with_borders
+from sharc.station_factory import StationFactory
+from sharc.parameters.parameters_mss_d2d import ParametersOrbit, ParametersMssD2d
 import numpy as np
 import plotly.graph_objects as go
 
@@ -16,13 +17,6 @@ sys_alt = 1200
 geoconv.set_reference(
     sys_lat, sys_long, sys_alt
 )
-
-from sharc.satellite.ngso.orbit_model import OrbitModel
-from sharc.satellite.utils.sat_utils import calc_elevation, lla2ecef
-from sharc.satellite.ngso.constants import EARTH_RADIUS_KM
-from sharc.parameters.parameters_mss_d2d import ParametersOrbit, ParametersMssD2d
-from sharc.station_factory import StationFactory
-from sharc.satellite.scripts.plot_globe import plot_globe_with_borders
 
 
 if __name__ == "__main__":
@@ -78,7 +72,8 @@ if __name__ == "__main__":
 
     # Plot the ground station (blue marker)
     # ground_sta_pos = lla2ecef(sys_lat, sys_long, sys_alt)
-    ground_sta_pos = geoconv.convert_lla_to_transformed_cartesian(sys_lat, sys_long, 1200.0)
+    ground_sta_pos = geoconv.convert_lla_to_transformed_cartesian(
+        sys_lat, sys_long, 1200.0)
 
     center_of_earth = StationManager(1)
     # rotated and then translated center of earth

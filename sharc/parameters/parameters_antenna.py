@@ -11,19 +11,37 @@ import typing
 
 @dataclass
 class ParametersAntenna(ParametersBase):
+    """
+    Parameters for antenna configuration, including pattern, gain, and sub-parameters for different antenna models.
+    """
     # available antenna radiation patterns
     __SUPPORTED_ANTENNA_PATTERNS = [
-        "OMNI", "ITU-R F.699", "ITU-R S.465", "ITU-R S.580", "MODIFIED ITU-R S.465", "ITU-R S.1855",
-        "ITU-R Reg. RR. Appendice 7 Annex 3", "ARRAY", "ITU-R-S.1528-Taylor",
-        "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO", "MSS Adjacent"
-    ]
+        "OMNI",
+        "ITU-R F.699",
+        "ITU-R S.465",
+        "ITU-R S.580",
+        "MODIFIED ITU-R S.465",
+        "ITU-R S.1855",
+        "ITU-R Reg. RR. Appendice 7 Annex 3",
+        "ARRAY",
+        "ITU-R-S.1528-Taylor",
+        "ITU-R-S.1528-Section1.2",
+        "ITU-R-S.1528-LEO",
+        "MSS Adjacent"]
 
     # chosen antenna radiation pattern
-    pattern: typing.Literal[
-        "OMNI", "ITU-R F.699", "ITU-R S.465", "ITU-R S.580", "MODIFIED ITU-R S.465", "ITU-R S.1855",
-        "ITU-R Reg. RR. Appendice 7 Annex 3", "ARRAY", "ITU-R-S.1528-Taylor",
-        "ITU-R-S.1528-Section1.2", "ITU-R-S.1528-LEO", "MSS Adjacent"
-    ] = None
+    pattern: typing.Literal["OMNI",
+                            "ITU-R F.699",
+                            "ITU-R S.465",
+                            "ITU-R S.580",
+                            "MODIFIED ITU-R S.465",
+                            "ITU-R S.1855",
+                            "ITU-R Reg. RR. Appendice 7 Annex 3",
+                            "ARRAY",
+                            "ITU-R-S.1528-Taylor",
+                            "ITU-R-S.1528-Section1.2",
+                            "ITU-R-S.1528-LEO",
+                            "MSS Adjacent"] = None
 
     # antenna gain [dBi]
     gain: float = None
@@ -56,7 +74,9 @@ class ParametersAntenna(ParametersBase):
         default_factory=ParametersAntennaWithDiameter,
     )
 
-    array: ParametersAntennaImt = field(default_factory=lambda: ParametersAntennaImt(downtilt=0.0))
+    array: ParametersAntennaImt = field(
+        default_factory=lambda: ParametersAntennaImt(
+            downtilt=0.0))
 
     # TODO: maybe separate each different S.1528 parameter?
     itu_r_s_1528: ParametersAntennaS1528 = field(
@@ -64,9 +84,16 @@ class ParametersAntenna(ParametersBase):
     )
 
     def set_external_parameters(self, **kwargs):
-        attr_list = [
-            a for a in dir(self) if not a.startswith('__') and isinstance(getattr(self, a), ParametersBase)
-        ]
+        """
+        Set external parameters for all sub-parameters of the antenna.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            External parameters to set on sub-parameters.
+        """
+        attr_list = [a for a in dir(self) if not a.startswith(
+            '__') and isinstance(getattr(self, a), ParametersBase)]
 
         for attr_name in attr_list:
             param = getattr(self, attr_name)
@@ -79,10 +106,33 @@ class ParametersAntenna(ParametersBase):
                 param.antenna_gain = self.gain
 
     def load_parameters_from_file(self, config_file):
-        # should not be loaded except as subparameter
+        """
+        Not implemented for ParametersAntenna. Should only be loaded as a subparameter.
+
+        Parameters
+        ----------
+        config_file : str
+            Path to the configuration file.
+        Raises
+        ------
+        NotImplementedError
+            Always raised for this method.
+        """
         raise NotImplementedError()
 
     def validate(self, ctx):
+        """
+        Validate the antenna parameters for correctness.
+
+        Parameters
+        ----------
+        ctx : str
+            Context string for error messages.
+        Raises
+        ------
+        ValueError
+            If any parameter is invalid.
+        """
         if None in [self.pattern]:
             raise ValueError(
                 f"{ctx}.pattern should be set. Is None instead",
@@ -95,8 +145,8 @@ class ParametersAntenna(ParametersBase):
 
         if self.pattern not in self.__SUPPORTED_ANTENNA_PATTERNS:
             raise ValueError(
-                f"Invalid {ctx}.pattern. It should be one of: {self.__SUPPORTED_ANTENNA_PATTERNS}.",
-            )
+                f"Invalid {ctx}.pattern. It should be one of: {
+                    self.__SUPPORTED_ANTENNA_PATTERNS}.", )
 
         match self.pattern:
             case "OMNI":
@@ -134,5 +184,4 @@ class ParametersAntenna(ParametersBase):
                 self.mss_adjacent.validate(f"{ctx}.mss_adjacent")
             case _:
                 raise NotImplementedError(
-                    "ParametersAntenna.validate does not implement this antenna validation!",
-                )
+                    "ParametersAntenna.validate does not implement this antenna validation!", )

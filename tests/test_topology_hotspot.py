@@ -15,8 +15,10 @@ from sharc.topology.topology_hotspot import TopologyHotspot
 
 
 class TopologyHotspotTest(unittest.TestCase):
+    """Unit tests for the TopologyHotspot class, including coordinate and overlap logic."""
 
     def setUp(self):
+        """Set up a TopologyHotspot instance for testing coordinate calculations."""
         # For this test case, hotspot parameters are useless because we are
         # testing only the validation methods
         param = ParametersHotspot()
@@ -32,6 +34,7 @@ class TopologyHotspotTest(unittest.TestCase):
         )
 
     def test_calculate_coordinates(self):
+        """Test calculation of hotspot coordinates and hexagonal grid logic."""
         # algorithms for hexagonal coordinate systems (axial and cube)
         # based on https://www.redblobgames.com/grids/hexagons/
         def cube_round(q, r, s):
@@ -152,6 +155,7 @@ class TopologyHotspotTest(unittest.TestCase):
         npt.assert_array_equal(list(count.values()), 3)
 
     def test_overlapping_hotspots(self):
+        """Test detection of overlapping hotspots in the topology."""
         candidate_x = np.array([300])
         candidate_y = np.array([0])
         candidate_azimuth = np.array([-180])

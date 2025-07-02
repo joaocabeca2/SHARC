@@ -27,6 +27,7 @@ def is_float(s: str) -> bool:
 
 
 def to_scalar(x):
+    """Convert a numpy scalar or array to a Python scalar if possible."""
     if isinstance(x, np.ndarray):
         return x.item()  # Works for 0-D or 1-element arrays
     return x
@@ -82,6 +83,7 @@ def load_gdf(
                     f"{allowed_filter_vals}"
                 )
 
-        filtered_gdf = filtered_gdf[filtered_gdf[filter_name].isin(filter_vals)]
+        filtered_gdf = filtered_gdf[filtered_gdf[filter_name].isin(
+            filter_vals)]
 
     return filtered_gdf.to_crs(EARTH_DEFAULT_CRS)

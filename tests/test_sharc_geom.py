@@ -9,14 +9,16 @@ from sharc.support.sharc_utils import load_gdf
 
 
 class TestSharcGeom(unittest.TestCase):
+    """Unit tests for geometric utilities in SHARC (e.g., grid generation in polygons)."""
+
     def setUp(self):
+        """Set up test fixtures for SHARC geometry tests."""
         root = (Path(__file__) / ".." / "..").resolve()
-        self.countries_shapefile = root / "sharc" / "data" / "countries" / "ne_110m_admin_0_countries.shp"
+        self.countries_shapefile = root / "sharc" / "data" / \
+            "countries" / "ne_110m_admin_0_countries.shp"
 
     def test_generate_grid(self):
-        """
-        Testing generate grid
-        """
+        """Test the generate_grid_in_multipolygon function."""
         # approx a square
         # good only for small (lon, lat) values
         mx = 0.001
@@ -32,9 +34,11 @@ class TestSharcGeom(unittest.TestCase):
         # l >= min(x * sin(60deg),  x * sin(30deg) + x/2)
         # l >= min(sqrt(3) * x / 2, x)
         # l >= sqrt(3) * x / 2
-        grid = generate_grid_in_multipolygon(poly, 1.01 * mx * 111e3 * 2 / np.sqrt(3))
+        grid = generate_grid_in_multipolygon(
+            poly, 1.01 * mx * 111e3 * 2 / np.sqrt(3))
         self.assertEqual(len(grid[0]), 0)
-        grid = generate_grid_in_multipolygon(poly, 0.9 * mx * 111e3 * 2 / np.sqrt(3))
+        grid = generate_grid_in_multipolygon(
+            poly, 0.9 * mx * 111e3 * 2 / np.sqrt(3))
         self.assertEqual(len(grid[0]), 1)
 
         # doing some packing inside the square

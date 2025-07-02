@@ -21,8 +21,10 @@ from sharc.parameters.imt.parameters_single_bs import ParametersSingleBS
 
 
 class SimulationAdjacentTest(unittest.TestCase):
+    """Unit tests for adjacent channel simulation."""
 
     def setUp(self):
+        """Set up test fixtures for adjacent channel simulation tests."""
         self.param = Parameters()
 
         self.param.general.system = "FSS_SS"
@@ -145,6 +147,7 @@ class SimulationAdjacentTest(unittest.TestCase):
         self.param.fss_ss.polarization_loss = 3.0
 
     def test_simulation_2bs_4ue_downlink(self):
+        """Test simulation of 2 base stations and 4 UEs in downlink scenario."""
         self.param.general.imt_link = "DOWNLINK"
 
         self.simulation = SimulationDownlink(self.param, "")
@@ -203,9 +206,7 @@ class SimulationAdjacentTest(unittest.TestCase):
 
         # test coupling loss method
         self.simulation.coupling_loss_imt = self.simulation.calculate_intra_imt_coupling_loss(
-            self.simulation.ue,
-            self.simulation.bs,
-        )
+            self.simulation.ue, self.simulation.bs, )
         npt.assert_allclose(
             self.simulation.coupling_loss_imt,
             np.array([
@@ -229,12 +230,12 @@ class SimulationAdjacentTest(unittest.TestCase):
         tx_power = 10 - 10 * math.log10(2)
         npt.assert_allclose(
             self.simulation.bs.tx_power[0], np.array(
-            [tx_power, tx_power],
+                [tx_power, tx_power],
             ), atol=1e-2,
         )
         npt.assert_allclose(
             self.simulation.bs.tx_power[1], np.array(
-            [tx_power, tx_power],
+                [tx_power, tx_power],
             ), atol=1e-2,
         )
 
@@ -265,12 +266,15 @@ class SimulationAdjacentTest(unittest.TestCase):
         # interf_pow = np.power(10, 0.1 * (self.param.imt.bs.conducted_power))
         expected_rx_interference = 0
         for bs in np.where(self.simulation.bs.active)[0]:
-            active_beams = [i for i in range(bs * self.param.imt.ue.k, (bs + 1) * self.param.imt.ue.k)]
+            active_beams = [
+                i for i in range(
+                    bs * self.param.imt.ue.k,
+                    (bs + 1) * self.param.imt.ue.k)]
             tx_pow = self.simulation.bs.tx_power[bs]
             tx_oob = tx_pow - self.param.imt.adjacent_ch_leak_ratio
             rx_oob = tx_pow - self.param.fss_ss.adjacent_ch_selectivity
-            oob_interferece = 10 * np.log10(10**(0.1 * tx_oob) + 10**(0.1 * rx_oob)) - \
-                coupling_loss_imt_system_adj[active_beams].flatten()
+            oob_interferece = 10 * np.log10(10**(0.1 * tx_oob) + 10**(
+                0.1 * rx_oob)) - coupling_loss_imt_system_adj[active_beams].flatten()
             expected_rx_interference += np.sum(10**(0.1 * oob_interferece))
         expected_rx_interference = 10 * np.log10(expected_rx_interference)
         npt.assert_almost_equal(
@@ -280,6 +284,7 @@ class SimulationAdjacentTest(unittest.TestCase):
         )
 
     def test_simulation_2bs_4ue_uplink(self):
+        """Test simulation of 2 base stations and 4 UEs in uplink scenario."""
         self.param.general.imt_link = "UPLINK"
 
         self.simulation = SimulationUplink(self.param, "")
@@ -337,9 +342,7 @@ class SimulationAdjacentTest(unittest.TestCase):
 
         # test coupling loss method
         self.simulation.coupling_loss_imt = self.simulation.calculate_intra_imt_coupling_loss(
-            self.simulation.ue,
-            self.simulation.bs,
-        )
+            self.simulation.ue, self.simulation.bs, )
         coupling_loss_imt = np.array([
             [88.68 - 1 - 10, 99.36 - 1 - 11, 103.28 - 1 - 22, 107.06 - 1 - 23],
             [107.55 - 2 - 10, 104.73 - 2 - 11, 101.54 - 2 - 22, 92.08 - 2 - 23],
