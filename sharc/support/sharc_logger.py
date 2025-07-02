@@ -16,6 +16,9 @@ class Logging:
         default_level=logging.INFO,
         env_key='LOG_CFG',
     ):
+        """
+        Setup logging configuration.
+        """
         path = os.getenv(env_key, default_path)
         if os.path.exists(path):
             with open(path, 'rt') as f:
@@ -26,7 +29,18 @@ class Logging:
 
 
 class SimulationLogger:
+    """
+    Logs simulation metadata to a YAML file for reproducibility.
+    """
+
     def __init__(self, param_file: str, log_base: str = "simulation_log"):
+        """
+        Initialize the logger with the parameter file path.
+
+        Args:
+            param_file (str): Path to the simulation parameter file.
+            log_base (str): Subdirectory for storing logs (default: 'simulation_log').
+        """
         self.param_file = Path(param_file).resolve()
         self.param_name = self.param_file.stem
         self.timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -54,10 +68,16 @@ class SimulationLogger:
         }
 
     def start(self):
+        """
+        Start the simulation timer and record initial metadata.
+        """
         self.start_time = datetime.now()
         self.data["run"]["started_at"] = self.start_time.isoformat()
 
     def end(self):
+        """
+        Stop the simulation timer, compute duration, and save the YAML log.
+        """
         end_time = datetime.now()
         self.data["run"]["ended_at"] = end_time.isoformat()
         if self.start_time:
