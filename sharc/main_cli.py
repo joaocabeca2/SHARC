@@ -10,11 +10,11 @@ from sharc.support.sharc_logger import SimulationLogger
 from sharc.controller import Controller
 from sharc.gui.view_cli import ViewCli
 from sharc.model import Model
-from pathlib import Path
 import sys
 import getopt
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
 
 def main(argv):
     print("Welcome to SHARC!\n")

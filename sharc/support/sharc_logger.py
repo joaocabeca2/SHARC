@@ -9,14 +9,20 @@ from datetime import datetime
 from typing import Optional
 
 
-class Logging:
+class Logging():
+
     @staticmethod
     def setup_logging(
-        default_path: str = 'support/logging.yaml',
-        default_level=logging.INFO,
-        env_key: str = 'LOG_CFG',
+        default_path='support/logging.yaml',
+        default_level=logging.INFO, env_key='LOG_CFG',
     ):
-        path = os.getenv(env_key, default_path)
+        """
+        Setup logging configuration
+        """
+        path = default_path
+        value = os.getenv(env_key, None)
+        if value:
+            path = value
         if os.path.exists(path):
             with open(path, 'rt') as f:
                 config = yaml.safe_load(f.read())
