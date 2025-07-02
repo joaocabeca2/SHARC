@@ -9,20 +9,14 @@ from datetime import datetime
 from typing import Optional
 
 
-class Logging():
-
+class Logging:
     @staticmethod
     def setup_logging(
         default_path='support/logging.yaml',
-        default_level=logging.INFO, env_key='LOG_CFG',
+        default_level=logging.INFO,
+        env_key='LOG_CFG',
     ):
-        """
-        Setup logging configuration
-        """
-        path = default_path
-        value = os.getenv(env_key, None)
-        if value:
-            path = value
+        path = os.getenv(env_key, default_path)
         if os.path.exists(path):
             with open(path, 'rt') as f:
                 config = yaml.safe_load(f.read())
@@ -38,7 +32,10 @@ class SimulationLogger:
         self.timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
         self.output_dir = (
-            self.param_file.parent.parent / "output" / log_base / f"simulation_{self.param_name}_{self.timestamp}"
+            self.param_file.parent.parent
+            / "output"
+            / log_base
+            / f"simulation_{self.param_name}_{self.timestamp}"
         )
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -53,7 +50,7 @@ class SimulationLogger:
                 "command": self._get_invocation_command(),
                 "python_version": self._get_python_version(),
                 "pkgs": self._get_installed_packages(),
-            }
+            },
         }
 
     def start(self):
@@ -78,19 +75,29 @@ class SimulationLogger:
 
     def _run_git_cmd(self, args: list[str]) -> Optional[str]:
         try:
-            return subprocess.check_output(['git'] + args, stderr=subprocess.DEVNULL).decode().strip()
+            return subprocess.check_output(
+                ['git'] + args, stderr=subprocess.DEVNULL
+            ).decode().strip()
         except subprocess.CalledProcessError:
             return None
 
     def _get_git_info(self) -> dict:
         branch = self._run_git_cmd(['rev-parse', '--abbrev-ref', 'HEAD'])
         commit = self._run_git_cmd(['rev-parse', 'HEAD'])
-        remote_name = self._run_git_cmd(['config', f'branch.{branch}.remote']) if branch else None
-        remote_url = self._run_git_cmd(['config', f'remote.{remote_name}.url']) if remote_name else None
+        remote_name = (
+            self._run_git_cmd(['config', f'branch.{branch}.remote'])
+            if branch
+            else None
+        )
+        remote_url = (
+            self._run_git_cmd(['config', f'remote.{remote_name}.url'])
+            if remote_name
+            else None
+        )
         return {
             "url": remote_url or "N/A",
             "branch": branch or "N/A",
-            "commit": commit or "N/A"
+            "commit": commit or "N/A",
         }
 
     def _get_invocation_command(self) -> str:
@@ -103,7 +110,7 @@ class SimulationLogger:
         try:
             pkgs = subprocess.check_output(
                 [sys.executable, '-m', 'pip', 'freeze'],
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
             )
             return sorted(pkgs.decode().strip().split('\n'))
         except subprocess.CalledProcessError:
