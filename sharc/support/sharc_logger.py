@@ -1,34 +1,22 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Jan  9 18:15:47 2017
-
-@author: edgar
-"""
-
 import os
-import logging.config
-import yaml
-import subprocess
 import sys
-
-from datetime import datetime
+import yaml
+import logging
+import subprocess
 from pathlib import Path
+from datetime import datetime
+from typing import Optional
 
 
-class Logging():
-
+class Logging:
     @staticmethod
     def setup_logging(
-        default_path='support/logging.yaml',
-        default_level=logging.INFO, env_key='LOG_CFG',
+        default_path: str = 'support/logging.yaml',
+        default_level=logging.INFO,
+        env_key: str = 'LOG_CFG',
     ):
-        """
-        Setup logging configuration
-        """
-        path = default_path
-        value = os.getenv(env_key, None)
-        if value:
-            path = value
+        path = os.getenv(env_key, default_path)
         if os.path.exists(path):
             with open(path, 'rt') as f:
                 config = yaml.safe_load(f.read())
@@ -38,49 +26,29 @@ class Logging():
 
 
 class SimulationLogger:
-    def __init__(self, output_dir: str):
-        self.output_dir = Path(output_dir)
+    def __init__(self, param_file: str, log_base: str = "simulation_log"):
+        self.param_file = Path(param_file).resolve()
+        self.param_name = self.param_file.stem
+        self.timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+        self.output_dir = (
+            self.param_file.parent.parent / "output" / log_base / f"simulation_{self.param_name}_{self.timestamp}"
+        )
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.log_path = self.output_dir / f"simulation_output_log_{str(output_dir)}.yaml"
+
+        self.log_path = self.output_dir / f"simulation_log_{self.timestamp}.yaml"
         self.start_time = None
+        self.root_dir = self._get_root_dir()
+
         self.data = {
             "repo": self._get_git_info(),
+            "root_dir": str(self.root_dir) if self.root_dir else "N/A",
             "run": {
                 "command": self._get_invocation_command(),
                 "python_version": self._get_python_version(),
                 "pkgs": self._get_installed_packages(),
             }
         }
-
-    def _run_git_cmd(self, args):
-        try:
-            return subprocess.check_output(['git'] + args, stderr=subprocess.DEVNULL).decode().strip()
-        except subprocess.CalledProcessError:
-            return None
-
-    def _get_git_info(self):
-        branch = self._run_git_cmd(['rev-parse', '--abbrev-ref', 'HEAD'])
-        commit = self._run_git_cmd(['rev-parse', 'HEAD'])
-        remote_name = self._run_git_cmd(['config', f'branch.{branch}.remote']) if branch else None
-        remote_url = self._run_git_cmd(['config', f'remote.{remote_name}.url']) if remote_name else None
-        return {
-            "url": remote_url or "N/A",
-            "branch": branch or "N/A",
-            "commit": commit or "N/A"
-        }
-
-    def _get_invocation_command(self):
-        return f"{sys.executable} {' '.join(sys.argv)}"
-
-    def _get_python_version(self):
-        return sys.version.replace("\n", " ")
-
-    def _get_installed_packages(self):
-        try:
-            pkgs = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'], stderr=subprocess.DEVNULL)
-            return sorted(pkgs.decode().strip().split('\n'))
-        except subprocess.CalledProcessError:
-            return ["Could not retrieve packages"]
 
     def start(self):
         self.start_time = datetime.now()
@@ -92,6 +60,45 @@ class SimulationLogger:
         if self.start_time:
             duration = end_time - self.start_time
             self.data["run"]["duration"] = str(duration)
-
         with open(self.log_path, "w") as f:
-            yaml.dump(self.data, f, sort_keys=False)
+            yaml.dump(self.data, f, sort_keys=False, allow_unicode=True)
+
+    def _get_root_dir(self, folder_name: str = "sharc") -> Optional[Path]:
+        path = self.param_file.resolve()
+        for parent in path.parents:
+            if (parent / folder_name).exists():
+                return parent
+        return None
+
+    def _run_git_cmd(self, args: list[str]) -> Optional[str]:
+        try:
+            return subprocess.check_output(['git'] + args, stderr=subprocess.DEVNULL).decode().strip()
+        except subprocess.CalledProcessError:
+            return None
+
+    def _get_git_info(self) -> dict:
+        branch = self._run_git_cmd(['rev-parse', '--abbrev-ref', 'HEAD'])
+        commit = self._run_git_cmd(['rev-parse', 'HEAD'])
+        remote_name = self._run_git_cmd(['config', f'branch.{branch}.remote']) if branch else None
+        remote_url = self._run_git_cmd(['config', f'remote.{remote_name}.url']) if remote_name else None
+        return {
+            "url": remote_url or "N/A",
+            "branch": branch or "N/A",
+            "commit": commit or "N/A"
+        }
+
+    def _get_invocation_command(self) -> str:
+        return f"{sys.executable} {' '.join(sys.argv)}"
+
+    def _get_python_version(self) -> str:
+        return sys.version.replace("\n", " ")
+
+    def _get_installed_packages(self) -> list[str]:
+        try:
+            pkgs = subprocess.check_output(
+                [sys.executable, '-m', 'pip', 'freeze'],
+                stderr=subprocess.DEVNULL
+            )
+            return sorted(pkgs.decode().strip().split('\n'))
+        except subprocess.CalledProcessError:
+            return ["Could not retrieve packages"]

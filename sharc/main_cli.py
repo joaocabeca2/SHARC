@@ -10,11 +10,11 @@ from sharc.support.sharc_logger import SimulationLogger
 from sharc.controller import Controller
 from sharc.gui.view_cli import ViewCli
 from sharc.model import Model
+from pathlib import Path
 import sys
 import getopt
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
 
 def main(argv):
     print("Welcome to SHARC!\n")
@@ -37,8 +37,7 @@ def main(argv):
             elif opt == "-p":
                 param_file = param_file = os.path.join(os.getcwd(), arg)
 
-    output_dir = os.path.dirname(param_file)
-    sim_logger = SimulationLogger(output_dir)
+    sim_logger = SimulationLogger(param_file)
     sim_logger.start()
 
     Logging.setup_logging()
