@@ -8,17 +8,19 @@ Created on Mon Aug 21 12:17:34 2017
 import unittest
 import numpy as np
 import numpy.testing as npt
-from sharc.propagation.propagation_building_entry_loss import PropagationBuildingEntryLoss
 
 
 class TestPropagationBuildingEntryLoss(unittest.TestCase):
+    """Unit tests for the PropagationBuildingEntryLoss class and its loss calculations."""
 
     def setUp(self):
+        """Set up test fixtures for PropagationBuildingEntryLoss tests."""
         self.building_entry_loss = PropagationBuildingEntryLoss(
             np.random.RandomState(),
         )
 
     def test_building_entry_loss(self):
+        """Test the get_loss method for different building types and frequencies."""
         # compare with benchmark from ITU-R P-2109-0 Fig. 1
 
         f_GHz_vec = np.array([.1, .3, 1, 5, 10, 30, 100])

@@ -19,8 +19,10 @@ from sharc.support.enumerations import StationType
 
 
 class SimulationUplinkTest(unittest.TestCase):
+    """Unit tests for the SimulationUplink class and its uplink simulation scenarios."""
 
     def setUp(self):
+        """Set up test fixtures for SimulationUplink tests."""
         self.param = Parameters()
 
         self.param.general.imt_link = "UPLINK"
@@ -172,6 +174,7 @@ class SimulationUplinkTest(unittest.TestCase):
         self.param.ras.polarization_loss = 0.0
 
     def test_simulation_2bs_4ue_ss(self):
+        """Test simulation with 2 base stations and 4 UEs for FSS-SS scenario."""
         self.param.general.system = "FSS_SS"
 
         self.simulation = SimulationUplink(self.param, "")
@@ -389,6 +392,7 @@ class SimulationUplinkTest(unittest.TestCase):
         )
 
     def test_simulation_2bs_4ue_es(self):
+        """Test simulation with 2 base stations and 4 UEs for FSS-ES scenario."""
         self.param.general.system = "FSS_ES"
 
         self.simulation = SimulationUplink(self.param, "")
@@ -657,6 +661,7 @@ class SimulationUplinkTest(unittest.TestCase):
         )
 
     def test_simulation_2bs_4ue_ras(self):
+        """Test simulation with 2 base stations and 4 UEs for RAS scenario."""
         self.param.general.system = "RAS"
 
         self.simulation = SimulationUplink(self.param, "")
@@ -803,6 +808,7 @@ class SimulationUplinkTest(unittest.TestCase):
         )
 
     def test_beamforming_gains(self):
+        """Test calculation of beamforming gains in the uplink simulation."""
         self.param.general.system = "FSS_SS"
 
         self.simulation = SimulationUplink(self.param, "")
@@ -955,6 +961,7 @@ class SimulationUplinkTest(unittest.TestCase):
         npt.assert_allclose(gain, ref_gain, atol=eps)
 
     def test_calculate_imt_ul_tput(self):
+        """Test calculation of IMT uplink throughput."""
         self.param.general.system = "FSS_SS"
 
         self.simulation = SimulationUplink(self.param, "")

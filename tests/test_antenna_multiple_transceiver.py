@@ -12,7 +12,10 @@ from sharc.station_manager import StationManager
 
 
 class AntennaAntennaMultipleTransceiverTest(unittest.TestCase):
+    """Unit tests for the AntennaMultipleTransceiver class."""
+
     def setUp(self):
+        """Set up test fixtures for AntennaMultipleTransceiver tests."""
         param = ParametersAntennaS1528()
         param.antenna_gain = 30
         param.frequency = 2170.0
@@ -52,14 +55,7 @@ class AntennaAntennaMultipleTransceiverTest(unittest.TestCase):
         )
 
     def test_calculate_gain(self):
-        """
-        We simply compare gains when using antennas separately
-        and when using the multiple transceiver
-        since P_lin = sum_{i=0}^{n_beams} P_in * loss * g_other_sys * g_transceiver(i) (linear)
-        P_lin = P_in * loss * g_other_sys * sum_{i=0}^{n_beams} g_transceiver(i) (linear)
-        so we compare the output of the multiple transceiver antenna with
-        gain_mult_transceiver = sum_{i=0}^{n_beams} g_transceiver(i)
-        """
+        """Test calculate_gain method for multiple transceiver antennas."""
         phi = np.array([
             0.0, 0.0, 0.0,
         ])

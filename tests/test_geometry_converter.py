@@ -7,7 +7,10 @@ from sharc.station_manager import StationManager
 
 
 class TestGeometryConverter(unittest.TestCase):
+    """Unit tests for the GeometryConverter class and related coordinate transformations."""
+
     def setUp(self):
+        """Set up test fixtures for GeometryConverter tests."""
         self.conv0_0km = GeometryConverter()
         self.conv0_0km.set_reference(
             0, 0, 0
@@ -34,9 +37,7 @@ class TestGeometryConverter(unittest.TestCase):
         ]
 
     def test_set_reference(self):
-        """
-        Checking if set reference sets both lla and ecef coordinates
-        """
+        """Check if set_reference sets both LLA and ECEF coordinates correctly."""
         # negative x in xaxis
         self.conv0_0km.set_reference(0, 180, 1200)
         self.assertEqual(self.conv0_0km.ref_alt, 1200)
@@ -60,6 +61,7 @@ class TestGeometryConverter(unittest.TestCase):
         self.assertAlmostEqual(self.conv0_0km.ref_z, 0)
 
     def test_reference_ecef(self):
+        """Test ECEF to LLA conversion for reference points."""
         for conv in self.all_converters:
             lat, lon, alt = ecef2lla(conv.ref_x, conv.ref_y, conv.ref_z)
             # ecef2lla approximation requires "almost equal" directive
@@ -69,9 +71,7 @@ class TestGeometryConverter(unittest.TestCase):
             self.assertAlmostEqual(alt[0], conv.ref_alt, places=8)
 
     def test_ecef_to_enu(self):
-        """
-        Testing if ecef to enu works correctly
-        """
+        """Test ECEF to ENU coordinate transformation."""
         # for each converter defined at the setup
         for conv in self.all_converters:
             # check if reference point always goes to (0,0,0)
@@ -81,9 +81,7 @@ class TestGeometryConverter(unittest.TestCase):
             self.assertEqual(z, 0)
 
     def test_lla_to_enu(self):
-        """
-        Testing if lla to enu works correctly
-        """
+        """Test LLA to ENU coordinate transformation."""
         # for each converter defined at the setup
         for conv in self.all_converters:
             x, y, z = conv.convert_lla_to_transformed_cartesian(conv.ref_lat, conv.ref_long, conv.ref_alt)
@@ -92,9 +90,7 @@ class TestGeometryConverter(unittest.TestCase):
             self.assertEqual(z, 0)
 
     def test_enu_to_ecef(self):
-        """
-        Testing if enu to ecef works correctly
-        """
+        """Test ENU to ECEF coordinate transformation."""
         # for each converter defined at the setup
         for conv in self.all_converters:
             # check if the reverse is true
@@ -104,9 +100,7 @@ class TestGeometryConverter(unittest.TestCase):
             self.assertEqual(z, conv.ref_z)
 
     def test_station_converter(self):
-        """
-        Testing if station conversion works correctly
-        """
+        """Test station coordinate and orientation conversions between ECEF and ENU."""
         # for each converter defined at the setup
         for conv in self.all_converters:
             rng = np.random.default_rng(0)

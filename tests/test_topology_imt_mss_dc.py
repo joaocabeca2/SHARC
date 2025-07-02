@@ -25,6 +25,7 @@ class TestTopologyImtMssDc(unittest.TestCase):
     """
 
     def setUp(self):
+        """Set up test environment, including parameters and geometry converter."""
         # Define the parameters for the IMT MSS-DC topology
         orbit = ParametersOrbit(
             n_planes=20,
@@ -61,11 +62,13 @@ class TestTopologyImtMssDc(unittest.TestCase):
         self.imt_mss_dc_topology = TopologyImtMssDc(self.params, self.geometry_converter)
 
     def test_initialization(self):
+        """Test initialization of the IMT MSS-DC topology."""
         self.assertTrue(self.imt_mss_dc_topology.is_space_station)
         self.assertEqual(self.imt_mss_dc_topology.num_sectors, self.params.num_beams)
         self.assertEqual(len(self.imt_mss_dc_topology.orbits), len(self.params.orbits))
 
     def test_calculate_coordinates(self):
+        """Test calculation of coordinates for the topology."""
         self.imt_mss_dc_topology.calculate_coordinates()
         center_beam_idxs = np.arange(self.imt_mss_dc_topology.num_base_stations // self.imt_mss_dc_topology.num_sectors) *\
             self.imt_mss_dc_topology.num_sectors
@@ -116,6 +119,7 @@ class TestTopologyImtMssDc(unittest.TestCase):
         )
 
     def test_visible_satellites(self):
+        """Test visibility of satellites based on elevation angle."""
         self.imt_mss_dc_topology.calculate_coordinates(random_number_gen=np.random.RandomState(8))
         min_elevation_angle = 5.0
 

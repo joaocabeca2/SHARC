@@ -12,16 +12,16 @@ import unittest
 # from sharc.parameters.parameters_indoor import ParametersIndoor
 
 
+
 class PropagationIndoorTest(unittest.TestCase):
-    """Tests PropagationIndoor class
-    """
+    """Unit tests for the PropagationIndoor class and its loss calculations."""
 
     def setUp(self):
+        """Set up test fixtures for PropagationIndoor tests."""
         pass
 
     def test_loss(self):
-        """Tests the get_loss method
-        """
+        """Test the get_loss method for indoor propagation loss calculation."""
         pass
     #     params = ParametersIndoor()
     #     params.basic_path_loss = "INH_OFFICE"

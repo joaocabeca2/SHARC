@@ -20,8 +20,10 @@ from sharc.parameters.imt.parameters_indoor import ParametersIndoor
 
 
 class SimulationIndoorTest(unittest.TestCase):
+    """Unit tests for the SimulationDownlink class in indoor scenarios."""
 
     def setUp(self):
+        """Set up test fixtures for SimulationDownlink indoor tests."""
         self.param = Parameters()
 
         self.param.general.imt_link = "DOWNLINK"
@@ -139,6 +141,7 @@ class SimulationIndoorTest(unittest.TestCase):
         self.param.fss_es.polarization_loss = 3.0
 
     def test_simulation_fss_es(self):
+        """Test simulation for FSS-ES scenario in indoor environments."""
         # Initialize stations
         self.param.general.system = "FSS_ES"
 

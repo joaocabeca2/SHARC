@@ -21,8 +21,10 @@ from sharc.parameters.imt.parameters_single_bs import ParametersSingleBS
 
 
 class SimulationAdjacentTest(unittest.TestCase):
+    """Unit tests for adjacent channel simulation."""
 
     def setUp(self):
+        """Set up test fixtures for adjacent channel simulation tests."""
         self.param = Parameters()
 
         self.param.general.system = "FSS_SS"
@@ -145,6 +147,7 @@ class SimulationAdjacentTest(unittest.TestCase):
         self.param.fss_ss.polarization_loss = 3.0
 
     def test_simulation_2bs_4ue_downlink(self):
+        """Test simulation of 2 base stations and 4 UEs in downlink scenario."""
         self.param.general.imt_link = "DOWNLINK"
 
         self.simulation = SimulationDownlink(self.param, "")
@@ -280,6 +283,7 @@ class SimulationAdjacentTest(unittest.TestCase):
         )
 
     def test_simulation_2bs_4ue_uplink(self):
+        """Test simulation of 2 base stations and 4 UEs in uplink scenario."""
         self.param.general.imt_link = "UPLINK"
 
         self.simulation = SimulationUplink(self.param, "")

@@ -1,3 +1,5 @@
+"""Unit tests for satellite utility functions (coordinate conversions, elevation calculations, etc.)."""
+
 import unittest
 import numpy as np
 import numpy.testing as npt
@@ -6,11 +8,14 @@ from sharc.satellite.ngso.constants import EARTH_RADIUS_M
 
 
 class TestSatUtils(unittest.TestCase):
+    """Unit tests for satellite utility functions (coordinate conversions, elevation calculations, etc.)."""
 
     def setUp(self):
+        """Set up test fixtures for satellite utility tests."""
         pass
 
     def test_ecef2lla(self):
+        """Test conversion from ECEF to latitude, longitude, altitude (LLA)."""
         # Object is over the meridional plane at 1414km of altitude
         sx1 = EARTH_RADIUS_M + 1414e3
         sy1 = 0.0
@@ -51,6 +56,7 @@ class TestSatUtils(unittest.TestCase):
         npt.assert_almost_equal(alt, [1414000.0, 0.0, 4209582], 1)
 
     def test_lla2ecef(self):
+        """Test conversion from latitude, longitude, altitude (LLA) to ECEF."""
         # Object is over the meridional plane at 1414km of altitude
         lat = 0.0
         lng = 0.0
@@ -88,6 +94,7 @@ class TestSatUtils(unittest.TestCase):
         npt.assert_almost_equal(sz, [0.0, 0.0, 4449180.9], 1)
 
     def test_calculate_elev_angle(self):
+        """Test calculation of elevation angle between earth and space stations."""
         earth_station_coords = [
             (0.0, 0.0),
             (-15.0, -42.0),

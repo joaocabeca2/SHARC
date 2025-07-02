@@ -20,8 +20,10 @@ from sharc.parameters.imt.parameters_single_bs import ParametersSingleBS
 
 
 class SimulationDownlinkTest(unittest.TestCase):
+    """Unit tests for the SimulationDownlink class and its downlink simulation scenarios."""
 
     def setUp(self):
+        """Set up test fixtures for SimulationDownlink tests."""
         self.param = Parameters()
 
         self.param.general.imt_link = "DOWNLINK"
@@ -179,6 +181,7 @@ class SimulationDownlinkTest(unittest.TestCase):
         self.param.ras.polarization_loss = 0.0
 
     def test_simulation_2bs_4ue_fss_ss(self):
+        """Test simulation with 2 base stations and 4 UEs for FSS-SS scenario."""
         self.param.general.system = "FSS_SS"
 
         self.simulation = SimulationDownlink(self.param, "")
@@ -389,6 +392,7 @@ class SimulationDownlinkTest(unittest.TestCase):
         )
 
     def test_simulation_2bs_4ue_fss_es(self):
+        """Test simulation with 2 base stations and 4 UEs for FSS-ES scenario."""
         self.param.general.system = "FSS_ES"
 
         self.simulation = SimulationDownlink(self.param, "")
@@ -587,6 +591,7 @@ class SimulationDownlinkTest(unittest.TestCase):
         )
 
     def test_simulation_2bs_4ue_ras(self):
+        """Test simulation with 2 base stations and 4 UEs for RAS scenario."""
         self.param.general.system = "RAS"
 
         self.simulation = SimulationDownlink(self.param, "")
@@ -729,6 +734,7 @@ class SimulationDownlinkTest(unittest.TestCase):
         )
 
     def test_calculate_bw_weights(self):
+        """Test calculation of bandwidth weights for co-channel systems."""
         self.param.general.system = "FSS_ES"
         self.simulation = SimulationDownlink(self.param, "")
 

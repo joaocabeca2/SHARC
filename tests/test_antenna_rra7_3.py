@@ -14,8 +14,10 @@ from sharc.parameters.parameters_antenna_with_diameter import ParametersAntennaW
 
 
 class AntennaReg_RR_A7_3Test(unittest.TestCase):
+    """Unit tests for the AntennaReg_RR_A7_3 class."""
 
     def setUp(self):
+        """Set up test fixtures for AntennaReg_RR_A7_3 tests."""
         self.antenna1_params = ParametersAntennaWithDiameter(
                 diameter=3,
                 frequency=10000,
@@ -42,7 +44,7 @@ class AntennaReg_RR_A7_3Test(unittest.TestCase):
         )
 
     def test_diameter_inference(self):
-        """Document specifies a diameter to assume for when no diameter is given"""
+        """Test diameter inference when no diameter is given."""
         self.assertAlmostEqual(
             20 * math.log10(self.antenna3.D_lmbda),
             self.antenna3_params.antenna_gain - 7.7,
@@ -50,6 +52,7 @@ class AntennaReg_RR_A7_3Test(unittest.TestCase):
         )
 
     def test_gain(self):
+        """Test gain and related properties of the antenna."""
         self.assertEqual(self.antenna1.peak_gain, self.antenna1_params.antenna_gain)
         self.assertEqual(self.antenna1.D_lmbda, 100)
         self.assertEqual(self.antenna1.g1, 29)
@@ -63,11 +66,7 @@ class AntennaReg_RR_A7_3Test(unittest.TestCase):
         self.assertAlmostEqual(self.antenna2.phi_m, 1.65442589867, delta=1e-11)
 
     def test_invalid_antenna(self):
-        """
-        The appendix 7 Annex 3 does not specify what should happen
-        in case phi_r < phi_m. We're throwing an error, but if you
-        happen to know that isn't an error, remove it and verify the behavior you want
-        """
+        """Test error is raised when phi_r < phi_m for the antenna."""
 
         with self.assertRaises(ValueError):
             AntennaReg_RR_A7_3(
@@ -79,6 +78,7 @@ class AntennaReg_RR_A7_3Test(unittest.TestCase):
             )
 
     def test_calculate_gain(self):
+        """Test calculate_gain method of the antenna."""
         # Test antenna1
         phi = [
             0.9,

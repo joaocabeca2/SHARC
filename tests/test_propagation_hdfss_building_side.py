@@ -14,9 +14,12 @@ from sharc.support.enumerations import StationType
 from sharc.propagation.propagation_hdfss_building_side import PropagationHDFSSBuildingSide
 
 
+
 class PropagationHDFSSBuildingSideTest(unittest.TestCase):
+    """Unit tests for the PropagationHDFSSBuildingSide class and its loss calculations."""
 
     def setUp(self):
+        """Set up test fixtures for PropagationHDFSSBuildingSide tests."""
         # Basic propagation
         rnd = np.random.RandomState(101)
         par = ParametersHDFSS()
@@ -66,6 +69,7 @@ class PropagationHDFSSBuildingSideTest(unittest.TestCase):
         self.propagation_random_prob = PropagationHDFSSBuildingSide(par, rnd)
 
     def test_get_loss(self):
+        """Test the get_loss method for same building scenario."""
         # On same building
         d = np.array([[10.0, 80.0, 200.0]])
         f = 40000 * np.ones_like(d)
@@ -96,6 +100,7 @@ class PropagationHDFSSBuildingSideTest(unittest.TestCase):
         npt.assert_allclose(loss, expected_loss, atol=1e-1)
 
     def test_get_build_loss(self):
+        """Test the get_build_loss method for various elevation angles."""
         # Initialize variables
         ele = np.array([[0.0, 45.0, 90.0]])
         f = 40000 * np.ones_like(ele)
@@ -152,6 +157,7 @@ class PropagationHDFSSBuildingSideTest(unittest.TestCase):
         npt.assert_allclose(build_loss, expected_build_loss, atol=1e-1)
 
     def test_is_same_build(self):
+        """Test is_same_building method for correct building identification."""
         # Test is_same_building()
         es_x = np.array([0.0])
         es_y = np.array([25.0])
@@ -168,6 +174,7 @@ class PropagationHDFSSBuildingSideTest(unittest.TestCase):
         npt.assert_array_equal(in_build, expected_in_build)
 
     def test_is_next_build(self):
+        """Test is_next_building method for correct next building identification."""
         # Test is_same_building()
         es_x = np.array([0.0])
         es_y = np.array([25.0])

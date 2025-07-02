@@ -1,7 +1,6 @@
 import unittest
 from sharc.parameters.parameters_mss_d2d import ParametersOrbit, ParametersMssD2d
 from sharc.parameters.imt.parameters_imt import ParametersImt
-from sharc.topology.topology_single_base_station import TopologySingleBaseStation
 from sharc.support.enumerations import StationType
 from sharc.station_factory import StationFactory
 from sharc.station_manager import StationManager
@@ -12,7 +11,10 @@ import numpy.testing as npt
 
 
 class StationFactoryNgsoTest(unittest.TestCase):
+    """Unit tests for NGSO station factory and related coordinate/antenna logic."""
+
     def setUp(self):
+        """Set up NGSO constellation parameters and geometry for testing."""
         # Adding multiple shells to this constellation
         # Creating orbital parameters for the first orbit
         orbit_1 = ParametersOrbit(
@@ -58,10 +60,10 @@ class StationFactoryNgsoTest(unittest.TestCase):
         self.param.antenna_s1528.antenna_gain = 46.6
 
         # Creating an IMT topology
-        imt_topology = TopologySingleBaseStation(
-            cell_radius=500,
-            num_clusters=2,
-        )
+        # imt_topology = TopologySingleBaseStation(
+        #     cell_radius=500,
+        #     num_clusters=2,
+        # )  # Unused variable removed
 
         # random number generator
         self.seed = 42
@@ -70,6 +72,7 @@ class StationFactoryNgsoTest(unittest.TestCase):
         self.ngso_manager = StationFactory.generate_mss_d2d(self.param, rng, self.geoconvert)
 
     def test_ngso_manager(self):
+        """Test that the NGSO manager creates the correct number and type of stations."""
         self.assertEqual(self.ngso_manager.station_type, StationType.MSS_D2D)
         self.assertEqual(self.ngso_manager.num_stations, 20 * 32 + 12 * 20)
         self.assertEqual(self.ngso_manager.x.shape, (20 * 32 + 12 * 20,))
@@ -77,6 +80,7 @@ class StationFactoryNgsoTest(unittest.TestCase):
         self.assertEqual(self.ngso_manager.height.shape, (20 * 32 + 12 * 20,))
 
     def test_satellite_antenna_pointing(self):
+        """Test that satellite antennas point to nadir and off-axis angles are correct."""
         # by default, satellites should always point to nadir (earth center)
 
         # Test: check if azimuth is pointing towards correct direction
@@ -100,11 +104,7 @@ class StationFactoryNgsoTest(unittest.TestCase):
         distance_to_center_of_earth_should_eq = np.sqrt(
             self.ngso_manager.x ** 2 +
             self.ngso_manager.y ** 2 +
-            (
-                    np.sqrt(
-                        x * x + y * y + z * z,
-                    ) + self.ngso_manager.z
-            ) ** 2,
+            (np.sqrt(x * x + y * y + z * z) + self.ngso_manager.z) ** 2,
         )
 
         npt.assert_allclose(off_axis_angle, 0.0, atol=1e-05)
@@ -116,6 +116,7 @@ class StationFactoryNgsoTest(unittest.TestCase):
         )
 
     def test_satellite_coordinate_reversing(self):
+        """Test coordinate conversion and azimuth direction for NGSO satellites."""
         # by default, satellites should always point to nadir (earth center)
         rng = np.random.RandomState(seed=self.seed)
 

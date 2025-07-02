@@ -19,15 +19,17 @@ class StationFactoryTest(unittest.TestCase):
     """Test cases for StationFactory."""
 
     def setUp(self):
+        """Set up a StationFactory instance for testing."""
         self.station_factory = StationFactory()
 
     def test_generate_imt_base_stations(self):
+        """Test IMT base station generation (placeholder)."""
         pass
 
     def test_generate_imt_base_stations_ntn(self):
         """Test for IMT-NTN space station generation."""
-        seed = 100
-        rng = np.random.RandomState(seed)
+        # seed = 100  # Unused variable removed
+        rng = np.random.RandomState(100)
 
         param_imt = ParametersImt()
         param_imt.topology.type = "NTN"

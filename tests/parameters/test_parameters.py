@@ -9,6 +9,7 @@ from sharc.satellite.ngso.constants import EARTH_RADIUS_M
 
 @contextmanager
 def assertDoesNotRaise(test_case):
+    """Context manager to assert that no exception is raised."""
     try:
         yield
     except Exception as e:
@@ -16,10 +17,10 @@ def assertDoesNotRaise(test_case):
 
 
 class ParametersTest(unittest.TestCase):
-    """Run Parameter class tests.
-    """
+    """Run Parameter class tests."""
 
     def setUp(self):
+        """Set up test fixtures for Parameters tests."""
         self.parameters = Parameters()
         param_file = Path(__file__).parent.resolve() / \
             'parameters_for_testing.yaml'
@@ -27,6 +28,7 @@ class ParametersTest(unittest.TestCase):
         self.parameters.read_params()
 
     def test_parameters_imt(self):
+        """Unit test for ParametersIMT."""
         """Unit test for ParametersIMT
         """
         self.assertEqual(self.parameters.imt.topology.type, "INDOOR")
@@ -683,6 +685,7 @@ class ParametersTest(unittest.TestCase):
         )
 
     def test_mss_d2d_loaded_geom(self):
+        """Test loading and geometry checks for MSS D2D parameters."""
         self.parameters.mss_d2d.sat_is_active_if.lat_long_inside_country.margin_from_border = 0.0
         # test brazil's area
         self.parameters.mss_d2d.sat_is_active_if.lat_long_inside_country.country_names = ["Brazil"]

@@ -20,8 +20,10 @@ from sharc.parameters.imt.parameters_single_bs import ParametersSingleBS
 
 
 class SimulationDownlinkHapsTest(unittest.TestCase):
+    """Unit tests for the SimulationDownlink class in HAPS scenarios."""
 
     def setUp(self):
+        """Set up test fixtures for SimulationDownlink HAPS tests."""
         self.param = Parameters()
 
         self.param.general.imt_link = "DOWNLINK"

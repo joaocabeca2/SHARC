@@ -17,8 +17,10 @@ from sharc.propagation.propagation_factory import PropagationFactory
 
 
 class SimulationDownlinkTvroTest(unittest.TestCase):
+    """Unit tests for the SimulationDownlink class in TVRO scenarios."""
 
     def setUp(self):
+        """Set up test fixtures for SimulationDownlink TVRO tests."""
         self.param = Parameters()
 
         self.param.general.imt_link = "DOWNLINK"
@@ -135,6 +137,7 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
         self.param.fss_es.polarization_loss = 3.0
 
     def test_simulation_1bs_1ue_tvro(self):
+        """Test simulation with 1 base station and 1 UE for TVRO scenario."""
         self.param.general.system = "FSS_ES"
 
         self.simulation = SimulationDownlink(self.param, "")

@@ -4,8 +4,11 @@ from sharc.satellite.ngso.orbit_model import OrbitModel
 
 
 class TestOrbitModel(unittest.TestCase):
+    """Unit tests for the OrbitModel class and its orbital calculations."""
+
 
     def setUp(self):
+        """Set up test fixtures for OrbitModel tests."""
         self.orbit = OrbitModel(
             Nsp=6,
             Np=8,
@@ -19,6 +22,7 @@ class TestOrbitModel(unittest.TestCase):
         )
 
     def test_initialization(self):
+        """Test initialization and parameter assignment of OrbitModel."""
         self.assertEqual(self.orbit.Nsp, 6)
         self.assertEqual(self.orbit.Np, 8)
         self.assertAlmostEqual(self.orbit.phasing, 7.5)
@@ -30,6 +34,7 @@ class TestOrbitModel(unittest.TestCase):
         self.assertAlmostEqual(self.orbit.Mo, 0)
 
     def test_orbit_parameters(self):
+        """Test calculation of orbital parameters."""
         self.assertAlmostEqual(self.orbit.semi_major_axis, 7792.145)
         self.assertAlmostEqual(self.orbit.eccentricity, 0.0)
         self.assertAlmostEqual(self.orbit.orbital_period_sec, 6845.3519, places=4)
@@ -37,6 +42,7 @@ class TestOrbitModel(unittest.TestCase):
         self.assertAlmostEqual(self.orbit.orbital_plane_inclination, 45.0)
 
     def test_mean_anomalies(self):
+        """Test mean anomaly calculations and satellite phasing logic."""
         self.orbit.get_orbit_positions_time_instant(time_instant_secs=0)
         ma_deg = np.degrees(self.orbit.mean_anomaly.reshape((self.orbit.Np, self.orbit.Nsp)))
 

@@ -7,16 +7,16 @@ from pathlib import Path
 from sharc.support.sharc_geom import generate_grid_in_multipolygon
 from sharc.support.sharc_utils import load_gdf
 
-
 class TestSharcGeom(unittest.TestCase):
+    """Unit tests for geometric utilities in SHARC (e.g., grid generation in polygons)."""
+
     def setUp(self):
+        """Set up test fixtures for SHARC geometry tests."""
         root = (Path(__file__) / ".." / "..").resolve()
         self.countries_shapefile = root / "sharc" / "data" / "countries" / "ne_110m_admin_0_countries.shp"
 
     def test_generate_grid(self):
-        """
-        Testing generate grid
-        """
+        """Test the generate_grid_in_multipolygon function."""
         # approx a square
         # good only for small (lon, lat) values
         mx = 0.001
