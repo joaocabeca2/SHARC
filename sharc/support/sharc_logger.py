@@ -34,26 +34,23 @@ class SimulationLogger:
     """
 
     def __init__(self, param_file: str, log_base: str = "simulation_log"):
-        """
-        Initialize the logger with the parameter file path.
-
-        Args:
-            param_file (str): Path to the simulation parameter file.
-            log_base (str): Subdirectory for storing logs (default: 'simulation_log').
-        """
         self.param_file = Path(param_file).resolve()
         self.param_name = self.param_file.stem
-        self.timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        self.output_dir = (
-            self.param_file.parent.parent
-            / "output"
-            / log_base
-            / f"simulation_{self.param_name}_{self.timestamp}"
+        # Pasta base da sessão (uma pasta por execução/sessão)
+        self.session_dir = (
+            self.param_file.parent.parent / "output" / log_base / self.timestamp
         )
+        self.session_dir.mkdir(parents=True, exist_ok=True)
+
+        # Pasta para cada parâmetro dentro da sessão
+        self.output_dir = self.session_dir / f"simulation_{self.param_name}_{self.timestamp}"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
+        # Arquivo YAML de log dentro da pasta específica
         self.log_path = self.output_dir / f"simulation_log_{self.timestamp}.yaml"
+
         self.start_time = None
         self.root_dir = self._get_root_dir()
 
