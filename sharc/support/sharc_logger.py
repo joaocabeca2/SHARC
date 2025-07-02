@@ -38,17 +38,14 @@ class SimulationLogger:
         self.param_name = self.param_file.stem
         self.timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        # Pasta base da sessão (uma pasta por execução/sessão)
         self.session_dir = (
             self.param_file.parent.parent / "output" / log_base / self.timestamp
         )
         self.session_dir.mkdir(parents=True, exist_ok=True)
 
-        # Pasta para cada parâmetro dentro da sessão
         self.output_dir = self.session_dir / f"simulation_{self.param_name}_{self.timestamp}"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Arquivo YAML de log dentro da pasta específica
         self.log_path = self.output_dir / f"simulation_log_{self.timestamp}.yaml"
 
         self.start_time = None
