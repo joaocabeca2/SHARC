@@ -8,6 +8,7 @@ Created on Mon Aug 21 12:17:34 2017
 import unittest
 import numpy as np
 import numpy.testing as npt
+from sharc.propagation.propagation_building_entry_loss import PropagationBuildingEntryLoss
 
 
 class TestPropagationBuildingEntryLoss(unittest.TestCase):

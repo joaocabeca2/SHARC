@@ -449,10 +449,6 @@ class ParametersImtMssDc(ParametersBase):
         ValueError
             If a parameter is not valid.
         """
-        ------
-        ValueError
-            If a parameter is not valid.
-        """
         # Now do the sanity check for some parameters
         if self.num_beams not in [1, 7, 19]:
             raise ValueError(f"{ctx}.num_beams: Invalid number of sectors {self.num_sectors}")
