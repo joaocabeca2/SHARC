@@ -6,6 +6,7 @@ Created on Thu May 11 15:34:31 2017.
 @author: edgar
 """
 
+
 class Plot(object):
     """Class for handling and storing plot data and metadata."""
 

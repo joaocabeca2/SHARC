@@ -3,7 +3,6 @@
 Script to generate a 3D plot of the Earth with satellite positions for the MSS D2D to IMT cross-border scenario.
 """
 # https://geopandas.org/en/stable/docs/user_guide/io.html
-import geopandas as gpd
 import numpy as np
 import plotly.graph_objects as go
 from pathlib import Path
@@ -96,15 +95,12 @@ if __name__ == "__main__":
 
     polygons_lim = plot_mult_polygon(
         parameters.mss_d2d.sat_is_active_if.lat_long_inside_country.filter_polygon,
-        geoconv, False
-    )
+        geoconv,
+        False)
     from functools import reduce
 
-    lim_x, lim_y, lim_z = reduce(
-        lambda acc, it: (list(it[0]) + [None] + acc[0], list(it[1]) + [None] + acc[1], list(it[2]) + [None] + acc[2]),
-        polygons_lim,
-        ([], [], [])
-    )
+    lim_x, lim_y, lim_z = reduce(lambda acc, it: (list(it[0]) + [None] + acc[0], list(
+        it[1]) + [None] + acc[1], list(it[2]) + [None] + acc[2]), polygons_lim, ([], [], []))
 
     fig.add_trace(go.Scatter3d(
         x=lim_x,
@@ -169,7 +165,8 @@ if __name__ == "__main__":
                 range=(-range, range)
             ),
             camera=dict(
-                center=dict(x=0, y=0, z=-geoconv.get_translation() / (2 * range)),  # Look at Earth's center
+                center=dict(x=0, y=0, z=-geoconv.get_translation() /
+                            (2 * range)),  # Look at Earth's center
                 # eye=eye,   # Camera position
                 # center=dict(x=0, y=0, z=0),  # Look at Earth's center
                 # up=dict(x=0, y=0, z=1)  # Ensure the up direction is correct

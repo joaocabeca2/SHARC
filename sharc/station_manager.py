@@ -42,7 +42,8 @@ class StationManager(object):
         self.thermal_noise = np.empty(n)
         self.total_interference = np.empty(n)
         self.pfd_external = np.empty(n)  # External PFD in dBW/m²/MHz
-        self.pfd_external_aggregated = np.empty(n)  # Aggregated External PFD in dBW/m²/MHz
+        # Aggregated External PFD in dBW/m²/MHz
+        self.pfd_external_aggregated = np.empty(n)
         self.snr = np.empty(n)
         self.sinr = np.empty(n)
         self.sinr_ext = np.empty(n)
@@ -322,9 +323,10 @@ class StationManager(object):
         C = Az0[:, np.newaxis] - Az
 
         cos_phi = np.cos(np.radians(a)) * np.cos(np.radians(b)) \
-                    + np.sin(np.radians(a)) * np.sin(np.radians(b)) * np.cos(np.radians(C))
+            + np.sin(np.radians(a)) * np.sin(np.radians(b)) * np.cos(np.radians(C))
         phi = np.arccos(
-            # imprecision may accumulate enough for numbers to be slightly out of arccos range
+            # imprecision may accumulate enough for numbers to be slightly out
+            # of arccos range
             np.clip(cos_phi, -1., 1.)
         )
         phi_deg = np.degrees(phi)

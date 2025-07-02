@@ -9,7 +9,6 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 
-
 class SpectralMask(ABC):
     """
     Abstract base class for defining spectral emission masks.
@@ -38,7 +37,6 @@ class SpectralMask(ABC):
         p_tx : float, optional
             Transmit power in dBm (default is 0).
         """
-        pass
 
     def power_calc(self, center_f: float, band: float):
         """

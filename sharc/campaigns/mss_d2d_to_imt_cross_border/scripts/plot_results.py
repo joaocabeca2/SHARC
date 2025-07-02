@@ -14,7 +14,14 @@ auto_open = False
 # Add a legend to results in folder that match the pattern
 # This could easily come from a config file
 
-prefixes = ["0km", "157.9km", "213.4km", "268.9km", "324.4km", "379.9km", "border"]
+prefixes = [
+    "0km",
+    "157.9km",
+    "213.4km",
+    "268.9km",
+    "324.4km",
+    "379.9km",
+    "border"]
 for link in ["dl", "ul"]:
     for prefix in prefixes:
         if prefix == "border":
@@ -38,14 +45,23 @@ for link in ["dl", "ul"]:
 
 campaign_base_dir = str((Path(__file__) / ".." / "..").resolve())
 
-results_dl = Results.load_many_from_dir(os.path.join(campaign_base_dir, "output_base_dl"), only_latest=True)
-results_ul = Results.load_many_from_dir(os.path.join(campaign_base_dir, "output_base_ul"), only_latest=True)
+results_dl = Results.load_many_from_dir(
+    os.path.join(
+        campaign_base_dir,
+        "output_base_dl"),
+    only_latest=True)
+results_ul = Results.load_many_from_dir(
+    os.path.join(
+        campaign_base_dir,
+        "output_base_ul"),
+    only_latest=True)
 # ^: typing.List[Results]
 all_results = [*results_ul, *results_dl]
 
 post_processor.add_results(all_results)
 
-# Define line styles for different prefixes - the size must match the number of unique legends
+# Define line styles for different prefixes - the size must match the
+# number of unique legends
 styles = ["solid", "dot", "dash", "longdash", "dashdot", "longdashdot"]
 
 
@@ -123,6 +139,10 @@ attributes_to_plot = [
 htmls_dir = Path(__file__).parent / "htmls"
 htmls_dir.mkdir(exist_ok=True)
 for attr in attributes_to_plot:
-    fig = post_processor.get_plot_by_results_attribute_name(attr, plot_type='ccdf')
+    fig = post_processor.get_plot_by_results_attribute_name(
+        attr, plot_type='ccdf')
     fig.update_layout(template="plotly_white")
-    fig.write_html(htmls_dir / f"{attr}.html", include_plotlyjs="cdn", auto_open=auto_open)
+    fig.write_html(
+        htmls_dir / f"{attr}.html",
+        include_plotlyjs="cdn",
+        auto_open=auto_open)

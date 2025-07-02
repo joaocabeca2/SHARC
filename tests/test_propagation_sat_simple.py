@@ -12,7 +12,6 @@ import numpy as np
 from sharc.propagation.propagation_sat_simple import PropagationSatSimple
 
 
-
 class PropagationSatSimpleTest(unittest.TestCase):
     """Unit tests for the PropagationSatSimple class and its satellite propagation loss calculations."""
 

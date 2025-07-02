@@ -36,7 +36,8 @@ class AntennaReg_RR_A7_3(Antenna):
             self.g1 = -21 + 25 * np.log10(D_lmbda)
             self.phi_r = 100 / D_lmbda
         else:
-            raise ValueError(f"Recommendation does not define antenna pattern when D/lmbda = {D_lmbda}")
+            raise ValueError(
+                f"Recommendation does not define antenna pattern when D/lmbda = {D_lmbda}")
 
         self.phi_m = 20 / D_lmbda * np.sqrt(self.peak_gain - self.g1)
 
@@ -44,7 +45,10 @@ class AntennaReg_RR_A7_3(Antenna):
         # if this is erroring in your simulation, you should check with a professor how to deal with this
         # since the document doesn't specify
         if self.phi_m >= self.phi_r:
-            raise ValueError(f"Recommendation doesn't specify what to do when phi_m ({self.phi_m}) >= phi_r ({self.phi_r})")
+            raise ValueError(
+                f"Recommendation doesn't specify what to do when phi_m ({
+                    self.phi_m}) >= phi_r ({
+                    self.phi_r})")
 
     def calculate_gain(self, *args, **kwargs) -> np.array:
         """
@@ -67,7 +71,8 @@ class AntennaReg_RR_A7_3(Antenna):
         gain = np.zeros(phi.shape)
 
         idx_00 = np.where(phi < self.phi_m)[0]
-        gain[idx_00] = self.peak_gain - 2.5 * self.D_lmbda * self.D_lmbda * phi[idx_00] * phi[idx_00] / 1000
+        gain[idx_00] = self.peak_gain - 2.5 * self.D_lmbda * \
+            self.D_lmbda * phi[idx_00] * phi[idx_00] / 1000
 
         idx_0 = np.where((self.phi_m <= phi) & (phi < self.phi_r))[0]
         gain[idx_0] = self.g1

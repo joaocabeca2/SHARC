@@ -19,8 +19,6 @@ class SampleList(list):
     This class only exists so that no list property can be confused with a SampleList
     """
 
-    pass
-
 
 class Results(object):
     """Handle the output of the simulator"""
@@ -162,8 +160,9 @@ class Results(object):
         """
 
         dir_head_complete = (
-            self.__sharc_dir / self.output_dir_parent / dir_head.format(results_number)
-        )
+            self.__sharc_dir /
+            self.output_dir_parent /
+            dir_head.format(results_number))
 
         try:
             os.makedirs(dir_head_complete)
@@ -178,8 +177,13 @@ class Results(object):
         self_dict = self.__dict__
 
         results_relevant_attr_names = list(
-            filter(lambda x: isinstance(getattr(self, x), SampleList), self_dict)
-        )
+            filter(
+                lambda x: isinstance(
+                    getattr(
+                        self,
+                        x),
+                    SampleList),
+                self_dict))
 
         return results_relevant_attr_names
 
@@ -236,7 +240,8 @@ class Results(object):
             print("[WARNING]: Results.load_many_from_dir did not find any results")
 
         if only_latest:
-            output_dirs = Results.get_most_recent_outputs_for_each_prefix(output_dirs)
+            output_dirs = Results.get_most_recent_outputs_for_each_prefix(
+                output_dirs)
 
         if filter_fn:
             output_dirs = filter(filter_fn, output_dirs)
@@ -249,7 +254,11 @@ class Results(object):
 
         return all_res
 
-    def load_from_dir(self, abs_path: str, *, only_samples: list[str] = None) -> "Results":
+    def load_from_dir(
+            self,
+            abs_path: str,
+            *,
+            only_samples: list[str] = None) -> "Results":
         """
         Load results from a specified directory, optionally loading only specified samples.
 
@@ -274,7 +283,8 @@ class Results(object):
             file_path = os.path.join(abs_path, f"{attr_name}.csv")
             if os.path.exists(file_path):
                 try:
-                    # Try reading the .csv file using pandas with different delimiters
+                    # Try reading the .csv file using pandas with different
+                    # delimiters
                     try:
                         data = pd.read_csv(file_path, delimiter=",")
                     except pd.errors.ParserError:
@@ -283,8 +293,7 @@ class Results(object):
                     # Ensure the data has exactly one column
                     if data.shape[1] != 1:
                         raise Exception(
-                            f"The file with samples of {attr_name} should have a single column.",
-                        )
+                            f"The file with samples of {attr_name} should have a single column.", )
 
                     # Remove rows that do not contain valid numeric values
                     data = data.apply(pd.to_numeric, errors="coerce").dropna()
@@ -299,13 +308,13 @@ class Results(object):
                 except Exception as e:
                     print(e)
                     raise Exception(
-                        f"Error processing the sample file ({attr_name}.csv) for {attr_name}: {e}"
-                    )
+                        f"Error processing the sample file ({attr_name}.csv) for {attr_name}: {e}")
 
         return self
 
     @staticmethod
-    def get_most_recent_outputs_for_each_prefix(dirnames: list[str]) -> list[str]:
+    def get_most_recent_outputs_for_each_prefix(
+            dirnames: list[str]) -> list[str]:
         """
         Get the most recent output directory for each output prefix.
 
@@ -319,7 +328,9 @@ class Results(object):
 
         for dirname in dirnames:
             prefix, date, id = Results.get_prefix_date_and_id(dirname)
-            res.setdefault(prefix, {"date": date, "id": id, "dirname": dirname})
+            res.setdefault(
+                prefix, {
+                    "date": date, "id": id, "dirname": dirname})
             if date > res[prefix]["date"]:
                 res[prefix]["date"] = date
                 res[prefix]["id"] = id
@@ -341,6 +352,8 @@ class Results(object):
         Returns:
             tuple: A tuple containing the prefix, date, and id as strings.
         """
-        mtch = re.search("(.*)(20[2-9][0-9]-[0-1][0-9]-[0-3][0-9])_([0-9]{2})", dirname)
+        mtch = re.search(
+            "(.*)(20[2-9][0-9]-[0-1][0-9]-[0-3][0-9])_([0-9]{2})",
+            dirname)
         prefix, date, id = mtch.group(1), mtch.group(2), mtch.group(3)
         return prefix, date, id

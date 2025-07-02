@@ -36,5 +36,9 @@ class ParametersAntennaWithEnvelopeGain(ParametersBase):
         if not isinstance(self.gain, int) and not isinstance(self.gain, float):
             raise ValueError(f"{ctx}.gain needs to be a number")
 
-        if not isinstance(self.envelope_gain, int) and not isinstance(self.envelope_gain, float):
+        if not isinstance(
+                self.envelope_gain,
+                int) and not isinstance(
+                self.envelope_gain,
+                float):
             raise ValueError(f"{ctx}.envelope_gain needs to be a number")

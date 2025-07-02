@@ -16,7 +16,6 @@ from sharc.station import Station
 from sharc.station_manager import StationManager
 
 
-
 class StationManagerTest(unittest.TestCase):
     """Unit tests for the StationManager class, including station attributes, distances, and pointing logic."""
 
@@ -73,7 +72,7 @@ class StationManagerTest(unittest.TestCase):
         par = self.bs_param.get_antenna_parameters()
         self.station_manager.antenna = np.array([
             AntennaBeamformingImt(
-            par, 60, -10,
+                par, 60, -10,
             ), AntennaBeamformingImt(par, 180, -10), AntennaBeamformingImt(par, 300, -10),
         ])
         self.station_manager.station_type = StationType.IMT_BS
@@ -209,7 +208,7 @@ class StationManagerTest(unittest.TestCase):
         # get all values (no need to specify the id's)
         npt.assert_array_equal(
             self.station_manager.tx_power, dict(
-            {0: [27, 30], 1: [35], 2: [40]},
+                {0: [27, 30], 1: [35], 2: [40]},
             ),
         )
         # set a single value and get it
@@ -219,7 +218,7 @@ class StationManagerTest(unittest.TestCase):
         self.station_manager.tx_power[2] = [20, 25]
         npt.assert_array_equal(
             self.station_manager.tx_power, dict(
-            {0: [33, 38], 1: [35], 2: [20, 25]},
+                {0: [33, 38], 1: [35], 2: [20, 25]},
             ),
         )
 
@@ -362,8 +361,7 @@ class StationManagerTest(unittest.TestCase):
 
         # 2D Distance
         d_2D, d_3D, phi, theta = self.station_manager.get_dist_angles_wrap_around(
-            self.station_manager2,
-        )
+            self.station_manager2, )
         ref_d_2D = np.asarray([
             [18.03, 150.32, 85.39],
             [147.68, 181.12, 205.25],

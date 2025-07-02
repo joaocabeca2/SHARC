@@ -35,11 +35,20 @@ class ParametersAntennaWithDiameter(ParametersBase):
         ]:
             raise ValueError(f"{ctx} needs to have all its parameters set")
 
-        if not isinstance(self.antenna_gain, int) and not isinstance(self.antenna_gain, float):
+        if not isinstance(
+                self.antenna_gain,
+                int) and not isinstance(
+                self.antenna_gain,
+                float):
             raise ValueError(f"{ctx}.antenna_gain needs to be a number")
 
-        if (not isinstance(self.diameter, int) and not isinstance(self.diameter, float)) or self.diameter <= 0:
+        if (not isinstance(self.diameter, int) and not isinstance(
+                self.diameter, float)) or self.diameter <= 0:
             raise ValueError(f"{ctx}.diameter needs to be a positive number")
 
-        if not isinstance(self.frequency, int) and not isinstance(self.frequency, float):
+        if not isinstance(
+                self.frequency,
+                int) and not isinstance(
+                self.frequency,
+                float):
             raise ValueError(f"{ctx}.frequency needs to be a number")

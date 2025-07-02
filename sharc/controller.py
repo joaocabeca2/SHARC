@@ -20,7 +20,6 @@ class Controller:
 
     def __init__(self):
         """Initialize the Controller class."""
-        pass
 
     def set_model(self, model: Model):
         """

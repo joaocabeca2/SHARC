@@ -10,7 +10,6 @@ import math
 from sharc.topology.topology_ntn import TopologyNTN
 
 
-
 class TopologyNTNTest(unittest.TestCase):
     """Unit tests for the TopologyNTN class, including coordinate and sector logic."""
 

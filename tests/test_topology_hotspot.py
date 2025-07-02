@@ -14,7 +14,6 @@ from sharc.parameters.imt.parameters_hotspot import ParametersHotspot
 from sharc.topology.topology_hotspot import TopologyHotspot
 
 
-
 class TopologyHotspotTest(unittest.TestCase):
     """Unit tests for the TopologyHotspot class, including coordinate and overlap logic."""
 

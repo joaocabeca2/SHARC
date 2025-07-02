@@ -41,7 +41,13 @@ gain_rolloff_7 = antenna.calculate_gain(off_axis_angle_vec=theta_angles,
 fig = go.Figure()
 
 # Add a trace for the antenna gain
-fig.add_trace(go.Scatter(x=theta_angles, y=gain_rolloff_7 - g_max, mode='lines', name='Antenna Gain'))
+fig.add_trace(
+    go.Scatter(
+        x=theta_angles,
+        y=gain_rolloff_7 -
+        g_max,
+        mode='lines',
+        name='Antenna Gain'))
 # Limit the y-axis from 0 to 35 dBi
 fig.update_yaxes(range=[-20 - g_max, 2])
 fig.update_xaxes(range=[0, 90])

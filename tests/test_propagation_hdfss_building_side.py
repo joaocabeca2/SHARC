@@ -14,7 +14,6 @@ from sharc.support.enumerations import StationType
 from sharc.propagation.propagation_hdfss_building_side import PropagationHDFSSBuildingSide
 
 
-
 class PropagationHDFSSBuildingSideTest(unittest.TestCase):
     """Unit tests for the PropagationHDFSSBuildingSide class and its loss calculations."""
 

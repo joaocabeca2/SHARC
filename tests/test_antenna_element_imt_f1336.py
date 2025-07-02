@@ -11,7 +11,6 @@ import numpy.testing as npt
 
 from sharc.antenna.antenna_element_imt_f1336 import AntennaElementImtF1336
 from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
-from sharc.support.enumerations import StationType
 
 
 class AntennaElementImtF1336Test(unittest.TestCase):

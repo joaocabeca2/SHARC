@@ -10,7 +10,6 @@ import unittest
 
 from sharc.antenna.antenna_element_imt_m2101 import AntennaElementImtM2101
 from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
-from sharc.support.enumerations import StationType
 
 
 class AntennaImtTest(unittest.TestCase):

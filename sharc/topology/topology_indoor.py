@@ -96,7 +96,8 @@ class TopologyIndoor(Topology):
 
             # In the end, we have to update the number of base stations
             self.num_base_stations = len(self.x)
-            self.z = np.zeros_like(self.height)  # height will be added to z in station_factory
+            # height will be added to z in station_factory
+            self.z = np.zeros_like(self.height)
 
             self.azimuth = np.zeros(self.num_base_stations)
             self.indoor = np.ones(self.num_base_stations, dtype=bool)

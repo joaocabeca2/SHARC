@@ -51,7 +51,6 @@ class PropagationABGTest(unittest.TestCase):
             loss, atol=1e-2,
         )
 
-
     def setUp(self):
         """Set up test fixtures for PropagationABG tests."""
         self.abg = PropagationABG(

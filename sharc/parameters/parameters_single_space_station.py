@@ -4,8 +4,6 @@ import typing
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_antenna import ParametersAntenna
 from sharc.parameters.parameters_p619 import ParametersP619
-from sharc.parameters.parameters_p452 import ParametersP452
-from sharc.parameters.parameters_hdfss import ParametersHDFSS
 
 
 @dataclass
@@ -74,27 +72,31 @@ class ParametersSingleSpaceStation(ParametersBase):
                 """
                 if self.type not in self.__EXISTING_TYPES:
                     raise ValueError(
-                        f"Invalid value for {ctx}.type. Should be one of {self.__EXISTING_TYPES}",
-                    )
+                        f"Invalid value for {ctx}.type. Should be one of {
+                            self.__EXISTING_TYPES}", )
 
                 match self.type:
                     case "FIXED":
-                        if not isinstance(self.fixed, int) and not isinstance(self.fixed, float):
+                        if not isinstance(
+                                self.fixed,
+                                int) and not isinstance(
+                                self.fixed,
+                                float):
                             raise ValueError(f"{ctx}.fixed should be a number")
                     case "POINTING_AT_IMT":
                         pass
                     case _:
                         raise NotImplementedError(
-                            f"Validation for {ctx}.type = {self.type} is not implemented",
-                        )
+                            f"Validation for {ctx}.type = {
+                                self.type} is not implemented", )
 
         azimuth: PointingParam = field(
-            default_factory=lambda: ParametersSingleSpaceStation.SpaceStationGeometry.PointingParam(type="POINTING_AT_IMT"),
-        )
+            default_factory=lambda: ParametersSingleSpaceStation.SpaceStationGeometry.PointingParam(
+                type="POINTING_AT_IMT"), )
         # default pointing directly downwards
         elevation: PointingParam = field(
-            default_factory=lambda: ParametersSingleSpaceStation.SpaceStationGeometry.PointingParam(type="POINTING_AT_IMT"),
-        )
+            default_factory=lambda: ParametersSingleSpaceStation.SpaceStationGeometry.PointingParam(
+                type="POINTING_AT_IMT"), )
 
         @dataclass
         class Location(ParametersBase):
@@ -106,7 +108,8 @@ class ParametersSingleSpaceStation(ParametersBase):
                 """
                 Represents a fixed location with latitude and longitude differences between the space station and earth station.
                 """
-                # This should be the difference between SS lat/long and ES lat/long
+                # This should be the difference between SS lat/long and ES
+                # lat/long
                 lat_deg: float = None
                 long_deg: float = None
 
@@ -114,10 +117,19 @@ class ParametersSingleSpaceStation(ParametersBase):
                     """
                     Validate the LocationFixed parameters for correctness.
                     """
-                    if not isinstance(self.lat_deg, int) and not isinstance(self.lat_deg, float):
+                    if not isinstance(
+                            self.lat_deg,
+                            int) and not isinstance(
+                            self.lat_deg,
+                            float):
                         raise ValueError(f"{ctx}.lat_deg needs to be a number")
-                    if not isinstance(self.long_deg, int) and not isinstance(self.long_deg, float):
-                        raise ValueError(f"{ctx}.long_deg needs to be a number")
+                    if not isinstance(
+                            self.long_deg,
+                            int) and not isinstance(
+                            self.long_deg,
+                            float):
+                        raise ValueError(
+                            f"{ctx}.long_deg needs to be a number")
 
             fixed: LocationFixed = field(default_factory=LocationFixed)
 
@@ -130,8 +142,8 @@ class ParametersSingleSpaceStation(ParametersBase):
                         self.fixed.validate(f"{ctx}.fixed")
                     case _:
                         raise NotImplementedError(
-                            f"ParametersSingleSpaceStation.Location.type = {self.type} has no validation implemented!",
-                        )
+                            f"ParametersSingleSpaceStation.Location.type = {
+                                self.type} has no validation implemented!", )
 
         location: Location = field(default_factory=Location)
 
@@ -188,7 +200,8 @@ class ParametersSingleSpaceStation(ParametersBase):
         self.param_p619.earth_station_lat_deg = self.geometry.es_lat_deg
 
         if self.geometry.location.type == "FIXED":
-            self.param_p619.earth_station_long_diff_deg = self.geometry.location.fixed.long_deg - self.geometry.es_long_deg
+            self.param_p619.earth_station_long_diff_deg = self.geometry.location.fixed.long_deg - \
+                self.geometry.es_long_deg
         else:
             self.param_p619.earth_station_long_diff_deg = None
 
@@ -207,10 +220,13 @@ class ParametersSingleSpaceStation(ParametersBase):
         """
         super().validate(ctx)
 
-        if None in [self.frequency, self.bandwidth, self.channel_model, self.tx_power_density]:
+        if None in [
+                self.frequency,
+                self.bandwidth,
+                self.channel_model,
+                self.tx_power_density]:
             raise ValueError(
-                "ParametersSingleSpaceStation required parameters are not all set",
-            )
+                "ParametersSingleSpaceStation required parameters are not all set", )
 
         if self.season not in ["WINTER", "SUMMER"]:
             raise ValueError(

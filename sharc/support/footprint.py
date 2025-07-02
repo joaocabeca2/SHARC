@@ -165,8 +165,8 @@ class Footprint(object):
             ),
         )
 
-        eps_n = arctan2(sin(self.bore_subsat_long_rad), tan(self.bore_lat_rad)) + \
-            phi_n
+        eps_n = arctan2(sin(self.bore_subsat_long_rad),
+                        tan(self.bore_lat_rad)) + phi_n
 
         beta_n = arcsin((1 / self.sigma) * sin(gamma_n)) - gamma_n
         beta_n[where(gamma_n > self.max_gamma_rad)] = self.max_beta_rad

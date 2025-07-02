@@ -15,7 +15,6 @@ from sharc.support.named_tuples import AntennaPar
 from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 
 
-
 class BeamformingNormalizerTest(unittest.TestCase):
     """Unit tests for the BeamformingNormalizer class."""
 

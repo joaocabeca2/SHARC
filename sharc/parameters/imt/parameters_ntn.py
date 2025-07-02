@@ -29,7 +29,8 @@ class ParametersNTN(ParametersBase):
     intersite_distance: float = None
 
     # BS azimuth
-    # TODO: Put this elsewhere (in a bs.geometry for example) if needed by another model
+    # TODO: Put this elsewhere (in a bs.geometry for example) if needed by
+    # another model
     bs_azimuth: float = 45
     # BS elevation
     bs_elevation: float = 90
@@ -54,7 +55,8 @@ class ParametersNTN(ParametersBase):
         super().load_subparameters(ctx, params, quiet)
 
         if self.cell_radius is not None and self.intersite_distance is not None:
-            raise ValueError(f"You cannot set both {ctx}.intersite_distance and {ctx}.cell_radius.")
+            raise ValueError(
+                f"You cannot set both {ctx}.intersite_distance and {ctx}.cell_radius.")
 
         if self.cell_radius is not None:
             self.intersite_distance = self.cell_radius * np.sqrt(3)
@@ -94,30 +96,30 @@ class ParametersNTN(ParametersBase):
 
         if self.bs_height <= 0:
             raise ValueError(
-                f"ParametersNTN: bs_height must be greater than 0, but is {self.bs_height}",
-            )
+                f"ParametersNTN: bs_height must be greater than 0, but is {
+                    self.bs_height}", )
 
         if self.cell_radius <= 0:
             raise ValueError(
-                f"ParametersNTN: cell_radius must be greater than 0, but is {self.cell_radius}",
-            )
+                f"ParametersNTN: cell_radius must be greater than 0, but is {
+                    self.cell_radius}", )
 
         if self.intersite_distance <= 0:
             raise ValueError(
-                f"ParametersNTN: intersite_distance must be greater than 0, but is {self.intersite_distance}",
-            )
+                f"ParametersNTN: intersite_distance must be greater than 0, but is {
+                    self.intersite_distance}", )
 
-        if not isinstance(self.bs_backoff_power, int) or self.bs_backoff_power < 0:
+        if not isinstance(
+                self.bs_backoff_power,
+                int) or self.bs_backoff_power < 0:
             raise ValueError(
-                f"ParametersNTN: bs_backoff_power must be a non-negative integer, but is {self.bs_backoff_power}",
-            )
+                f"ParametersNTN: bs_backoff_power must be a non-negative integer, but is {
+                    self.bs_backoff_power}", )
 
         if not np.all((0 <= self.bs_azimuth) & (self.bs_azimuth <= 360)):
             raise ValueError(
-                "ParametersNTN: bs_azimuth values must be between 0 and 360 degrees",
-            )
+                "ParametersNTN: bs_azimuth values must be between 0 and 360 degrees", )
 
         if not np.all((0 <= self.bs_elevation) & (self.bs_elevation <= 90)):
             raise ValueError(
-                "ParametersNTN: bs_elevation values must be between 0 and 90 degrees",
-            )
+                "ParametersNTN: bs_elevation values must be between 0 and 90 degrees", )

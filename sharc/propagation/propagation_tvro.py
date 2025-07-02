@@ -73,19 +73,21 @@ class PropagationTvro(Propagation):
         wrap_around_enabled = False
         if params.imt.topology.type == "MACROCELL":
             wrap_around_enabled = params.imt.topology.macrocell.wrap_around \
-                                    and params.imt.topology.macrocell.num_clusters == 1
+                and params.imt.topology.macrocell.num_clusters == 1
         if params.imt.topology.type == "HOTSPOT":
             wrap_around_enabled = params.imt.topology.hotspot.wrap_around \
-                                    and params.imt.topology.hotspot.num_clusters == 1
+                and params.imt.topology.hotspot.num_clusters == 1
 
-        if wrap_around_enabled and (station_a.is_imt_station() and station_b.is_imt_station()):
+        if wrap_around_enabled and (
+                station_a.is_imt_station() and station_b.is_imt_station()):
             distances_2d, distances_3d, _, _ = \
                 station_a.get_dist_angles_wrap_around(station_b)
         else:
             distances_2d = station_a.get_distance_to(station_b)
             distances_3d = station_a.get_3d_distance_to(station_b)
 
-        indoor_stations = np.tile(station_a.indoor, (station_b.num_stations, 1)).transpose()
+        indoor_stations = np.tile(
+            station_a.indoor, (station_b.num_stations, 1)).transpose()
 
         # Use the right interface whether the link is IMT-IMT or IMT-System
         # TODO: Refactor __get_loss and get rid of that if-else.

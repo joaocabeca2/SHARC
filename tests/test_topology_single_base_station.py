@@ -12,13 +12,11 @@ import numpy.testing as npt
 from sharc.topology.topology_single_base_station import TopologySingleBaseStation
 
 
-
 class TopologySingleBaseStationTest(unittest.TestCase):
     """Unit tests for the TopologySingleBaseStation class, including coordinate and cluster logic."""
 
     def setUp(self):
         """Set up for TopologySingleBaseStation tests (placeholder)."""
-        pass
 
     def test_coordinates(self):
         """Test calculation of coordinates for single and multiple clusters."""

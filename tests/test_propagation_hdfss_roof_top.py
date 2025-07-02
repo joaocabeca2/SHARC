@@ -14,7 +14,6 @@ from sharc.support.enumerations import StationType
 from sharc.propagation.propagation_hdfss_roof_top import PropagationHDFSSRoofTop
 
 
-
 class PropagationHDFSSRoofTopTest(unittest.TestCase):
     """Unit tests for the PropagationHDFSSRoofTop class and its loss calculations."""
 

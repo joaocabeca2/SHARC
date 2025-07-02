@@ -44,7 +44,8 @@ class AntennaMSSAdjacent(Antenna):
             Calculated antenna gain values.
         """
         theta = np.absolute(kwargs["off_axis_angle_vec"])
-        return 20 * np.log10(self.frequency / 2e3) + 10 * np.log10(np.cos(np.deg2rad(theta)))
+        return 20 * np.log10(self.frequency / 2e3) + 10 * \
+            np.log10(np.cos(np.deg2rad(theta)))
 
 
 if __name__ == '__main__':

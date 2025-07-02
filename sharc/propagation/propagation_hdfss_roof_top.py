@@ -29,7 +29,10 @@ class PropagationHDFSSRoofTop(Propagation):
         P.1411 NLOS for distances distance > 260m
     """
 
-    def __init__(self, param: ParametersHDFSS, random_number_gen: np.random.RandomState):
+    def __init__(
+            self,
+            param: ParametersHDFSS,
+            random_number_gen: np.random.RandomState):
         super().__init__(random_number_gen)
 
         self.param = param
@@ -235,8 +238,8 @@ class PropagationHDFSSRoofTop(Propagation):
             (self.fspl_to_los_dist - self.fspl_dist) + fspl_loss
 
         if shad:
-            interp_sigma = (dist - self.fspl_dist) * (self.propagation_p1411.los_sigma) / \
-                (self.fspl_to_los_dist - self.fspl_dist)
+            interp_sigma = (dist - self.fspl_dist) * (self.propagation_p1411.los_sigma) / (
+                self.fspl_to_los_dist - self.fspl_dist)
             loss = loss + self.random_number_gen.normal(0.0, interp_sigma)
 
         return loss
@@ -373,7 +376,15 @@ class PropagationHDFSSRoofTop(Propagation):
 
         return loss
 
-    def get_diff_distances(self, imt_x, imt_y, imt_z, es_x, es_y, es_z, dist_2D=False):
+    def get_diff_distances(
+            self,
+            imt_x,
+            imt_y,
+            imt_z,
+            es_x,
+            es_y,
+            es_z,
+            dist_2D=False):
         """Compute distances for diffraction calculations between IMT and earth station.
 
         Parameters

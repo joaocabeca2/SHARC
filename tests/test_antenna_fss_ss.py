@@ -14,7 +14,6 @@ import numpy as np
 import numpy.testing as npt
 
 
-
 class AntennaFssSsTest(unittest.TestCase):
     """Unit tests for the AntennaFssSs class."""
 

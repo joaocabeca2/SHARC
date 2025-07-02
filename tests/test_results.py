@@ -38,20 +38,26 @@ class StationTest(unittest.TestCase):
         self.assertEqual(len(self.results.imt_coupling_loss), 0)
         self.assertEqual(len(self.results.imt_bs_antenna_gain), 0)
 
-        results_recuperated_from_file = Results().load_from_dir(self.results.output_directory)
+        results_recuperated_from_file = Results().load_from_dir(
+            self.results.output_directory)
 
         results_arr = arr1
         results_arr.extend(arr2)
 
-        self.assertEqual(results_recuperated_from_file.imt_coupling_loss, results_arr)
-        self.assertEqual(results_recuperated_from_file.imt_bs_antenna_gain, results_arr)
+        self.assertEqual(
+            results_recuperated_from_file.imt_coupling_loss,
+            results_arr)
+        self.assertEqual(
+            results_recuperated_from_file.imt_bs_antenna_gain,
+            results_arr)
 
         results_recuperated_from_file = Results().load_from_dir(
-            self.results.output_directory, only_samples=["imt_bs_antenna_gain"],
-        )
+            self.results.output_directory, only_samples=["imt_bs_antenna_gain"], )
 
         self.assertEqual(results_recuperated_from_file.imt_coupling_loss, [])
-        self.assertEqual(results_recuperated_from_file.imt_bs_antenna_gain, results_arr)
+        self.assertEqual(
+            results_recuperated_from_file.imt_bs_antenna_gain,
+            results_arr)
 
     def test_get_most_recent_dirs(self):
         """Test retrieval of most recent output directories for each prefix."""

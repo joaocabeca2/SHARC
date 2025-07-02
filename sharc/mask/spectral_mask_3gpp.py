@@ -12,7 +12,6 @@ import numpy as np
 import sys
 
 
-
 class SpectralMask3Gpp(SpectralMask):
     """
     Spectral emission mask implementation based on 3GPP standards.

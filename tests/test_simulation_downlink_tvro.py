@@ -187,9 +187,7 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
 
         # test coupling loss method
         self.simulation.coupling_loss_imt = self.simulation.calculate_intra_imt_coupling_loss(
-            self.simulation.ue,
-            self.simulation.bs,
-        )
+            self.simulation.ue, self.simulation.bs, )
         path_loss_imt = np.array([
             [74.49, 79.50, 90.43, 93.11],
             [90.81, 91.87, 72.25, 83.69],
@@ -222,12 +220,12 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
         tx_power = 46 - 10 * np.log10(2)
         npt.assert_allclose(
             self.simulation.bs.tx_power[0], np.array(
-            [tx_power, tx_power],
+                [tx_power, tx_power],
             ), atol=1e-2,
         )
         npt.assert_allclose(
             self.simulation.bs.tx_power[1], np.array(
-            [tx_power, tx_power],
+                [tx_power, tx_power],
             ), atol=1e-2,
         )
 
@@ -266,7 +264,9 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
                 np.power(10, 0.1 * thermal_noise),
             )
         npt.assert_allclose(
-            self.simulation.ue.total_interference, total_interference, atol=1e-1,
+            self.simulation.ue.total_interference,
+            total_interference,
+            atol=1e-1,
         )
 
         # check SNR

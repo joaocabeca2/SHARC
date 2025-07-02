@@ -95,8 +95,16 @@ class AntennaRes122(Antenna):
         a = 90 - self.beams_list[0][1]
         C = Az0 - Az
         off_axis_rad = np.arccos(
-            np.cos(np.radians(a)) * np.cos(np.radians(b)) +
-            np.sin(np.radians(a)) * np.sin(np.radians(b)) * np.cos(np.radians(C)),
+            np.cos(
+                np.radians(a)) *
+            np.cos(
+                np.radians(b)) +
+            np.sin(
+                np.radians(a)) *
+            np.sin(
+                np.radians(b)) *
+            np.cos(
+                np.radians(C)),
         )
         off_axis_deg = np.degrees(off_axis_rad)
         return off_axis_deg

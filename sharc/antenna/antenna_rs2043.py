@@ -17,7 +17,6 @@ class AntennaRS2043(object):
         antenna_gain (float): maximum gain of FS omni antenna
     """
 
-
     def calculate_gain(self, **kwargs) -> np.array:
         """
         Calculate the total antenna gain for given off-axis and elevation angles.

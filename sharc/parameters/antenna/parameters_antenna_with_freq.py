@@ -3,7 +3,6 @@ from sharc.parameters.parameters_base import ParametersBase
 from dataclasses import dataclass
 
 
-
 @dataclass
 class ParametersAntennaWithFreq(ParametersBase):
     """
@@ -32,5 +31,9 @@ class ParametersAntennaWithFreq(ParametersBase):
         ]:
             raise ValueError(f"{ctx} needs to have all its parameters set")
 
-        if not isinstance(self.frequency, int) and not isinstance(self.frequency, float):
+        if not isinstance(
+                self.frequency,
+                int) and not isinstance(
+                self.frequency,
+                float):
             raise ValueError(f"{ctx}.frequency needs to be a number")

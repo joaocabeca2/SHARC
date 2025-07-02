@@ -8,7 +8,6 @@ Created on Mon Feb  6 10:51:19 2017
 from sharc.support.enumerations import StationType
 
 
-
 class Station(object):
     """
     Represents a communication station with position, antenna, and signal properties.

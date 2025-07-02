@@ -70,7 +70,14 @@ class AntennaRS1813(Antenna):
 
         id1 = np.where((self.phi_m < phi) & (phi <= 69))[0]
         gain[id1] = np.maximum(
-            gain[id1], 33 - 5 * math.log10(self.d_lmbda) - 25 * np.log10(phi[id1]),
+            gain[id1],
+            33 -
+            5 *
+            math.log10(
+                self.d_lmbda) -
+            25 *
+            np.log10(
+                phi[id1]),
         )
 
         id2 = np.where((69 < phi) & (phi <= 180))[0]

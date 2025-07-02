@@ -5,7 +5,7 @@ import pyproj
 import scipy.spatial.transform
 import typing
 
-from sharc.satellite.utils.sat_utils import lla2ecef, ecef2lla
+from sharc.satellite.utils.sat_utils import lla2ecef
 from sharc.station_manager import StationManager
 from sharc.support.sharc_utils import to_scalar
 from sharc.satellite.ngso.constants import EARTH_RADIUS_M, EARTH_DEFAULT_CRS, EARTH_SPHERICAL_CRS
@@ -40,7 +40,10 @@ def cartesian_to_polar(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
     return r, np.degrees(azimuth), np.degrees(elevation)
 
 
-def polar_to_cartesian(r: np.ndarray, azimuth: np.ndarray, elevation: np.ndarray) -> tuple:
+def polar_to_cartesian(
+        r: np.ndarray,
+        azimuth: np.ndarray,
+        elevation: np.ndarray) -> tuple:
     """Convert polar coordinates to cartesian coordinates.
 
     Parameters
@@ -216,7 +219,8 @@ class GeometryConverter():
             If the reference latitude, longitude, or altitude is not set.
         """
         if None in [self.ref_lat, self.ref_long, self.ref_alt]:
-            raise ValueError("You need to set a reference for coordinate transformation before using it")
+            raise ValueError(
+                "You need to set a reference for coordinate transformation before using it")
 
     def set_reference(self, ref_lat: float, ref_long: float, ref_alt: float):
         """Set the reference latitude, longitude, and altitude for coordinate transformation."""
@@ -234,7 +238,8 @@ class GeometryConverter():
         self.ref_lat = to_scalar(ref_lat)
         self.ref_long = to_scalar(ref_long)
         self.ref_alt = to_scalar(ref_alt)
-        ref_x, ref_y, ref_z = lla2ecef(self.ref_lat, self.ref_long, self.ref_alt)
+        ref_x, ref_y, ref_z = lla2ecef(
+            self.ref_lat, self.ref_long, self.ref_alt)
         self.ref_x = to_scalar(ref_x)
         self.ref_y = to_scalar(ref_y)
         self.ref_z = to_scalar(ref_z)
@@ -389,9 +394,11 @@ class GeometryConverter():
         """
         # transform positions
         if idx is None:
-            nx, ny, nz = self.convert_cartesian_to_transformed_cartesian(station.x, station.y, station.z)
+            nx, ny, nz = self.convert_cartesian_to_transformed_cartesian(
+                station.x, station.y, station.z)
         else:
-            nx, ny, nz = self.convert_cartesian_to_transformed_cartesian(station.x[idx], station.y[idx], station.z[idx])
+            nx, ny, nz = self.convert_cartesian_to_transformed_cartesian(
+                station.x[idx], station.y[idx], station.z[idx])
 
         if idx is None:
             azim = station.azimuth
@@ -402,25 +409,28 @@ class GeometryConverter():
 
         r = 1
         # then get pointing vec
-        pointing_vec_x, pointing_vec_y, pointing_vec_z = polar_to_cartesian(r, azim, elev)
+        pointing_vec_x, pointing_vec_y, pointing_vec_z = polar_to_cartesian(
+            r, azim, elev)
 
-        # transform pointing vectors, without considering geodesical earth coord system
+        # transform pointing vectors, without considering geodesical earth
+        # coord system
         pointing_vec_x, pointing_vec_y, pointing_vec_z = self.convert_cartesian_to_transformed_cartesian(
-            pointing_vec_x, pointing_vec_y, pointing_vec_z, translate=0
-        )
+            pointing_vec_x, pointing_vec_y, pointing_vec_z, translate=0)
 
         if idx is None:
             station.x = nx
             station.y = ny
             station.z = nz
 
-            _, station.azimuth, station.elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
+            _, station.azimuth, station.elevation = cartesian_to_polar(
+                pointing_vec_x, pointing_vec_y, pointing_vec_z)
         else:
             station.x[idx] = nx
             station.y[idx] = ny
             station.z[idx] = nz
 
-            _, azimuth, elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
+            _, azimuth, elevation = cartesian_to_polar(
+                pointing_vec_x, pointing_vec_y, pointing_vec_z)
 
             station.azimuth[idx] = azimuth
             station.elevation[idx] = elevation
@@ -442,9 +452,11 @@ class GeometryConverter():
         """
         # transform positions
         if idx is None:
-            nx, ny, nz = self.revert_transformed_cartesian_to_cartesian(station.x, station.y, station.z)
+            nx, ny, nz = self.revert_transformed_cartesian_to_cartesian(
+                station.x, station.y, station.z)
         else:
-            nx, ny, nz = self.revert_transformed_cartesian_to_cartesian(station.x[idx], station.y[idx], station.z[idx])
+            nx, ny, nz = self.revert_transformed_cartesian_to_cartesian(
+                station.x[idx], station.y[idx], station.z[idx])
 
         if idx is None:
             azim = station.azimuth
@@ -455,25 +467,28 @@ class GeometryConverter():
 
         r = 1
         # then get pointing vec
-        pointing_vec_x, pointing_vec_y, pointing_vec_z = polar_to_cartesian(r, azim, elev)
+        pointing_vec_x, pointing_vec_y, pointing_vec_z = polar_to_cartesian(
+            r, azim, elev)
 
-        # transform pointing vectors, without considering geodesical earth coord system
+        # transform pointing vectors, without considering geodesical earth
+        # coord system
         pointing_vec_x, pointing_vec_y, pointing_vec_z = self.revert_transformed_cartesian_to_cartesian(
-            pointing_vec_x, pointing_vec_y, pointing_vec_z, translate=0
-        )
+            pointing_vec_x, pointing_vec_y, pointing_vec_z, translate=0)
 
         if idx is None:
             station.x = nx
             station.y = ny
             station.z = nz
 
-            _, station.azimuth, station.elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
+            _, station.azimuth, station.elevation = cartesian_to_polar(
+                pointing_vec_x, pointing_vec_y, pointing_vec_z)
         else:
             station.x[idx] = nx
             station.y[idx] = ny
             station.z[idx] = nz
 
-            _, azimuth, elevation = cartesian_to_polar(pointing_vec_x, pointing_vec_y, pointing_vec_z)
+            _, azimuth, elevation = cartesian_to_polar(
+                pointing_vec_x, pointing_vec_y, pointing_vec_z)
 
             station.azimuth[idx] = azimuth
             station.elevation[idx] = elevation
@@ -534,8 +549,10 @@ def shrink_country_polygon_by_km(
 
     # Create transformer objects
     # NOTE: important always_xy=True to not mix lat lon up order
-    to_proj = pyproj.Transformer.from_crs(EARTH_DEFAULT_CRS, proj_crs, always_xy=True).transform
-    from_proj = pyproj.Transformer.from_crs(proj_crs, EARTH_DEFAULT_CRS, always_xy=True).transform
+    to_proj = pyproj.Transformer.from_crs(
+        EARTH_DEFAULT_CRS, proj_crs, always_xy=True).transform
+    from_proj = pyproj.Transformer.from_crs(
+        proj_crs, EARTH_DEFAULT_CRS, always_xy=True).transform
 
     # Transform to projection where unit is meters
     polygon_proj = shp.ops.transform(to_proj, polygon)
@@ -611,15 +628,18 @@ def generate_grid_in_polygon(
         Array with shape (2, N): longitude in first row, latitude in second row.
     """
     if hexagon_radius < 0:
-        raise ValueError("generate_grid_in_polygon.hexagon radius must be positive")
+        raise ValueError(
+            "generate_grid_in_polygon.hexagon radius must be positive")
     # Lambert is more precise, but could prob. get UTM projection
     # Didn't see any practical difference for current use cases
     proj_crs = get_lambert_equal_area_crs(polygon)
 
     # Create transformer objects
     # NOTE: important always_xy=True to not mix lat lon up order
-    to_proj = pyproj.Transformer.from_crs(EARTH_DEFAULT_CRS, proj_crs, always_xy=True).transform
-    from_proj = pyproj.Transformer.from_crs(proj_crs, EARTH_DEFAULT_CRS, always_xy=True).transform
+    to_proj = pyproj.Transformer.from_crs(
+        EARTH_DEFAULT_CRS, proj_crs, always_xy=True).transform
+    from_proj = pyproj.Transformer.from_crs(
+        proj_crs, EARTH_DEFAULT_CRS, always_xy=True).transform
 
     # Transform to projection where unit is meters
     polygon_proj = shp.ops.transform(to_proj, polygon)

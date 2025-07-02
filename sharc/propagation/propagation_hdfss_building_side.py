@@ -22,7 +22,10 @@ class PropagationHDFSSBuildingSide(Propagation):
 
     """
 
-    def __init__(self, param: ParametersHDFSS, random_number_gen: np.random.RandomState):
+    def __init__(
+            self,
+            param: ParametersHDFSS,
+            random_number_gen: np.random.RandomState):
         super().__init__(random_number_gen)
 
         self.param = param
@@ -254,10 +257,12 @@ class PropagationHDFSSBuildingSide(Propagation):
         next_building_y_range = same_building_y_range + self.b_d + self.s_w
 
         is_in_x = np.logical_and(
-            imt_x >= next_building_x_range[0], imt_x <= next_building_x_range[1],
+            imt_x >= next_building_x_range[0],
+            imt_x <= next_building_x_range[1],
         )
         is_in_y = np.logical_and(
-            imt_y >= next_building_y_range[0], imt_y <= next_building_y_range[1],
+            imt_y >= next_building_y_range[0],
+            imt_y <= next_building_y_range[1],
         )
 
         is_in_next_building = np.logical_and(is_in_x, is_in_y)

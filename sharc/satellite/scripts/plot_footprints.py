@@ -1,12 +1,8 @@
-# """
+"""
 Script to generate a 3D plot of the Earth with satellite positions and footprints.
 
-This module uses geopandas and plotly to visualize satellite footprints and related data for SHARC simulations.
+This module uses plotly to visualize satellite footprints and related data for SHARC simulations.
 """
-# Generates a 3D plot of the Earth with the satellites positions
-# https://geopandas.org/en/stable/docs/user_guide/io.html
-import os
-import geopandas as gpd
 import numpy as np
 import plotly.graph_objects as go
 from dataclasses import dataclass, field
@@ -22,6 +18,9 @@ from sharc.satellite.scripts.plot_globe import plot_globe_with_borders, plot_mul
 
 @dataclass
 class FootPrintOpts:
+    """
+    Options for configuring the satellite footprint plotting, including color, resolution, and gain calculation settings.
+    """
     # choose a seed to use for getting the satellites
     # if seed is different, different random numbers are taken
     seed: int
@@ -54,6 +53,17 @@ def plot_fp(
     geoconv,
     opts=FootPrintOpts(seed=32)
 ):
+    """
+    Generate a 3D plot of the Earth with satellite positions and their footprints.
+
+    Args:
+        params: Parameters for the MSS D2D system.
+        geoconv: GeometryConverter instance for coordinate transformations.
+        opts: FootPrintOpts instance with plotting options.
+
+    Returns:
+        plotly.graph_objects.Figure: The generated 3D plot.
+    """
     colors = opts.colors
     step = opts.step
     seed = opts.seed
@@ -65,18 +75,9 @@ def plot_fp(
     print("instantiating stations")
     # Create a topology with a single base station
     from sharc.topology.topology_single_base_station import TopologySingleBaseStation
-    imt_topology = TopologySingleBaseStation(
-        cell_radius=500, num_clusters=1
-    )
 
     # Create a random number generator
     rng = np.random.RandomState(seed=seed)
-
-    # Lists to store satellite positions (all and visible)
-    # Plot the ground station (blue marker)
-    # ground_sta_pos = lla2ecef(sys_lat, sys_long, sys_alt)
-    ground_sta_pos = geoconv.convert_lla_to_transformed_cartesian(
-        sys_lat, sys_long, sys_alt)
 
     center_of_earth = StationManager(1)
     # rotated and then translated center of earth
@@ -85,12 +86,6 @@ def plot_fp(
     center_of_earth.z = np.array([-geoconv.get_translation()])
 
     mss_d2d_manager = StationFactory.generate_mss_d2d(params, rng, geoconv)
-
-    # Extract satellite positions
-    x_vec = mss_d2d_manager.x / 1e3  # (Km)
-    y_vec = mss_d2d_manager.y / 1e3  # (Km)
-    z_vec = mss_d2d_manager.z / 1e3  # (Km)
-    # Store all positions
 
     # Plot the globe with satellite positions
     fig = plot_globe_with_borders(
@@ -196,7 +191,6 @@ def plot_fp(
     world_surf_y = y_flat.reshape(lat.shape)
     world_surf_z = z_flat.reshape(lat.shape)
     reshaped_gain = gains.reshape(lat.shape)
-    clor = 'rgb(220, 220, 220)'
 
     mx_gain = np.max(reshaped_gain)
     mn_gain = np.min(reshaped_gain)

@@ -24,7 +24,8 @@ class StationTest(unittest.TestCase):
         self.results.imt_dl_inr.extend([0, 1, 2, 3, 4, 5])
 
         trace_legend = "any legendd. Lorem ipsum"
-        self.post_processor.add_plot_legend_pattern(dir_name_contains="output", legend=trace_legend)
+        self.post_processor.add_plot_legend_pattern(
+            dir_name_contains="output", legend=trace_legend)
 
         self.post_processor.add_plots(
             self.post_processor.generate_cdf_plots_from_results(
@@ -33,7 +34,9 @@ class StationTest(unittest.TestCase):
         )
 
         self.assertEqual(len(self.post_processor.plots), 2)
-        self.assertEqual(self.post_processor.plots[0].data[0].name, trace_legend)
+        self.assertEqual(
+            self.post_processor.plots[0].data[0].name,
+            trace_legend)
 
 
 if __name__ == '__main__':

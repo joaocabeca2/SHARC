@@ -12,7 +12,6 @@ import numpy.testing as npt
 from sharc.propagation.propagation_free_space import PropagationFreeSpace
 
 
-
 class PropagationFreeSpaceTest(unittest.TestCase):
     """Unit tests for the PropagationFreeSpace class and its free space loss calculations."""
 

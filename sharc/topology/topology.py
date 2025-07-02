@@ -10,7 +10,6 @@ import numpy as np
 import matplotlib.axes
 
 
-
 class Topology(object):
     """Abstract base class for network topology representations."""
 
@@ -40,8 +39,14 @@ class Topology(object):
     def calculate_coordinates(self, random_number_gen=np.random.RandomState()):
         """Calculate the coordinates of the stations according to class attributes."""
 
-    # by default, a sharc topology will translate the UE distribution by the BS position
-    def transform_ue_xyz(self, bs_i: int, x: np.array, y: np.array, z: np.array):
+    # by default, a sharc topology will translate the UE distribution by the
+    # BS position
+    def transform_ue_xyz(
+            self,
+            bs_i: int,
+            x: np.array,
+            y: np.array,
+            z: np.array):
         """Translate UE coordinates by the position of the specified base station."""
         return (
             x + self.x[bs_i],

@@ -12,13 +12,11 @@ import numpy.testing as npt
 from sharc.topology.topology_macrocell import TopologyMacrocell
 
 
-
 class TopologyMacrocellTest(unittest.TestCase):
     """Unit tests for the TopologyMacrocell class, including intersite distance and cluster logic."""
 
     def setUp(self):
         """Set up for TopologyMacrocell tests (placeholder)."""
-        pass
 
     def test_intersite_distance(self):
         """Test calculation of intersite distance and cell radius."""
