@@ -669,10 +669,11 @@ class Simulation(ABC, Observable):
         sys_min_f = fc_sys - bw_sys / 2
         sys_max_f = fc_sys + bw_sys / 2
 
-        overlap = np.maximum(
-            0,
+        # NOTE: using clip is necessary to prevent
+        # floating point error to impact the expected result range [0, 1]
+        overlap = np.clip((
             np.minimum(ue_max_f, sys_max_f) - np.maximum(ue_min_f, sys_min_f)
-        ) / bw_ue
+        ) / bw_ue, 0.0, 1.0)
 
         return overlap
 
