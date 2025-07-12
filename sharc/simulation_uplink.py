@@ -237,7 +237,7 @@ class SimulationUplink(Simulation):
                             "You're trying to use ACS on a partially overlapping band "
                             "with UEs.\n\tVerify the code implements the behavior you expect!!"
                         )
-                    acs_dB = self.parameters.imt.ue.adjacent_ch_selectivity
+                    acs_dB = self.parameters.imt.bs.adjacent_ch_selectivity
                     rx_oob[::] = self.param_system.tx_power_density + 10 * np.log10(non_overlap_sys_bw * 1e6) - acs_dB
                 elif self.parameters.imt.adjacent_ch_reception == "OFF":
                     pass
