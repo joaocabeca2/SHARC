@@ -34,25 +34,35 @@ class Logging():
 class SimulationLogger:
     """
     Logs simulation metadata to a YAML file for reproducibility.
+    Also manages output directory via internal SimulationSetDir instance.
     """
+
+    class SimulationSetDir:
+        _instance = None
+        _output_dir: Optional[Path] = None
+
+        def __new__(cls):
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+            return cls._instance
+
+        def set_output_dir(self, path: Path):
+            self._output_dir = path.resolve()
+
+        def get_output_dir(self) -> Optional[Path]:
+            return self._output_dir
 
     def __init__(self, param_file: str, log_base: str = "simulation_log"):
         self.param_file = Path(param_file).resolve()
         self.param_name = self.param_file.stem
         self.timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        self.session_dir = (
-            self.param_file.parent.parent / "output" / log_base / self.timestamp
-        )
-        self.session_dir.mkdir(parents=True, exist_ok=True)
-
-        self.output_dir = self.session_dir / f"simulation_{self.param_name}_{self.timestamp}"
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-
-        self.log_path = self.output_dir / f"simulation_log_{self.timestamp}.yaml"
-
+        self.log_base = log_base
         self.start_time = None
         self.root_dir = self._get_root_dir()
+
+        self.output_dir = None
+        self.log_path = None
 
         self.data = {
             "repo": self._get_git_info(),
@@ -73,15 +83,28 @@ class SimulationLogger:
 
     def end(self):
         """
-        Stop the simulation timer, compute duration, and save the YAML log.
+        Stop the simulation timer, compute duration,
+        create output/log folder, and save the YAML log.
         """
         end_time = datetime.now()
         self.data["run"]["ended_at"] = end_time.isoformat()
+
         if self.start_time:
             duration = end_time - self.start_time
             self.data["run"]["duration"] = str(duration)
+
+        base_dir = self.SimulationSetDir().get_output_dir()
+        if base_dir is None:
+            base_dir = Path.cwd() / "logs" 
+
+        self.output_dir = base_dir / f"simulation_{self.param_name}_{self.timestamp}"
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        self.log_path = self.output_dir / f"{self.log_base}_{self.timestamp}.yaml"
+
         with open(self.log_path, "w") as f:
             yaml.dump(self.data, f, sort_keys=False, allow_unicode=True)
+            print(f"Simulation log file saved in {self.output_dir}")
 
     def _get_root_dir(self, folder_name: str = "sharc") -> Optional[Path]:
         path = self.param_file.resolve()

@@ -39,6 +39,7 @@ def main(argv):
             elif opt == "-p":
                 param_file = os.path.join(os.getcwd(), arg)
 
+    # Logger setup start
     sim_logger = SimulationLogger(param_file)
     sim_logger.start()
 
