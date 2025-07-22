@@ -199,7 +199,7 @@ class SimulationDownlink(Simulation):
                         self.param_system.tx_power_density + 10 * np.log10(
                             self.ue.bandwidth[ue, np.newaxis] * 1e6
                         ) + 10 * np.log10(weights)[:, np.newaxis] - \
-                            self.coupling_loss_imt_system[ue, :][:, active_sys]
+                        self.coupling_loss_imt_system[ue, :][:, active_sys]
 
             oob_power = np.resize(-500., (len(ue), 1))
             if self.adjacent_channel:
@@ -588,8 +588,10 @@ class SimulationDownlink(Simulation):
                     self.results.imt_system_diffraction_loss.extend(
                         self.imt_system_diffraction_loss[sys_active[:, np.newaxis], ue].flatten(),
                     )
-                self.results.sys_to_imt_coupling_loss.extend(
-                    self.coupling_loss_imt_system[np.array(ue)[:, np.newaxis], sys_active].flatten())
+                # NOTE: at some point this parameter stopped being collected..?
+                # but isn't actually needed, and naming convention used is bad
+                # self.results.sys_to_imt_coupling_loss.extend(
+                #     self.coupling_loss_imt_system[np.array(ue)[:, np.newaxis], sys_active].flatten())
             else:  # IMT is the interferer
                 self.results.system_imt_antenna_gain.extend(
                     self.system_imt_antenna_gain[sys_active[:, np.newaxis], ue].flatten(),

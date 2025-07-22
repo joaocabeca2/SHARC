@@ -16,6 +16,7 @@ from sharc.parameters.constants import BOLTZMANN_CONSTANT
 
 warn = warnings.warn
 
+
 class SimulationUplink(Simulation):
     """
     Implements the flowchart of simulation downlink method
@@ -306,15 +307,10 @@ class SimulationUplink(Simulation):
 
             # [dBm]
             ext_interference = 10 * np.log10(in_band_interf_lin + oob_interf_lin) + 30
-            print("in_band_interf_lin", in_band_interf_lin)
-            print("oob_interf_lin", oob_interf_lin)
-            print("dB(oob_interf_lin)", 10  *np.log10(oob_interf_lin))
-            print("ext_interference", ext_interference)
 
             # Sum all the interferers from each active system transmitters for each bs
             self.bs.ext_interference[bs] = 10 * np.log10(
                 np.sum(np.power(10, 0.1 * ext_interference), axis=1))
-            print("self.bs.ext_interference[bs]", self.bs.ext_interference[bs])
 
             self.bs.sinr_ext[bs] = self.bs.rx_power[bs] \
                 - (10 * np.log10(np.power(10, 0.1 * self.bs.total_interference[bs]) +
