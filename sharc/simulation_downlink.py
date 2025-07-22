@@ -81,6 +81,7 @@ class SimulationDownlink(Simulation):
         self.connect_ue_to_bs()
         self.connect_wifi_sta_to_ap()
         self.select_ue(random_number_gen)
+        self.select_sta(random_number_gen)
 
         # Calculate coupling loss after beams are created
         self.coupling_loss_imt = self.calculate_intra_imt_coupling_loss(

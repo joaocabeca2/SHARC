@@ -92,8 +92,17 @@ class Simulation(ABC, Observable):
         self.bs_to_ue_theta = np.empty(0)
         self.bs_to_ue_beam_rbs = np.empty(0)
 
+        self.ap_to_sta_d_2D = np.empty(0)
+        self.ap_to_sta_d_3D = np.empty(0)
+        self.ap_to_sta_phi = np.empty(0)
+        self.ap_to_sta_theta = np.empty(0)
+        self.ap_to_sta_beam_rbs = np.empty(0)
+
         self.ue = np.empty(0)
         self.bs = np.empty(0)
+        self.wifi_ap = np.empty(0)
+        self.wifi_sta = np.empty(0)
+        
         self.system = np.empty(0)
 
         self.link = dict()
@@ -157,6 +166,7 @@ class Simulation(ABC, Observable):
         self.topology.calculate_coordinates()
         num_bs = self.topology.num_base_stations
         num_ue = num_bs * self.parameters.imt.ue.k * self.parameters.imt.ue.k_m
+        num_sta = num_bs * self.parameters.wifi.sta.k * self.parameters.wifi.sta.k_m
 
         self.bs_power_gain = 10 * math.log10(
             self.parameters.imt.bs.antenna.n_rows *
@@ -176,8 +186,15 @@ class Simulation(ABC, Observable):
         self.bs_to_ue_theta = np.empty([num_bs, num_ue])
         self.bs_to_ue_beam_rbs = -1.0 * np.ones(num_ue, dtype=int)
 
+        self.ap_to_sta_phi = np.empty([num_bs, num_sta])
+        self.bs_to_ue_theta = np.empty([num_bs, num_sta])
+        self.bs_to_ue_beam_rbs = -1.0 * np.ones(num_ue, dtype=int)
+
         self.ue = np.empty(num_ue)
         self.bs = np.empty(num_bs)
+
+        self.ap = np.empty(num_bs)
+        self.sta = np.empty(num_sta)
         self.system = np.empty(1)
 
         # this attribute indicates the list of UE's that are connected to each
@@ -483,7 +500,55 @@ class Simulation(ABC, Observable):
                 )
             ]
             self.wifi_link[ap] = sta_list
+    
+    def select_sta(self, random_number_gen: np.random.RandomState):
+        """
+        Select K STAs randomly from all the STAs linked to one AP as “chosen”
+        STAs. These K “chosen” STAs will be scheduled during this snapshot.
+        """
+        # Calculate distances and angles between Access Points (APs) and Stations (STAs)
+        if self.wrap_around_enabled:
+            self.ap_to_sta_d_2D, self.ap_to_sta_d_3D, self.ap_to_sta_phi, self.ap_to_sta_theta = \
+                self.wifi_ap.get_dist_angles_wrap_around(self.sta)
+        else:
+            self.ap_to_sta_d_2D = self.wifi_ap.get_distance_to(self.wifi_sta)
+            self.ap_to_sta_d_3D = self.wifi_ap.get_3d_distance_to(self.wifi_sta)
+            self.ap_to_sta_phi, self.ap_to_sta_theta = self.wifi_ap.get_pointing_vector_to(
+                self.wifi_sta,
+            )
 
+        # Get all currently active Access Points
+        ap_active = np.where(self.wifi_ap.active)[0]
+        
+        # Iterate over each active Access Point
+        for ap in ap_active:
+            # Select K STA's among the ones that are connected to this AP
+            random_number_gen.shuffle(self.link[ap])
+            K = self.parameters.wifi.sta.k
+            del self.wifi_link[ap][K:]
+            
+            # Activate the selected STA's and create beams if the AP is active
+            if self.wifi_ap.active[ap]:
+                self.wifi_sta.active[self.wifi_link[ap]] = np.ones(K, dtype=bool)
+                
+                for sta in self.wifi_link[ap]:
+                    # Add a beam from the AP's antenna to the STA
+                    self.wifi_ap.antenna[ap].add_beam(
+                        self.ap_to_sta_phi[ap, sta],
+                        self.ap_to_sta_theta[ap, sta],
+                    )
+                    
+                    # Add a corresponding beam from the STA's antenna back to the AP
+                    self.wifi_sta.antenna[sta].add_beam(
+                        self.ap_to_sta_phi[ap, sta] - 180,
+                        180 - self.ap_to_sta_theta[ap, sta],
+                    )
+                    
+                    # Set beam resource block group for the STA
+                    self.ap_to_sta_beam_rbs[sta] = len(
+                        self.wifi_ap.antenna[ap].beams_list,
+                    ) - 1
+    
     def select_ue(self, random_number_gen: np.random.RandomState):
         """
         Select K UEs randomly from all the UEs linked to one BS as “chosen”

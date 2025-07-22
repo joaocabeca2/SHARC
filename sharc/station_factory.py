@@ -66,16 +66,13 @@ class StationFactory(object):
         param_ant_bs: ParametersAntennaImt,
         topology: Topology,
         random_number_gen: np.random.RandomState,
-        is_ap: bool = False,
+
     ):
         param_ant = param_ant_bs.get_antenna_parameters()
         num_bs = topology.num_base_stations
         imt_base_stations = StationManager(num_bs)
+        imt_base_stations.station_type = StationType.IMT_BS
         
-        if is_ap:
-            imt_base_stations.station_type = StationType.WIFI.APS
-        else:
-            imt_base_stations.station_type = StationType.IMT_BS
 
         if param.topology.type == "NTN":
             imt_base_stations.x = topology.space_station_x * np.ones(num_bs)
@@ -94,9 +91,9 @@ class StationFactory(object):
                 imt_base_stations.height = param.bs.height * np.ones(num_bs)
 
         imt_base_stations.azimuth = topology.azimuth
-        imt_base_stations.active = random_number_gen.rand(
-            num_bs,
-        ) < param.bs.load_probability
+        random_values = random_number_gen.rand(num_bs)
+        imt_base_stations.active = random_values < param.bs.load_probability
+
         imt_base_stations.tx_power = param.bs.conducted_power * np.ones(num_bs)
         imt_base_stations.rx_power = dict(
             [(bs, -500 * np.ones(param.ue.k)) for bs in range(num_bs)],
@@ -170,13 +167,12 @@ class StationFactory(object):
         ue_param_ant: ParametersAntennaImt,
         topology: Topology,
         random_number_gen: np.random.RandomState,
-        is_sta: bool = False
     ) -> StationManager:
 
         if param.topology == "INDOOR":
-            return StationFactory.generate_imt_ue_indoor(param, ue_param_ant, random_number_gen, topology, is_sta)
+            return StationFactory.generate_imt_ue_indoor(param, ue_param_ant, random_number_gen, topology)
         else:
-            return StationFactory.generate_imt_ue_outdoor(param, ue_param_ant, random_number_gen, topology, is_sta)
+            return StationFactory.generate_imt_ue_outdoor(param, ue_param_ant, random_number_gen, topology)
 
     @staticmethod
     def generate_ras_station(
@@ -195,7 +191,6 @@ class StationFactory(object):
         ue_param_ant: ParametersAntennaImt,
         random_number_gen: np.random.RandomState,
         topology: Topology,
-        is_sta: bool = False
     ) -> StationManager:
         num_bs = topology.num_base_stations
         num_ue_per_bs = param.ue.k * param.ue.k_m
@@ -203,14 +198,7 @@ class StationFactory(object):
         num_ue = num_bs * num_ue_per_bs
 
         imt_ue = StationManager(num_ue)
-
-        # NOVO: gerar tipos de estação de forma aleatória
-        wifi_ratio = 0.2  # proporção desejada de WIFI_APS (ajuste conforme quiser)
-        is_wifi = random_number_gen.rand(num_ue) < wifi_ratio
-
-        imt_ue.station_type = np.where(
-            is_wifi, StationType.WIFI_STA, StationType.IMT_UE
-        )
+        imt_ue.station_type = StationType.IMT_UE
 
         ue_x = list()
         ue_y = list()
@@ -399,21 +387,13 @@ class StationFactory(object):
         ue_param_ant: ParametersAntennaImt,
         random_number_gen: np.random.RandomState,
         topology: Topology,
-        is_sta: bool = False
     ) -> StationManager:
         num_bs = topology.num_base_stations
         num_ue_per_bs = param.ue.k * param.ue.k_m
         num_ue = num_bs * num_ue_per_bs
 
         imt_ue = StationManager(num_ue)
-
-        # NOVO: gerar tipos de estação de forma aleatória
-        wifi_ratio = 0.2  # proporção desejada de WIFI_APS (ajuste conforme quiser)
-        is_wifi = random_number_gen.rand(num_ue) < wifi_ratio
-
-        imt_ue.station_type = np.where(
-            is_wifi, StationType.WIFI_STA, StationType.IMT_UE
-        )
+        imt_ue.station_type = StationType.IMT_UE
 
         ue_x = list()
         ue_y = list()
@@ -1158,9 +1138,8 @@ class StationFactory(object):
         wifi_aps.height = param.ap.height * np.ones(num_aps)
 
         wifi_aps.azimuth = topology.azimuth
-        wifi_aps.active = random_number_gen.rand(
-            num_aps,
-        ) < param.ap.load_probability
+        random_values = random_number_gen.rand(num_aps)
+        wifi_aps.active = random_values < param.ap.load_probability
         wifi_aps.tx_power = param.ap.conducted_power * np.ones(num_aps)
         wifi_aps.rx_power = dict(
             [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],

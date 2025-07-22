@@ -31,7 +31,7 @@ class ParametersWifiSystem(ParametersBase):
 
     @dataclass
     class ParametersAP(ParametersBase):
-        load_probability = 0.2
+        load_probability = 0.5
         conducted_power = 10.0
         height: float = 6.0
         noise_figure: float = 10.0
