@@ -26,6 +26,7 @@ class SimulationE2EIMTVictim(unittest.TestCase):
     simulator is unchanged considering adjacent channel coupling loss and interference.
     """
     def setUp(self):
+        """Set up test parameters and simulation objects for each test."""
         self.fspl = PropagationFreeSpace(np.random.RandomState())
 
         self.param = Parameters()
@@ -107,9 +108,13 @@ class SimulationE2EIMTVictim(unittest.TestCase):
         self.param.single_earth_station.validate("single_earth_station")
 
     def lin(self, dB):
+        """Convert dB value to linear scale."""
         return 10 ** (0.1 * dB)
 
     def dB(self, lin):
+        """
+        Convert linear scale value to dB.
+        """
         return 10 * np.log10(lin)
 
     def assert_sys_to_imt_dl_results_attr(

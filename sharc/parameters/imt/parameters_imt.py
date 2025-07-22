@@ -74,7 +74,9 @@ class ParametersImt(ParametersBase):
 
     @dataclass
     class ParametersUE(ParametersBase):
-        """Dataclass containing the IMT User Equipment (UE) parameters."""
+        """
+        Dataclass containing the IMT User Equipment (UE) parameters.
+        """
 
         k: int = 3
         k_m: int = 1
@@ -111,6 +113,7 @@ class ParametersImt(ParametersBase):
 
     @dataclass
     class ParamatersDL(ParametersBase):
+        """Dataclass containing the IMT Downlink (DL) parameters."""
         attenuation_factor: float = 0.6
         sinr_min: float = -10.0
         sinr_max: float = 30.0
@@ -221,6 +224,7 @@ class ParametersImt(ParametersBase):
         self.validate("imt")
 
     def validate(self, ctx):
+        """Validate the IMT system parameters."""
         super().validate(ctx)
 
         if self.adjacent_antenna_model != "SINGLE_ELEMENT" \
