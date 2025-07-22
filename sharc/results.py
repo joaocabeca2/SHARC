@@ -12,6 +12,7 @@ import re
 import pathlib
 import pandas as pd
 from shutil import copy
+from sharc.support.sharc_logger import SimulationLogger
 
 
 class SampleList(list):
@@ -134,12 +135,14 @@ class Results(object):
             )
             self.create_dir(results_number, results_dir_head)
             copy(parameters_filename, self.output_directory)
+
         else:
             self.output_directory = self.__sharc_dir / self.output_dir_parent
             try:
                 os.makedirs(self.output_directory)
             except FileExistsError:
                 pass
+        SimulationLogger.set_output_dir(self.output_directory)
 
         return self
 
@@ -220,7 +223,7 @@ class Results(object):
         *,
         only_latest=True,
         only_samples: list[str] = None,
-        filter_fn=None
+        filter_fn=None,
     ) -> list["Results"]:
         """
         Load multiple Results objects from a directory containing output folders.
