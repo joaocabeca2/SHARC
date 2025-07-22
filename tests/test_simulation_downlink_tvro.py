@@ -17,8 +17,10 @@ from sharc.propagation.propagation_factory import PropagationFactory
 
 
 class SimulationDownlinkTvroTest(unittest.TestCase):
+    """Unit tests for the SimulationDownlink class in TVRO scenarios."""
 
     def setUp(self):
+        """Set up test fixtures for SimulationDownlink TVRO tests."""
         self.param = Parameters()
 
         self.param.general.imt_link = "DOWNLINK"
@@ -135,6 +137,7 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
         self.param.fss_es.polarization_loss = 3.0
 
     def test_simulation_1bs_1ue_tvro(self):
+        """Test simulation with 1 base station and 1 UE for TVRO scenario."""
         self.param.general.system = "FSS_ES"
 
         self.simulation = SimulationDownlink(self.param, "")
@@ -184,9 +187,7 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
 
         # test coupling loss method
         self.simulation.coupling_loss_imt = self.simulation.calculate_intra_imt_coupling_loss(
-            self.simulation.ue,
-            self.simulation.bs,
-        )
+            self.simulation.ue, self.simulation.bs, )
         path_loss_imt = np.array([
             [74.49, 79.50, 90.43, 93.11],
             [90.81, 91.87, 72.25, 83.69],
@@ -219,12 +220,12 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
         tx_power = 46 - 10 * np.log10(2)
         npt.assert_allclose(
             self.simulation.bs.tx_power[0], np.array(
-            [tx_power, tx_power],
+                [tx_power, tx_power],
             ), atol=1e-2,
         )
         npt.assert_allclose(
             self.simulation.bs.tx_power[1], np.array(
-            [tx_power, tx_power],
+                [tx_power, tx_power],
             ), atol=1e-2,
         )
 
@@ -263,7 +264,9 @@ class SimulationDownlinkTvroTest(unittest.TestCase):
                 np.power(10, 0.1 * thermal_noise),
             )
         npt.assert_allclose(
-            self.simulation.ue.total_interference, total_interference, atol=1e-1,
+            self.simulation.ue.total_interference,
+            total_interference,
+            atol=1e-1,
         )
 
         # check SNR

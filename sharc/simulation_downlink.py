@@ -21,9 +21,27 @@ class SimulationDownlink(Simulation):
     """
 
     def __init__(self, parameters: Parameters, parameter_file: str):
+        """Initialize the SimulationDownlink with parameters and parameter file.
+
+        Parameters
+        ----------
+        parameters : Parameters
+            Simulation parameters object.
+        parameter_file : str
+            Path to the parameter file.
+        """
         super().__init__(parameters, parameter_file)
 
     def snapshot(self, *args, **kwargs):
+        """Run a simulation snapshot for the downlink scenario.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments (unused).
+        **kwargs : dict
+            Keyword arguments, must include 'write_to_file', 'snapshot_number', and 'seed'.
+        """
         write_to_file = kwargs["write_to_file"]
         snapshot_number = kwargs["snapshot_number"]
         seed = kwargs["seed"]
@@ -89,11 +107,21 @@ class SimulationDownlink(Simulation):
         self.collect_results(write_to_file, snapshot_number)
 
     def finalize(self, *args, **kwargs):
+        """
+        Finalize the simulation and notify observers with the results.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments (unused).
+        **kwargs : dict
+            Keyword arguments (unused).
+        """
         self.notify_observers(source=__name__, results=self.results)
 
     def power_control(self):
         """
-        Apply downlink power control algorithm
+        Apply downlink power control algorithm to distribute power among selected UEs.
         """
         # Currently, the maximum transmit power of the base station is equaly
         # divided among the selected UEs
@@ -122,7 +150,8 @@ class SimulationDownlink(Simulation):
             self.ue.rx_power[ue] = self.bs.tx_power[bs] - \
                 self.coupling_loss_imt[bs, ue]
 
-            # create a list with base stations that generate interference in ue_list
+            # create a list with base stations that generate interference in
+            # ue_list
             bs_interf = [b for b in bs_active if b not in [bs]]
 
             # calculate intra system interference
@@ -130,10 +159,8 @@ class SimulationDownlink(Simulation):
                 interference = self.bs.tx_power[bi] - \
                     self.coupling_loss_imt[bi, ue]
 
-                self.ue.rx_interference[ue] = 10 * np.log10(
-                    np.power(
-                        10, 0.1 * self.ue.rx_interference[ue]) + np.power(10, 0.1 * interference),
-                )
+                self.ue.rx_interference[ue] = 10 * np.log10(np.power(
+                    10, 0.1 * self.ue.rx_interference[ue]) + np.power(10, 0.1 * interference), )
 
         # Thermal noise in dBm
         self.ue.thermal_noise = \
@@ -180,7 +207,8 @@ class SimulationDownlink(Simulation):
         for bs in bs_active:
             ue = self.link[bs]
 
-            # Get the weight factor for the system overlaping bandwidth in each UE band.
+            # Get the weight factor for the system overlaping bandwidth in each
+            # UE band.
             weights = self.calculate_bw_weights(
                 self.ue.bandwidth[ue],
                 self.ue.center_freq[ue],
@@ -190,8 +218,8 @@ class SimulationDownlink(Simulation):
 
             in_band_interf_power = -500.
             if self.co_channel:
-                # TODO: test this in integration testing
-                # Inteferer transmit power in dBm over the overlapping band (MHz) with UEs.
+                # Inteferer transmit power in dBm over the overlapping band
+                # (MHz) with UEs.
                 if self.overlapping_bandwidth > 0:
                     # in_band_interf_power = self.param_system.tx_power_density + \
                     #     10 * np.log10(self.overlapping_bandwidth * 1e6) + 30
@@ -215,7 +243,8 @@ class SimulationDownlink(Simulation):
                 # TODO: M.2101 states that:
                 # "The ACIR value should be calculated based on per UE allocated number of resource blocks"
 
-                # should we actually implement that for ACS since the receiving filter is fixed?
+                # should we actually implement that for ACS since the receiving
+                # filter is fixed?
 
                 # or maybe ignore ACS altogether (ACS = inf)? If we consider only allocated RB, it makes
                 # no sense to use ACS.
@@ -241,15 +270,16 @@ class SimulationDownlink(Simulation):
                     pass
                 else:
                     raise ValueError(
-                        f"No implementation for parameters.imt.adjacent_ch_reception == {self.parameters.imt.adjacent_ch_reception}"
-                    )
+                        f"No implementation for parameters.imt.adjacent_ch_reception == {
+                            self.parameters.imt.adjacent_ch_reception}")
 
                 # for tx oob we accept ACLR and spectral mask
                 if self.param_system.adjacent_ch_emissions == "SPECTRAL_MASK":
                     ue_bws = self.ue.bandwidth[ue]
                     center_freqs = self.ue.center_freq[ue]
 
-                    for i, center_freq, bw in zip(range(len(center_freqs)), center_freqs, ue_bws):
+                    for i, center_freq, bw in zip(
+                            range(len(center_freqs)), center_freqs, ue_bws):
                         # calculate tx emissions in UE in use bandwidth only
                         # [dB]
                         tx_oob[i] = self.system.spectral_mask.power_calc(
@@ -288,8 +318,8 @@ class SimulationDownlink(Simulation):
                     pass
                 else:
                     raise ValueError(
-                        f"No implementation for param_system.adjacent_ch_emissions == {self.param_system.adjacent_ch_emissions}"
-                    )
+                        f"No implementation for param_system.adjacent_ch_emissions == {
+                            self.param_system.adjacent_ch_emissions}")
 
                 if self.param_system.adjacent_ch_emissions != "OFF":
                     tx_oob = tx_oob[:, np.newaxis] - self.coupling_loss_imt_system[ue, :][:, active_sys]
@@ -297,7 +327,8 @@ class SimulationDownlink(Simulation):
                 rx_oob = rx_oob[:, np.newaxis] - self.coupling_loss_imt_system_adjacent[ue, :][:, active_sys]
 
                 # Out of band power
-                # sum linearly power leaked into band and power received in the adjacent band
+                # sum linearly power leaked into band and power received in the
+                # adjacent band
                 oob_power = 10 * np.log10(
                     10 ** (0.1 * tx_oob) + 10 ** (0.1 * rx_oob)
                 )
@@ -307,7 +338,8 @@ class SimulationDownlink(Simulation):
                                                                                        0.1 * oob_power))
 
             # Sum all the interferers for each UE
-            self.ue.ext_interference[ue] = 10 * np.log10(np.sum(np.power(10, 0.1 * ue_ext_int), axis=1)) + 30
+            self.ue.ext_interference[ue] = 10 * \
+                np.log10(np.sum(np.power(10, 0.1 * ue_ext_int), axis=1)) + 30
 
             self.ue.sinr_ext[ue] = \
                 self.ue.rx_power[ue] - (10 * np.log10(np.power(10, 0.1 * self.ue.total_interference[ue]) +
@@ -324,20 +356,24 @@ class SimulationDownlink(Simulation):
         # Calculate PFD at the UE
 
         # Distance from each system transmitter to each UE receiver (in meters)
-        dist_sys_to_imt = self.system.get_3d_distance_to(self.ue)  # shape: [n_tx, n_ue]
+        dist_sys_to_imt = self.system.get_3d_distance_to(
+            self.ue)  # shape: [n_tx, n_ue]
 
         # EIRP in dBW/MHz per transmitter
-        eirp_dBW_MHz = self.param_system.tx_power_density + 60 + self.system_imt_antenna_gain
+        eirp_dBW_MHz = self.param_system.tx_power_density + \
+            60 + self.system_imt_antenna_gain
 
         # PFD formula (dBW/m²/MHz)
         # PFD = EIRP - 10log10(4π) - 20log10(distance)
         # Store the PFD for each transmitter and each UE
-        self.ue.pfd_external = eirp_dBW_MHz - 10.992098640220963 - 20 * np.log10(dist_sys_to_imt)
+        self.ue.pfd_external = eirp_dBW_MHz - \
+            10.992098640220963 - 20 * np.log10(dist_sys_to_imt)
 
         # Total PFD per UE (sum of PFDs from each transmitter)
         # Convert PFD from dB to linear scale (W/m²/MHz)
         pfd_linear = 10 ** (self.ue.pfd_external / 10)
-        # Sum PFDs from all transmitters for each UE (axis=0 assumes shape [n_tx, n_ue])
+        # Sum PFDs from all transmitters for each UE (axis=0 assumes shape
+        # [n_tx, n_ue])
         pfd_agg_linear = np.sum(pfd_linear[active_sys], axis=0)
         # Convert back to dBW
         self.ue.pfd_external_aggregated = 10 * np.log10(pfd_agg_linear)
@@ -350,10 +386,7 @@ class SimulationDownlink(Simulation):
             self.adjacent_channel and self.param_system.adjacent_ch_reception != "OFF"
         ):
             self.coupling_loss_imt_system = self.calculate_coupling_loss_system_imt(
-                self.system,
-                self.bs,
-                is_co_channel=True,
-            )
+                self.system, self.bs, is_co_channel=True, )
         if self.adjacent_channel:
             self.coupling_loss_imt_system_adjacent = \
                 self.calculate_coupling_loss_system_imt(
@@ -406,8 +439,9 @@ class SimulationDownlink(Simulation):
                     # antenna). In SHARC implementation, ohmic losses are already
                     # included in coupling loss. Then, care has to be taken;
                     # otherwise ohmic loss will be included twice.
-                    tx_oob = self.bs.spectral_mask.power_calc(self.param_system.frequency, self.system.bandwidth) \
-                        + self.parameters.imt.bs.ohmic_loss
+                    tx_oob = self.bs.spectral_mask.power_calc(
+                        self.param_system.frequency,
+                        self.system.bandwidth) + self.parameters.imt.bs.ohmic_loss
 
                 elif self.parameters.imt.adjacent_ch_emissions == "ACLR":
                     non_overlap_sys_bw = self.param_system.bandwidth - self.overlapping_bandwidth
@@ -439,8 +473,8 @@ class SimulationDownlink(Simulation):
                     pass
                 else:
                     raise ValueError(
-                        f"No implementation for self.parameters.imt.adjacent_ch_emissions == {self.parameters.imt.adjacent_ch_emissions}"
-                    )
+                        f"No implementation for self.parameters.imt.adjacent_ch_emissions == {
+                            self.parameters.imt.adjacent_ch_emissions}")
 
                 # Calculate how much power is received in the adjacent channel
                 if self.param_system.adjacent_ch_reception == "ACS":
@@ -457,13 +491,13 @@ class SimulationDownlink(Simulation):
                     ) - acs_dB
                 elif self.param_system.adjacent_ch_reception == "OFF":
                     if self.parameters.imt.adjacent_ch_emissions == "OFF":
-                        raise ValueError("parameters.imt.adjacent_ch_emissions and parameters.imt.adjacent_ch_reception"
-                                         " cannot be both set to \"OFF\"")
-                    pass
+                        raise ValueError(
+                            "parameters.imt.adjacent_ch_emissions and parameters.imt.adjacent_ch_reception"
+                            " cannot be both set to \"OFF\"")
                 else:
                     raise ValueError(
-                        f"No implementation for self.param_system.adjacent_ch_reception == {self.param_system.adjacent_ch_reception}"
-                    )
+                        f"No implementation for self.param_system.adjacent_ch_reception == {
+                            self.param_system.adjacent_ch_reception}")
 
                 # oob_power per beam
                 # NOTE: we only consider one beam since all beams should have gain
@@ -481,7 +515,8 @@ class SimulationDownlink(Simulation):
                     rx_oob -= self.coupling_loss_imt_system[active_beams, sys_active]
 
                 # Out of band power
-                # sum linearly power leaked into band and power received in the adjacent band
+                # sum linearly power leaked into band and power received in the
+                # adjacent band
                 oob_power = 10 * np.log10(
                     10 ** (0.1 * tx_oob) + 10 ** (0.1 * rx_oob)
                 )
@@ -505,7 +540,9 @@ class SimulationDownlink(Simulation):
 
         # Calculate PFD at the system
         # TODO: generalize this a bit more if needed
-        if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
+        if hasattr(
+                self.system.antenna[0],
+                "effective_area") and self.system.num_stations == 1:
             self.system.pfd = 10 * \
                 np.log10(
                     10**(self.system.rx_interference / 10) /
@@ -513,6 +550,13 @@ class SimulationDownlink(Simulation):
                 )
 
     def collect_results(self, write_to_file: bool, snapshot_number: int):
+        """
+        Collect and store results for the current downlink simulation snapshot.
+
+        Args:
+            write_to_file (bool): Whether to write results to file.
+            snapshot_number (int): The current snapshot number.
+        """
         if not self.parameters.imt.interfered_with and np.any(self.bs.active):
             self.results.system_inr.extend(self.system.inr.flatten())
             self.results.system_dl_interf_power.extend(
@@ -521,8 +565,11 @@ class SimulationDownlink(Simulation):
             self.results.system_dl_interf_power_per_mhz.extend(
                 self.system.rx_interference.flatten() - 10 * math.log10(self.system.bandwidth),
             )
-            # TODO: generalize this a bit more if needed (same conditional as above)
-            if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
+            # TODO: generalize this a bit more if needed (same conditional as
+            # above)
+            if hasattr(
+                    self.system.antenna[0],
+                    "effective_area") and self.system.num_stations == 1:
                 self.results.system_pfd.extend([self.system.pfd])
 
         bs_active = np.where(self.bs.active)[0]
@@ -563,9 +610,11 @@ class SimulationDownlink(Simulation):
                 )
                 self.results.imt_dl_inr.extend(self.ue.inr[ue].tolist())
 
-                self.results.imt_dl_pfd_external.extend(self.ue.pfd_external[sys_active[:, np.newaxis], ue].flatten())
+                self.results.imt_dl_pfd_external.extend(
+                    self.ue.pfd_external[sys_active[:, np.newaxis], ue].flatten())
 
-                self.results.imt_dl_pfd_external_aggregated.extend(self.ue.pfd_external_aggregated[ue].tolist())
+                self.results.imt_dl_pfd_external_aggregated.extend(
+                    self.ue.pfd_external_aggregated[ue].tolist())
 
                 self.results.system_imt_antenna_gain.extend(
                     self.system_imt_antenna_gain[sys_active[:, np.newaxis], ue].flatten(),

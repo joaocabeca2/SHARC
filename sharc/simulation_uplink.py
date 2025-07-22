@@ -26,6 +26,13 @@ class SimulationUplink(Simulation):
         super().__init__(parameters, parameter_file)
 
     def snapshot(self, *args, **kwargs):
+        """
+        Execute a simulation snapshot for the uplink scenario.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments. Should include 'write_to_file', 'snapshot_number', and 'seed'.
+        """
         write_to_file = kwargs["write_to_file"]
         snapshot_number = kwargs["snapshot_number"]
         seed = kwargs["seed"]
@@ -154,7 +161,7 @@ class SimulationUplink(Simulation):
                 10 * np.log10(
                     np.power(10, 0.1 * self.bs.rx_interference[bs]) +
                     np.power(10, 0.1 * self.bs.thermal_noise[bs]),
-                )
+            )
 
             # calculate SNR and SINR
             self.bs.sinr[bs] = self.bs.rx_power[bs] - \
@@ -329,10 +336,7 @@ class SimulationUplink(Simulation):
             self.adjacent_channel and self.param_system.adjacent_ch_reception != "OFF"
         ):
             self.coupling_loss_imt_system = self.calculate_coupling_loss_system_imt(
-                self.system,
-                self.ue,
-                is_co_channel=True,
-            )
+                self.system, self.ue, is_co_channel=True, )
         if self.adjacent_channel:
             self.coupling_loss_imt_system_adjacent = \
                 self.calculate_coupling_loss_system_imt(
@@ -469,7 +473,9 @@ class SimulationUplink(Simulation):
 
         # Calculate PFD at the system
         # TODO: generalize this a bit more if needed
-        if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
+        if hasattr(
+                self.system.antenna[0],
+                "effective_area") and self.system.num_stations == 1:
             self.system.pfd = 10 * \
                 np.log10(
                     10**(self.system.rx_interference / 10) /
@@ -477,6 +483,13 @@ class SimulationUplink(Simulation):
                 )
 
     def collect_results(self, write_to_file: bool, snapshot_number: int):
+        """
+        Collect and store results for the current uplink simulation snapshot.
+
+        Args:
+            write_to_file (bool): Whether to write results to file.
+            snapshot_number (int): The current snapshot number.
+        """
         if not self.parameters.imt.interfered_with and np.any(self.bs.active):
             self.results.system_inr.extend(self.system.inr.tolist())
             self.results.system_ul_interf_power.extend(
@@ -486,7 +499,9 @@ class SimulationUplink(Simulation):
                 [self.system.rx_interference - 10 * math.log10(self.system.bandwidth)],
             )
             # TODO: generalize this a bit more if needed
-            if hasattr(self.system.antenna[0], "effective_area") and self.system.num_stations == 1:
+            if hasattr(
+                    self.system.antenna[0],
+                    "effective_area") and self.system.num_stations == 1:
                 self.results.system_pfd.extend([self.system.pfd])
 
         sys_active = np.where(self.system.active)[0]
@@ -528,7 +543,7 @@ class SimulationUplink(Simulation):
 
                 active_beams = np.array([
                     i for i in range(
-                    bs * self.parameters.imt.ue.k, (bs + 1) * self.parameters.imt.ue.k,
+                        bs * self.parameters.imt.ue.k, (bs + 1) * self.parameters.imt.ue.k,
                     )
                 ])
                 self.results.system_imt_antenna_gain.extend(
@@ -576,7 +591,7 @@ class SimulationUplink(Simulation):
             self.results.imt_ul_tx_power.extend(self.ue.tx_power[ue].tolist())
             imt_ul_tx_power_density = 10 * np.log10(
                 np.power(10, 0.1 * self.ue.tx_power[ue]) / (
-                self.num_rb_per_ue * self.parameters.imt.rb_bandwidth * 1e6
+                    self.num_rb_per_ue * self.parameters.imt.rb_bandwidth * 1e6
                 ),
             )
             self.results.imt_ul_tx_power_density.extend(

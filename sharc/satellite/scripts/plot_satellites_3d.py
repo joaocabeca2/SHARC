@@ -1,7 +1,5 @@
 # Generates a 3D plot of the Earth with the satellites positions
 # https://geopandas.org/en/stable/docs/user_guide/io.html
-import os
-import geopandas as gpd
 import numpy as np
 import plotly.graph_objects as go
 
@@ -32,7 +30,8 @@ if __name__ == "__main__":
 
     # Plot satellite traces from a time interval
     fig = plot_globe_with_borders(True, None, True)
-    pos_vec = orbit.get_satellite_positions_time_interval(initial_time_secs=0, interval_secs=5, n_periods=1)
+    pos_vec = orbit.get_satellite_positions_time_interval(
+        initial_time_secs=0, interval_secs=5, n_periods=1)
     fig.add_trace(go.Scatter3d(x=pos_vec['sx'].flatten(),
                                y=pos_vec['sy'].flatten(),
                                z=pos_vec['sz'].flatten(),
@@ -72,11 +71,17 @@ if __name__ == "__main__":
     NUM_DROPS = 1000
     rng = np.random.RandomState(seed=6)
     pos_vec = orbit.get_orbit_positions_random(rng=rng, n_samples=NUM_DROPS)
-    look_angles = calc_elevation(GROUND_STA_LAT, pos_vec['lat'], GROUND_STA_LON, pos_vec['lon'],
-                                 sat_height=orbit.apogee_alt_km * 1e3,
-                                 es_height=0)
-    elevation_angles_per_drop = look_angles[np.where(np.array(look_angles) > 0)]
-    num_of_visible_sats_per_drop = np.sum(look_angles > MIN_ELEV_ANGLE_DEG, axis=0)
+    look_angles = calc_elevation(
+        GROUND_STA_LAT,
+        pos_vec['lat'],
+        GROUND_STA_LON,
+        pos_vec['lon'],
+        sat_height=orbit.apogee_alt_km * 1e3,
+        es_height=0)
+    elevation_angles_per_drop = look_angles[np.where(
+        np.array(look_angles) > 0)]
+    num_of_visible_sats_per_drop = np.sum(
+        look_angles > MIN_ELEV_ANGLE_DEG, axis=0)
 
     # plot all satellites in drops
     fig.add_trace(go.Scatter3d(x=pos_vec['sx'].flatten(),

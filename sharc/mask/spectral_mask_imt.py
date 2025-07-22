@@ -131,6 +131,7 @@ class SpectralMaskImt(SpectralMask):
                     "\tYou may:\n\t\t- Have set spurious emission to a value not in [-13,-30]"
                     "\n\t\t- Be trying to use the mask for IMT BS outdoor but freq not in (24.25, 86) GHz range"
                 )
+
         if mask_dbm is not None:
             self.mask_dbm = np.concatenate((
                 mask_dbm[::-1], np.array([self.p_tx]),
