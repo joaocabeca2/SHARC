@@ -43,10 +43,12 @@ class SimulationLogger:
 
     @classmethod
     def set_output_dir(cls, path: Path):
+        """Set the global output directory for simulation logs."""
         cls._global_output_dir = path.resolve()
 
     @classmethod
     def get_output_dir(cls) -> Optional[Path]:
+        """Return the global output directory, if set."""
         return cls._global_output_dir
 
     def __init__(self, param_file: str, log_base: str = "simulation_log"):
