@@ -132,7 +132,6 @@ class Results(object):
             self.output_directory = self.__sharc_dir / self.output_dir_parent
             try:
                 os.makedirs(self.output_directory)
-                            
             except FileExistsError:
                 pass
         SimulationLogger.set_output_dir(self.output_directory)
@@ -210,7 +209,7 @@ class Results(object):
         *,
         only_latest=True,
         only_samples: list[str] = None,
-        filter_fn=None
+        filter_fn=None,
     ) -> list["Results"]:
         output_dirs = list(glob.glob(f"{root_dir}/output_*"))
 
@@ -231,7 +230,9 @@ class Results(object):
 
         return all_res
 
-    def load_from_dir(self, abs_path: str, *, only_samples: list[str] = None) -> "Results":
+    def load_from_dir(
+        self, abs_path: str, *, only_samples: list[str] = None
+    ) -> "Results":
         self.output_directory = abs_path
 
         self_dict = self.__dict__

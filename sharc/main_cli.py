@@ -21,7 +21,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 def main(argv):
     print("Welcome to SHARC!\n")
 
-    param_file = ''
+    param_file = ""
 
     try:
         opts, _ = getopt.getopt(argv, "hp:")

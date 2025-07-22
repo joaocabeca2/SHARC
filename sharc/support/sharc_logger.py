@@ -9,12 +9,13 @@ from datetime import datetime
 from typing import Optional
 
 
-class Logging():
+class Logging:
 
     @staticmethod
     def setup_logging(
-        default_path='support/logging.yaml',
-        default_level=logging.INFO, env_key='LOG_CFG',
+        default_path="support/logging.yaml",
+        default_level=logging.INFO,
+        env_key="LOG_CFG",
     ):
         """
         Setup logging configuration
@@ -24,7 +25,7 @@ class Logging():
         if value:
             path = value
         if os.path.exists(path):
-            with open(path, 'rt') as f:
+            with open(path, "rt") as f:
                 config = yaml.safe_load(f.read())
             logging.config.dictConfig(config)
         else:
@@ -102,14 +103,20 @@ class SimulationLogger:
 
     def _run_git_cmd(self, args: list[str]) -> Optional[str]:
         try:
-            return subprocess.check_output(["git"] + args, stderr=subprocess.DEVNULL).decode().strip()
+            return (
+                subprocess.check_output(["git"] + args, stderr=subprocess.DEVNULL)
+                .decode()
+                .strip()
+            )
         except subprocess.CalledProcessError:
             return None
 
     def _get_git_info(self) -> dict:
         branch = self._run_git_cmd(["rev-parse", "--abbrev-ref", "HEAD"])
         commit = self._run_git_cmd(["rev-parse", "HEAD"])
-        remote = self._run_git_cmd(["config", f"branch.{branch}.remote"]) if branch else None
+        remote = (
+            self._run_git_cmd(["config", f"branch.{branch}.remote"]) if branch else None
+        )
         url = self._run_git_cmd(["config", f"remote.{remote}.url"]) if remote else None
 
         return {
