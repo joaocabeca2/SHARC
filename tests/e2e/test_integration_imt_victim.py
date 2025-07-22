@@ -381,9 +381,6 @@ class SimulationE2EIMTVictim(unittest.TestCase):
 
         sys_non_overlap = self.param.single_earth_station.bandwidth - overlap
 
-        sys_measurement_bw = self.param.single_earth_station.bandwidth
-        imt_measurement_bw = self.param.imt.bandwidth
-
         """
         Calculating received power from filter imperfections,
         the oob for IMT and co-channel for System
@@ -638,7 +635,6 @@ class SimulationE2EIMTVictim(unittest.TestCase):
         sys_non_overlap = self.param.single_earth_station.bandwidth - overlap
 
         sys_measurement_bw = self.param.single_earth_station.bandwidth
-        imt_measurement_bw = self.param.imt.bandwidth
 
         """
         Calculating received power from filter imperfections,

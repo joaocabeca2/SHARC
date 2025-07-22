@@ -398,7 +398,6 @@ class SimulationE2EAdjacentTest(unittest.TestCase):
         imt_non_overlap = self.param.imt.bandwidth - overlap
         sys_non_overlap = self.param.single_earth_station.bandwidth - overlap
 
-        sys_measurement_bw = self.param.single_earth_station.bandwidth
         imt_measurement_bw = self.param.imt.bandwidth
 
         """
@@ -732,7 +731,6 @@ class SimulationE2EAdjacentTest(unittest.TestCase):
         imt_non_overlap = self.param.imt.bandwidth - overlap
         sys_non_overlap = self.param.single_earth_station.bandwidth - overlap
 
-        sys_measurement_bw = self.param.single_earth_station.bandwidth
         imt_measurement_bw = self.param.imt.bandwidth
 
         """
