@@ -10,6 +10,7 @@ from typing import Optional
 
 
 class Logging:
+    """Logging utility class for configuring application logging."""
 
     @staticmethod
     def setup_logging(

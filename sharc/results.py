@@ -11,11 +11,8 @@ import datetime
 import re
 import pathlib
 import pandas as pd
-import sys
-from pathlib import Path
 from shutil import copy
 from sharc.support.sharc_logger import SimulationLogger
-from typing import Optional
 
 
 class SampleList(list):
@@ -231,8 +228,20 @@ class Results(object):
         return all_res
 
     def load_from_dir(
-        self, abs_path: str, *, only_samples: list[str] = None
-    ) -> "Results":
+            self,
+            abs_path: str,
+            *,
+            only_samples: list[str] = None) -> "Results":
+        """
+        Load results from a specified directory, optionally loading only specified samples.
+
+        Args:
+            abs_path (str): Absolute path to the output directory.
+            only_samples (list[str], optional): List of sample names to load. If None, load all samples. Defaults to None.
+
+        Returns:
+            Results: The Results object with loaded data.
+        """
         self.output_directory = abs_path
 
         self_dict = self.__dict__
