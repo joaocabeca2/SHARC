@@ -182,6 +182,7 @@ class SimulationE2EAdjacentTest(unittest.TestCase):
     def test_2bs_to_es_mask(self):
         """
         Testing BS spectral mask interference
+        This simplifies spectral mask calculation by only getting the spurious emissions
         """
         self.param.general.imt_link = "DOWNLINK"
         self.param.imt.interfered_with = False
@@ -480,6 +481,7 @@ class SimulationE2EAdjacentTest(unittest.TestCase):
     def test_ue_to_es_mask(self):
         """
         Testing UE spectral mask interference
+        This simplifies spectral mask calculation by only getting the spurious emissions
         """
         self.param.general.imt_link = "UPLINK"
         self.param.imt.interfered_with = False

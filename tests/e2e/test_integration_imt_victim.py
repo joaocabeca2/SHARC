@@ -112,7 +112,7 @@ class SimulationE2EIMTVictim(unittest.TestCase):
     def dB(self, lin):
         return 10 * np.log10(lin)
 
-    def assert_sys_to_imt_ul_results_attr(
+    def assert_sys_to_imt_dl_results_attr(
         self,
         res: Results,
         k: int, n_bs: int,
@@ -156,7 +156,7 @@ class SimulationE2EIMTVictim(unittest.TestCase):
         # FIXME: why is this attr only on system -> IMT DL??
         self.assertEqual(len(res.sys_to_imt_coupling_loss), n_sys * n_ue)
 
-    def assert_sys_to_imt_dl_results_attr(
+    def assert_sys_to_imt_ul_results_attr(
         self,
         res: Results,
         k: int, n_bs: int,
@@ -456,11 +456,11 @@ class SimulationE2EIMTVictim(unittest.TestCase):
 
         # TODO: test IMT KPIs (sinr, etc)
 
-        self.assert_sys_to_imt_ul_results_attr(
+        self.assert_sys_to_imt_dl_results_attr(
             simulation_1k.results,
             1, 2
         )
-        self.assert_sys_to_imt_ul_results_attr(
+        self.assert_sys_to_imt_dl_results_attr(
             simulation_3k.results,
             3, 2
         )
@@ -713,11 +713,306 @@ class SimulationE2EIMTVictim(unittest.TestCase):
             rx_power_3k + 30,
         )
 
+        self.assert_sys_to_imt_ul_results_attr(
+            simulation_1k.results,
+            1, 2
+        )
+        self.assert_sys_to_imt_ul_results_attr(
+            simulation_3k.results,
+            3, 2
+        )
+
+    def test_es_to_ue_mask(self):
+        """
+        Testing ES spectral mask interference into UE
+        This simplifies spectral mask calculation by only getting the spurious emissions
+        """
+        self.param.general.imt_link = "DOWNLINK"
+        self.param.imt.interfered_with = True
+        self.param.single_earth_station.adjacent_ch_emissions = "SPECTRAL_MASK"
+        self.param.single_earth_station.spectral_mask = "MSS"
+        self.param.single_earth_station.spurious_emissions = -13.
+
+        self.param.imt.ue.k = 1
+        simulation_1k = SimulationDownlink(self.param, "")
+        simulation_1k.initialize()
+
+        self.assertFalse(simulation_1k.co_channel)
+
+        simulation_1k.snapshot(
+            write_to_file=False,
+            snapshot_number=0,
+            seed=14,
+        )
+
+        """
+        We also check that received spectral mask power
+        is per UE allocated RBs
+        """
+        self.param.imt.ue.k = 3
+        simulation_3k = SimulationDownlink(self.param, "")
+        simulation_3k.initialize()
+
+        simulation_3k.snapshot(
+            write_to_file=False,
+            snapshot_number=0,
+            seed=13,
+        )
+
+        self.assertEqual(
+            simulation_1k.coupling_loss_imt_system_adjacent.shape,
+            (2, 1)
+        )
+        self.assertEqual(
+            simulation_3k.coupling_loss_imt_system_adjacent.shape,
+            (6, 1)
+        )
+
+        p_loss_1k = self.fspl.get_loss(
+            simulation_1k.system.get_3d_distance_to(simulation_1k.ue),
+            # TODO: maybe should change this?
+            np.array([self.param.single_earth_station.frequency])
+        )
+        npt.assert_array_equal(
+            p_loss_1k.flatten(),
+            simulation_1k.results.imt_system_path_loss
+        )
+
+        p_loss_3k = self.fspl.get_loss(
+            simulation_3k.system.get_3d_distance_to(simulation_3k.ue),
+            # TODO: maybe should change this?
+            np.array([self.param.single_earth_station.frequency])
+        )
+        npt.assert_array_equal(
+            sorted(p_loss_3k.flatten()),
+            sorted(simulation_3k.results.imt_system_path_loss)
+        )
+
+        g1_co_1k = np.zeros((1, 2))
+        phis, thetas = simulation_1k.ue.get_pointing_vector_to(simulation_1k.system)
+
+        for i, phi, theta in zip(range(2), phis, thetas):
+            g1_co_1k[0][i] = simulation_1k.ue.antenna[i].calculate_gain(
+                phi_vec=np.array([phi]),
+                theta_vec=np.array([theta]),
+                beams_l=np.array([0]),
+                co_channel=True,
+            )
+
+        npt.assert_allclose(
+            simulation_1k.results.imt_system_antenna_gain,
+            g1_co_1k.flatten()
+        )
+
+        g1_co_3k = np.zeros((1, 6))
+        phis, thetas = simulation_3k.ue.get_pointing_vector_to(simulation_1k.system)
+
+        for i, phi, theta in zip(range(6), phis, thetas):
+            g1_co_3k[0][i] = simulation_3k.ue.antenna[i].calculate_gain(
+                phi_vec=np.array([phi]),
+                theta_vec=np.array([theta]),
+                beams_l=np.array([0]),
+                co_channel=True,
+            )
+
+        g1_co_3k = np.reshape(np.transpose(g1_co_3k), (1, 6))
+        npt.assert_allclose(
+            # the order may not be the same, so we sort
+            sorted(simulation_3k.results.imt_system_antenna_gain),
+            sorted(g1_co_3k.flatten())
+        )
+
+        g2 = self.param.single_earth_station.antenna.gain
+
+        coc_coupling_1k = np.transpose(p_loss_1k - g1_co_1k - g2)
+        coc_coupling_3k = np.transpose(p_loss_3k - g1_co_3k - g2)
+
+        npt.assert_allclose(
+            coc_coupling_1k,
+            simulation_1k.coupling_loss_imt_system
+        )
+        npt.assert_allclose(
+            coc_coupling_3k,
+            simulation_3k.coupling_loss_imt_system
+        )
+
+        mask_power_1k = self.param.single_earth_station.spurious_emissions + \
+            self.dB(simulation_1k.ue.bandwidth)
+        mask_power_3k = self.param.single_earth_station.spurious_emissions + \
+            self.dB(simulation_3k.ue.bandwidth)
+
+        rx_power_1k = mask_power_1k - coc_coupling_1k.reshape(mask_power_1k.shape)
+        rx_power_3k = mask_power_3k - coc_coupling_3k.reshape(mask_power_3k.shape)
+
+        npt.assert_almost_equal(
+            simulation_1k.ue.ext_interference,
+            rx_power_1k
+        )
+
+        npt.assert_allclose(
+            simulation_3k.ue.ext_interference,
+            rx_power_3k,
+        )
+        npt.assert_almost_equal(
+            simulation_3k.results.system_dl_interf_power,
+            simulation_1k.results.system_dl_interf_power,
+        )
+
         self.assert_sys_to_imt_dl_results_attr(
             simulation_1k.results,
             1, 2
         )
         self.assert_sys_to_imt_dl_results_attr(
+            simulation_3k.results,
+            3, 2
+        )
+
+    def test_es_to_bs_mask(self):
+        """
+        Testing ES spectral mask interference into BS
+        This simplifies spectral mask calculation by only getting the spurious emissions
+        """
+        self.param.general.imt_link = "UPLINK"
+        self.param.imt.interfered_with = True
+        self.param.single_earth_station.adjacent_ch_emissions = "SPECTRAL_MASK"
+        self.param.single_earth_station.spectral_mask = "MSS"
+        self.param.single_earth_station.spurious_emissions = -13.
+
+        self.param.imt.ue.k = 1
+        simulation_1k = SimulationUplink(self.param, "")
+        simulation_1k.initialize()
+
+        self.assertFalse(simulation_1k.co_channel)
+
+        simulation_1k.snapshot(
+            write_to_file=False,
+            snapshot_number=0,
+            seed=14,
+        )
+
+        """
+        We also check that received spectral mask power
+        is per UE allocated RBs
+        """
+        self.param.imt.ue.k = 3
+        simulation_3k = SimulationUplink(self.param, "")
+        simulation_3k.initialize()
+
+        simulation_3k.snapshot(
+            write_to_file=False,
+            snapshot_number=0,
+            seed=13,
+        )
+
+        self.assertEqual(
+            simulation_1k.coupling_loss_imt_system_adjacent.shape,
+            (2, 1)
+        )
+        self.assertEqual(
+            simulation_3k.coupling_loss_imt_system_adjacent.shape,
+            (6, 1)
+        )
+
+        p_loss_1k = self.fspl.get_loss(
+            simulation_1k.system.get_3d_distance_to(simulation_1k.bs),
+            # TODO: maybe should change this?
+            np.array([self.param.single_earth_station.frequency])
+        )
+        npt.assert_array_equal(
+            p_loss_1k.flatten(),
+            simulation_1k.results.imt_system_path_loss
+        )
+
+        p_loss_3k = p_loss_1k.repeat(3)
+        npt.assert_array_equal(
+            p_loss_3k.flatten(),
+            simulation_3k.results.imt_system_path_loss
+        )
+
+        g1_co_1k = np.zeros((1, 2))
+
+        for i in range(2):
+            phi = 0. if i == 0 else 180.
+            g1_co_1k[0][i] = simulation_1k.bs.antenna[i].calculate_gain(
+                phi_vec=np.array([phi]),
+                theta_vec=np.array([90.]),
+                beams_l=np.array([0]),
+                co_channel=True,
+            )
+        npt.assert_allclose(
+            simulation_1k.results.imt_system_antenna_gain,
+            g1_co_1k.flatten()
+        )
+
+        g1_co_3k = np.zeros((3, 2))
+        for k in range(3):
+            for i in range(2):
+                phi = 0. if i == 0 else 180.
+                g1_co_3k[k][i] = simulation_3k.bs.antenna[i].calculate_gain(
+                    phi_vec=np.array([phi]),
+                    theta_vec=np.array([90.]),
+                    beams_l=np.array([k]),
+                    co_channel=True,
+                )
+        g1_co_3k = np.reshape(np.transpose(g1_co_3k), (1, 6))
+
+        npt.assert_allclose(
+            # the order may not be the same, so we sort
+            sorted(simulation_3k.results.imt_system_antenna_gain),
+            sorted(g1_co_3k.flatten())
+        )
+
+        g2 = self.param.single_earth_station.antenna.gain
+
+        coc_coupling_1k = np.transpose(p_loss_1k - g1_co_1k - g2)
+        coc_coupling_3k = np.transpose(p_loss_3k - g1_co_3k - g2)
+
+        npt.assert_allclose(
+            coc_coupling_1k,
+            simulation_1k.coupling_loss_imt_system
+        )
+        npt.assert_allclose(
+            coc_coupling_3k,
+            simulation_3k.coupling_loss_imt_system
+        )
+
+        mask_power_1k = self.param.single_earth_station.spurious_emissions + \
+            self.dB(simulation_1k.bs.bandwidth)
+        mask_power_3k = np.repeat(
+            self.param.single_earth_station.spurious_emissions + \
+            self.dB(simulation_3k.bs.bandwidth),
+            3
+        )
+
+        # mask power for BS with 3 times more RB should be 3 times bigger
+        self.assertAlmostEqual(
+            mask_power_1k.flat[0],
+            mask_power_3k.flat[0] + self.dB(3),
+            1
+        )
+
+        rx_power_1k = mask_power_1k - coc_coupling_1k.reshape(mask_power_1k.shape)
+        rx_power_3k = mask_power_3k - coc_coupling_3k.reshape(mask_power_3k.shape)
+
+        npt.assert_almost_equal(
+            np.ravel(list(simulation_1k.bs.ext_interference.values())),
+            rx_power_1k
+        )
+
+        npt.assert_allclose(
+            np.ravel(list(simulation_3k.bs.ext_interference.values())),
+            rx_power_3k,
+        )
+        npt.assert_almost_equal(
+            simulation_3k.results.system_dl_interf_power,
+            simulation_1k.results.system_dl_interf_power,
+        )
+
+        self.assert_sys_to_imt_ul_results_attr(
+            simulation_1k.results,
+            1, 2
+        )
+        self.assert_sys_to_imt_ul_results_attr(
             simulation_3k.results,
             3, 2
         )

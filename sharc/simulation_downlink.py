@@ -588,10 +588,8 @@ class SimulationDownlink(Simulation):
                     self.results.imt_system_diffraction_loss.extend(
                         self.imt_system_diffraction_loss[sys_active[:, np.newaxis], ue].flatten(),
                     )
-                # NOTE: at some point this parameter stopped being collected..?
-                # but isn't actually needed, and naming convention used is bad
-                # self.results.sys_to_imt_coupling_loss.extend(
-                #     self.coupling_loss_imt_system[np.array(ue)[:, np.newaxis], sys_active].flatten())
+                self.results.sys_to_imt_coupling_loss.extend(
+                    self.coupling_loss_imt_system[np.array(ue)[:, np.newaxis], sys_active].flatten())
             else:  # IMT is the interferer
                 self.results.system_imt_antenna_gain.extend(
                     self.system_imt_antenna_gain[sys_active[:, np.newaxis], ue].flatten(),
