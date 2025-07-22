@@ -135,7 +135,7 @@ class Results(object):
                             
             except FileExistsError:
                 pass
-        SimulationLogger.SimulationSetDir().set_output_dir(self.output_directory)
+        SimulationLogger.set_output_dir(self.output_directory)
 
         return self
 

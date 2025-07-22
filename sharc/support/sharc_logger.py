@@ -34,35 +34,29 @@ class Logging():
 class SimulationLogger:
     """
     Logs simulation metadata to a YAML file for reproducibility.
-    Also manages output directory via internal SimulationSetDir instance.
+    Also manages an optional global output directory.
     """
 
-    class SimulationSetDir:
-        _instance = None
-        _output_dir: Optional[Path] = None
+    _global_output_dir: Optional[Path] = None
 
-        def __new__(cls):
-            if cls._instance is None:
-                cls._instance = super().__new__(cls)
-            return cls._instance
+    @classmethod
+    def set_output_dir(cls, path: Path):
+        cls._global_output_dir = path.resolve()
 
-        def set_output_dir(self, path: Path):
-            self._output_dir = path.resolve()
-
-        def get_output_dir(self) -> Optional[Path]:
-            return self._output_dir
+    @classmethod
+    def get_output_dir(cls) -> Optional[Path]:
+        return cls._global_output_dir
 
     def __init__(self, param_file: str, log_base: str = "simulation_log"):
-        self.param_file = Path(param_file).resolve()
-        self.param_name = self.param_file.stem
-        self.timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        self.param_file: Path = Path(param_file).resolve()
+        self.param_name: str = self.param_file.stem
+        self.timestamp: str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        self.log_base: str = log_base
+        self.start_time: Optional[datetime] = None
 
-        self.log_base = log_base
-        self.start_time = None
-        self.root_dir = self._get_root_dir()
-
-        self.output_dir = None
-        self.log_path = None
+        self.output_dir: Optional[Path] = None
+        self.log_path: Optional[Path] = None
+        self.root_dir: Optional[Path] = self._find_root_dir("sharc")
 
         self.data = {
             "repo": self._get_git_info(),
@@ -75,17 +69,12 @@ class SimulationLogger:
         }
 
     def start(self):
-        """
-        Start the simulation timer and record initial metadata.
-        """
+        """Start the simulation timer and record start time."""
         self.start_time = datetime.now()
         self.data["run"]["started_at"] = self.start_time.isoformat()
 
     def end(self):
-        """
-        Stop the simulation timer, compute duration,
-        create output/log folder, and save the YAML log.
-        """
+        """Stop timer, calculate duration, create output folder, and save YAML log."""
         end_time = datetime.now()
         self.data["run"]["ended_at"] = end_time.isoformat()
 
@@ -93,10 +82,7 @@ class SimulationLogger:
             duration = end_time - self.start_time
             self.data["run"]["duration"] = str(duration)
 
-        base_dir = self.SimulationSetDir().get_output_dir()
-        if base_dir is None:
-            base_dir = Path.cwd() / "logs" 
-
+        base_dir = self.get_output_dir() or Path.cwd() / "logs"
         self.output_dir = base_dir / f"simulation_{self.param_name}_{self.timestamp}"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -104,38 +90,30 @@ class SimulationLogger:
 
         with open(self.log_path, "w") as f:
             yaml.dump(self.data, f, sort_keys=False, allow_unicode=True)
-            print(f"Simulation log file saved in {self.output_dir}")
 
-    def _get_root_dir(self, folder_name: str = "sharc") -> Optional[Path]:
-        path = self.param_file.resolve()
-        for parent in path.parents:
+        print(f"Simulation log saved in {self.output_dir}")
+
+    def _find_root_dir(self, folder_name: str) -> Optional[Path]:
+        """Search upward for a directory containing the given folder."""
+        for parent in self.param_file.parents:
             if (parent / folder_name).exists():
                 return parent
         return None
 
     def _run_git_cmd(self, args: list[str]) -> Optional[str]:
         try:
-            return subprocess.check_output(
-                ['git'] + args, stderr=subprocess.DEVNULL
-            ).decode().strip()
+            return subprocess.check_output(["git"] + args, stderr=subprocess.DEVNULL).decode().strip()
         except subprocess.CalledProcessError:
             return None
 
     def _get_git_info(self) -> dict:
-        branch = self._run_git_cmd(['rev-parse', '--abbrev-ref', 'HEAD'])
-        commit = self._run_git_cmd(['rev-parse', 'HEAD'])
-        remote_name = (
-            self._run_git_cmd(['config', f'branch.{branch}.remote'])
-            if branch
-            else None
-        )
-        remote_url = (
-            self._run_git_cmd(['config', f'remote.{remote_name}.url'])
-            if remote_name
-            else None
-        )
+        branch = self._run_git_cmd(["rev-parse", "--abbrev-ref", "HEAD"])
+        commit = self._run_git_cmd(["rev-parse", "HEAD"])
+        remote = self._run_git_cmd(["config", f"branch.{branch}.remote"]) if branch else None
+        url = self._run_git_cmd(["config", f"remote.{remote}.url"]) if remote else None
+
         return {
-            "url": remote_url or "N/A",
+            "url": url or "N/A",
             "branch": branch or "N/A",
             "commit": commit or "N/A",
         }
@@ -148,10 +126,9 @@ class SimulationLogger:
 
     def _get_installed_packages(self) -> list[str]:
         try:
-            pkgs = subprocess.check_output(
-                [sys.executable, '-m', 'pip', 'freeze'],
-                stderr=subprocess.DEVNULL,
+            output = subprocess.check_output(
+                [sys.executable, "-m", "pip", "freeze"], stderr=subprocess.DEVNULL
             )
-            return sorted(pkgs.decode().strip().split('\n'))
+            return sorted(output.decode().strip().splitlines())
         except subprocess.CalledProcessError:
             return ["Could not retrieve packages"]
