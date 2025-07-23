@@ -187,8 +187,8 @@ class Simulation(ABC, Observable):
         self.bs_to_ue_beam_rbs = -1.0 * np.ones(num_ue, dtype=int)
 
         self.ap_to_sta_phi = np.empty([num_bs, num_sta])
-        self.bs_to_ue_theta = np.empty([num_bs, num_sta])
-        self.bs_to_ue_beam_rbs = -1.0 * np.ones(num_ue, dtype=int)
+        self.ap_to_sta_theta = np.empty([num_bs, num_sta])
+        self.ap_to_sta_beam_rbs = -1.0 * np.ones(num_ue, dtype=int)
 
         self.ue = np.empty(num_ue)
         self.bs = np.empty(num_bs)
