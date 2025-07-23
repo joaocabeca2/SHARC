@@ -23,7 +23,7 @@ class ParametersWifiSystem(ParametersBase):
     frequency: float = 7000.0
     bandwidth: float = 80.0
     rb_bandwidth: float = 0.180
-    #spectral_mask: str = "3GPP E-UTRA"
+    spectral_mask: str = "3GPP E-UTRA"
     spurious_emissions: float = -13.0
     guard_band_ratio: float = 0.1
     antenna_pattern: str = "Modified ITU-R S.465"

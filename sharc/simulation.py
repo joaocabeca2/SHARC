@@ -73,6 +73,9 @@ class Simulation(ABC, Observable):
         self.bs_power_gain = 0
         self.ue_power_gain = 0
 
+        self.ap_power_gain = 0
+        self.sta_power_gain = 0
+
         self.imt_bs_antenna_gain = list()
         self.imt_ue_antenna_gain = list()
         self.system_imt_antenna_gain = list()
@@ -110,6 +113,9 @@ class Simulation(ABC, Observable):
 
         self.num_rb_per_bs = 0
         self.num_rb_per_ue = 0
+
+        self.num_rb_per_ap = 0
+        self.num_rb_per_sta = 0
 
         self.results = None
 
@@ -176,11 +182,26 @@ class Simulation(ABC, Observable):
             self.parameters.imt.ue.antenna.n_rows *
             self.parameters.imt.ue.antenna.n_columns,
         )
+
+        self.ap_power_gain = 10 * math.log10(
+            self.parameters.wifi.ap.antenna.n_rows *
+            self.parameters.wifi.ap.antenna.n_columns,
+        )
+        self.sta_power_gain = 10 * math.log10(
+            self.parameters.wifi.sta.antenna.n_rows *
+            self.parameters.wifi.sta.antenna.n_columns,
+        )
+
         self.imt_bs_antenna_gain = list()
         self.imt_ue_antenna_gain = list()
         self.path_loss_imt = np.empty([num_bs, num_ue])
         self.coupling_loss_imt = np.empty([num_bs, num_ue])
         self.coupling_loss_imt_system = np.empty(num_ue)
+
+        self.wifi_ap_antenna_gain = list()
+        self.wifi_sta_antenna_gain = list()
+        self.path_loss_wifi = np.empty([num_bs, num_sta])
+        self.coupling_loss_wifi = np.empty([num_bs, num_sta])
 
         self.bs_to_ue_phi = np.empty([num_bs, num_ue])
         self.bs_to_ue_theta = np.empty([num_bs, num_ue])
@@ -202,6 +223,8 @@ class Simulation(ABC, Observable):
         # group that is allocated to the given UE
         self.link = dict([(bs, list()) for bs in range(num_bs)])
 
+        self.wifi_link = dict([(ap, list()) for ap in range(num_bs)])
+
         # calculates the number of RB per BS
         self.num_rb_per_bs = math.trunc(
             (1 - self.parameters.imt.guard_band_ratio) *
@@ -210,6 +233,15 @@ class Simulation(ABC, Observable):
         # calculates the number of RB per UE on a given BS
         self.num_rb_per_ue = math.trunc(
             self.num_rb_per_bs / self.parameters.imt.ue.k,
+        )
+
+        self.num_rb_per_ap = math.trunc(
+            (1 - self.parameters.wifi.guard_band_ratio) *
+            self.parameters.wifi.bandwidth / self.parameters.wifi.rb_bandwidth,
+        )
+        # calculates the number of RB per UE on a given BS
+        self.num_rb_per_sta = math.trunc(
+            self.num_rb_per_ap / self.parameters.wifi.sta.k,
         )
 
         self.results = Results().prepare_to_write(
@@ -659,13 +691,13 @@ class Simulation(ABC, Observable):
         This scheduler divides the available resource blocks among UE's for
         a given BS
         """
-        ap_active = np.where(self.system.ap.active)[0]
+        ap_active = np.where(self.wifi_ap.active)[0]
         for ap in ap_active:
-            sta = self.system.link[ap]
-            self.wifi.ap.bandwidth[ap] = self.system.num_rb_per_sta * \
-                self.system.parameters.rb_bandwidth
-            self.system.sta.bandwidth[sta] = self.system.num_rb_per_sta * \
-                self.system.parameters.rb_bandwidth
+            sta = self.wifi_link[ap]
+            self.wifi_ap.bandwidth[ap] = self.num_rb_per_sta * \
+                self.parameters.wifi.rb_bandwidth
+            self.wifi_sta.bandwidth[sta] = self.num_rb_per_sta * \
+                self.parameters.wifi.rb_bandwidth
                 
         bs_active = np.where(self.bs.active)[0]
         for bs in bs_active:

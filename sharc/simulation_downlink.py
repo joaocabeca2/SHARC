@@ -130,9 +130,21 @@ class SimulationDownlink(Simulation):
              for bs in bs_active],
         )
 
+        '''total_power_wifi = self.parameters.wifi.ap.conducted_power + \
+            self.ap_power_gain
+        tx_power_wifi = total_power_wifi - 10 * math.log10(
+            self.parameters.wifi.sta.k,
+        )
+        ap_active = np.where(self.wifi_ap.active)[0]
+        self.wifi_ap.tx_power = dict(
+            [(ap, tx_power_wifi * np.ones(self.parameters.wifi.sta.k))
+             for ap in ap_active],
+        )'''
+
         # Update the spectral mask
         if self.adjacent_channel:
             self.bs.spectral_mask.set_mask(p_tx=total_power)
+            #self.wifi_ap.spectral_mask.set_mask(p_tx=total_power_wifi)
 
     def calculate_sinr(self):
         """
@@ -410,28 +422,6 @@ class SimulationDownlink(Simulation):
         if write_to_file:
             self.results.write_files(snapshot_number)
             self.notify_observers(source=__name__, results=self.results)
-
-    def set_wifi_parameters(self, is_ap):
-        """Set the WiFi parameters for the stations
-
-        Parameters
-        ----------
-        parameters : ParametersWifi
-            The parameters to set for the WiFi stations
-        """
-        if is_ap:
-            for i in range(self.bs.num_stations):
-                if self.bs.station_type[i] == StationType.WIFI_APS:
-                    self.bs.bandwidth[i] = self.parameters.wifi.bandwidth
-                    self.bs.center_freq[i] = self.parameters.wifi.frequency
-                    self.bs.height[i] = self.parameters.wifi.ap.height
-        
-        else:
-            for i in range(self.ue.num_stations):
-                if self.ue.station_type[i] == StationType.WIFI_STA:
-                    self.ue.bandwidth[i] = self.parameters.wifi.bandwidth
-                    self.ue.center_freq[i] = self.parameters.wifi.frequency
-                    self.ue.height[i] = self.parameters.wifi.sta.height
 
                 
 
