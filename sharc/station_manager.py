@@ -274,7 +274,7 @@ class StationManager(object):
         else:
             return False
     
-    def is_imt_and_wifi_station(self) -> bool:
+    def is_imt_or_wifi_station(self) -> bool:
         """Whether this station is IMT or WiFi or not
 
         Returns

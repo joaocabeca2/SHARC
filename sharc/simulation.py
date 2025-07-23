@@ -590,8 +590,8 @@ class Simulation(ABC, Observable):
                     ) - 1
 
     def calculate_intra_wifi_coupling_loss(self,
-            wifi_ap_station: StationManager,
-            wifi_sta_station: StationManager
+            wifi_sta_station: StationManager,
+            wifi_ap_station: StationManager
         
     ) -> np.array:
         """
@@ -641,15 +641,15 @@ class Simulation(ABC, Observable):
 
         # Collect Wi-Fi AP and STA antenna gain samples
         self.path_loss_wifi = np.transpose(path_loss)
-        self.system_ap_antenna_gain = ant_gain_ap_to_sta
-        self.system_sta_antenna_gain = np.transpose(ant_gain_sta_to_ap)
+        self.ap_antenna_gain = ant_gain_ap_to_sta
+        self.sta_antenna_gain = np.transpose(ant_gain_sta_to_ap)
         additional_loss = self.parameters.wifi.ap.ohmic_loss \
             + self.parameters.wifi.sta.ohmic_loss \
             + self.parameters.wifi.sta.body_loss
 
         # calculate coupling loss
         coupling_loss = np.squeeze(
-            self.path_loss_wifi - self.system_ap_antenna_gain - self.system_sta_antenna_gain,
+            self.path_loss_wifi - self.ap_antenna_gain - self.sta_antenna_gain,
         ) + additional_loss
 
         return coupling_loss
@@ -659,14 +659,13 @@ class Simulation(ABC, Observable):
         This scheduler divides the available resource blocks among UE's for
         a given BS
         """
-        if self.parameters.general.system == "WIFI":
-            ap_active = np.where(self.system.ap.active)[0]
-            for ap in ap_active:
-                sta = self.system.link[ap]
-                self.system.ap.bandwidth[ap] = self.system.num_rb_per_sta * \
-                    self.system.parameters.rb_bandwidth
-                self.system.sta.bandwidth[sta] = self.system.num_rb_per_sta * \
-                    self.system.parameters.rb_bandwidth
+        ap_active = np.where(self.system.ap.active)[0]
+        for ap in ap_active:
+            sta = self.system.link[ap]
+            self.wifi.ap.bandwidth[ap] = self.system.num_rb_per_sta * \
+                self.system.parameters.rb_bandwidth
+            self.system.sta.bandwidth[sta] = self.system.num_rb_per_sta * \
+                self.system.parameters.rb_bandwidth
                 
         bs_active = np.where(self.bs.active)[0]
         for bs in bs_active:
@@ -691,23 +690,36 @@ class Simulation(ABC, Observable):
         station_2_active = np.where(station_2.active)[0]
 
         # Initialize variables (phi, theta, beams_idx)
-        if np.isin(station_1.station_type, [StationType.IMT_BS, StationType.WIFI_APS]).any():
-            if np.isin(station_2.station_type, [StationType.IMT_UE, StationType.WIFI_STA]).any():
+        if station_1.station_type is StationType.IMT_BS:
+            if station_2.station_type is StationType.IMT_UE:
                 phi = self.bs_to_ue_phi
                 theta = self.bs_to_ue_theta
                 beams_idx = self.bs_to_ue_beam_rbs[station_2_active]
-            elif not station_2.is_imt_and_wifi_station():
+            elif not station_2.is_imt_or_wifi_station():
                 phi, theta = station_1.get_pointing_vector_to(station_2)
                 phi = np.repeat(phi, self.parameters.imt.ue.k, 0)
                 theta = np.repeat(theta, self.parameters.imt.ue.k, 0)
                 beams_idx = np.tile(
                     np.arange(self.parameters.imt.ue.k), self.bs.num_stations,
                 )
+        elif station_1.station_type is StationType.WIFI_APS:
+            if station_2.station_type is StationType.WIFI_STA:
+                phi = self.ap_to_sta_phi
+                theta = self.ap_to_sta_theta
+                beams_idx = self.ap_to_sta_beam_rbs[station_2_active]
+            else:
+                phi, theta = station_1.get_pointing_vector_to(station_2)
+                phi = np.repeat(phi, self.parameters.wifi.sta.k, 0)
+                theta = np.repeat(theta, self.parameters.wifi.sta.k, 0)
+                beams_idx = np.tile(
+                    np.arange(self.parameters.wifi.sta.k), self.ap.num_stations,
+                )
+
         elif np.isin(station_1.station_type, [StationType.IMT_UE, StationType.WIFI_STA]).any():
             phi, theta = station_1.get_pointing_vector_to(station_2)
             beams_idx = np.zeros(len(station_2_active), dtype=int)
 
-        elif not station_1.is_imt_and_wifi_station():
+        elif not station_1.is_imt_or_wifi_station():
             phi, theta = station_1.get_pointing_vector_to(station_2)
             beams_idx = np.zeros(len(station_2_active), dtype=int)
                 
@@ -716,7 +728,7 @@ class Simulation(ABC, Observable):
         # Calculate gains
         gains = np.zeros(phi.shape)
         if (np.isin(station_1.station_type, [StationType.IMT_BS, StationType.WIFI_APS]).any()) and not\
-            station_2.is_imt_and_wifi_station():
+            station_2.is_imt_or_wifi_station():
             for k in station_1_active:
                 for b in range(k * self.parameters.imt.ue.k, (k + 1) * self.parameters.imt.ue.k):
                     gains[b, station_2_active] = station_1.antenna[k].calculate_gain(
@@ -731,7 +743,7 @@ class Simulation(ABC, Observable):
                         co_channel=c_channel,
                     )
 
-        elif (np.isin(station_1.station_type, [StationType.IMT_UE, StationType.WIFI_STA]).any()) and not station_2.is_imt_station():
+            '''elif (np.isin(station_1.station_type, [StationType.IMT_UE, StationType.WIFI_STA]).any()) and not station_2.is_imt_station():
             for k in station_1_active:
                 gains[k, station_2_active] = station_1.antenna[k].calculate_gain(
                     phi_vec=phi[k, station_2_active],
@@ -741,7 +753,7 @@ class Simulation(ABC, Observable):
                     ],
                     beams_l=beams_idx,
                     co_channel=c_channel,
-                )
+                )'''
 
         elif station_1.station_type is StationType.RNS:
             gains[0, station_2_active] = station_1.antenna[0].calculate_gain(
@@ -749,7 +761,7 @@ class Simulation(ABC, Observable):
                 theta_vec=theta[0, station_2_active],
             )
 
-        elif not station_1.is_imt_and_wifi_station():
+        elif not station_1.is_imt_or_wifi_station():
 
             off_axis_angle = station_1.get_off_axis_angle(station_2)
             distance = station_1.get_distance_to(station_2)
