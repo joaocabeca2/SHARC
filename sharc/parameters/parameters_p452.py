@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
 
@@ -18,9 +19,11 @@ class ParametersP452(ParametersBase):
     delta_N: float = 43.127
     # percentage p. Float (0 to 100) or RANDOM
     percentage_p: float = 0.2
-    # Distance over land from the transmit and receive antennas to the coast (km)
+    # Distance over land from the transmit and receive antennas to the coast
+    # (km)
     Dct: float = 70.0
-    # Distance over land from the transmit and receive antennas to the coast (km)
+    # Distance over land from the transmit and receive antennas to the coast
+    # (km)
     Dcr: float = 70.0
     # Effective height of interfering antenna (m)
     Hte: float = 20.0
@@ -32,7 +35,8 @@ class ParametersP452(ParametersBase):
     rx_lat: float = -23.17889
     # Antenna polarization
     polarization: str = "horizontal"
-    # determine whether clutter loss following ITU-R P.2108 is added (TRUE/FALSE)
+    # determine whether clutter loss following ITU-R P.2108 is added
+    # (TRUE/FALSE)
     clutter_loss: bool = True
     # Determine if clutter is applied to "one-end" or "both-ends"
     clutter_type: str = "one-end"
