@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 # Object that loads the parameters for the P.619 propagation model.
 """Parameters definitions for IMT systems
@@ -29,6 +30,8 @@ class ParametersP619(ParametersBase):
     season: str = "SUMMER"
     shadowing: bool = True
     noise_temperature: float = 290.0
+    mean_clutter_height: str = "high"
+    below_rooftop: float = 100
 
     def load_from_paramters(self, param: ParametersBase):
         """Used to load parameters of P.619 from IMT or system parameters
@@ -55,9 +58,6 @@ class ParametersP619(ParametersBase):
                                 earth_station_lat_deg: float,
                                 earth_station_long_diff_deg: float,
                                 season: typing.Literal["SUMMER", "WINTER"]):
-        """
-        Set external parameters for P619 propagation calculations.
-        """
         self.space_station_alt_m = space_station_alt_m
         self.earth_station_alt_m = earth_station_alt_m
         self.earth_station_lat_deg = earth_station_lat_deg

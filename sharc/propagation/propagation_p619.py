@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 """
 Created on Mon Apr 17 15:35:00 2017
@@ -39,6 +40,8 @@ class PropagationP619(Propagation):
         earth_station_lat_deg: float,
         earth_station_long_diff_deg: float,
         season: str,
+        mean_clutter_height: str,
+        below_rooftop: float
     ):
         """Implements the earth-to-space channel model from ITU-R P.619
 
@@ -82,7 +85,8 @@ class PropagationP619(Propagation):
         self.earth_station_alt_m = earth_station_alt_m
         self.earth_station_lat_deg = earth_station_lat_deg
         self.earth_station_long_diff_deg = earth_station_long_diff_deg
-
+        self.mean_clutter_height = mean_clutter_height
+        self.below_rooftop = below_rooftop
         if season.upper() not in ["SUMMER", "WINTER"]:
             raise ValueError(
                 f"PropagationP619: Invalid value for parameter season - {season}. Possible values are \"SUMMER\", \"WINTER\".",
@@ -101,10 +105,7 @@ class PropagationP619(Propagation):
         with open(localidades_file, mode='r') as file:
             reader = csv.DictReader(file)
             for row in reader:
-                if abs(
-                        float(
-                            row['Latitude']) -
-                        self.earth_station_lat_deg) < 1e-5:
+                if abs(float(row['Latitude']) - self.earth_station_lat_deg) < 1e-5:
                     return row['Cidade']
         return 'Unknown'
 
@@ -131,11 +132,8 @@ class PropagationP619(Propagation):
             # Define the path to the CSV file
             output_dir = os.path.join(os.path.dirname(__file__), 'Dataset')
             csv_file = os.path.join(
-                output_dir, f'{
-                    self.city_name}_{
-                    int(frequency_MHz)}_{
-                    int(
-                        self.earth_station_alt_m)}m.csv', )
+                output_dir, f'{self.city_name}_{int(frequency_MHz)}_{int(self.earth_station_alt_m)}m.csv',
+            )
             if os.path.exists(csv_file):
                 elevations = []
                 losses = []
@@ -146,7 +144,8 @@ class PropagationP619(Propagation):
                         elevations.append(float(row[0]))
                         losses.append(float(row[1]))
                 interpolation_function = interp1d(
-                    elevations, losses, kind='linear', fill_value='extrapolate', )
+                    elevations, losses, kind='linear', fill_value='extrapolate',
+                )
                 return interpolation_function(apparent_elevation)
 
         earth_radius_km = EARTH_RADIUS / 1000
@@ -156,18 +155,15 @@ class PropagationP619(Propagation):
 
         if not surf_water_vapour_density:
             _, _, surf_water_vapour_density = self.atmosphere.get_reference_atmosphere_p835(
-                self.earth_station_lat_deg, 0, season=self.season, )
+                self.earth_station_lat_deg, 0, season=self.season,
+            )
 
         if len(self.elevation_has_atmospheric_loss):
             elevation_diff = np.abs(
-                apparent_elevation -
-                np.array(
-                    self.elevation_has_atmospheric_loss),
+                apparent_elevation - np.array(self.elevation_has_atmospheric_loss),
             )
             elevation_diff = np.abs(
-                apparent_elevation -
-                np.array(
-                    self.elevation_has_atmospheric_loss),
+                apparent_elevation - np.array(self.elevation_has_atmospheric_loss),
             )
             indices = np.where(elevation_diff <= self.elevation_delta)
             if indices[0].size:
@@ -240,10 +236,7 @@ class PropagationP619(Propagation):
         return a_acc
 
     @staticmethod
-    def _get_beam_spreading_att(
-            elevation,
-            altitude,
-            earth_to_space) -> np.array:
+    def _get_beam_spreading_att(elevation, altitude, earth_to_space) -> np.array:
         """
         Calculates beam spreading attenuation based on ITU-R P.619, Section 2.4.2
 
@@ -277,10 +270,7 @@ class PropagationP619(Propagation):
         return attenuation
 
     @classmethod
-    def apparent_elevation_angle(
-            cls,
-            elevation_deg: np.array,
-            space_station_alt_m: float) -> np.array:
+    def apparent_elevation_angle(cls, elevation_deg: np.array, space_station_alt_m: float) -> np.array:
         """Calculate apparent elevation angle according to ITU-R P619, Attachment B
 
         Parameters
@@ -309,8 +299,7 @@ class PropagationP619(Propagation):
 
         return np.degrees(elev_angles_rad + tau_fs)
 
-    @dispatch(Parameters, float, StationManager,
-              StationManager, np.ndarray, np.ndarray)
+    @dispatch(Parameters, float, StationManager, StationManager, np.ndarray, np.ndarray)
     def get_loss(
         self,
         params: Parameters,
@@ -357,10 +346,8 @@ class PropagationP619(Propagation):
                 station_a.height,
             )
             # Transpose it to fit the expected path loss shape
-            elevation_angles["free_space"] = np.transpose(
-                elevation_angles["free_space"])
-            elevation_angles["apparent"] = np.transpose(
-                elevation_angles["apparent"])
+            elevation_angles["free_space"] = np.transpose(elevation_angles["free_space"])
+            elevation_angles["apparent"] = np.transpose(elevation_angles["apparent"])
         elif station_b.is_space_station:
             elevation_angles["free_space"] = station_a.get_elevation(station_b)
             earth_station_antenna_gain = station_a_gains
@@ -370,11 +357,11 @@ class PropagationP619(Propagation):
             )
         else:
             raise ValueError(
-                "PropagationP619: At least one station must be an space station", )
+                "PropagationP619: At least one station must be an space station",
+            )
 
         # Determine the Earth-space path direction and if the interferer is single or multiple-entry.
-        # The get_loss interface won't tell us who is the interferer, so we
-        # need to get it from the parameters.
+        # The get_loss interface won't tell us who is the interferer, so we need to get it from the parameters.
         is_intra_imt = True if station_a.is_imt_station(
         ) and station_b.is_imt_station() else False
         if is_intra_imt:
@@ -399,7 +386,9 @@ class PropagationP619(Propagation):
             else:
                 is_earth_to_space_link = False if imt_station.is_space_station else True
                 is_single_entry_interf = False
-
+        earth_station_height = station_b.height
+        mean_clutter_height = self.mean_clutter_height
+        below_rooftop = self.below_rooftop
         loss = self.get_loss(
             distance,
             frequency,
@@ -408,11 +397,14 @@ class PropagationP619(Propagation):
             is_earth_to_space_link,
             earth_station_antenna_gain,
             is_single_entry_interf,
+            earth_station_height,
+            mean_clutter_height,
+            below_rooftop,
         )
 
         return loss
 
-    @dispatch(np.ndarray, np.ndarray, np.ndarray, dict, bool, np.ndarray, bool)
+    @dispatch(np.ndarray, np.ndarray, np.ndarray, dict, bool, np.ndarray, bool, np.ndarray, str, int)
     def get_loss(
         self,
         distance: np.array,
@@ -422,6 +414,9 @@ class PropagationP619(Propagation):
         earth_to_space: bool,
         earth_station_antenna_gain: np.array,
         single_entry: bool,
+        earth_station_height: np.array,
+        mean_clutter_height: np.str_,
+        below_rooftop: float
     ) -> np.array:
         """
         Calculates path loss for earth-space link
@@ -472,8 +467,9 @@ class PropagationP619(Propagation):
                 season=self.season,
             )
 
-            loss = free_space_loss + self.depolarization_loss + atmospheric_gasses_loss + \
-                beam_spreading_attenuation + diffraction_loss + tropo_scintillation_loss
+            loss = \
+                free_space_loss + self.depolarization_loss + atmospheric_gasses_loss + beam_spreading_attenuation + \
+                diffraction_loss + tropo_scintillation_loss
         else:
             clutter_loss = \
                 self.clutter.get_loss(
@@ -481,19 +477,18 @@ class PropagationP619(Propagation):
                     distance=distance,
                     elevation=elevation["free_space"],
                     station_type=StationType.FSS_SS,
+                    earth_station_height=earth_station_height,
+                    mean_clutter_height=mean_clutter_height,
+                    below_rooftop=below_rooftop,
                 )
             building_loss = self.building_entry.get_loss(
                 frequency, elevation["apparent"],
             ) * indoor_stations
 
             loss = (
-                free_space_loss +
-                clutter_loss +
-                building_loss +
-                self.polarization_mismatch_loss +
-                atmospheric_gasses_loss +
-                beam_spreading_attenuation +
-                diffraction_loss)
+                free_space_loss + clutter_loss + building_loss + self.polarization_mismatch_loss +
+                atmospheric_gasses_loss + beam_spreading_attenuation + diffraction_loss
+            )
 
         return loss
 
@@ -509,8 +504,7 @@ if __name__ == '__main__':
 
     # propagation_path = os.getcwd()
     # sharc_path = os.path.dirname(propagation_path)
-    # param_file = os.path.join(sharc_path, "parameters", "parameters.ini")
-    # deprecated
+    # param_file = os.path.join(sharc_path, "parameters", "parameters.ini") deprecated
 
     # params.set_file_name(param_file)
     # params.read_params()
