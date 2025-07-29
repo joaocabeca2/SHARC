@@ -127,6 +127,8 @@ class PropagationClutterLoss(Propagation):
         """
         # Converting to GHz
         frequency = frequency / 1000
+        # Convert to percentage
+        loc_percentage = loc_percentage * 100
         # --- Table 7: plos parameters ---
         if mean_clutter_height == "Low":
             ak, bk, ck = 4.9, 6.7, 2.6
