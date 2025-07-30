@@ -29,6 +29,7 @@ class ParametersP619(ParametersBase):
     season: str = "SUMMER"
     shadowing: bool = True
     noise_temperature: float = 290.0
+    # Average height of clutter. According to 2018 it can be "Low", "Mid" or "High"
     mean_clutter_height: str = "high"
     below_rooftop: float = 100
 
