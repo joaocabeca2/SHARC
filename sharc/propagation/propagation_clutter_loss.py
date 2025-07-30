@@ -90,8 +90,10 @@ class PropagationClutterLoss(Propagation):
             clutter_type = kwargs["clutter_type"]
             if clutter_type == 'one_end':
                 loss = self.get_terrestrial_clutter_loss(f, d, p1, True)
-            else:
+            elif clutter_type == 'both_ends':
                 loss = self.get_terrestrial_clutter_loss(f, d, p1, True) + self.get_terrestrial_clutter_loss(f, d, p2, False)
+            else:
+                raise ValueError("Invalid type of Clutter-type. It can be either 'one_end' or 'both-ends'")
         else:
             theta = kwargs["elevation"]
             earth_station_height = kwargs["earth_station_height"]
@@ -129,6 +131,10 @@ class PropagationClutterLoss(Propagation):
         frequency = frequency / 1000
         # Convert to percentage
         loc_percentage = loc_percentage * 100
+        ## Check mean_clutter_height
+        allowed = {"Low", "Mid", "High"}
+        if str(mean_clutter_height).lower() not in allowed:
+            raise ValueError("Invalid type of mean_clutter_height. mean_clutter_height must be 'Low', 'Mid', or 'High'")
         # --- Table 7: plos parameters ---
         if mean_clutter_height == "Low":
             ak, bk, ck = 4.9, 6.7, 2.6
