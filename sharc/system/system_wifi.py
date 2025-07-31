@@ -2,24 +2,125 @@ import math
 import sys
 
 import numpy as np
-from scipy.stats.sampling import DiscreteAliasUrn
 from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
-from sharc.propagation.propagation_factory import PropagationFactory
+from sharc.parameters.wifi.parameters_indoor import ParametersIndoor
+#om sharc.propagation.propagation_factory import PropagationFactory
 from sharc.station_manager import StationManager
 from sharc.support.enumerations import StationType
-from sharc.topology.topology_factory import TopologyFactory
-from sharc.propagation.propagation_free_space import PropagationFreeSpace
-from sharc.topology.topology_macrocell import TopologyMacrocell
-from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
 from sharc.topology.topology import Topology
+from sharc.propagation.propagation_free_space import PropagationFreeSpace
+from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
+
+from itertools import product
+
+class TopologyIndoor(Topology):
+    """
+    Generates the coordinates of the sites based on the indoor network
+    topology.
+    """
+     
+    def __init__(self, param: ParametersIndoor):
+        """
+        Constructor method that sets the parameters.
+
+        Parameters
+        ----------
+            param : parameters of the indoor topology
+        """
+
+        # These are the building's width, deep and height
+        # They do not change
+        self.b_w = 120
+        self.b_d = 50
+        self.b_h = 3
+
+        cell_radius = param.intersite_distance / 2
+        super().__init__(param.intersite_distance, cell_radius)
+
+        self.n_rows = param.n_rows
+        self.n_colums = param.n_colums
+        self.street_width = param.street_width
+        self.sta_indoor_percent = param.sta_indoor_percent
+        self.building_class = param.building_class
+        self.num_cells = param.num_cells
+        self.num_floors = param.num_floors
+        if param.num_wifi_buildings == 'ALL':
+            self.all_buildings = True
+            self.num_wifi_buildings = self.n_rows * self.n_colums
+        else:
+            self.all_buildings = False
+            self.num_wifi_buildings = int(param.num_wifi_buildings)
+        self.wifi_buildings = list()
+        self.total_ap_level = self.num_wifi_buildings * self.num_cells
+
+        self.height = np.empty(0)
+
+    def calculate_coordinates(self, random_number_gen=np.random.RandomState()):
+        """
+        Calculates the coordinates of the stations according to the inter-site
+        distance parameter. This method is invoked in all snapshots but it can
+        be called only once for the indoor topology. So we set
+        static_base_stations to True to avoid unnecessary calculations.
+        """
+        if not self.static_base_stations:
+            self.reset()
+            self.static_base_stations = self.all_buildings
+
+            x_base = np.array(
+                [(2 * k + 1) * self.cell_radius for k in range(self.num_cells)],
+            )
+            y_base = self.b_d / 2 * np.ones(self.num_cells)
+
+            # Choose random buildings
+            all_buildings = list(
+                product(range(self.n_rows), range(self.n_colums)),
+            )
+            random_number_gen.shuffle(all_buildings)
+            self.wifi_buildings = all_buildings[:self.num_wifi_buildings]
+
+            floor_x = np.empty(0)
+            floor_y = np.empty(0)
+            for build in self.wifi_buildings:
+                r = build[0]
+                c = build[1]
+                floor_x = np.concatenate(
+                    (floor_x, x_base + c * (self.b_w + self.street_width)),
+                )
+                floor_y = np.concatenate(
+                    (floor_y, y_base + r * (self.b_d + self.street_width)),
+                )
+
+            for f in range(self.num_floors):
+                self.x = np.concatenate((self.x, floor_x))
+                self.y = np.concatenate((self.y, floor_y))
+                self.height = np.concatenate((
+                    self.height,
+                    (f + 1) * self.b_h * np.ones_like(floor_x),
+                ))
+
+            # In the end, we have to update the number of base stations
+            self.num_base_stations = len(self.x)
+
+            self.azimuth = np.zeros(self.num_base_stations)
+            self.indoor = np.ones(self.num_base_stations, dtype=bool)
+        
+    def reset(self):
+        self.x = np.empty(0)
+        self.y = np.empty(0)
+        self.height = np.empty(0)
+        self.azimuth = np.empty(0)
+        self.indoor = np.empty(0)
+        self.num_base_stations = -1
+        self.static_base_stations = False
+
 
 class SystemWifi:
     """Implements a Wifi Network compose of APs and STAs."""
-    def __init__(self, param: ParametersWifiSystem, param_ant_ap: ParametersAntennaWifi) -> None:
+    def __init__(self, param: ParametersWifiSystem, param_ant_ap: ParametersAntennaWifi, param_ant_sta: ParametersAntennaWifi, random_number_gen: np.random.RandomState) -> None:
         self.parameters = param
         self.parameters_antenna = param_ant_ap
-        self.topology = TopologyFactory.createTopology(self.parameters)
+        self.topology = TopologyIndoor(self.parameters.topology.indoor) 
         self.topology.calculate_coordinates()
         self.num_aps = self.topology.num_base_stations
         self.num_stas = self.num_aps * self.parameters.sta.k * self.parameters.sta.k_m
@@ -230,6 +331,8 @@ class SystemWifi:
 
         self.wifi_sta = wifi_sta
         return wifi_sta
+    
+    
     
     '''def get_random_position(self,
                             random_number_gen: np.random.RandomState,

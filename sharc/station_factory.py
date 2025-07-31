@@ -56,6 +56,7 @@ from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.topology.topology_hotspot import TopologyHotspot
 from sharc.parameters.imt.parameters_hotspot import ParametersHotspot
 from sharc.parameters.imt.parameters_imt import ParametersImt
+from system.system_wifi import SystemWifi
 
 
 class StationFactory(object):
@@ -564,7 +565,7 @@ class StationFactory(object):
         elif parameters.general.system == "RNS":
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         elif parameters.general.system == "WIFI":
-            return StationFactory.generate_wifi_system(parameters.wifi, random_number_gen)
+            return StationFactory.generate_wifi_system(parameters.wifi, parameters.wifi.ap.antenna, parameters.wifi.sta.antenna, random_number_gen)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -1294,6 +1295,32 @@ class StationFactory(object):
         for i in range(num_sta):
             wifi_sta.antenna[i] = AntennaOmni()
         return wifi_sta
+
+    @staticmethod
+    def generate_wifi_system(param: ParametersWifiSystem,
+                            param_ant_ap: ParametersAntennaWifi,
+                            param_ant_sta: ParametersAntennaWifi,
+                            random_number_gen: np.random.RandomState):
+        """
+        Generate a Wi-Fi system with access points and stations.
+
+        Parameters
+        ----------
+        param : ParametersWifiSystem
+            The parameters for the Wi-Fi system.
+        param_ant_ap : ParametersAntennaImt
+            Antenna parameters for the access points.
+        topology : Topology
+            The IMT topology object.
+        random_number_gen : np.random.RandomState
+            Random number generator.
+
+        Returns
+        -------
+        tuple
+            Access points and stations as StationManager objects.
+        """
+        return SystemWifi(param, param_ant_ap, param_ant_sta, random_number_gen)
 
     @staticmethod
     def get_random_position(num_ue: int,
