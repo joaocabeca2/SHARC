@@ -405,8 +405,6 @@ class PropagationP619(Propagation):
                 is_single_entry_interf = False
 
         earth_station_height = station_b.height
-        mean_clutter_height = self.mean_clutter_height
-        below_rooftop = self.below_rooftop
         loss = self.get_loss(
             distance,
             frequency,
@@ -416,13 +414,11 @@ class PropagationP619(Propagation):
             earth_station_antenna_gain,
             is_single_entry_interf,
             earth_station_height,
-            mean_clutter_height,
-            below_rooftop,
         )
 
         return loss
 
-    @dispatch(np.ndarray, np.ndarray, np.ndarray, dict, bool, np.ndarray, bool, np.ndarray, str, int)
+    @dispatch(np.ndarray, np.ndarray, np.ndarray, dict, bool, np.ndarray, bool, np.ndarray)
     def get_loss(
         self,
         distance: np.array,
@@ -433,8 +429,7 @@ class PropagationP619(Propagation):
         earth_station_antenna_gain: np.array,
         single_entry: bool,
         earth_station_height: np.array,
-        mean_clutter_height: np.str_,
-        below_rooftop: float
+
     ) -> np.array:
         """
         Calculates path loss for earth-space link
@@ -495,8 +490,8 @@ class PropagationP619(Propagation):
                     elevation=elevation["free_space"],
                     station_type=StationType.FSS_SS,
                     earth_station_height=earth_station_height,
-                    mean_clutter_height=mean_clutter_height,
-                    below_rooftop=below_rooftop,
+                    mean_clutter_height=self.mean_clutter_height,
+                    below_rooftop=self.below_rooftop,
                 )
             building_loss = self.building_entry.get_loss(
                 frequency, elevation["apparent"],

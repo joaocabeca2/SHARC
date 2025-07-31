@@ -132,15 +132,15 @@ class PropagationClutterLoss(Propagation):
         # Convert to percentage
         loc_percentage = loc_percentage * 100
         ## Check mean_clutter_height
-        allowed = {"Low", "Mid", "High"}
+        allowed = {"low", "mid", "high"}
         if str(mean_clutter_height).lower() not in allowed:
             raise ValueError("Invalid type of mean_clutter_height. mean_clutter_height must be 'Low', 'Mid', or 'High'")
         # --- Table 7: plos parameters ---
-        if mean_clutter_height == "Low":
+        if str(mean_clutter_height).lower() == "low":
             ak, bk, ck = 4.9, 6.7, 2.6
             aC, bC = 0.19, 0
             aV, bV = 1.4, 74
-        elif mean_clutter_height == "Mid":
+        elif str(mean_clutter_height).lower() == "mid":
             ak, bk, ck = -2.6, 6.6, 2.0
             aC, bC = 0.42, -6.7
             aV, bV = 0.15, 97
@@ -150,12 +150,12 @@ class PropagationClutterLoss(Propagation):
             aV, bV = 0.15, 98
 
         # --- Table 8: p_fclo_los parameters ---
-        if mean_clutter_height == "Low":
+        if str(mean_clutter_height).lower() == "low":
             akp, bkp = 6.0, 0.07
             aCp, bC1p, bC2p = 0.15, 5.4, -0.3
             bC3p, bC4p = 3.2, 0.07
             cCp, aVp, bVp = -27, 1.6, -17
-        elif mean_clutter_height == "Mid":
+        elif str(mean_clutter_height).lower() == "mid":
             akp, bkp = 3.6, 0.05
             aCp, bC1p, bC2p = 0.17, 13, -0.2
             bC3p, bC4p = 3.7, 0.05
@@ -315,7 +315,7 @@ class PropagationClutterLoss(Propagation):
 if __name__ == '__main__':
 
     elevation_angle = np.array([90, 80, 70, 60, 50, 40, 30, 20, 15, 10, 5, 0])
-    loc_percentage = np.linspace(0.1, 99.9, 1001)
+    loc_percentage = np.linspace(0.1 / 100, 99.9 / 100, 1001)
     frequency = 3000 * np.ones(loc_percentage.shape)
     earth_station_height = 5 * np.ones(loc_percentage.shape)
     random_number_gen = np.random.RandomState(101)

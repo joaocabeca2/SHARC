@@ -46,11 +46,16 @@ class ParametersP619(ParametersBase):
         self.earth_station_lat_deg = param.earth_station_lat_deg
         self.earth_station_long_diff_deg = param.earth_station_long_diff_deg
         self.season = param.season
+        self.mean_clutter_height = param.param_p619.mean_clutter_height
 
         if self.season.upper() not in ["SUMMER", "WINTER"]:
             raise ValueError(f"{self.__class__.__name__}: \
                              Invalid value for parameter season - {self.season}. \
                              Possible values are \"SUMMER\", \"WINTER\".")
+
+        allowed = {"low", "mid", "high"}
+        if str(self.mean_clutter_height).lower() not in allowed:
+            raise ValueError("Invalid type of mean_clutter_height. mean_clutter_height must be 'Low', 'Mid', or 'High'")
 
     def set_external_parameters(self, *,
                                 space_station_alt_m: float,
