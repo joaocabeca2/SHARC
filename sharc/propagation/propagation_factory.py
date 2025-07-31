@@ -79,7 +79,7 @@ class PropagationFactory(object):
                             param.imt.topology.type}", )
             else:
                 # P.619 model is used only for space-to-earth links
-                if param.imt.topology.type != "NTN" and not param_system.is_space_to_earth:
+                if param.imt.topology.type not in ["NTN", "MSS_DC"] and not param_system.is_space_to_earth:
                     raise ValueError((
                         "PropagationFactory: Channel model P.619 is invalid"
                         f"for system {param.general.system} and IMT "
