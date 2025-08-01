@@ -90,6 +90,43 @@ class Results(object):
         self.system_pfd = SampleList()
         self.system_rx_interf = SampleList()
 
+        self.wifi_ul_tx_power_density = SampleList()
+        self.wifi_ul_tx_power = SampleList()
+        self.wifi_ul_sinr_ext = SampleList()
+        self.wifi_ul_sinr = SampleList()
+        self.wifi_ul_snr = SampleList()
+        self.wifi_ul_inr = SampleList()
+        self.wifi_ul_tput_ext = SampleList()
+        self.wifi_ul_tput = SampleList()
+
+        self.wifi_path_loss = SampleList()
+        self.wifi_coupling_loss = SampleList()
+        self.wifi_ap_antenna_gain = SampleList()  # equivalent to imt_bs_antenna_gain
+        self.wifi_sta_antenna_gain = SampleList()
+
+        self.wifi_dl_tx_power_density = SampleList()
+        self.wifi_dl_tx_power = SampleList()
+        self.wifi_dl_sinr_ext = SampleList()
+        self.wifi_dl_sinr = SampleList()
+        self.wifi_dl_snr = SampleList()
+        self.wifi_dl_inr = SampleList()
+        self.wifi_dl_tput_ext = SampleList()
+        self.wifi_dl_tput = SampleList()
+
+        self.wifi_system_ul_coupling_loss = SampleList()  # equivalent to system_ul_coupling_loss
+        self.wifi_system_ul_interf_power = SampleList()  # equivalent to system_ul_interf_power
+        self.wifi_system_dl_coupling_loss = SampleList()  # equivalent to system_dl_coupling_loss
+        self.wifi_system_dl_interf_power = SampleList()
+        self.wifi_system_inr = SampleList()  # equivalent to system_inr
+        self.wifi_system_pfd = SampleList()  # equivalent to system_pfd
+        self.wifi_system_rx_interf = SampleList()  # equivalent to system_rx_interf
+
+        self.wifi_imt_antenna_gain = SampleList()  # equivalent to imt_bs_antenna_gain
+        self.imt_wifi_antenna_gain = SampleList()  # equivalent to imt_ue_antenna_gain
+        self.imt_wifi_path_loss = SampleList()
+        self.imt_wifi_building_entry_loss = SampleList()
+        self.imt_wifi_diffraction_loss = SampleList()
+
         self.__sharc_dir = pathlib.Path(__file__).parent.resolve()
 
     def prepare_to_write(

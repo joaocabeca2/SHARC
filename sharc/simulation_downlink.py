@@ -44,11 +44,11 @@ class SimulationDownlink(Simulation):
             self.topology, random_number_gen,
         )
 
-        self.wifi_ap = StationFactory.generate_wifi_aps(
+        '''self.wifi_ap = StationFactory.generate_wifi_aps(
             self.parameters.wifi,
             self.parameters.wifi.ap.antenna,
             self.topology, random_number_gen,
-        )
+        )'''
         #Create instance of wifi aps
         #self.wifi_ap = StationFactory.filter_station_manager(self.bs, StationType.WIFI_APS)
         #self.bs = StationFactory.filter_station_manager(self.bs, StationType.IMT_BS)
@@ -67,22 +67,25 @@ class SimulationDownlink(Simulation):
             self.topology, random_number_gen,
         )
 
-        self.wifi_sta = StationFactory.generate_wifi_sta(
+        '''self.wifi_sta = StationFactory.generate_wifi_sta(
             self.parameters.wifi,
             self.parameters.wifi.sta.antenna,
             self.topology, random_number_gen,
-        )
-        
+        )'''
+
         #Create instance of wifi stations
         #self.wifi_sta = StationFactory.filter_station_manager(self.ue, StationType.WIFI_STA)
         #self.ue = StationFactory.filter_station_manager(self.ue, StationType.IMT_UE)
 
         # self.plot_scenario()
 
+        if self.parameters.general.system == "WIFI":
+            self.system.connect_wifi_sta_to_ap(self.parameters.wifi)
+            self.system.select_sta(random_number_gen, self.parameters.wifi)
+
         self.connect_ue_to_bs()
-        self.connect_wifi_sta_to_ap()
         self.select_ue(random_number_gen)
-        self.select_sta(random_number_gen)
+        
 
         # Calculate coupling loss after beams are created
         self.coupling_loss_imt = self.calculate_intra_imt_coupling_loss(
@@ -91,7 +94,7 @@ class SimulationDownlink(Simulation):
 
         #Calculate intra wifi coupling loss 
         self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(
-            self.wifi_sta, self.wifi_ap,)
+            self.system.sta, self.system.ap,)
 
         self.scheduler()
         self.power_control()
@@ -105,7 +108,7 @@ class SimulationDownlink(Simulation):
             # Execute this piece of code if IMT generates interference into
             # the other system
             self.calculate_sinr()
-            self.calculate_external_interference()
+            #self.calculate_external_interference()
 
         self.collect_results(write_to_file, snapshot_number)
 
@@ -130,17 +133,6 @@ class SimulationDownlink(Simulation):
             [(bs, tx_power * np.ones(self.parameters.imt.ue.k))
              for bs in bs_active],
         )
-
-        '''total_power_wifi = self.parameters.wifi.ap.conducted_power + \
-            self.ap_power_gain
-        tx_power_wifi = total_power_wifi - 10 * math.log10(
-            self.parameters.wifi.sta.k,
-        )
-        ap_active = np.where(self.wifi_ap.active)[0]
-        self.wifi_ap.tx_power = dict(
-            [(ap, tx_power_wifi * np.ones(self.parameters.wifi.sta.k))
-             for ap in ap_active],
-        )'''
 
         # Update the spectral mask
         if self.adjacent_channel:
@@ -219,19 +211,23 @@ class SimulationDownlink(Simulation):
         """
         Calculates interference that IMT system generates on other system
         """
-        if self.co_channel:
-            self.coupling_loss_imt_system = self.calculate_coupling_loss_system_imt(
-                self.system,
-                self.bs,
-                is_co_channel=True,
-            )
-        if self.adjacent_channel:
-            self.coupling_loss_imt_system_adjacent = \
-                self.calculate_coupling_loss_system_imt(
+        if self.parameters.general.system == "WIFI":
+            pass
+
+        else:
+            if self.co_channel:
+                self.coupling_loss_imt_system = self.calculate_coupling_loss_system_imt(
                     self.system,
                     self.bs,
-                    is_co_channel=False,
+                    is_co_channel=True,
                 )
+            if self.adjacent_channel:
+                self.coupling_loss_imt_system_adjacent = \
+                    self.calculate_coupling_loss_system_imt(
+                        self.system,
+                        self.bs,
+                        is_co_channel=False,
+                    )
 
         # applying a bandwidth scaling factor since UE transmits on a portion
         # of the interfered systems bandwidth
@@ -337,7 +333,23 @@ class SimulationDownlink(Simulation):
                     self.results.system_pfd.extend([self.system.pfd])
             except AttributeError:
                 pass
-
+        
+        if self.parameters.general.system == "WIFI":
+            ap_active = np.where(self.system.ap.active)[0]
+            for ap in ap_active:
+                sta = self.system.link[ap]  
+                self.results.wifi_path_loss.extend(
+                    self.path_loss_wifi[ap, sta],
+                )   
+                self.results.wifi_coupling_loss.extend(
+                    self.coupling_loss_wifi[ap, sta],
+                )
+                self.results.wifi_ap_antenna_gain.extend(
+                    self.ap_antenna_gain[ap, sta],
+                )   
+                self.results.wifi_sta_antenna_gain.extend(
+                    self.sta_antenna_gain[ap, sta],
+                )  
         bs_active = np.where(self.bs.active)[0]
         for bs in bs_active:
             ue = self.link[bs]
@@ -352,6 +364,8 @@ class SimulationDownlink(Simulation):
             self.results.imt_ue_antenna_gain.extend(
                 self.imt_ue_antenna_gain[bs, ue],
             )
+
+
 
             tput = self.calculate_imt_tput(
                 self.ue.sinr[ue],
@@ -374,24 +388,28 @@ class SimulationDownlink(Simulation):
                 )
                 self.results.imt_dl_inr.extend(self.ue.inr[ue].tolist())
 
-                self.results.system_imt_antenna_gain.extend(
-                    self.system_imt_antenna_gain[0, ue],
-                )
-                self.results.imt_system_antenna_gain.extend(
-                    self.imt_system_antenna_gain[0, ue],
-                )
-                self.results.imt_system_path_loss.extend(
-                    self.imt_system_path_loss[0, ue],
-                )
-                if self.param_system.channel_model == "HDFSS":
-                    self.results.imt_system_build_entry_loss.extend(
-                        self.imt_system_build_entry_loss[0, ue],
+                if self.parameters.general.system != "WIFI":
+                    self.results.system_imt_antenna_gain.extend(
+                        self.system_imt_antenna_gain[0, ue],
                     )
-                    self.results.imt_system_diffraction_loss.extend(
-                        self.imt_system_diffraction_loss[0, ue],
+                    self.results.imt_system_antenna_gain.extend(
+                        self.imt_system_antenna_gain[0, ue],
                     )
+                    self.results.imt_system_path_loss.extend(
+                        self.imt_system_path_loss[0, ue],
+                    )
+                    if self.param_system.channel_model == "HDFSS":
+                        self.results.imt_system_build_entry_loss.extend(
+                            self.imt_system_build_entry_loss[0, ue],
+                        )
+                        self.results.imt_system_diffraction_loss.extend(
+                            self.imt_system_diffraction_loss[0, ue],
+                        )
+                else:
+                    pass
+
             else:
-                active_beams = [
+                '''active_beams = [
                     i for i in range(
                         bs *
                         self.parameters.imt.ue.k, (bs + 1) *
@@ -413,7 +431,8 @@ class SimulationDownlink(Simulation):
                     )
                     self.results.imt_system_diffraction_loss.extend(
                         self.imt_system_diffraction_loss[:, bs],
-                    )
+                    )'''
+                pass
 
             self.results.imt_dl_tx_power.extend(self.bs.tx_power[bs].tolist())
 
