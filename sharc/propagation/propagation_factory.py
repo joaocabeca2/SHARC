@@ -79,7 +79,7 @@ class PropagationFactory(object):
                             param.imt.topology.type}", )
             else:
                 # P.619 model is used only for space-to-earth links
-                if param.imt.topology.type != "NTN" and not param_system.is_space_to_earth:
+                if param.imt.topology.type not in ["NTN", "MSS_DC"] and not param_system.is_space_to_earth:
                     raise ValueError((
                         "PropagationFactory: Channel model P.619 is invalid"
                         f"for system {param.general.system} and IMT "
@@ -92,7 +92,10 @@ class PropagationFactory(object):
                 earth_station_lat_deg=param_system.param_p619.earth_station_lat_deg,
                 earth_station_long_diff_deg=param_system.param_p619.earth_station_lat_deg,
                 season=param_system.season,
+                mean_clutter_height=param_system.param_p619.mean_clutter_height,
+                below_rooftop=param_system.param_p619.below_rooftop
             )
+
         elif channel_model == "P452":
             return PropagationClearAir(
                 random_number_gen, param_system.param_p452)

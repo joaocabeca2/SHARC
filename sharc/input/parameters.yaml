@@ -606,6 +606,11 @@ imt:
         # difference between longitudes of IMT-NTN station and FSS-ES system [deg]
         #   (positive if space-station is to the East of earth-station)
         earth_station_long_diff_deg: 0
+        # Average height of clutter. According to 2018 it can be "Low", "Mid" or "High"
+        mean_clutter_height: "High" 
+        # Percentage of stations below rooftop (To apply clutter)
+        below_rooftop: 100
+
 single_earth_station:
     ###########################################################################
     # Sensor center frequency [MHz]
@@ -751,6 +756,10 @@ single_earth_station:
         # difference between longitudes of IMT-NTN station and FSS-ES system [deg]
         #   (positive if space-station is to the East of earth-station)
         earth_station_long_diff_deg: 10
+        # Average height of clutter. According to 2018 it can be "Low", "Mid" or "High"
+        mean_clutter_height: "High" 
+        # Percentage of stations below rooftop (To apply clutter)
+        below_rooftop: 100
 
     ###########################################################################
     # season - season of the year.
@@ -799,7 +808,8 @@ single_earth_station:
         ###########################################################################
         # determine whether clutter loss following ITU-R P.2108 is added (TRUE/FALSE)
         clutter_loss: TRUE
-
+        # Determine if clutter is applied to "one_end" or "both)ends"
+        clutter_type: "one_end"
     # HDFSS propagation parameters
     param_hdfss:
         ###########################################################################
@@ -1097,7 +1107,10 @@ mss_d2d:
         ###########################################################################
         # year season: SUMMER of WINTER
         season: SUMMER
-
+        # Average height of clutter. According to 2018 it can be "Low", "Mid" or "High"
+        mean_clutter_height: "High" 
+        # Percentage of stations below rooftop (To apply clutter)
+        below_rooftop: 100
     # Orbit parameters
     orbit:
         # Number of planes

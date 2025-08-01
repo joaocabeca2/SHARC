@@ -97,6 +97,7 @@ class ParametersFssEs(ParametersBase):
     # Determine whether clutter loss following ITU-R P.2108 is added
     # (TRUE/FALSE)
     clutter_loss: bool = True
+    clutter_type: str = "one-end"
 
     # Parameters for the P.619 propagation model used for sharing studies between IMT-NTN and FSS-ES
     #    space_station_alt_m - altiteude of the IMT-MSS station

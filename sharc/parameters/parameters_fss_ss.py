@@ -105,6 +105,11 @@ class ParametersFssSs(ParametersBase):
                              Invalid value for paramter channel_model = {self.channel_model}. \
                              Possible values are \"FSPL\", \"SatelliteSimple\", \"P619\".")
         self.param_p619.load_from_paramters(self)
+
+        allowed = {"low", "mid", "high"}
+        if str(self.param_p619.mean_clutter_height).lower() not in allowed:
+            raise ValueError("Invalid type of mean_clutter_height. mean_clutter_height must be 'Low', 'Mid', or 'High'")
+
         self.antenna_s1528.set_external_parameters(
             frequency=self.frequency,
             bandwidth=self.bandwidth,
