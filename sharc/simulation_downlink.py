@@ -82,7 +82,12 @@ class SimulationDownlink(Simulation):
         if self.parameters.general.system == "WIFI":
             self.system.connect_wifi_sta_to_ap(self.parameters.wifi)
             self.system.select_sta(random_number_gen, self.parameters.wifi)
-
+            #Calculate intra wifi coupling loss 
+            self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(
+                self.system.sta, self.system.ap)
+            
+            self.calculate_sinr_wifi()
+            
         self.connect_ue_to_bs()
         self.select_ue(random_number_gen)
         
@@ -91,10 +96,6 @@ class SimulationDownlink(Simulation):
         self.coupling_loss_imt = self.calculate_intra_imt_coupling_loss(
             self.ue, self.bs,
         )
-
-        #Calculate intra wifi coupling loss 
-        self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(
-            self.system.sta, self.system.ap,)
 
         self.scheduler()
         self.power_control()
@@ -442,7 +443,42 @@ class SimulationDownlink(Simulation):
         if write_to_file:
             self.results.write_files(snapshot_number)
             self.notify_observers(source=__name__, results=self.results)
+    
+    def calculate_sinr_wifi(self):
+        """
+        Calculates the downlink SINR for each STA.
+        """
+        ap_active = np.where(self.system.ap.active)[0]
+        for ap in ap_active:
+            sta = self.system.link[ap]
+            self.system.sta.rx_power[sta] = self.system.ap.tx_power[ap] - \
+                self.coupling_loss_wifi[ap, sta]
 
-                
+            # create a list with access points that generate interference in sta_list
+            ap_interf = [a for a in ap_active if a not in [ap]]
 
-                    
+            # calculate intra system interference
+            for ai in ap_interf:
+                interference = self.system.ap.tx_power[ai] - \
+                    self.coupling_loss_wifi[ai, sta]
+
+                self.system.sta.rx_interference[sta] = 10 * np.log10(
+                    np.power(
+                        10, 0.1 * self.system.sta.rx_interference[sta]) + np.power(10, 0.1 * interference),
+                )
+
+        # Thermal noise in dBm
+        self.system.sta.thermal_noise = \
+            10 * math.log10(BOLTZMANN_CONSTANT * self.parameters.wifi.noise_temperature * 1e3) + \
+            10 * np.log10(self.system.sta.bandwidth * 1e6) + \
+            self.system.sta.noise_figure
+
+        self.system.sta.total_interference = \
+            10 * np.log10(
+                np.power(10, 0.1 * self.system.sta.rx_interference) +
+                np.power(10, 0.1 * self.system.sta.thermal_noise),
+            )
+
+        self.system.sta.sinr = self.system.sta.rx_power - self.system.sta.total_interference
+        self.system.sta.snr = self.system.sta.rx_power - self.system.sta.thermal_noise
+                        
