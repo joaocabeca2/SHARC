@@ -323,7 +323,7 @@ class SimulationDownlink(Simulation):
             pass
 
     def collect_results(self, write_to_file: bool, snapshot_number: int):
-        if not self.parameters.imt.interfered_with and np.any(self.bs.active):
+        if not self.parameters.imt.interfered_with and np.any(self.bs.active) and self.parameters.general.system != "WIFI":
             self.results.system_inr.extend(self.system.inr.tolist())
             self.results.system_dl_interf_power.extend(
                 [self.system.rx_interference],
@@ -339,18 +339,26 @@ class SimulationDownlink(Simulation):
             ap_active = np.where(self.system.ap.active)[0]
             for ap in ap_active:
                 sta = self.system.link[ap]  
-                self.results.wifi_path_loss.extend(
-                    self.path_loss_wifi[ap, sta],
-                )   
-                self.results.wifi_coupling_loss.extend(
-                    self.coupling_loss_wifi[ap, sta],
+                # Coleta resultados básicos do WiFi
+                self.results.wifi_path_loss.extend(self.path_loss_wifi[ap, sta])
+                self.results.wifi_coupling_loss.extend(self.coupling_loss_wifi[ap, sta])
+                self.results.wifi_ap_antenna_gain.extend(self.ap_antenna_gain[ap, sta])
+                self.results.wifi_sta_antenna_gain.extend(self.sta_antenna_gain[ap, sta])
+
+                # Coleta resultados de potência e SINR do WiFi
+                #self.results.wifi_dl_tx_power.extend(self.system.ap.tx_power[ap].tolist())
+                self.results.wifi_dl_sinr.extend(self.system.sta.sinr[sta].tolist())
+                self.results.wifi_dl_snr.extend(self.system.sta.snr[sta].tolist())
+            
+                #Calculate throughput for wifi
+                wifi_tput = self.calculate_imt_tput(
+                    self.system.sta.sinr[sta],
+                    self.parameters.wifi.downlink.sinr_min,
+                    self.parameters.wifi.downlink.sinr_max,
+                    self.parameters.wifi.downlink.attenuation_factor,
                 )
-                self.results.wifi_ap_antenna_gain.extend(
-                    self.ap_antenna_gain[ap, sta],
-                )   
-                self.results.wifi_sta_antenna_gain.extend(
-                    self.sta_antenna_gain[ap, sta],
-                )  
+                self.results.wifi_dl_tput.extend(wifi_tput.tolist())
+                
         bs_active = np.where(self.bs.active)[0]
         for bs in bs_active:
             ue = self.link[bs]
@@ -410,33 +418,33 @@ class SimulationDownlink(Simulation):
                     pass
 
             else:
-                '''active_beams = [
-                    i for i in range(
-                        bs *
-                        self.parameters.imt.ue.k, (bs + 1) *
-                        self.parameters.imt.ue.k,
+                if self.parameters.general.system != "WIFI":
+                    active_beams = [
+                        i for i in range(
+                            bs *
+                            self.parameters.imt.ue.k, (bs + 1) *
+                            self.parameters.imt.ue.k,
+                        )
+                    ]
+                    self.results.system_imt_antenna_gain.extend(
+                        self.system_imt_antenna_gain[0, active_beams],
                     )
-                ]
-                self.results.system_imt_antenna_gain.extend(
-                    self.system_imt_antenna_gain[0, active_beams],
-                )
-                self.results.imt_system_antenna_gain.extend(
-                    self.imt_system_antenna_gain[0, active_beams],
-                )
-                self.results.imt_system_path_loss.extend(
-                    self.imt_system_path_loss[0, active_beams],
-                )
-                if self.param_system.channel_model == "HDFSS":
-                    self.results.imt_system_build_entry_loss.extend(
-                        self.imt_system_build_entry_loss[:, bs],
+                    self.results.imt_system_antenna_gain.extend(
+                        self.imt_system_antenna_gain[0, active_beams],
                     )
-                    self.results.imt_system_diffraction_loss.extend(
-                        self.imt_system_diffraction_loss[:, bs],
-                    )'''
-                pass
+                    self.results.imt_system_path_loss.extend(
+                        self.imt_system_path_loss[0, active_beams],
+                    )
+                    if self.param_system.channel_model == "HDFSS":
+                        self.results.imt_system_build_entry_loss.extend(
+                            self.imt_system_build_entry_loss[:, bs],
+                        )
+                        self.results.imt_system_diffraction_loss.extend(
+                            self.imt_system_diffraction_loss[:, bs],
+                        )
+            
 
             self.results.imt_dl_tx_power.extend(self.bs.tx_power[bs].tolist())
-
             self.results.imt_dl_sinr.extend(self.ue.sinr[ue].tolist())
             self.results.imt_dl_snr.extend(self.ue.snr[ue].tolist())
 
