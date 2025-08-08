@@ -11,6 +11,7 @@ import csv
 from scipy.interpolate import interp1d
 import numpy as np
 from multipledispatch import dispatch
+from warnings import warn
 from sharc.station_manager import StationManager
 from sharc.parameters.parameters import Parameters
 from sharc.propagation.propagation import Propagation
@@ -97,10 +98,12 @@ class PropagationP619(Propagation):
         self.city_name = self._get_city_name_by_latitude()
         if self.city_name != "Unknown":
             self.lookup_table = True
+        else:
+            warn('Using analytical model for atmospheric attenuation. No lookup table available for this latitude.')
 
     def _get_city_name_by_latitude(self):
         localidades_file = os.path.join(
-            os.path.dirname(__file__), 'Dataset/localidades.csv',
+            os.path.dirname(__file__), 'Dataset/locations.csv',
         )
         with open(localidades_file, mode='r') as file:
             reader = csv.DictReader(file)
@@ -134,12 +137,9 @@ class PropagationP619(Propagation):
         if lookupTable and self.city_name != 'Unknown':
             # Define the path to the CSV file
             output_dir = os.path.join(os.path.dirname(__file__), 'Dataset')
+            lookup_table_name = f'{self.city_name}_{int(frequency_MHz)}_{int(self.earth_station_alt_m)}m.csv'
             csv_file = os.path.join(
-                output_dir, f'{
-                    self.city_name}_{
-                    int(frequency_MHz)}_{
-                    int(
-                        self.earth_station_alt_m)}m.csv', )
+                output_dir, lookup_table_name)
             if os.path.exists(csv_file):
                 elevations = []
                 losses = []
@@ -152,6 +152,10 @@ class PropagationP619(Propagation):
                 interpolation_function = interp1d(
                     elevations, losses, kind='linear', fill_value='extrapolate', )
                 return interpolation_function(apparent_elevation)
+            else:
+                raise FileNotFoundError(
+                    f"CSV file {lookup_table_name} not found but lookupTable is set to True. Did you configured the 'Dataset/locations.csv' lookup table correctly? ",
+                )
 
         earth_radius_km = EARTH_RADIUS / 1000
         a_acc = 0.  # accumulated attenuation (in dB)
