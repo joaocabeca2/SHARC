@@ -240,7 +240,7 @@ class SystemWifi:
         num_sta_per_ap = self.parameters.sta.k * self.parameters.sta.k_m
         wifi_sta = StationManager(self.num_sta)
         wifi_sta.station_type = StationType.WIFI_STA
-
+        
         sta_x = list()
         sta_y = list()
         sta_z = list()
@@ -332,6 +332,10 @@ class SystemWifi:
         wifi_sta.active = np.zeros(self.num_sta, dtype=bool)
         wifi_sta.rx_interference = -500 * np.ones(self.num_sta)
         wifi_sta.ext_interference = -500 * np.ones(self.num_sta)
+        wifi_sta.bandwidth = self.parameters.bandwidth * np.ones(self.num_sta)
+        wifi_sta.center_freq = self.parameters.frequency * np.ones(self.num_sta)
+        wifi_sta.noise_figure = self.parameters.ap.noise_figure * np.ones(self.num_sta)
+        wifi_sta.thermal_noise = -500 * np.ones(self.num_sta)
 
         for i in range(self.num_sta):
             wifi_sta.antenna[i] = AntennaOmni()

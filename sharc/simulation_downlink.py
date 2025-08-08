@@ -43,15 +43,6 @@ class SimulationDownlink(Simulation):
             self.parameters.imt.bs.antenna,
             self.topology, random_number_gen,
         )
-
-        '''self.wifi_ap = StationFactory.generate_wifi_aps(
-            self.parameters.wifi,
-            self.parameters.wifi.ap.antenna,
-            self.topology, random_number_gen,
-        )'''
-        #Create instance of wifi aps
-        #self.wifi_ap = StationFactory.filter_station_manager(self.bs, StationType.WIFI_APS)
-        #self.bs = StationFactory.filter_station_manager(self.bs, StationType.IMT_BS)
         
 
         # Create the other system (FSS, HAPS, etc...)
@@ -66,16 +57,6 @@ class SimulationDownlink(Simulation):
             self.parameters.imt.ue.antenna,
             self.topology, random_number_gen,
         )
-
-        '''self.wifi_sta = StationFactory.generate_wifi_sta(
-            self.parameters.wifi,
-            self.parameters.wifi.sta.antenna,
-            self.topology, random_number_gen,
-        )'''
-
-        #Create instance of wifi stations
-        #self.wifi_sta = StationFactory.filter_station_manager(self.ue, StationType.WIFI_STA)
-        #self.ue = StationFactory.filter_station_manager(self.ue, StationType.IMT_UE)
 
         # self.plot_scenario()
 
