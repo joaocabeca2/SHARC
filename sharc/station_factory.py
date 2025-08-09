@@ -56,7 +56,7 @@ from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.topology.topology_hotspot import TopologyHotspot
 from sharc.parameters.imt.parameters_hotspot import ParametersHotspot
 from sharc.parameters.imt.parameters_imt import ParametersImt
-from system.system_wifi import SystemWifi
+from sharc.system.system_wifi import SystemWifi
 
 
 class StationFactory(object):
@@ -1121,180 +1121,6 @@ class StationFactory(object):
 
         return space_station
 
-    @staticmethod
-    def generate_wifi_aps(
-        param: ParametersWifiSystem,
-        param_ant_ap: ParametersAntennaImt,
-        topology: Topology,
-        random_number_gen: np.random.RandomState,
-    ):
-        param_ant = param_ant_ap.get_antenna_parameters()
-        num_aps = topology.num_base_stations
-        wifi_aps = StationManager(num_aps)
-        wifi_aps.station_type = StationType.WIFI_APS
-
-        wifi_aps.x = topology.x
-        wifi_aps.y = topology.y
-        wifi_aps.elevation = -param_ant.downtilt * np.ones(num_aps)
-        wifi_aps.height = param.ap.height * np.ones(num_aps)
-
-        wifi_aps.azimuth = topology.azimuth
-        random_values = random_number_gen.rand(num_aps)
-        wifi_aps.active = random_values < param.ap.load_probability
-        wifi_aps.tx_power = param.ap.conducted_power * np.ones(num_aps)
-        wifi_aps.rx_power = dict(
-            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
-        )
-        wifi_aps.rx_interference = dict(
-            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
-        )
-        wifi_aps.ext_interference = dict(
-            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
-        )
-        wifi_aps.total_interference = dict(
-            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
-        )
-
-        wifi_aps.snr = dict(
-            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
-        )
-        wifi_aps.sinr = dict(
-            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
-        )
-        wifi_aps.sinr_ext = dict(
-            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
-        )
-        wifi_aps.inr = dict(
-            [(ap, -500 * np.ones(param.sta.k)) for ap in range(num_aps)],
-        )
-
-        wifi_aps.antenna = np.empty(
-            num_aps, dtype=AntennaOmni,
-        )
-
-        for i in range(num_aps):
-            wifi_aps.antenna[i] = AntennaOmni()
-     
-        wifi_aps.bandwidth = param.bandwidth * np.ones(num_aps)
-        wifi_aps.center_freq = param.frequency * np.ones(num_aps)
-        wifi_aps.noise_figure = param.ap.noise_figure * np.ones(num_aps)
-        wifi_aps.thermal_noise = -500 * np.ones(num_aps)
-
-
-        if param.topology.type == 'HOTSPOT':
-            wifi_aps.intersite_dist = param.topology.hotspot.intersite_distance
-
-        return wifi_aps
-        
-    @staticmethod
-    def generate_wifi_sta(
-        param: ParametersWifiSystem,
-        sta_param_ant: ParametersAntennaImt,
-        topology: Topology,
-        random_number_gen: np.random.RandomState,
-        
-    ) -> StationManager:
-        num_aps = topology.num_base_stations
-        num_sta_per_ap = param.sta.k * param.sta.k_m
-        num_sta = num_aps * num_sta_per_ap
-        wifi_sta = StationManager(num_sta)
-        wifi_sta.station_type = StationType.WIFI_STA
-
-        sta_x = list()
-        sta_y = list()
-        sta_z = list()
-
-        wifi_sta.indoor = np.ones(num_sta, dtype=bool)
-
-        azimuth_range = (-60, 60)
-        azimuth = (azimuth_range[1] - azimuth_range[0]) * \
-            random_number_gen.random_sample(num_sta) + azimuth_range[0]
-
-        elevation_range = (-90, 90)
-        elevation = (elevation_range[1] - elevation_range[0]) * \
-            random_number_gen.random_sample(num_sta) + elevation_range[0]
-
-        delta_x = (
-            topology.b_w / math.sqrt(topology.ue_indoor_percent) - topology.b_w
-        ) / 2
-        delta_y = (
-            topology.b_d / math.sqrt(topology.ue_indoor_percent) - topology.b_d
-        ) / 2
-
-        for ap in range(num_aps):
-            idx = [
-                i for i in range(
-                    ap * num_sta_per_ap, ap * num_sta_per_ap + num_sta_per_ap,
-                )
-            ]
-            if ap % topology.num_cells == 0 and ap < topology.total_bs_level:
-                x_min = topology.x[ap] - topology.cell_radius - delta_x
-                x_max = topology.x[ap] + topology.cell_radius
-            elif ap % topology.num_cells == topology.num_cells - 1 and ap < topology.total_bs_level:
-                x_min = topology.x[ap] - topology.cell_radius
-                x_max = topology.x[ap] + topology.cell_radius + delta_x
-            else:
-                x_min = topology.x[ap] - topology.cell_radius
-                x_max = topology.x[ap] + topology.cell_radius
-
-            if ap < topology.total_bs_level:
-                y_min = topology.y[ap] - topology.b_d / 2 - delta_y
-                y_max = topology.y[ap] + topology.b_d / 2 + delta_y
-            else:
-                y_min = topology.y[ap] - topology.b_d / 2
-                y_max = topology.y[ap] + topology.b_d / 2
-
-            x = (x_max - x_min) * \
-                random_number_gen.random_sample(num_sta_per_ap) + x_min
-            y = (y_max - y_min) * \
-                random_number_gen.random_sample(num_sta_per_ap) + y_min
-            z = [
-                topology.height[ap] - topology.b_h +
-                param.sta.height for k in range(num_sta_per_ap)
-            ]
-            sta_x.extend(x)
-            sta_y.extend(y)
-            sta_z.extend(z)
-
-            theta = np.degrees(
-                np.arctan2(
-                    y - topology.y[ap], x - topology.x[ap],
-                ),
-            )
-            wifi_sta.azimuth[idx] = (azimuth[idx] + theta + 180) % 360
-
-            distance = np.sqrt(
-                (topology.x[ap] - x)**2 + (topology.y[ap] - y)**2,
-            )
-            psi = np.degrees(
-                np.arctan((param.sta.height - param.sta.height) / distance),
-            )
-            wifi_sta.elevation[idx] = elevation[idx] + psi
-
-            if ap % topology.num_cells == 0:
-                out = (x < topology.x[ap] - topology.cell_radius) | \
-                    (y > topology.y[ap] + topology.b_d / 2) | \
-                    (y < topology.y[ap] - topology.b_d / 2)
-            elif ap % topology.num_cells == topology.num_cells - 1:
-                out = (x > topology.x[ap] + topology.cell_radius) | \
-                    (y > topology.y[ap] + topology.b_d / 2) | \
-                    (y < topology.y[ap] - topology.b_d / 2)
-            else:
-                out = (y > topology.y[ap] + topology.b_d / 2) | \
-                    (y < topology.y[ap] - topology.b_d / 2)
-            wifi_sta.indoor[idx] = ~out
-
-        wifi_sta.x = np.array(sta_x)
-        wifi_sta.y = np.array(sta_y)
-        wifi_sta.height = np.array(sta_z)
-
-        wifi_sta.active = np.zeros(num_sta, dtype=bool)
-        wifi_sta.rx_interference = -500 * np.ones(num_sta)
-        wifi_sta.ext_interference = -500 * np.ones(num_sta)
-
-        for i in range(num_sta):
-            wifi_sta.antenna[i] = AntennaOmni()
-        return wifi_sta
 
     @staticmethod
     def generate_wifi_system(param: ParametersWifiSystem,
@@ -1462,40 +1288,41 @@ if __name__ == '__main__':
 
     factory = StationFactory()
 
+    wifi_ant_param = ParametersAntennaWifi()
+    wifi_param = ParametersWifiSystem()
     t_param = ParametersHotspot()
     #topology = TopologyMacrocell(1000, 1)
-    topology = TopologyHotspot(t_param, 321, 1)
-    topology.calculate_coordinates()
+    imt_topology = TopologyHotspot(t_param, 321, 1)
+    imt_topology.calculate_coordinates()
 
     params = Parameters()
 
-    bs_ant_param = ParametersAntennaImt()
-
-    ue_ant_param = ParametersAntennaImt()
+    imt_ant_param = ParametersAntennaImt()
 
     rnd = np.random.RandomState(1)
 
-    imt_ue = factory.generate_imt_ue(params.imt, ue_ant_param, topology, rnd)
-    imt_bs = factory.generate_imt_base_stations(params.imt, bs_ant_param, topology, rnd)
+    imt_ue = factory.generate_imt_ue(params.imt, imt_ant_param, imt_topology, rnd)
+    imt_bs = factory.generate_imt_base_stations(params.imt, imt_ant_param, imt_topology, rnd)
 
+    wifi = factory.generate_wifi_system(wifi_param, wifi_ant_param, wifi_ant_param, rnd)
     # Separar por tipo de estação
     # Base stations
-    imt_bs_x = imt_bs.x[np.array(imt_bs.station_type) == StationType.IMT_BS]
-    imt_bs_y = imt_bs.y[np.array(imt_bs.station_type) == StationType.IMT_BS]
+    imt_bs_x = imt_bs.x
+    imt_bs_y = imt_bs.y
 
-    wifi_aps_x = imt_bs.x[np.array(imt_bs.station_type) == StationType.WIFI_APS]
-    wifi_aps_y = imt_bs.y[np.array(imt_bs.station_type) == StationType.WIFI_APS]
+    wifi_aps_x = wifi.ap.x
+    wifi_aps_y = wifi.ap.y
 
     # User equipments
-    imt_ue_x = imt_ue.x[np.array(imt_ue.station_type) == StationType.IMT_UE]
-    imt_ue_y = imt_ue.y[np.array(imt_ue.station_type) == StationType.IMT_UE]
+    imt_ue_x = imt_ue.x
+    imt_ue_y = imt_ue.y
 
-    wifi_sta_x = imt_ue.x[np.array(imt_ue.station_type) == StationType.WIFI_STA]
-    wifi_sta_y = imt_ue.y[np.array(imt_ue.station_type) == StationType.WIFI_STA]
+    wifi_sta_x = wifi.sta.x
+    wifi_sta_y = wifi.sta.y
 
     fig = plt.figure(figsize=(8, 8), facecolor='w', edgecolor='k')
     ax = fig.add_subplot(1, 1, 1)
-    topology.plot(ax)
+    imt_topology.plot(ax)
 
     plt.axis('image')
     plt.title("Macro cell topology")
