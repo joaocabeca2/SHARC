@@ -61,19 +61,21 @@ class OrbitModel():
         self.phasing = phasing
         self.long_asc = long_asc
         self.omega_0 = omega
+        self.omega = omega
         self.delta = delta
         self.perigee_alt_km = hp
         self.apogee_alt_km = ha
         self.Mo = Mo
-        self.is_elliptical = hp != ha
 
         # Derive other orbit parameters
         self.semi_major_axis = (
             hp + ha + 2 * EARTH_RADIUS_KM) / 2  # semi-major axis, in km
         self.eccentricity = (ha + EARTH_RADIUS_KM - self.semi_major_axis) / \
             self.semi_major_axis  # orbital eccentricity (e)
-        self.orbital_period_sec = 2 * np.pi * \
-            np.sqrt(self.semi_major_axis ** 3 / KEPLER_CONST)  # orbital period, in seconds
+        # TODO: consider J2 perturbations for mean motion and orbital period
+        self.mean_motion = np.sqrt(KEPLER_CONST / self.semi_major_axis ** 3)
+        # orbital period, in seconds
+        self.orbital_period_sec = 2 * np.pi / self.mean_motion
         # satellite separation angle in the plane (degrees)
         self.sat_sep_angle_deg = 360 / self.Nsp
         # angle between plane intersections with the equatorial plane (degrees)
@@ -101,6 +103,9 @@ class OrbitModel():
         else:
             # sane default
             self.t_max = t_min + self.orbital_period_sec * 1e3
+            # TODO: implement 1503 secular drift to enable correct higher time ceiling
+            # self.t_max = t_min + 365 * 24 * 60 * 60
+            # self.t_max = sys.float_info.max
 
         # Calculated variables
         self.mean_anomaly = None  # computed mean anomalies
@@ -157,21 +162,33 @@ class OrbitModel():
                 lat, lon, alt, sx, sy, sz
         """
         t = np.atleast_1d(time_instant_secs)
-        if t.ndim > 1:
-            raise ValueError("Input must be scalar or 1D array")
 
+        assert t.ndim == 1, "Input must be scalar or 1D array"
+
+        # TODO: add J2 perturbations based on 1503
         # Mean anomaly (M)
-        self.mean_anomaly = (self.initial_mean_anomalies_rad[:, None] + (
-            2 * np.pi / self.orbital_period_sec) * t) % (2 * np.pi)
+        self.mean_anomaly = (
+            self.initial_mean_anomalies_rad[:, None] + self.mean_motion * t
+        ) % (2 * np.pi)
+
+        # TODO: add J2 perturbations based on 1503
         # Longitudes of the ascending node (OmegaG)
         # shape (Np*Nsp, len(t))
-        raan_rad = (self.inital_raan_rad[:, None] + EARTH_ROTATION_RATE * t)
+        self.raan_rad = self.inital_raan_rad[:, None]
+
+        # TODO: add J2 perturbations based on 1503
+        # perigee argument
+        self.omega = self.omega_0
+
+        self.omega_rad = np.deg2rad(self.omega)
+
         # The time to be used for calculation of Earth's rotation angle
         earth_rotated_t = t
 
         return self.__get_satellite_positions_from_angles(
             self.mean_anomaly,
-            raan_rad,
+            self.raan_rad,
+            self.omega_rad,
             earth_rotated_t,
         )
 
@@ -213,16 +230,7 @@ class OrbitModel():
 
         # perigee argument
         # NOTE: using fixed perigee argument for circular orbits always make sense
-        if self.is_elliptical:
-            # NOTE: since the purpose is to ensemble different geometries for constellation
-            # it may make sense to randomize this as well, breaking even more physics
-            # but exploring geometries
-            raise NotImplementedError(
-                "It has not been discussed whether perigee argument is to be drawn randomly"
-            )
-            # self.omega = self.omega_0 + 360 * rng.random_sample(n_samples)
-        else:
-            self.omega = self.omega_0
+        self.omega = self.omega_0
 
         self.omega_rad = np.deg2rad(self.omega)
 
@@ -251,7 +259,9 @@ class OrbitModel():
         earth_rotated_t:
             The time to be used for calculation of Earth's rotation angle
         """
-        assert raan_rad.shape == (self.Np * self.Nsp, len(earth_rotated_t))
+        assert (raan_rad.shape == (self.Np * self.Nsp, len(earth_rotated_t))) or (
+            raan_rad.shape == (self.Np * self.Nsp, 1)
+        )
 
         # Eccentric anomaly (E)
         self.eccentric_anom = eccentric_anomaly(

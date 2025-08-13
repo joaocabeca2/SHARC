@@ -45,7 +45,7 @@ class TestOrbitModel(unittest.TestCase):
             6845.3519,
             places=4)
         self.assertAlmostEqual(self.orbit.sat_sep_angle_deg, 60.0)
-        self.assertAlmostEqual(self.orbit.orbital_plane_inclination, 45.0)
+        self.assertAlmostEqual(self.orbit.orbital_plane_spacing, 45.0)
 
     def test_mean_anomalies(self):
         """Test mean anomaly calculations and satellite phasing logic."""
