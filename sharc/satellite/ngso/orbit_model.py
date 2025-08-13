@@ -60,11 +60,12 @@ class OrbitModel():
         self.Np = Np
         self.phasing = phasing
         self.long_asc = long_asc
-        self.omega = omega
+        self.omega_0 = omega
         self.delta = delta
         self.perigee_alt_km = hp
         self.apogee_alt_km = ha
         self.Mo = Mo
+        self.is_elliptical = hp != ha
 
         # Derive other orbit parameters
         self.semi_major_axis = (
@@ -76,7 +77,7 @@ class OrbitModel():
         # satellite separation angle in the plane (degrees)
         self.sat_sep_angle_deg = 360 / self.Nsp
         # angle between plane intersections with the equatorial plane (degrees)
-        self.orbital_plane_inclination = 360 / self.Np
+        self.orbital_plane_spacing = 360 / self.Np
 
         # Initial mean anomalies for all the satellites
         initial_mean_anomalies_deg = (
@@ -89,7 +90,7 @@ class OrbitModel():
 
         # Initial longitudes of ascending node for all the planes
         inital_raan = (self.long_asc * np.ones(self.Nsp) + np.arange(self.Np)
-                       [:, np.newaxis] * self.orbital_plane_inclination) % 360
+                       [:, np.newaxis] * self.orbital_plane_spacing) % 360
         self.inital_raan_rad = np.radians(inital_raan.flatten())
 
         self.model_time_as_random_variable = model_time_as_random_variable
@@ -193,22 +194,42 @@ class OrbitModel():
         """
         if self.model_time_as_random_variable:
             return self.get_orbit_positions_time_instant(
-                self.t_min + (self.t_min - self.t_max) * rng.random_sample(n_samples)
+                self.t_min + (self.t_max - self.t_min) * rng.random_sample(n_samples)
             )
         # Mean anomaly (M)
         self.mean_anomaly = (self.initial_mean_anomalies_rad[:, None] +
                              2 * np.pi * rng.random_sample(n_samples)) % (2 * np.pi)
 
+        # just selecting a random earth rotation for later coordinate transformation
+        earth_rotated_t = 2 * np.pi * rng.random_sample(n_samples) / EARTH_ROTATION_RATE
+
         # Longitudes of the ascending node (OmegaG)
         # shape (Np*Nsp, len(t))
-        raan_rad = (self.inital_raan_rad[:, None] +
-                    2 * np.pi * rng.random_sample(n_samples))
+        # FIXME: previous implementation, due to unexpected behavior, did not
+        # use the drawn random samples. Choose whether to maintain behavior
+        # self.raan_rad = (self.inital_raan_rad[:, None] +
+        #             2 * np.pi * rng.random_sample(n_samples))
+        self.raan_rad = self.inital_raan_rad[:, None]
 
-        earth_rotated_t = 2 * np.pi * rng.random_sample(n_samples) / EARTH_ROTATION_RATE
+        # perigee argument
+        # NOTE: using fixed perigee argument for circular orbits always make sense
+        if self.is_elliptical:
+            # NOTE: since the purpose is to ensemble different geometries for constellation
+            # it may make sense to randomize this as well, breaking even more physics
+            # but exploring geometries
+            raise NotImplementedError(
+                "It has not been discussed whether perigee argument is to be drawn randomly"
+            )
+            # self.omega = self.omega_0 + 360 * rng.random_sample(n_samples)
+        else:
+            self.omega = self.omega_0
+
+        self.omega_rad = np.deg2rad(self.omega)
 
         return self.__get_satellite_positions_from_angles(
             self.mean_anomaly,
-            raan_rad,
+            self.raan_rad,
+            self.omega_rad,
             earth_rotated_t,
         )
 
@@ -216,15 +237,19 @@ class OrbitModel():
         self,
         mean_anomaly: np.ndarray,
         raan_rad: np.ndarray,
+        omega_rad: np.array,
         earth_rotated_t: np.ndarray,
     ):
         """
         mean_anomaly:
-        Mean anomaly (M)
+            Mean anomaly (M)
         raan_rad: np.ndarray
             Longitudes of the ascending node (OmegaG)
+        omega_rad: np.ndarray
+            Perigee argument
+            NOTE: doesn't matter for circular orbits
         earth_rotated_t:
-        The time to be used for calculation of Earth's rotation angle
+            The time to be used for calculation of Earth's rotation angle
         """
         assert raan_rad.shape == (self.Np * self.Nsp, len(earth_rotated_t))
 
@@ -245,8 +270,7 @@ class OrbitModel():
         # True anomaly relative to the line of nodes (gamma)
         self.true_anomaly_rel_line_nodes = wrap2pi(
             self.true_anomaly +
-            np.radians(
-                self.omega))  # gamma in the interval [-pi, pi]
+            omega_rad)  # gamma in the interval [-pi, pi]
 
         # Latitudes of the satellites, in radians (theta)
         # theta = np.arcsin(np.sin(gamma) * np.sin(np.radians(self.delta)))
@@ -260,8 +284,8 @@ class OrbitModel():
         r_eci = keplerian2eci(self.semi_major_axis,
                               self.eccentricity,
                               self.delta,
-                              np.degrees(self.inital_raan_rad),
-                              self.omega,
+                              np.degrees(raan_rad),
+                              np.degrees(omega_rad),
                               np.degrees(self.true_anomaly))
 
         r_ecef = eci2ecef(earth_rotated_t, r_eci)
