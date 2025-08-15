@@ -1249,7 +1249,9 @@ class StationFactory(object):
             else:
                 raise ValueError(f"Invalid or not implemented spectral mask - {param.spectral_mask}")
 
-            single_earth_station.spectral_mask.set_mask(param.tx_power_density + 10 * np.log10(param.bandwidth * 1e6))
+            single_earth_station.spectral_mask.set_mask(
+                param.tx_power_density + 10 * np.log10(param.bandwidth * 1e6) + 30
+            )
 
         return single_earth_station
 
@@ -1632,7 +1634,8 @@ class StationFactory(object):
             10 *
             np.log10(
                 param_mss.bandwidth *
-                1e6))
+                1e6) + 30
+        )
 
         return mss_ss
 
@@ -1697,7 +1700,8 @@ class StationFactory(object):
             10 *
             np.log10(
                 params.bandwidth *
-                1e6))
+                1e6) + 30
+        )
 
        # Configure satellite positions in the StationManager
         mss_d2d.x = mss_d2d_values["sat_x"]
