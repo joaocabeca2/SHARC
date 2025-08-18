@@ -513,15 +513,7 @@ class ParametersTest(unittest.TestCase):
             1200,
         )
         self.assertEqual(
-            self.parameters.single_earth_station.param_p619.space_station_alt_m,
-            540000,
-        )
-        self.assertEqual(
             self.parameters.single_earth_station.param_p619.earth_station_lat_deg, 13, )
-        self.assertEqual(
-            self.parameters.single_earth_station.param_p619.earth_station_long_diff_deg,
-            10,
-        )
 
         self.assertEqual(
             self.parameters.single_earth_station.param_p452.atmospheric_pressure, 1, )
@@ -641,8 +633,6 @@ class ParametersTest(unittest.TestCase):
             self.parameters.mss_d2d.param_p619.earth_station_alt_m, 0.0)
         self.assertEqual(
             self.parameters.mss_d2d.param_p619.earth_station_lat_deg, 0.0)
-        self.assertEqual(
-            self.parameters.mss_d2d.param_p619.earth_station_long_diff_deg, 0.75)
 
         self.assertEqual(
             self.parameters.mss_d2d.beam_positioning.service_grid.beam_radius,
@@ -817,10 +807,6 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(
             self.parameters.single_space_station.param_p619.earth_station_alt_m,
             self.parameters.single_space_station.geometry.es_altitude,
-        )
-        self.assertEqual(
-            self.parameters.single_space_station.param_p619.space_station_alt_m,
-            self.parameters.single_space_station.geometry.altitude,
         )
         self.assertEqual(
             self.parameters.single_space_station.param_p619.earth_station_lat_deg,

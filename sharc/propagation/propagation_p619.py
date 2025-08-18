@@ -35,10 +35,8 @@ class PropagationP619(Propagation):
     def __init__(
         self,
         random_number_gen: np.random.RandomState,
-        space_station_alt_m: float,
         earth_station_alt_m: float,
         earth_station_lat_deg: float,
-        earth_station_long_diff_deg: float,
         season: str,
         mean_clutter_height: str,
         below_rooftop: float
@@ -49,8 +47,6 @@ class PropagationP619(Propagation):
         ----------
         random_number_gen : np.random.RandomState
             randon number generator
-        space_station_alt_m : float
-            The space station altitude in meters
         earth_station_alt_m : float
             The Earth station altitude in meters
         earth_station_lat_deg : float
@@ -83,10 +79,8 @@ class PropagationP619(Propagation):
         self.mean_clutter_height = mean_clutter_height
         self.below_rooftop = below_rooftop
 
-        self.space_station_alt_m = space_station_alt_m
         self.earth_station_alt_m = earth_station_alt_m
         self.earth_station_lat_deg = earth_station_lat_deg
-        self.earth_station_long_diff_deg = earth_station_long_diff_deg
 
         if season.upper() not in ["SUMMER", "WINTER"]:
             raise ValueError(
@@ -521,31 +515,17 @@ if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
 
-    # params = Parameters()
-
-    # propagation_path = os.getcwd()
-    # sharc_path = os.path.dirname(propagation_path)
-    # param_file = os.path.join(sharc_path, "parameters", "parameters.ini")
-    # deprecated
-
-    # params.set_file_name(param_file)
-    # params.read_params()
-
-    # sat_params = params.fss_ss
-
-    space_station_alt_m = 20000.0
     earth_station_alt_m = 1000.0
     earth_station_lat_deg = -15.7801
-    earth_station_long_diff_deg = 0.0
     season = "SUMMER"
 
     random_number_gen = np.random.RandomState(101)
     propagation = PropagationP619(
         random_number_gen=random_number_gen,
-        space_station_alt_m=space_station_alt_m,
         earth_station_alt_m=earth_station_alt_m,
         earth_station_lat_deg=earth_station_lat_deg,
-        earth_station_long_diff_deg=earth_station_long_diff_deg,
+        mean_clutter_height='low',
+        below_rooftop=0.0,
         season=season,
     )
 
