@@ -144,14 +144,10 @@ class ParametersImt(ParametersBase):
     # the BS space station and the UEs on Earth's surface.
     # For now, the NTN footprint is centered over the BS nadir point, therefore
     # the paramters imt_lag_deg and imt_long_diff_deg SHALL be zero.
-    #    space_station_alt_m - altitude of IMT space station (meters)
     #    earth_station_alt_m - altitude of IMT earth stations (UEs) (in meters)
     #    earth_station_lat_deg - latitude of IMT earth stations (UEs) (in degrees)
-    #    earth_station_long_diff_deg - difference between longitudes of IMT space and earth stations
-    #      (positive if space-station is to the East of earth-station)
     #    season - season of the year.
     param_p619 = ParametersP619()
-    season: str = "SUMMER"
 
     # TODO: create parameters for where this is needed
     los_adjustment_factor: float = 18.0
@@ -200,11 +196,6 @@ class ParametersImt(ParametersBase):
             raise ValueError(
                 f"ParametersImt: Invalid channel model {
                     self.channel_model} for topology NTN", )
-
-        if self.season not in ["SUMMER", "WINTER"]:
-            raise ValueError(f"ParamtersImt: \
-                             Invalid value for parameter season - {self.season}. \
-                             Possible values are \"SUMMER\", \"WINTER\".")
 
         if self.topology.type == "NTN":
             self.is_space_to_earth = True

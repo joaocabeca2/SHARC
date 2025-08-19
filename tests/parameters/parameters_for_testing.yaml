@@ -567,19 +567,14 @@ imt:
     noise_temperature  : 290
     param_p619:
         ###########################################################################
-        # altitude of the space station [m]
-        space_station_alt_m: 540000
-        ###########################################################################
         # altitude of ES system [m]
         earth_station_alt_m: 1200
         ###########################################################################
         # latitude of ES system [m]
         earth_station_lat_deg: 13
         ###########################################################################
-        # difference between longitudes of IMT-NTN station and FSS-ES system [deg]
-        #   (positive if space-station is to the East of earth-station)
-        earth_station_long_diff_deg: 10
         mean_clutter_height: 'low'
+        ###########################################################################
         below_rooftop: 50
 haps:
     ###########################################################################
@@ -755,19 +750,14 @@ single_earth_station:
     # Parameters for P619 channel model
     param_p619:
         ###########################################################################
-        # altitude of the space station [m]
-        space_station_alt_m: 540000
-        ###########################################################################
         # altitude of ES system [m]
         earth_station_alt_m: 1200
         ###########################################################################
         # latitude of ES system [m]
         earth_station_lat_deg: 13
         ###########################################################################
-        # difference between longitudes of IMT-NTN station and FSS-ES system [deg]
-        #   (positive if space-station is to the East of earth-station)
-        earth_station_long_diff_deg: 10
         mean_clutter_height: 'low'
+        ###########################################################################
         below_rooftop: 50
     ###########################################################################
     # season - season of the year.
@@ -1074,10 +1064,6 @@ mss_d2d:
         ###########################################################################
         # latitude of ES system [m]
         earth_station_lat_deg: 0
-        ###########################################################################
-        # difference between longitudes of IMT-NTN station and FSS-ES system [deg]
-        #   (positive if space-station is to the East of earth-station)
-        earth_station_long_diff_deg: 0.75
         ###########################################################################
         # year season: SUMMER of WINTER
         season: SUMMER
