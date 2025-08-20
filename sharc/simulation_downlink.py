@@ -47,7 +47,7 @@ class SimulationDownlink(Simulation):
 
         # Create the other system (FSS, HAPS, etc...)
         self.system = StationFactory.generate_system(
-            self.parameters, self.topology, random_number_gen,
+            self.parameters, self.system_topology, random_number_gen,
         )
         
 
@@ -194,8 +194,33 @@ class SimulationDownlink(Simulation):
         Calculates interference that IMT system generates on other system
         """
         if self.parameters.general.system == "WIFI":
-            pass
 
+            if self.co_channel:
+                self.coupling_loss_imt_wifi_ap = self.calculate_coupling_loss_system_imt(
+                    self.system.ap,
+                    self.bs,
+                    is_co_channel=True,
+                )
+
+                self.coupling_loss_imt_wifi_sta = self.calculate_coupling_loss_system_imt(
+                    self.system.sta,
+                    self.bs,
+                    is_co_channel=True,
+                )
+            if self.adjacent_channel:
+                self.coupling_loss_imt_wifi_ap_adjacent = \
+                    self.calculate_coupling_loss_system_imt(
+                        self.system.ap,
+                        self.bs,
+                        is_co_channel=False,
+                    )
+
+                self.coupling_loss_imt_wifi_sta_adjacent = \
+                    self.calculate_coupling_loss_system_imt(
+                        self.system.sta,
+                        self.bs,
+                        is_co_channel=False,
+                    )
         else:
             if self.co_channel:
                 self.coupling_loss_imt_system = self.calculate_coupling_loss_system_imt(
@@ -259,14 +284,30 @@ class SimulationDownlink(Simulation):
                     + self.parameters.imt.bs.ohmic_loss
                 
                 if self.parameters.general.system == "WIFI":
-                    oob_interference = oob_power \
-                        - self.coupling_loss_imt_system_adjacent[:, active_beams[0]] \
+                    # Verify array bounds before indexing
+                    if active_beams[0] >= self.coupling_loss_imt_wifi_ap_adjacent.shape[1]:
+                        continue
+                    # Calculate OOB interference for APs
+                    oob_interference_ap = oob_power \
+                        - self.coupling_loss_imt_wifi_ap_adjacent[:, active_beams[0]] \
+                        + 10 * np.log10(
+                            (self.param_system.bandwidth - self.overlapping_bandwidth) /
+                            self.param_system.bandwidth,
+                        )
+                    
+                    if active_beams[0] >= self.coupling_loss_imt_wifi_sta_adjacent.shape[1]:
+                        continue
+                    # Calculate OOB interference for STAs
+                    oob_interference_sta = oob_power \
+                        - self.coupling_loss_imt_wifi_sta_adjacent[:, active_beams[0]] \
                         + 10 * np.log10(
                             (self.param_system.bandwidth - self.overlapping_bandwidth) /
                             self.param_system.bandwidth,
                         )
 
-                    rx_interference += np.sum(np.power(10, 0.1 * oob_interference), axis=0)
+                    # Sum interference from both APs and STAs
+                    rx_interference += (np.sum(np.power(10, 0.1 * oob_interference_ap), axis=0) + 
+                                    np.sum(np.power(10, 0.1 * oob_interference_sta), axis=0))
 
                 else:
                     oob_interference = oob_power \

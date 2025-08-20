@@ -565,7 +565,7 @@ class StationFactory(object):
         elif parameters.general.system == "RNS":
             return StationFactory.generate_rns(parameters.rns, random_number_gen)
         elif parameters.general.system == "WIFI":
-            return StationFactory.generate_wifi_system(parameters.wifi, parameters.wifi.ap.antenna, parameters.wifi.sta.antenna, random_number_gen)
+            return StationFactory.generate_wifi_system(parameters.wifi, parameters.wifi.ap.antenna, parameters.wifi.sta.antenna, random_number_gen, topology)
         else:
             sys.stderr.write(
                 "ERROR\nInvalid system: " +
@@ -1126,7 +1126,8 @@ class StationFactory(object):
     def generate_wifi_system(param: ParametersWifiSystem,
                             param_ant_ap: ParametersAntennaWifi,
                             param_ant_sta: ParametersAntennaWifi,
-                            random_number_gen: np.random.RandomState):
+                            random_number_gen: np.random.RandomState,
+                            topology: Topology):
         """
         Generate a Wi-Fi system with access points and stations.
 
@@ -1146,7 +1147,7 @@ class StationFactory(object):
         tuple
             Access points and stations as StationManager objects.
         """
-        return SystemWifi(param, param_ant_ap, param_ant_sta, random_number_gen)
+        return SystemWifi(param, param_ant_ap, param_ant_sta, random_number_gen, topology)
 
     @staticmethod
     def get_random_position(num_ue: int,

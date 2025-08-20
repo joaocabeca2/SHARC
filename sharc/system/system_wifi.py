@@ -14,7 +14,7 @@ from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
 
 from itertools import product
 
-class TopologyIndoor(Topology):
+class TopologyIndoorWifi(Topology):
     """
     Generates the coordinates of the sites based on the indoor network
     topology.
@@ -117,11 +117,11 @@ class TopologyIndoor(Topology):
 
 class SystemWifi:
     """Implements a Wifi Network compose of APs and STAs."""
-    def __init__(self, param: ParametersWifiSystem, param_ant_ap: ParametersAntennaWifi, param_ant_sta: ParametersAntennaWifi, random_number_gen: np.random.RandomState) -> None:
+    def __init__(self, param: ParametersWifiSystem, param_ant_ap: ParametersAntennaWifi, param_ant_sta: ParametersAntennaWifi, random_number_gen: np.random.RandomState, topology: Topology):
         self.parameters = param
         self.parameters_antenna = param_ant_ap
-        self.topology = TopologyIndoor(self.parameters.topology.indoor) 
-        self.topology.calculate_coordinates()
+        self.topology = topology
+        #self.topology.calculate_coordinates()
         self.num_aps = self.topology.num_base_stations
         self.num_sta = self.num_aps * self.parameters.sta.k * self.parameters.sta.k_m
 

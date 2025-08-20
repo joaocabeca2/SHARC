@@ -274,18 +274,9 @@ class StationManager(object):
         else:
             return False
     
-    def is_imt_or_wifi_station(self) -> bool:
-        """Whether this station is IMT or WiFi or not
-
-        Returns
-        -------
-        bool
-            Whether this station is IMT or WiFi or not
-        """
+    def is_wifi_station(self) -> bool:
         
-        if np.isin(self.station_type, [StationType.IMT_BS, StationType.WIFI_APS]).any() or\
-            np.isin(self.station_type, [StationType.IMT_UE, StationType.WIFI_STA]).any():
+        if self.station_type is StationType.WIFI_APS or self.station_type is StationType.WIFI_STA:
             return True
         else:
             return False
-    

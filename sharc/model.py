@@ -66,6 +66,8 @@ class Model(Observable):
         self.current_snapshot = 0
 
         self.simulation.initialize()
+        if self.parameters.general.system == "WIFI":
+            self.simulation.initialize_wifi()
 
         random.seed(self.parameters.general.seed)
 
@@ -87,12 +89,11 @@ class Model(Observable):
             + "\tspurious emissions: {:.0f} dBm/MHz\n".format(self.parameters.imt.spurious_emissions) \
             + "\ttopology: {:s}\n".format(self.parameters.imt.topology.type) \
             + "\tpath loss model: {:s}\n".format(self.parameters.imt.channel_model)  \
-            + "\nWiFi:\n" \
-            + "\tfrequency: {:.3f} GHz\n".format(self.parameters.wifi.frequency * 1e-3) \
-            + "\tbandwidth: {:.0f} MHz\n".format(self.parameters.wifi.bandwidth) \
-            + "\tspurious emissions: {:.0f} dBm/MHz\n".format(self.parameters.wifi.spurious_emissions) \
-            + "\ttopology: {:s}\n".format(self.parameters.wifi.topology.type) \
-            + "\tpath loss model: {:s}\n".format(self.parameters.imt.channel_model)  \
+            + "{:s}:\n".format(self.parameters.general.system) \
+            + "\tfrequency: {:.3f} GHz\n".format(param_system.frequency * 1e-3) \
+            + "\tbandwidth: {:.0f} MHz\n".format(param_system.bandwidth) \
+            + "\tpath loss model: {:s}\n".format(param_system.channel_model) \
+            + "\tantenna pattern: {:s}\n".format(param_system.antenna_pattern)
                 
         return description
 
