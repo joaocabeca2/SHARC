@@ -13,11 +13,13 @@ from sharc.topology.topology_macrocell import TopologyMacrocell
 
 
 class TopologyMacrocellTest(unittest.TestCase):
+    """Unit tests for the TopologyMacrocell class, including intersite distance and cluster logic."""
 
     def setUp(self):
-        pass
+        """Set up for TopologyMacrocell tests (placeholder)."""
 
     def test_intersite_distance(self):
+        """Test calculation of intersite distance and cell radius."""
         intersite_distance = 1000
         num_clusters = 1
         topology = TopologyMacrocell(intersite_distance, num_clusters)
@@ -42,6 +44,7 @@ class TopologyMacrocellTest(unittest.TestCase):
         self.assertAlmostEqual(topology.cell_radius, 1000, places=2)
 
     def test_num_clusters(self):
+        """Test calculation of the number of clusters in the topology."""
         # set to 1 cluster
         intersite_distance = 1000
         num_clusters = 1
@@ -86,12 +89,20 @@ class TopologyMacrocellTest(unittest.TestCase):
         self.assertEqual(len(topology.azimuth), num_bs)
 
         # check coordinates
-        x_ref = np.repeat(np.array([0, 1000, 500, -500, -1000, -500,
-                                    500, 2000, 1500, 1000, 0, -1000,
-                                    -1500, -2000, -1500, -1000, 0, 1000, 1500]), num_bs_per_site)
-        y_ref = np.repeat(np.array([0, 0, 866.02, 866.02, 0, -866.02,
-                                    -866.02, 0, 866.02, 1732.05, 1732.05, 1732.05,
-                                    866.02, 0, -866.02, -1732.05, -1732.05, -1732.05, -866.02]), num_bs_per_site)
+        x_ref = np.repeat(
+            np.array([
+                0, 1000, 500, -500, -1000, -500,
+                500, 2000, 1500, 1000, 0, -1000,
+                -1500, -2000, -1500, -1000, 0, 1000, 1500,
+            ]), num_bs_per_site,
+        )
+        y_ref = np.repeat(
+            np.array([
+                0, 0, 866.02, 866.02, 0, -866.02,
+                -866.02, 0, 866.02, 1732.05, 1732.05, 1732.05,
+                866.02, 0, -866.02, -1732.05, -1732.05, -1732.05, -866.02,
+            ]), num_bs_per_site,
+        )
         az_ref = np.tile([60, 180, 300], num_sites)
 
         npt.assert_allclose(topology.x, x_ref, atol=1e-2)
@@ -110,12 +121,20 @@ class TopologyMacrocellTest(unittest.TestCase):
         self.assertEqual(len(topology.azimuth), num_bs)
 
         # check coordinates
-        x_ref = np.repeat(np.array([0, 500, 250, -250, -500, -250,
-                                    250, 1000, 750, 500, 0, -500,
-                                    -750, -1000, -750, -500, 0, 500, 750]), num_bs_per_site)
-        y_ref = np.repeat(np.array([0, 0, 433.01, 433.01, 0, -433.01,
-                                    -433.01, 0, 433.01, 866.02, 866.02, 866.02,
-                                    433.01, 0, -433.01, -866.02, -866.02, -866.02, -433.01]), num_bs_per_site)
+        x_ref = np.repeat(
+            np.array([
+                0, 500, 250, -250, -500, -250,
+                250, 1000, 750, 500, 0, -500,
+                -750, -1000, -750, -500, 0, 500, 750,
+            ]), num_bs_per_site,
+        )
+        y_ref = np.repeat(
+            np.array([
+                0, 0, 433.01, 433.01, 0, -433.01,
+                -433.01, 0, 433.01, 866.02, 866.02, 866.02,
+                433.01, 0, -433.01, -866.02, -866.02, -866.02, -433.01,
+            ]), num_bs_per_site,
+        )
         az_ref = np.tile([60, 180, 300], num_sites)
 
         npt.assert_allclose(topology.x, x_ref, atol=1e-2)

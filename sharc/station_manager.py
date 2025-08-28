@@ -10,7 +10,7 @@ import numpy as np
 from sharc.support.enumerations import StationType
 from sharc.station import Station
 from sharc.antenna.antenna import Antenna
-from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
+from sharc.mask.spectral_mask import SpectralMask
 
 
 class StationManager(object):
@@ -22,11 +22,13 @@ class StationManager(object):
 
     def __init__(self, n):
         self.num_stations = n
-        self.x = np.empty(n)
-        self.y = np.empty(n)
+        self.x = np.empty(n)  # x coordinate
+        self.y = np.empty(n)  # y coordinate
+        self.z = np.empty(n)  # z coordinate (includes height above ground)
         self.azimuth = np.empty(n)
         self.elevation = np.empty(n)
-        self.height = np.empty(n)
+        self.height = np.empty(n)  # station height above ground
+        self.idx_orbit = np.empty(n)
         self.indoor = np.zeros(n, dtype=bool)
         self.active = np.ones(n, dtype=bool)
         self.tx_power = np.empty(n)
@@ -39,19 +41,33 @@ class StationManager(object):
         self.noise_temperature = np.empty(n)
         self.thermal_noise = np.empty(n)
         self.total_interference = np.empty(n)
+        self.pfd_external = np.empty(n)  # External PFD in dBW/m²/MHz
+        # Aggregated External PFD in dBW/m²/MHz
+        self.pfd_external_aggregated = np.empty(n)
         self.snr = np.empty(n)
         self.sinr = np.empty(n)
         self.sinr_ext = np.empty(n)
         self.inr = np.empty(n)  # INR in dBm/MHz
         self.pfd = np.empty(n)  # Powerflux density in dBm/m^2
-        self.spectral_mask = np.empty(n, dtype=SpectralMask3Gpp)
+        self.spectral_mask = np.empty(n, dtype=SpectralMask)
         self.center_freq = np.empty(n)
-        self.spectral_mask = None
         self.station_type = StationType.NONE
         self.is_space_station = False
         self.intersite_dist = 0.0
 
     def get_station_list(self, id=None) -> list:
+        """Return a list of Station objects for the given indices.
+
+        Parameters
+        ----------
+        id : iterable or None, optional
+            Indices of stations to retrieve. If None, returns all stations.
+
+        Returns
+        -------
+        list
+            List of Station objects.
+        """
         if (id is None):
             id = range(self.num_stations)
         station_list = list()
@@ -60,10 +76,23 @@ class StationManager(object):
         return station_list
 
     def get_station(self, id) -> Station:
+        """Return a Station object for the given index.
+
+        Parameters
+        ----------
+        id : int
+            Index of the station to retrieve.
+
+        Returns
+        -------
+        Station
+            Station object with properties set from the manager.
+        """
         station = Station()
         station.id = id
         station.x = self.x[id]
         station.y = self.y[id]
+        station.z = self.z[id]
         station.azimuth = self.azimuth[id]
         station.elevation = self.elevation[id]
         station.height = self.height[id]
@@ -87,6 +116,18 @@ class StationManager(object):
         return station
 
     def get_distance_to(self, station) -> np.array:
+        """Calculate the 2D distance between this manager's stations and another's.
+
+        Parameters
+        ----------
+        station : StationManager
+            StationManager to which the distance is calculated.
+
+        Returns
+        -------
+        np.array
+            2D distance matrix between stations.
+        """
         distance = np.empty([self.num_stations, station.num_stations])
         for i in range(self.num_stations):
             distance[i] = np.sqrt(
@@ -96,22 +137,38 @@ class StationManager(object):
         return distance
 
     def get_3d_distance_to(self, station) -> np.array:
+        """Calculate the 3D distance between this manager's stations and another's.
+
+        Parameters
+        ----------
+        station : StationManager
+            StationManager to which the distance is calculated.
+
+        Returns
+        -------
+        np.array
+            3D distance matrix between stations.
+        """
         distance = np.empty([self.num_stations, station.num_stations])
         for i in range(self.num_stations):
             distance[i] = np.sqrt(
                 np.power(self.x[i] - station.x, 2) +
                 np.power(self.y[i] - station.y, 2) +
-                np.power(self.height[i] - station.height, 2),
+                np.power(self.z[i] - station.z, 2)
             )
         return distance
 
     def get_dist_angles_wrap_around(self, station) -> np.array:
-        """
-        Calcualtes distances and angles using the wrap around technique
-        Parameters:
-            station (StationManager): station to which calculate the distances
-                and angles
-        Returns:
+        """Calculate distances and angles using the wrap-around technique.
+
+        Parameters
+        ----------
+        station : StationManager
+            StationManager to which distances and angles are calculated.
+
+        Returns
+        -------
+        tuple
             distance_2D (np.array): 2D distance between stations
             distance_3D (np.array): 3D distance between stations
             phi (np.array): azimuth of pointing vector to other stations
@@ -184,14 +241,22 @@ class StationManager(object):
         return distance_2D, distance_3D, phi, theta
 
     def get_elevation(self, station) -> np.array:
-        """
-        Calculates the elevation angle between stations. Can be used for
-        IMT stations.
+        """Calculate the elevation angle between this manager's stations and another's.
 
-        TODO: this implementation is essentialy the same as the one from
-              get_elevation_angle (free-space elevation angle), despite the
-              different matrix dimentions. So, the methods should be merged
-              in order to reuse the source code
+        Parameters
+        ----------
+        station : StationManager
+            StationManager to which the elevation angle is calculated.
+
+        Returns
+        -------
+        np.array
+            Elevation angle matrix (degrees).
+
+        Notes
+        -----
+        This implementation is essentially the same as get_elevation_angle (free-space elevation angle),
+        despite the different matrix dimensions. The methods should be merged to reuse code.
         """
 
         elevation = np.empty([self.num_stations, station.num_stations])
@@ -201,29 +266,29 @@ class StationManager(object):
                 np.power(self.x[i] - station.x, 2) +
                 np.power(self.y[i] - station.y, 2),
             )
-            rel_z = station.height - self.height[i]
+            rel_z = station.z - self.z[i]
             elevation[i] = np.degrees(np.arctan2(rel_z, distance))
 
         return elevation
 
     def get_pointing_vector_to(self, station) -> tuple:
-        """calculate the pointing vector (angles) w.r.t. the other station
+        """Calculate the pointing vector (angles) with respect to another station.
 
         Parameters
         ----------
         station : StationManager
-            The other station to calculate the pointing vector
+            The other StationManager to calculate the pointing vector to.
 
         Returns
         -------
         tuple
-            phi, theta (phi is calculated with respect to x counter-clock-wise and
-            theta is calculated with respect to z counter-clock-wise)
+            phi, theta (phi is calculated with respect to x counter-clockwise and
+            theta is calculated with respect to z counter-clockwise).
         """
 
         point_vec_x = station.x - self.x[:, np.newaxis]
         point_vec_y = station.y - self.y[:, np.newaxis]
-        point_vec_z = station.height - self.height[:, np.newaxis]
+        point_vec_z = station.z - self.z[:, np.newaxis]
 
         dist = self.get_3d_distance_to(station)
 
@@ -239,37 +304,90 @@ class StationManager(object):
         return phi, theta
 
     def get_off_axis_angle(self, station) -> np.array:
-        """
-        Calculates the off-axis angle between this station and the input station
+        """Calculate the off-axis angle between this manager's stations and another's.
+
+        Parameters
+        ----------
+        station : StationManager
+            The other StationManager to calculate the off-axis angle to.
+
+        Returns
+        -------
+        np.array
+            Off-axis angle matrix (degrees).
         """
         Az, b = self.get_pointing_vector_to(station)
         Az0 = self.azimuth
 
-        a = 90 - self.elevation
-        C = Az0 - Az
+        a = 90 - self.elevation[:, np.newaxis]
+        C = Az0[:, np.newaxis] - Az
 
+        cos_phi = np.cos(np.radians(a)) * np.cos(np.radians(b)) \
+            + np.sin(np.radians(a)) * np.sin(np.radians(b)) * np.cos(np.radians(C))
         phi = np.arccos(
-            np.cos(np.radians(a)) * np.cos(np.radians(b)) +
-            np.sin(np.radians(a)) * np.sin(np.radians(b)) * np.cos(np.radians(C)),
+            # imprecision may accumulate enough for numbers to be slightly out
+            # of arccos range
+            np.clip(cos_phi, -1., 1.)
         )
         phi_deg = np.degrees(phi)
 
         return phi_deg
 
     def is_imt_station(self) -> bool:
-        """Whether this station is IMT or not
-
-        Parameters
-        ----------
-        sta : StationManager
-            The station that we're testing.
+        """Return whether this station manager represents IMT stations.
 
         Returns
         -------
         bool
-            Whether this station is IMT or not
+            True if this station manager is IMT (IMT_BS or IMT_UE), False otherwise.
         """
         if self.station_type is StationType.IMT_BS or self.station_type is StationType.IMT_UE:
             return True
         else:
             return False
+
+
+def copy_active_stations(stations: StationManager) -> StationManager:
+    """Return a new StationManager object containing only the active stations.
+
+    Parameters
+    ----------
+    stations : StationManager
+        StationManager object to copy from.
+
+    Returns
+    -------
+    StationManager
+        A new StationManager object with only the active stations.
+    """
+    act_sta = StationManager(np.sum(stations.active))
+    for idx, active_idx in enumerate(np.where(stations.active)[0]):
+        act_sta.x[idx] = stations.x[active_idx]
+        act_sta.y[idx] = stations.y[active_idx]
+        act_sta.z[idx] = stations.z[active_idx]
+        act_sta.azimuth[idx] = stations.azimuth[active_idx]
+        act_sta.elevation[idx] = stations.elevation[active_idx]
+        act_sta.height[idx] = stations.height[active_idx]
+        act_sta.indoor[idx] = stations.indoor[active_idx]
+        act_sta.active[idx] = stations.active[active_idx]
+        act_sta.tx_power[idx] = stations.tx_power[active_idx]
+        act_sta.rx_power[idx] = stations.rx_power[active_idx]
+        act_sta.rx_interference[idx] = stations.rx_interference[active_idx]
+        act_sta.ext_interference[idx] = stations.ext_interference[active_idx]
+        act_sta.antenna[idx] = stations.antenna[active_idx]
+        act_sta.bandwidth[idx] = stations.bandwidth[active_idx]
+        act_sta.noise_figure[idx] = stations.noise_figure[active_idx]
+        act_sta.noise_temperature[idx] = stations.noise_temperature[active_idx]
+        act_sta.thermal_noise[idx] = stations.thermal_noise[active_idx]
+        act_sta.total_interference[idx] = stations.total_interference[active_idx]
+        act_sta.snr[idx] = stations.snr[active_idx]
+        act_sta.sinr[idx] = stations.sinr[active_idx]
+        act_sta.sinr_ext[idx] = stations.sinr_ext[active_idx]
+        act_sta.inr[idx] = stations.inr[active_idx]
+        act_sta.pfd[idx] = stations.pfd[active_idx]
+        act_sta.spectral_mask = stations.spectral_mask
+        act_sta.center_freq[idx] = stations.center_freq[active_idx]
+        act_sta.station_type = stations.station_type
+        act_sta.is_space_station = stations.is_space_station
+        act_sta.intersite_dist = stations.intersite_dist
+    return act_sta

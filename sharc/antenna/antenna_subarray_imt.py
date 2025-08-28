@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Implements a Subarray "Element" for IMT antenna, as defined in R23-WP5D-C-0413, Annex 4.2, Table 8.
+Provides subarray pattern calculations for use in SHARC simulations.
+"""
+# -*- coding: utf-8 -*-
 import numpy as np
 import typing
 
@@ -73,7 +78,11 @@ class AntennaSubarrayIMT(object):
 
         return v_n
 
-    def _weight_vector(self, eletrical_downtilt: float, n_rows: int, dv_sub: float) -> np.array:
+    def _weight_vector(
+            self,
+            eletrical_downtilt: float,
+            n_rows: int,
+            dv_sub: float) -> np.array:
         """
         Calculates weight/sub-array excitation.
         Angles are in the local coordinate system.
@@ -92,9 +101,8 @@ class AntennaSubarrayIMT(object):
         """
         m = np.arange(self.n_rows) + 1
 
-        return 1 / np.sqrt(n_rows) * np.exp(
-            1.0j * 2 * np.pi * (m - 1) * dv_sub * np.sin(np.deg2rad(eletrical_downtilt))
-        )
+        return 1 / np.sqrt(n_rows) * np.exp(1.0j * 2 * np.pi *
+                                            (m - 1) * dv_sub * np.sin(np.deg2rad(eletrical_downtilt)))
 
     def _calculate_single_dir_gain(self, phi: float, theta: float):
         """
@@ -106,7 +114,8 @@ class AntennaSubarrayIMT(object):
 
         v_vec = self._super_position_vector(theta, self.n_rows, self.dv_sub)
 
-        w_vec = self._weight_vector(self.eletrical_downtilt, self.n_rows, self.dv_sub)
+        w_vec = self._weight_vector(
+            self.eletrical_downtilt, self.n_rows, self.dv_sub)
 
         array_g = 10 * np.log10(abs(np.sum(np.multiply(v_vec, w_vec)))**2)
 
@@ -138,7 +147,8 @@ class AntennaSubarrayIMT(object):
         gains = np.zeros(n_direct)
 
         for i in range(n_direct):
-            gains[i] = self._calculate_single_dir_gain(phi_arr[i], theta_arr[i])
+            gains[i] = self._calculate_single_dir_gain(
+                phi_arr[i], theta_arr[i])
 
         return gains
 
@@ -196,7 +206,7 @@ if __name__ == '__main__':
 
     # Plot BS TX radiation patterns
     par = bs_param.get_antenna_parameters()
-    bs_array = AntennaBeamformingImt(par, 0, 0, bs_param.subarray)
+    bs_array = AntennaBeamformingImt(par, 0, -6)
     f = plot.plot_element_pattern(bs_array, "BS", "ELEMENT")
     # f.savefig(figs_dir + "BS_element.pdf", bbox_inches='tight')
     f = plot.plot_element_pattern(bs_array, "BS", "SUBARRAY")
@@ -205,7 +215,7 @@ if __name__ == '__main__':
 
     # Plot UE TX radiation patterns
     par = bs2_param.get_antenna_parameters()
-    bs2_array = AntennaBeamformingImt(par, 0, 0, bs2_param.subarray)
+    bs2_array = AntennaBeamformingImt(par, 0, 0)
     # plot.plot_element_pattern(bs2_array, "BS 2", "ELEMENT")
     # plot.plot_element_pattern(bs2_array, "BS 2", "ARRAY")
 

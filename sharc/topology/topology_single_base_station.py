@@ -59,8 +59,17 @@ class TopologySingleBaseStation(Topology):
                 self.azimuth = np.array(TopologySingleBaseStation.AZIMUTH)
                 self.num_base_stations = 2
             self.indoor = np.zeros(self.num_base_stations, dtype=bool)
+        self.z = np.zeros_like(self.x)
 
     def plot(self, ax: matplotlib.axes.Axes):
+        """
+        Plots the base stations and their coverage areas on the given axes.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            The axes on which to plot the base stations and coverage areas.
+        """
         # plot base station
         plt.scatter(
             self.x, self.y, color='g', edgecolor="w",

@@ -24,10 +24,10 @@ class PropagationP1411(Propagation):
     Frequency in MHz and distance in meters!
     """
 
-    def __init__(self, 
-                random_number_gen: np.random.RandomState,
-                environment: str,
-        ):
+    def __init__(
+            self,
+            random_number_gen: np.random.RandomState,
+            above_clutter=True):
         super().__init__(random_number_gen)
         self.environment = environment
 
@@ -87,122 +87,69 @@ class PropagationP1411(Propagation):
             distances_2d, distances_3d, _, _ = \
                 station_a.get_dist_angles_wrap_around(station_b)
         else:
-            distances_2d = station_a.get_distance_to(station_b)
-            distances_3d = station_a.get_3d_distance_to(station_b)
+            self.los_alpha = 2.12
+            self.los_beta = 29.2
+            self.los_gamma = 2.11
+            self.los_sigma = 5.06
 
-        median_basic_loss = self.calculate_median_basic_loss(
-            distances_3d,
-            frequency * np.ones(distances_2d.shape),
-        )
+            self.nlos_alpha = 4.00
+            self.nlos_beta = 10.20
+            self.nlos_gamma = 2.36
+            self.nlos_sigma = 7.60
 
-        self.alfa = self.alfa * np.ones(distances_2d.shape)
-        self.beta = self.beta * np.ones(distances_2d.shape)
-        self.gamma = self.gamma * np.ones(distances_2d.shape)
-        self.sigma = self.sigma * np.ones(distances_2d.shape)
-
-        return median_basic_loss
-
-    def calculate_median_basic_loss(self, distance_3D: np.array,
-        frequency: np.array,
-        random_number_gen: np.random.Generator
-    ) -> np.array:
-        """
-        This site-general model is applicable to situations where both the transmitting and receiving stations 
-        are located below-rooftop, regardless of their antenna heights.
+    def get_loss(self, *args, **kwargs) -> np.array:
+        """Calculate the path loss using the ITU-R P.1411 model.
 
         Parameters
         ----------
-        distance_3D : np.array
-            3D direct distance between the transmitting and receiving stations (in meters).
-        frequency : np.array
-            Operating frequency in GHz.
-        
-        Returns
-        -------
-        np.array
-            Median basic transmission loss in dB.
-        """
-        median_loss = (10 * self.alfa * np.log10(distance_3D)) + self.beta + (10 * self.gamma * np.log10(frequency))
-        # Add zero-mean Gaussian random variable for shadowing
-        shadowing = random_number_gen.normal(0, self.sigma, distance_3D.shape)
-
-        return median_loss + shadowing
-
-
-    def calculate_excess_loss(self, lfs: np.array, median_basic_loss: np.array, distance_3D: np.array) -> np.array:
-        """
-        Calculates the excess basic transmission loss for NLoS scenarios.
-        
-        This method computes the excess loss with respect to the free-space basic transmission loss
-        using a Monte Carlo approach. It uses a random variable A, which is normally distributed
-        with mean μ and standard deviation σ, to account for the variability in the signal propagation
-        environment.
-
-        Parameters
-        ----------
-        lfs : np.array
-            Free-space basic transmission loss, LFS, in dB.
-        median_basic_loss : np.array
-            Median basic transmission loss, Lb(d, f), in dB.
-        distance_3D : np.array
-            3D direct distance between the transmitting and receiving stations (in meters).
+        distance_3D : np.ndarray, optional
+            3D distance array between stations (if provided).
+        distance_2D : np.ndarray, optional
+            2D distance array between stations (if provided).
+        frequency : float
+            Frequency in Hz.
+        los : bool, optional
+            If True, use line-of-sight model. Default is True.
+        shadow : bool, optional
+            If True, include shadow fading. Default is True.
+        number_of_sectors : int, optional
+            Number of sectors for the calculation. Default is 1.
 
         Returns
         -------
         np.array
-            Excess basic transmission loss in dB.
+            Path loss values for the given parameters.
         """
-        # Calculate μ as the difference between the median basic loss and free-space loss
-        u = median_basic_loss - lfs
+        if "distance_3D" in kwargs:
+            d = kwargs["distance_3D"]
+        else:
+            d = kwargs["distance_2D"]
 
-        # Generate the random variable A using a normal distribution with mean μ and standard deviation σ
-        a = self.random_number_gen.normal(u, self.sigma, distance_3D.shape)
+        f = kwargs["frequency"] / 1e3
+        los = kwargs.pop("los", True)
+        shadow = kwargs.pop("shadow", True)
+        number_of_sectors = kwargs.pop("number_of_sectors", 1)
 
-        # Compute the excess loss using the specified formula
-        return 10 * np.log10(10**(0.1 * a) + 1)
+        if los:
+            alpha = self.los_alpha
+            beta = self.los_beta
+            gamma = self.los_gamma
+            sigma = self.los_sigma
+        else:
+            alpha = self.nlos_alpha
+            beta = self.nlos_beta
+            gamma = self.nlos_gamma
+            sigma = self.nlos_sigma
 
+        if shadow:
+            shadow_loss = self.random_number_gen.normal(0.0, sigma, d.shape)
+        else:
+            shadow_loss = 0.0
 
-if __name__ == '__main__':
-    
-    import matplotlib.pyplot as plt
-    from cycler import cycler
+        loss = 10 * alpha * np.log10(d) + 10 * \
+            gamma * np.log10(f) + beta + shadow_loss
 
-    # Configuração de parâmetros
-    num_ue = 1
-    num_bs = 1000
-    h_bs = 6 * np.ones(num_bs)
-    h_ue = 1.5 * np.ones(num_ue)
+        if number_of_sectors > 1:
+            loss = np.repeat(loss, number_of_sectors, 1)
 
-    # Configuração da distância para o cenário
-    distance_2D = np.repeat(np.linspace(5, 660, num=num_bs)[np.newaxis, :], num_ue, axis=0)
-    frequency = 7 * np.ones(num_bs)  
-    distance_3D = np.sqrt(distance_2D**2 + (h_bs - h_ue[np.newaxis, :])**2)
-
-    # Gerador de números aleatórios
-    random_number_gen = np.random.RandomState(101)
-
-    p1411 = PropagationP1411(random_number_gen, 'URBAN')
-    free_space_prop = PropagationFreeSpace(random_number_gen)
-
-    free_space_loss = free_space_prop.get_free_space_loss(frequency * 1000, distance_3D)
-    median_basic_loss = p1411.calculate_median_basic_loss(distance_3D, frequency, random_number_gen)
-    excess_loss = p1411.calculate_excess_loss(free_space_loss, median_basic_loss, distance_3D)
-
-    # Plotando os gráficos
-    fig = plt.figure(figsize=(8, 6), facecolor='w', edgecolor='k')
-    ax = fig.gca()
-    ax.set_prop_cycle(cycler('color', ['r', 'g', 'b']))
-
-    ax.semilogx(distance_2D[0, :], median_basic_loss[0, :], label="Median basic Loss")
-    ax.semilogx(distance_2D[0, :], excess_loss[0, :], label="Excess Loss")
-    ax.semilogx(distance_2D[0, :], free_space_loss[0, :], label="Free space Loss")
-
-    plt.title(p1411.environment)
-    plt.xlabel("Distance [m]")
-    plt.ylabel("Path Loss [dB]")
-    plt.xlim((0, distance_2D[0, -1]))
-    plt.legend(loc="upper left")
-    plt.tight_layout()
-    plt.grid()
-
-    plt.show()
+        return loss

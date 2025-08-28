@@ -11,17 +11,16 @@ import numpy.testing as npt
 
 from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
-from sharc.support.named_tuples import AntennaPar
-from sharc.support.enumerations import StationType
 
 
 class AntennaBeamformingImtTest(unittest.TestCase):
+    """Unit tests for the AntennaBeamformingImt class."""
 
     def setUp(self):
+        """Set up test fixtures for AntennaBeamformingImt tests."""
         # Array parameters
         self.bs_param = ParametersAntennaImt()
         self.ue_param = ParametersAntennaImt()
-
         self.bs_param.adjacent_antenna_model = "SINGLE_ELEMENT"
         self.ue_param.adjacent_antenna_model = "SINGLE_ELEMENT"
         self.bs_param.normalization = False
@@ -29,7 +28,6 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         self.bs_param.element_pattern = "M2101"
         self.bs_param.minimum_array_gain = -200
         self.bs_param.downtilt = 0
-
         self.bs_param.element_max_g = 5
         self.bs_param.element_phi_3db = 80
         self.bs_param.element_theta_3db = 60
@@ -40,12 +38,10 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         self.bs_param.element_horiz_spacing = 1
         self.bs_param.element_vert_spacing = 1
         self.bs_param.multiplication_factor = 12
-
         self.ue_param.element_pattern = "M2101"
         self.ue_param.normalization = False
         self.ue_param.normalization_file = None
         self.ue_param.minimum_array_gain = -200
-
         self.ue_param.element_max_g = 10
         self.ue_param.element_phi_3db = 75
         self.ue_param.element_theta_3db = 65
@@ -56,7 +52,6 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         self.ue_param.element_horiz_spacing = 0.5
         self.ue_param.element_vert_spacing = 0.5
         self.ue_param.multiplication_factor = 12
-
         # Create antenna objects
         par = self.bs_param.get_antenna_parameters()
         self.antenna1 = AntennaBeamformingImt(par, 300, -10)
@@ -64,58 +59,72 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         self.antenna2 = AntennaBeamformingImt(par, -33.21, -5.31)
 
     def test_azimuth(self):
+        """Test azimuth property of the antenna."""
         self.assertEqual(self.antenna1.azimuth, 300)
         self.assertEqual(self.antenna2.azimuth, -33.21)
 
     def test_elevation(self):
+        """Test elevation property of the antenna."""
         self.assertEqual(self.antenna1.elevation, -10)
         self.assertEqual(self.antenna2.elevation, -5.31)
 
     def test_g_max(self):
+        """Test maximum element gain property."""
         self.assertEqual(self.antenna1.element.g_max, 5)
         self.assertEqual(self.antenna2.element.g_max, 10)
 
     def test_phi_3db(self):
+        """Test phi_3db property of the antenna element."""
         self.assertEqual(self.antenna1.element.phi_3db, 80)
         self.assertEqual(self.antenna2.element.phi_3db, 75)
 
     def test_theta_3db(self):
+        """Test theta_3db property of the antenna element."""
         self.assertEqual(self.antenna1.element.theta_3db, 60)
         self.assertEqual(self.antenna2.element.theta_3db, 65)
 
     def test_am(self):
+        """Test amplitude (am) property of the antenna element."""
         self.assertEqual(self.antenna1.element.am, 30)
         self.assertEqual(self.antenna2.element.am, 25)
 
     def test_sla_v(self):
+        """Test side lobe attenuation (sla_v) property."""
         self.assertEqual(self.antenna1.element.sla_v, 30)
         self.assertEqual(self.antenna2.element.sla_v, 35)
 
     def test_n_rows(self):
+        """Test number of rows in the antenna array."""
         self.assertEqual(self.antenna1.n_rows, 16)
         self.assertEqual(self.antenna2.n_rows, 2)
 
     def test_n_cols(self):
+        """Test number of columns in the antenna array."""
         self.assertEqual(self.antenna1.n_cols, 16)
         self.assertEqual(self.antenna2.n_cols, 2)
 
     def test_dh(self):
+        """Test horizontal spacing (dh) property."""
         self.assertEqual(self.antenna1.dh, 1)
         self.assertEqual(self.antenna2.dh, 0.5)
 
     def test_dv(self):
+        """Test vertical spacing (dv) property."""
         self.assertEqual(self.antenna1.dv, 1)
         self.assertEqual(self.antenna2.dv, 0.5)
 
     def test_beams_list(self):
+        """Test beams_list property of the antenna."""
         self.assertEqual(len(self.antenna1.beams_list), 0)
         self.assertEqual(len(self.antenna2.beams_list), 0)
 
     def test_w_vec_list(self):
+        """Test w_vec_list property of the antenna."""
         self.assertEqual(len(self.antenna1.w_vec_list), 0)
         self.assertEqual(len(self.antenna2.w_vec_list), 0)
 
     def test_super_position_vector(self):
+        """Test calculation of the superposition vector."""
         # Error margin
         eps = 1e-5
 
@@ -124,44 +133,81 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         theta = 0
         v_vec = self.antenna2._super_position_vector(phi, theta)
         expected_v_vec = np.array([[1.0, 1.0], [-1.0, -1.0]])
-        self.assertTrue(np.allclose(np.real(v_vec),
-                                    np.real(expected_v_vec), rtol=eps))
-        self.assertTrue(np.allclose(np.imag(v_vec),
-                                    np.imag(expected_v_vec), rtol=eps))
+        self.assertTrue(
+            np.allclose(
+                np.real(v_vec),
+                np.real(expected_v_vec), rtol=eps,
+            ),
+        )
+        self.assertTrue(
+            np.allclose(
+                np.imag(v_vec),
+                np.imag(expected_v_vec), rtol=eps,
+            ),
+        )
 
         # Test 2
         phi = 90
         theta = 90
         v_vec = self.antenna2._super_position_vector(phi, theta)
         expected_v_vec = np.array([[1.0, -1.0], [1.0, -1.0]])
-        self.assertTrue(np.allclose(np.real(v_vec),
-                                    np.real(expected_v_vec), rtol=eps))
-        self.assertTrue(np.allclose(np.imag(v_vec),
-                                    np.imag(expected_v_vec), rtol=eps))
+        self.assertTrue(
+            np.allclose(
+                np.real(v_vec),
+                np.real(expected_v_vec), rtol=eps,
+            ),
+        )
+        self.assertTrue(
+            np.allclose(
+                np.imag(v_vec),
+                np.imag(expected_v_vec), rtol=eps,
+            ),
+        )
 
         # Test 3
         phi = 45
         theta = 45
         v_vec = self.antenna2._super_position_vector(phi, theta)
-        expected_v_vec = np.array([[1.0 + 0.0j, 0.0 + 1.0j],
-                                   [-0.6056998 + 0.7956932j, -0.7956932 - 0.6056998j]])
-        self.assertTrue(np.allclose(np.real(v_vec),
-                                    np.real(expected_v_vec), rtol=eps))
-        self.assertTrue(np.allclose(np.imag(v_vec),
-                                    np.imag(expected_v_vec), rtol=eps))
+        expected_v_vec = np.array([
+            [1.0 + 0.0j, 0.0 + 1.0j],
+            [-0.6056998 + 0.7956932j, -0.7956932 - 0.6056998j],
+        ])
+        self.assertTrue(
+            np.allclose(
+                np.real(v_vec),
+                np.real(expected_v_vec), rtol=eps,
+            ),
+        )
+        self.assertTrue(
+            np.allclose(
+                np.imag(v_vec),
+                np.imag(expected_v_vec), rtol=eps,
+            ),
+        )
 
         # Test 4
         phi = 60
         theta = 90
         v_vec = self.antenna2._super_position_vector(phi, theta)
-        expected_v_vec = np.array([[1.0 + 0.0j, -0.912724 + 0.408576j],
-                                   [1.0 + 0.0j, -0.912724 + 0.408576j]])
-        self.assertTrue(np.allclose(np.real(v_vec),
-                                    np.real(expected_v_vec), rtol=eps))
-        self.assertTrue(np.allclose(np.imag(v_vec),
-                                    np.imag(expected_v_vec), rtol=eps))
+        expected_v_vec = np.array([
+            [1.0 + 0.0j, -0.912724 + 0.408576j],
+            [1.0 + 0.0j, -0.912724 + 0.408576j],
+        ])
+        self.assertTrue(
+            np.allclose(
+                np.real(v_vec),
+                np.real(expected_v_vec), rtol=eps,
+            ),
+        )
+        self.assertTrue(
+            np.allclose(
+                np.imag(v_vec),
+                np.imag(expected_v_vec), rtol=eps,
+            ),
+        )
 
     def test_weight_vector(self):
+        """Test calculation of the weight vector for beamforming."""
         # Error margin
         eps = 1e-5
 
@@ -170,54 +216,99 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         theta_tilt = 0
         w_vec = self.antenna2._weight_vector(phi_scan, theta_tilt)
         expected_w_vec = np.array([[0.5, 0.5], [0.5, 0.5]])
-        self.assertTrue(np.allclose(np.real(w_vec),
-                                    np.real(expected_w_vec), rtol=eps))
-        self.assertTrue(np.allclose(np.imag(w_vec),
-                                    np.imag(expected_w_vec), rtol=eps))
+        self.assertTrue(
+            np.allclose(
+                np.real(w_vec),
+                np.real(expected_w_vec), rtol=eps,
+            ),
+        )
+        self.assertTrue(
+            np.allclose(
+                np.imag(w_vec),
+                np.imag(expected_w_vec), rtol=eps,
+            ),
+        )
 
         # Test 2
         phi_scan = 90
         theta_tilt = 90
         w_vec = self.antenna2._weight_vector(phi_scan, theta_tilt)
         expected_w_vec = np.array([[0.5, 0.5], [-0.5, -0.5]])
-        self.assertTrue(np.allclose(np.real(w_vec),
-                                    np.real(expected_w_vec), rtol=eps))
-        self.assertTrue(np.allclose(np.imag(w_vec),
-                                    np.imag(expected_w_vec), rtol=eps))
+        self.assertTrue(
+            np.allclose(
+                np.real(w_vec),
+                np.real(expected_w_vec), rtol=eps,
+            ),
+        )
+        self.assertTrue(
+            np.allclose(
+                np.imag(w_vec),
+                np.imag(expected_w_vec), rtol=eps,
+            ),
+        )
 
         # Test 3
         phi_scan = 45
         theta_tilt = 45
         w_vec = self.antenna2._weight_vector(phi_scan, theta_tilt)
-        expected_w_vec = np.array([[0.5 + 0.0j, 0.0 - 0.5j],
-                                   [-0.3028499 + 0.3978466j, 0.3978466 + 0.3028499j]])
-        self.assertTrue(np.allclose(np.real(w_vec),
-                                    np.real(expected_w_vec), rtol=eps))
-        self.assertTrue(np.allclose(np.imag(w_vec),
-                                    np.imag(expected_w_vec), rtol=eps))
+        expected_w_vec = np.array([
+            [0.5 + 0.0j, 0.0 - 0.5j],
+            [-0.3028499 + 0.3978466j, 0.3978466 + 0.3028499j],
+        ])
+        self.assertTrue(
+            np.allclose(
+                np.real(w_vec),
+                np.real(expected_w_vec), rtol=eps,
+            ),
+        )
+        self.assertTrue(
+            np.allclose(
+                np.imag(w_vec),
+                np.imag(expected_w_vec), rtol=eps,
+            ),
+        )
 
         # Test 4
         phi_scan = 0
         theta_tilt = 90
         w_vec = self.antenna2._weight_vector(phi_scan, theta_tilt)
         expected_w_vec = np.array([[0.5, 0.5], [-0.5, -0.5]])
-        self.assertTrue(np.allclose(np.real(w_vec),
-                                    np.real(expected_w_vec), rtol=eps))
-        self.assertTrue(np.allclose(np.imag(w_vec),
-                                    np.imag(expected_w_vec), rtol=eps))
+        self.assertTrue(
+            np.allclose(
+                np.real(w_vec),
+                np.real(expected_w_vec), rtol=eps,
+            ),
+        )
+        self.assertTrue(
+            np.allclose(
+                np.imag(w_vec),
+                np.imag(expected_w_vec), rtol=eps,
+            ),
+        )
 
         # Test 5
         phi_scan = 45
         theta_tilt = 30
         w_vec = self.antenna2._weight_vector(phi_scan, theta_tilt)
-        expected_w_vec = np.array([[0.5 + 0.0j, -0.172870 - 0.469169j],
-                                   [0.0 + 0.5j, 0.469165 - 0.172870j]])
-        self.assertTrue(np.allclose(np.real(w_vec),
-                                    np.real(expected_w_vec), rtol=eps))
-        self.assertTrue(np.allclose(np.imag(w_vec),
-                                    np.imag(expected_w_vec), rtol=eps))
+        expected_w_vec = np.array([
+            [0.5 + 0.0j, -0.172870 - 0.469169j],
+            [0.0 + 0.5j, 0.469165 - 0.172870j],
+        ])
+        self.assertTrue(
+            np.allclose(
+                np.real(w_vec),
+                np.real(expected_w_vec), rtol=eps,
+            ),
+        )
+        self.assertTrue(
+            np.allclose(
+                np.imag(w_vec),
+                np.imag(expected_w_vec), rtol=eps,
+            ),
+        )
 
     def test_add_beam(self):
+        """Test adding a beam to the antenna and updating lists."""
         # Error margin and antenna object
         eps = 1e-5
         par = self.ue_param.get_antenna_parameters()
@@ -245,12 +336,22 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         self.assertAlmostEqual(self.antenna2.beams_list[0][1], 30, delta=eps)
 
         w_vec = self.antenna2.w_vec_list[0]
-        expected_w_vec = np.array([[0.5 + 0.0j, -0.172870 - 0.469169j],
-                                   [0.0 + 0.5j, 0.469165 - 0.172870j]])
-        self.assertTrue(np.allclose(np.real(w_vec),
-                                    np.real(expected_w_vec), rtol=eps))
-        self.assertTrue(np.allclose(np.imag(w_vec),
-                                    np.imag(expected_w_vec), rtol=eps))
+        expected_w_vec = np.array([
+            [0.5 + 0.0j, -0.172870 - 0.469169j],
+            [0.0 + 0.5j, 0.469165 - 0.172870j],
+        ])
+        self.assertTrue(
+            np.allclose(
+                np.real(w_vec),
+                np.real(expected_w_vec), rtol=eps,
+            ),
+        )
+        self.assertTrue(
+            np.allclose(
+                np.imag(w_vec),
+                np.imag(expected_w_vec), rtol=eps,
+            ),
+        )
 
         # Test second beam
         self.assertEqual(self.antenna2.beams_list[1][0], 90)
@@ -258,10 +359,18 @@ class AntennaBeamformingImtTest(unittest.TestCase):
 
         w_vec = self.antenna2.w_vec_list[1]
         expected_w_vec = np.array([[0.5, 0.5], [-0.5, -0.5]])
-        self.assertTrue(np.allclose(np.real(w_vec),
-                                    np.real(expected_w_vec), rtol=eps))
-        self.assertTrue(np.allclose(np.imag(w_vec),
-                                    np.imag(expected_w_vec), rtol=eps))
+        self.assertTrue(
+            np.allclose(
+                np.real(w_vec),
+                np.real(expected_w_vec), rtol=eps,
+            ),
+        )
+        self.assertTrue(
+            np.allclose(
+                np.imag(w_vec),
+                np.imag(expected_w_vec), rtol=eps,
+            ),
+        )
 
         # Reset beams and test
         self.antenna2.reset_beams()
@@ -269,6 +378,7 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         self.assertEqual(len(self.antenna2.w_vec_list), 0)
 
     def test_beam_gain(self):
+        """Test calculation of beam gain for given angles and beam index."""
         # Error margin and antenna
         eps = 1e-4
         par = self.ue_param.get_antenna_parameters()
@@ -301,6 +411,7 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         self.assertAlmostEqual(beam_g, 11.9636, delta=eps)
 
     def test_calculate_gain(self):
+        """Test calculation of antenna gain for given phi/theta vectors."""
         # Error margin and antenna
         eps = 1e-4
         par = self.bs_param.get_antenna_parameters()
@@ -312,7 +423,8 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         phi_vec = np.array([45.0, 32.5])
         theta_vec = np.array([45.0, 115.2])
         gains = self.antenna2.calculate_gain(
-            phi_vec=phi_vec, theta_vec=theta_vec)
+            phi_vec=phi_vec, theta_vec=theta_vec,
+        )
         npt.assert_allclose(gains, np.array([5.9491, 11.9636]), atol=eps)
 
         # Test 2
@@ -322,30 +434,37 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         theta_tilt = 180
         self.antenna2.add_beam(phi_scan, theta_tilt)
         beams_l = np.zeros_like(phi_vec, dtype=int)
-        gains = self.antenna2.calculate_gain(phi_vec=phi, theta_vec=theta,
-                                             beams_l=beams_l)
+        gains = self.antenna2.calculate_gain(
+            phi_vec=phi, theta_vec=theta,
+            beams_l=beams_l,
+        )
         npt.assert_allclose(gains, np.array([10.454087]), atol=eps)
 
         # Test 3
         phi = 40
         theta = 100
-        gains = self.antenna1.calculate_gain(phi_vec=phi, theta_vec=theta,
-                                             co_channel=False)
+        gains = self.antenna1.calculate_gain(
+            phi_vec=phi, theta_vec=theta,
+            co_channel=False,
+        )
         npt.assert_allclose(gains, np.array([1.6667]), atol=eps)
 
     def test_normalization(self):
+        """Test normalization logic for the antenna pattern."""
         # Create dummy normalization data
         adjacent_antenna_model = "SINGLE_ELEMENT"
         normalization = True
-        norm_data = {'norm_file': 'dummy_file.npz',
-                     'resolution': 1,
-                     'phi_range': (-180, +180),
-                     'theta_range': (0, 180),
-                     'correction_factor_co_channel': np.ones((360, 180)),
-                     'error_co_channel': 0.0,
-                     'correction_factor_adj_channel': 5,
-                     'error_adj_channel': 0.0,
-                     'parameters': None}
+        norm_data = {
+            'norm_file': 'dummy_file.npz',
+            'resolution': 1,
+            'phi_range': (-180, +180),
+            'theta_range': (0, 180),
+            'correction_factor_co_channel': np.ones((360, 180)),
+            'error_co_channel': 0.0,
+            'correction_factor_adj_channel': 5,
+            'error_adj_channel': 0.0,
+            'parameters': None,
+        }
         element_pattern = "M2101"
         element_max_g = 5
         element_phi_3db = 65
@@ -359,33 +478,36 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         minimum_array_gain = -200
         multiplication_factor = 12
         downtilt = 0
-        par = AntennaPar(adjacent_antenna_model,
-                         normalization,
-                         norm_data,
-                         element_pattern,
-                         element_max_g,
-                         element_phi_3db,
-                         element_theta_3db,
-                         element_am,
-                         element_sla_v,
-                         n_rows,
-                         n_columns,
-                         horiz_spacing,
-                         vert_spacing,
-                         multiplication_factor,
-                         minimum_array_gain,
-                         downtilt)
+        par = ParametersAntennaImt(
+            adjacent_antenna_model=adjacent_antenna_model,
+            normalization=normalization,
+            element_pattern=element_pattern,
+            element_max_g=element_max_g,
+            element_phi_3db=element_phi_3db,
+            element_theta_3db=element_theta_3db,
+            element_am=element_am,
+            element_sla_v=element_sla_v,
+            n_rows=n_rows,
+            n_columns=n_columns,
+            element_horiz_spacing=horiz_spacing,
+            element_vert_spacing=vert_spacing,
+            multiplication_factor=multiplication_factor,
+            minimum_array_gain=minimum_array_gain,
+            downtilt=downtilt,
+        )
+        par.normalization_data = norm_data
 
         # Create antenna objects
         self.antenna3 = AntennaBeamformingImt(par, 0.0, 0.0)  # Normalized
-        par = par._replace(normalization=False)
+        par.normalization = False
         self.antenna4 = AntennaBeamformingImt(par, 0.0, 0.0)  # Unormalized
 
         # Test co-channel gain: no beam
         phi_v = np.array([11.79, -0.71])
         theta_v = np.array([50.31, 120.51])
         gain_ref = self.antenna4.calculate_gain(
-            phi_vec=phi_v, theta_vec=theta_v)
+            phi_vec=phi_v, theta_vec=theta_v,
+        )
         gain = self.antenna3.calculate_gain(phi_vec=phi_v, theta_vec=theta_v)
         npt.assert_equal(gain, gain_ref + 1)
 
@@ -395,22 +517,29 @@ class AntennaBeamformingImtTest(unittest.TestCase):
         self.antenna3.add_beam(phi_scan, theta_tilt)
         self.antenna4.add_beam(phi_scan, theta_tilt)
         beams_l = np.zeros_like(phi_v, dtype=int)
-        gain_ref = self.antenna4.calculate_gain(phi_vec=phi_v, theta_vec=theta_v,
-                                                beams_l=beams_l)
-        gain = self.antenna3.calculate_gain(phi_vec=phi_v, theta_vec=theta_v,
-                                            beams_l=beams_l)
+        gain_ref = self.antenna4.calculate_gain(
+            phi_vec=phi_v, theta_vec=theta_v,
+            beams_l=beams_l,
+        )
+        gain = self.antenna3.calculate_gain(
+            phi_vec=phi_v, theta_vec=theta_v,
+            beams_l=beams_l,
+        )
         npt.assert_equal(gain, gain_ref + 1)
 
         # Test adjacent channel
         phi_v = np.array([11.79, -0.71])
         theta_v = np.array([50.31, 120.51])
         gain_ref = self.antenna4.calculate_gain(
-            phi_vec=phi_v, theta_vec=theta_v, co_channel=False)
+            phi_vec=phi_v, theta_vec=theta_v, co_channel=False,
+        )
         gain = self.antenna3.calculate_gain(
-            phi_vec=phi_v, theta_vec=theta_v, co_channel=False)
+            phi_vec=phi_v, theta_vec=theta_v, co_channel=False,
+        )
         npt.assert_equal(gain, gain_ref + 5)
 
     def test_to_local_coord(self):
+        """Test conversion of global to local coordinates for the antenna."""
         # Test 1
         # Create antenna object
         par = self.bs_param.get_antenna_parameters()

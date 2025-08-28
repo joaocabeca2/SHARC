@@ -50,6 +50,8 @@ class ParametersHaps(ParametersBase):
     # design, and has a maximum value of −25 dB
     antenna_l_n: float = -25.0
 
+    polarization_loss: float | None = None  # Polarization loss [dB]
+
     def load_parameters_from_file(self, config_file: str):
         """Load the parameters from file an run a sanity check
 
@@ -68,7 +70,8 @@ class ParametersHaps(ParametersBase):
             raise ValueError(f"ParametersHaps: \
                              Invalid value for parameter {self.antenna_pattern}. \
                              Allowed values are \"ITU-R F.1891\", \"OMNI\".")
-        if self.channel_model.upper() not in ["FSPL", "SatelliteSimple", "P619"]:
+        if self.channel_model.upper() not in [
+                "FSPL", "SatelliteSimple", "P619"]:
             raise ValueError(f"ParametersHaps: \
                              Invalid value for paramter channel_model = {self.channel_model}. \
                              Possible values are \"FSPL\", \"SatelliteSimple\", \"P619\".")
