@@ -180,7 +180,11 @@ class Simulation(ABC, Observable):
         self.wifi_ap_antenna_gain = list()
         self.wifi_sta_antenna_gain = list()
         self.path_loss_wifi = np.empty([num_ap, num_sta])
-        self.coupling_loss_wifi = np.empty([num_ap, num_sta])
+
+        self.coupling_loss_imt_wifi_ap = np.empty(num_ue)
+        self.coupling_loss_imt_wifi_sta = np.empty(num_ue)
+        self.coupling_loss_imt_wifi_ap_adjacent = np.empty(num_ue)
+        self.coupling_loss_imt_wifi_sta_adjacent = np.empty(num_ue)
 
         self.ap_to_sta_phi = np.empty([num_ap, num_sta])
         self.ap_to_sta_theta = np.empty([num_ap, num_sta])

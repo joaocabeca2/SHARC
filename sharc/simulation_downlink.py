@@ -284,30 +284,22 @@ class SimulationDownlink(Simulation):
                     + self.parameters.imt.bs.ohmic_loss
                 
                 if self.parameters.general.system == "WIFI":
-                    # Verify array bounds before indexing
-                    if active_beams[0] >= self.coupling_loss_imt_wifi_ap_adjacent.shape[1]:
-                        continue
-                    # Calculate OOB interference for APs
-                    oob_interference_ap = oob_power \
-                        - self.coupling_loss_imt_wifi_ap_adjacent[:, active_beams[0]] \
-                        + 10 * np.log10(
-                            (self.param_system.bandwidth - self.overlapping_bandwidth) /
-                            self.param_system.bandwidth,
-                        )
-                    
-                    if active_beams[0] >= self.coupling_loss_imt_wifi_sta_adjacent.shape[1]:
-                        continue
-                    # Calculate OOB interference for STAs
-                    oob_interference_sta = oob_power \
-                        - self.coupling_loss_imt_wifi_sta_adjacent[:, active_beams[0]] \
-                        + 10 * np.log10(
-                            (self.param_system.bandwidth - self.overlapping_bandwidth) /
-                            self.param_system.bandwidth,
-                        )
 
-                    # Sum interference from both APs and STAs
-                    rx_interference += (np.sum(np.power(10, 0.1 * oob_interference_ap), axis=0) + 
-                                    np.sum(np.power(10, 0.1 * oob_interference_sta), axis=0))
+                    bw_factor = 10 * np.log10(
+                        (self.param_system.bandwidth - self.overlapping_bandwidth) /
+                        self.param_system.bandwidth
+                    )
+                
+                    for beam in active_beams:
+
+                        if beam < self.coupling_loss_imt_wifi_ap_adjacent.shape[1]:
+                            oob_interference_ap = oob_power - self.coupling_loss_imt_wifi_ap_adjacent[:, beam] + bw_factor
+                            rx_interference += np.sum(np.power(10, 0.1 * oob_interference_ap))
+
+
+                        if beam < self.coupling_loss_imt_wifi_sta_adjacent.shape[1]:
+                            oob_interference_sta = oob_power - self.coupling_loss_imt_wifi_sta_adjacent[:, beam] + bw_factor
+                            rx_interference += np.sum(np.power(10, 0.1 * oob_interference_sta))
 
                 else:
                     oob_interference = oob_power \
