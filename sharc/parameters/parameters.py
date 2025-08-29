@@ -22,6 +22,7 @@ from sharc.parameters.parameters_single_earth_station import ParametersSingleEar
 from sharc.parameters.parameters_mss_ss import ParametersMssSs
 from sharc.parameters.parameters_mss_d2d import ParametersMssD2d
 from sharc.parameters.parameters_single_space_station import ParametersSingleSpaceStation
+from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
 
 
 class Parameters(object):
@@ -46,6 +47,7 @@ class Parameters(object):
         self.metsat_ss = ParametersMetSatSS()
         self.mss_ss = ParametersMssSs()
         self.mss_d2d = ParametersMssD2d()
+        self.wifi = ParametersWifiSystem()
 
     def set_file_name(self, file_name: str):
         """sets the configuration file name
@@ -127,6 +129,8 @@ class Parameters(object):
         self.mss_d2d.load_parameters_from_file(self.file_name)
 
         self.single_space_station.load_parameters_from_file(self.file_name)
+
+        self.wifi.load_parameters_from_file(self.file_name)
 
 
 if __name__ == "__main__":
