@@ -11,6 +11,7 @@ from sharc.support.enumerations import StationType
 from sharc.topology.topology import Topology
 from sharc.propagation.propagation_free_space import PropagationFreeSpace
 from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
+from sharc.mask.spectral_mask_wifi import SpectralMaskWifi
 
 from itertools import product
 
@@ -230,6 +231,13 @@ class SystemWifi:
         wifi_aps.noise_figure = self.parameters.ap.noise_figure * np.ones(num_aps)
         wifi_aps.thermal_noise = -500 * np.ones(num_aps)
 
+        if self.parameters.spectral_mask == "WIFI-2020":
+            wifi_aps.spectral_mask = SpectralMaskWifi(
+                self.parameters.frequency,
+                self.parameters.bandwidth,
+                StationType.WIFI_APS,
+                self.parameters.spurious_emissions,
+            )
 
         if self.parameters.topology.type == 'HOTSPOT':
             wifi_aps.intersite_dist = self.parameters.topology.hotspot.intersite_distance
@@ -339,6 +347,14 @@ class SystemWifi:
 
         for i in range(self.num_sta):
             wifi_sta.antenna[i] = AntennaOmni()
+        
+        if self.parameters.spectral_mask == "WIFI-2020":
+            wifi_sta.spectral_mask = SpectralMaskWifi(
+                self.parameters.frequency,
+                self.parameters.bandwidth,
+                StationType.WIFI_STA,
+                self.parameters.spurious_emissions,
+            )
 
         return wifi_sta
     
@@ -414,6 +430,9 @@ if __name__ == "__main__":
     wifi = SystemWifi(
         ParametersWifiSystem(),
         ParametersAntennaWifi(),
+        ParametersAntennaWifi(),
+        np.random.RandomState(),
+        TopologyIndoorWifi(ParametersIndoor())
     )
 
     aps = wifi.generate_aps(np.random.RandomState(1))

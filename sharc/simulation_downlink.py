@@ -66,8 +66,8 @@ class SimulationDownlink(Simulation):
             #Calculate intra wifi coupling loss 
             self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(
                 self.system.sta, self.system.ap)
-            
             self.calculate_sinr_wifi()
+            self.power_control_wifi()
             
         self.connect_ue_to_bs()
         self.select_ue(random_number_gen)
@@ -120,6 +120,25 @@ class SimulationDownlink(Simulation):
         if self.adjacent_channel:
             self.bs.spectral_mask.set_mask(p_tx=total_power)
             #self.wifi_ap.spectral_mask.set_mask(p_tx=total_power_wifi)
+
+    def power_control_wifi(self):
+        """
+        Apply downlink power control algorithm for WiFi
+        """
+        # Currently, the maximum transmit power of the access point is equaly
+        # divided among the selected STAs
+        total_power = self.parameters.wifi.ap.conducted_power \
+            + self.system.ap_power_gain
+        tx_power = total_power - 10 * math.log10(self.parameters.wifi.sta.k)
+        # calculate transmit powers to have a structure such as
+
+        ap_active = np.where(self.system.ap.active)[0]
+        self.system.ap.tx_power = dict(
+            [(ap, tx_power * np.ones(self.parameters.wifi.sta.k))
+             for ap in ap_active],
+        )
+        # Update the spectral mask
+        self.system.ap.spectral_mask.set_mask(p_tx=total_power)
 
     def calculate_sinr(self):
         """

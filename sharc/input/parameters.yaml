@@ -8,7 +8,7 @@ general:
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS, SINGLE_EARTH_STATION
-    system: "FSS_ES"
+    system: "WIFI"
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
     enable_cochannel: FALSE
@@ -42,6 +42,8 @@ imt:
     #   "IMT-2020" : for mmWave as described in ITU-R TG 5/1 Contribution 36
     #   "3GPP E-UTRA" : for E-UTRA bands > 1 GHz as described in
     #                   TS 36.104 v11.2.0 (BS) and TS 36.101 v11.2.0 (UE)
+    ###########################################################################
+    #WIFI 
     spectral_mask: 3GPP E-UTRA
     ###########################################################################
     # level of spurious emissions [dBm/MHz]
@@ -462,6 +464,13 @@ wifi:
     # Peak transmit power spectral density (clear sky) [dBW/Hz]
     tx_power_density: -65
     # Adjacent channel selectivity [dB]
+    ###########################################################################
+    #spectrum emission mask for WIFI.
+    #   "WIFI-2020" : for 802.11ad/ay as described in IEEE 802.11-2020
+    spectral_mask: WIFI-2020
+    ###########################################################################
+    spurious_emissions: -27
+    ###########################################################################
     adjacent_ch_selectivity: 20.0
     topology:
         ###########################################################################
