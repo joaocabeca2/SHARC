@@ -155,12 +155,6 @@ class StationFactory(object):
             num_bs, dtype=Antenna,
         )
 
-        # for i in range(num_bs):
-        #     imt_base_stations.antenna[i] = \
-        #         AntennaFactory.create_antenna(
-        #             param.bs.antenna, imt_base_stations.azimuth[i],
-        #             imt_base_stations.elevation[i],)
-
         imt_base_stations.antenna = AntennaFactory.create_n_antennas(
             param.bs.antenna,
             imt_base_stations.azimuth,

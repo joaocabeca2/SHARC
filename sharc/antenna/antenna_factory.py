@@ -17,6 +17,7 @@ from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 
 import numpy as np
 
+
 class AntennaFactory():
     """Factory class for creating antenna instances based on pattern parameters."""
 
