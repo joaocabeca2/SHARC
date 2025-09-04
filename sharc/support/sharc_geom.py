@@ -677,7 +677,7 @@ def generate_grid_in_polygon(
     if translation is not None:
         dx, dy = translation
         if abs(dx) > x_spacing or abs(dy) > y_spacing:
-            raise ValueError("generate_grid_in_polygon.translation (dx, dy) must be positive")
+            raise ValueError("generate_grid_in_polygon.translation (dx, dy) must not exceed grid spacing (x_spacing, y_spacing) in magnitude")
         x_vals += dx
         y_vals += dy
 
