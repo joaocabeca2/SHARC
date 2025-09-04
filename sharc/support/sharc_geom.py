@@ -623,6 +623,11 @@ def generate_grid_in_polygon(
         Polygon to fill with a grid.
     hexagon_radius : float
         Radius of the hexagons in the grid (in meters).
+    rotation_deg : float or None, optional
+        Rotation of the grid in degrees (default: None, no rotation).
+    translation : tuple of float or None, optional
+        Translation of the grid in meters (dx, dy) (default: None, no translation).
+        The translation must not exceed the grid spacing in magnitude.
 
     Returns
     -------
@@ -712,6 +717,10 @@ def generate_grid_in_multipolygon(
         The MultiPolygon or Polygon to process.
     km : float
         Hexagon radius in km
+    random_transform_on_grid : bool, optional
+        Whether to apply a random rotation and translation to the grid (default: False).
+    rng : np.random.RandomState, optional
+        Random number generator to use if random_transform_on_grid is True (default: None).
 
     Returns
     -------
