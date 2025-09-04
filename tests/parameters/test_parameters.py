@@ -224,6 +224,9 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(
             self.parameters.imt.topology.single_bs.num_clusters, 2)
 
+        self.assertEqual(
+            self.parameters.imt.topology.single_bs.azimuth, [60.0, 240.0])
+
         """Test ParametersIndoor
         """
         self.assertEqual(

@@ -97,6 +97,15 @@ imt:
             # Number of clusters in single base station topology
             # You can simulate 1 or 2 BS's with this topology
             num_clusters: 2
+            ###########################################################################
+            # Azimuth of each cluster in single base station topology [deg]
+            # You can provide a list of azimuths with length equal to num_clusters
+            # or use "random" to have them randomly generated
+            azimuth:
+                - 60.0
+                - 240.0
+            # azimuth: !!python/tuple [0.0, 180.0]
+            # azimuth: random
         ###########################################################################
         # Hotspot Topology parameters. Relevant when imt.topology.type == "HOTSPOT"
         hotspot:
