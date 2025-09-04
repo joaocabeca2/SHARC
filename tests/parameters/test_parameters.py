@@ -281,6 +281,9 @@ class ParametersTest(unittest.TestCase):
             self.parameters.imt.topology.mss_dc.beam_positioning.service_grid.beam_radius,
             19000)
         self.assertEqual(
+            self.parameters.imt.topology.mss_dc.beam_positioning.service_grid.transform_grid_randomly,
+            True)
+        self.assertEqual(
             self.parameters.imt.topology.mss_dc.beam_positioning.service_grid.grid_margin_from_border,
             0.11)
         self.assertEqual(
@@ -630,6 +633,9 @@ class ParametersTest(unittest.TestCase):
         self.assertEqual(
             self.parameters.mss_d2d.beam_positioning.service_grid.beam_radius,
             19001)
+        self.assertEqual(
+            self.parameters.mss_d2d.beam_positioning.service_grid.transform_grid_randomly,
+            True)
         self.assertEqual(
             self.parameters.mss_d2d.beam_positioning.service_grid.grid_margin_from_border,
             0.11)
