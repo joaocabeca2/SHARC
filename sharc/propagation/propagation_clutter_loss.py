@@ -335,7 +335,7 @@ if __name__ == '__main__':
     ax = fig.gca()
 
     for j in range(len(elevation_angle)):
-        ax.plot(clutter_loss[j, :], loc_percentage,
+        ax.plot(clutter_loss[j, :], loc_percentage * 100,
                 label="%i deg" % elevation_angle[j], linewidth=1)
 
     plt.title("Cumulative distribution of clutter loss not exceeded for 30 GHz")
