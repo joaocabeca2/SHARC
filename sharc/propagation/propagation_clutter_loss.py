@@ -102,7 +102,7 @@ class PropagationClutterLoss(Propagation):
             loss = self.get_spacial_clutter_loss(f, theta, p1, earth_station_height, mean_clutter_height)
             mult_1 = np.zeros(d.shape)
             num_ones = int(np.round(mult_1.size * below_rooftop / 100))
-            indices = np.random.choice(mult_1.size, size=num_ones, replace=False)
+            indices = self.random_number_gen.choice(mult_1.size, size=num_ones, replace=False)
             mult_1.flat[indices] = 1
             loss *= mult_1
         return loss
