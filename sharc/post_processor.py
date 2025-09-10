@@ -233,11 +233,11 @@ class PostProcessor:
         },
         "system_dl_interf_power_per_mhz": {
             "title": "[SYS] system interference PSD from IMT DL",
-            "x_label": "Interference Power [dB/MHz]",
+            "x_label": "Interference Power [dBm/MHz]",
         },
         "system_inr": {
             "title": "[SYS] system INR",
-            "x_label": "INR [dBm]",
+            "x_label": "INR [dB]",
         },
         "system_pfd": {
             "title": "[SYS] system PFD",
