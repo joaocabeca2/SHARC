@@ -79,12 +79,12 @@ class SpectralMaskMSS(SpectralMask):
         Set the spectral mask (mask_dbm attribute) based on station type, operating frequency and transmit power.
 
         Parameters:
-            p_tx (float): station transmit power.
+            p_tx (float): station transmit power in dBm
         """
         # dBm/MHz
         # this should work for the document's dBsd definition
         # when we have a uniform PSD in assigned band
-        self.p_tx = p_tx - 10 * np.log10(self.band_mhz) + 30
+        self.p_tx = p_tx - 10 * np.log10(self.band_mhz)
 
         # attenuation mask
         mask_dbsd = 40 * np.log10(

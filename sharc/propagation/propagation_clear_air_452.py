@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 """Implements ITU-R P.452 clear-air propagation model and related calculations."""
 import numpy as np
@@ -1824,6 +1825,7 @@ class PropagationClearAir(Propagation):
                 frequency=frequency * 1000,
                 distance=distance * 1000,
                 station_type=StationType.FSS_ES,
+                clutter_type=self.model_params.clutter_type
             )
         else:
             clutter_loss = np.zeros(distance.shape)

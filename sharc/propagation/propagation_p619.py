@@ -11,6 +11,7 @@ import csv
 from scipy.interpolate import interp1d
 import numpy as np
 from multipledispatch import dispatch
+from warnings import warn
 from sharc.station_manager import StationManager
 from sharc.parameters.parameters import Parameters
 from sharc.propagation.propagation import Propagation
@@ -34,11 +35,11 @@ class PropagationP619(Propagation):
     def __init__(
         self,
         random_number_gen: np.random.RandomState,
-        space_station_alt_m: float,
         earth_station_alt_m: float,
         earth_station_lat_deg: float,
-        earth_station_long_diff_deg: float,
         season: str,
+        mean_clutter_height: str,
+        below_rooftop: float
     ):
         """Implements the earth-to-space channel model from ITU-R P.619
 
@@ -46,8 +47,6 @@ class PropagationP619(Propagation):
         ----------
         random_number_gen : np.random.RandomState
             randon number generator
-        space_station_alt_m : float
-            The space station altitude in meters
         earth_station_alt_m : float
             The Earth station altitude in meters
         earth_station_lat_deg : float
@@ -77,11 +76,11 @@ class PropagationP619(Propagation):
         self.surf_water_dens_has_atmospheric_loss = []
         self.atmospheric_loss = []
         self.elevation_delta = .01
+        self.mean_clutter_height = mean_clutter_height
+        self.below_rooftop = below_rooftop
 
-        self.space_station_alt_m = space_station_alt_m
         self.earth_station_alt_m = earth_station_alt_m
         self.earth_station_lat_deg = earth_station_lat_deg
-        self.earth_station_long_diff_deg = earth_station_long_diff_deg
 
         if season.upper() not in ["SUMMER", "WINTER"]:
             raise ValueError(
@@ -93,10 +92,12 @@ class PropagationP619(Propagation):
         self.city_name = self._get_city_name_by_latitude()
         if self.city_name != "Unknown":
             self.lookup_table = True
+        else:
+            warn('Using analytical model for atmospheric attenuation. No lookup table available for this latitude.')
 
     def _get_city_name_by_latitude(self):
         localidades_file = os.path.join(
-            os.path.dirname(__file__), 'Dataset/localidades.csv',
+            os.path.dirname(__file__), 'Dataset/locations.csv',
         )
         with open(localidades_file, mode='r') as file:
             reader = csv.DictReader(file)
@@ -130,12 +131,9 @@ class PropagationP619(Propagation):
         if lookupTable and self.city_name != 'Unknown':
             # Define the path to the CSV file
             output_dir = os.path.join(os.path.dirname(__file__), 'Dataset')
+            lookup_table_name = f'{self.city_name}_{int(frequency_MHz)}_{int(self.earth_station_alt_m)}m.csv'
             csv_file = os.path.join(
-                output_dir, f'{
-                    self.city_name}_{
-                    int(frequency_MHz)}_{
-                    int(
-                        self.earth_station_alt_m)}m.csv', )
+                output_dir, lookup_table_name)
             if os.path.exists(csv_file):
                 elevations = []
                 losses = []
@@ -148,6 +146,10 @@ class PropagationP619(Propagation):
                 interpolation_function = interp1d(
                     elevations, losses, kind='linear', fill_value='extrapolate', )
                 return interpolation_function(apparent_elevation)
+            else:
+                raise FileNotFoundError(
+                    f"CSV file {lookup_table_name} not found but lookupTable is set to True. Did you configured the 'Dataset/locations.csv' lookup table correctly? ",
+                )
 
         earth_radius_km = EARTH_RADIUS / 1000
         a_acc = 0.  # accumulated attenuation (in dB)
@@ -348,6 +350,7 @@ class PropagationP619(Propagation):
         # Elevation angles seen from the station on Earth.
         elevation_angles = {}
         if station_a.is_space_station:
+            earth_station_height = station_b.height
             elevation_angles["free_space"] = station_b.get_elevation(station_a)
             earth_station_antenna_gain = station_b_gains
             # if (station_b_gains.shape != distance.shape):
@@ -362,6 +365,7 @@ class PropagationP619(Propagation):
             elevation_angles["apparent"] = np.transpose(
                 elevation_angles["apparent"])
         elif station_b.is_space_station:
+            earth_station_height = station_a.height
             elevation_angles["free_space"] = station_a.get_elevation(station_b)
             earth_station_antenna_gain = station_a_gains
             elevation_angles["apparent"] = self.apparent_elevation_angle(
@@ -408,11 +412,12 @@ class PropagationP619(Propagation):
             is_earth_to_space_link,
             earth_station_antenna_gain,
             is_single_entry_interf,
+            earth_station_height,
         )
 
         return loss
 
-    @dispatch(np.ndarray, np.ndarray, np.ndarray, dict, bool, np.ndarray, bool)
+    @dispatch(np.ndarray, np.ndarray, np.ndarray, dict, bool, np.ndarray, bool, np.ndarray)
     def get_loss(
         self,
         distance: np.array,
@@ -422,6 +427,8 @@ class PropagationP619(Propagation):
         earth_to_space: bool,
         earth_station_antenna_gain: np.array,
         single_entry: bool,
+        earth_station_height: np.array,
+
     ) -> np.array:
         """
         Calculates path loss for earth-space link
@@ -481,6 +488,9 @@ class PropagationP619(Propagation):
                     distance=distance,
                     elevation=elevation["free_space"],
                     station_type=StationType.FSS_SS,
+                    earth_station_height=earth_station_height,
+                    mean_clutter_height=self.mean_clutter_height,
+                    below_rooftop=self.below_rooftop,
                 )
             building_loss = self.building_entry.get_loss(
                 frequency, elevation["apparent"],
@@ -505,31 +515,17 @@ if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
 
-    # params = Parameters()
-
-    # propagation_path = os.getcwd()
-    # sharc_path = os.path.dirname(propagation_path)
-    # param_file = os.path.join(sharc_path, "parameters", "parameters.ini")
-    # deprecated
-
-    # params.set_file_name(param_file)
-    # params.read_params()
-
-    # sat_params = params.fss_ss
-
-    space_station_alt_m = 20000.0
     earth_station_alt_m = 1000.0
     earth_station_lat_deg = -15.7801
-    earth_station_long_diff_deg = 0.0
     season = "SUMMER"
 
     random_number_gen = np.random.RandomState(101)
     propagation = PropagationP619(
         random_number_gen=random_number_gen,
-        space_station_alt_m=space_station_alt_m,
         earth_station_alt_m=earth_station_alt_m,
         earth_station_lat_deg=earth_station_lat_deg,
-        earth_station_long_diff_deg=earth_station_long_diff_deg,
+        mean_clutter_height='low',
+        below_rooftop=0.0,
         season=season,
     )
 

@@ -59,6 +59,7 @@ from sharc.topology.topology_imt_mss_dc import TopologyImtMssDc
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.mask.spectral_mask_mss import SpectralMaskMSS
 from sharc.support.sharc_geom import GeometryConverter
+from sharc.support.sharc_utils import wrap2_180
 
 
 class StationFactory(object):
@@ -119,7 +120,7 @@ class StationFactory(object):
             else:
                 imt_base_stations.height = param.bs.height * np.ones(num_bs)
 
-        imt_base_stations.azimuth = topology.azimuth
+        imt_base_stations.azimuth = wrap2_180(topology.azimuth)
         imt_base_stations.active = random_number_gen.rand(
             num_bs,
         ) < param.bs.load_probability
@@ -154,11 +155,12 @@ class StationFactory(object):
             num_bs, dtype=Antenna,
         )
 
-        for i in range(num_bs):
-            imt_base_stations.antenna[i] = \
-                AntennaFactory.create_antenna(
-                    param.bs.antenna, imt_base_stations.azimuth[i],
-                    imt_base_stations.elevation[i],)
+        imt_base_stations.antenna = AntennaFactory.create_n_antennas(
+            param.bs.antenna,
+            imt_base_stations.azimuth,
+            imt_base_stations.elevation,
+            num_bs
+        )
 
         # imt_base_stations.antenna = [AntennaOmni(0) for bs in range(num_bs)]
         imt_base_stations.bandwidth = param.bandwidth * np.ones(num_bs)
@@ -457,11 +459,12 @@ class StationFactory(object):
 
         # TODO: this piece of code works only for uplink
         ue_param_ant.get_antenna_parameters()
-        for i in range(num_ue):
-            imt_ue.antenna[i] = AntennaFactory.create_antenna(
-                param.ue.antenna, imt_ue.azimuth[i],
-                imt_ue.elevation[i],
-            )
+        imt_ue.antenna = AntennaFactory.create_n_antennas(
+            param.ue.antenna,
+            imt_ue.azimuth,
+            imt_ue.elevation,
+            num_ue,
+        )
 
         # imt_ue.antenna = [AntennaOmni(0) for bs in range(num_ue)]
         imt_ue.bandwidth = param.bandwidth * np.ones(num_ue)
@@ -844,6 +847,7 @@ class StationFactory(object):
                                           space_station.elevation[0])
         ])
 
+        space_station.z = space_station.height
         space_station.bandwidth = param.bandwidth
         space_station.noise_temperature = param.noise_temperature
         space_station.thermal_noise = -500
@@ -1188,37 +1192,11 @@ class StationFactory(object):
                 [param.geometry.elevation.fixed],
             )
 
-        match param.antenna.pattern:
-            case "OMNI":
-                single_earth_station.antenna = np.array(
-                    [AntennaOmni(param.antenna.gain)],
-                )
-            case "ITU-R S.465":
-                single_earth_station.antenna = np.array(
-                    [AntennaS465(param.antenna.itu_r_s_465)],
-                )
-            case "ITU-R Reg. RR. Appendice 7 Annex 3":
-                single_earth_station.antenna = np.array(
-                    [AntennaReg_RR_A7_3(param.antenna.itu_reg_rr_a7_3)],
-                )
-            case "ITU-R S.1855":
-                single_earth_station.antenna = np.array(
-                    [AntennaS1855(param.antenna.itu_r_s_1855)],
-                )
-            case "MODIFIED ITU-R S.465":
-                single_earth_station.antenna = np.array(
-                    [AntennaModifiedS465(param.antenna.itu_r_s_465_modified)],
-                )
-            case "ITU-R S.580":
-                single_earth_station.antenna = np.array(
-                    [AntennaS580(param.antenna.itu_r_s_580)],
-                )
-            case _:
-                sys.stderr.write(
-                    "ERROR\nInvalid FSS ES antenna pattern: " +
-                    param.antenna_pattern,
-                )
-                sys.exit(1)
+        single_earth_station.antenna = np.array([
+            AntennaFactory.create_antenna(
+                param.antenna, single_earth_station.azimuth, single_earth_station.elevation
+            )
+        ])
 
         single_earth_station.active = np.array([True])
         single_earth_station.bandwidth = np.array([param.bandwidth])
@@ -1247,7 +1225,9 @@ class StationFactory(object):
             else:
                 raise ValueError(f"Invalid or not implemented spectral mask - {param.spectral_mask}")
 
-            single_earth_station.spectral_mask.set_mask(param.tx_power_density + 10 * np.log10(param.bandwidth * 1e6))
+            single_earth_station.spectral_mask.set_mask(
+                param.tx_power_density + 10 * np.log10(param.bandwidth * 1e6) + 30
+            )
 
         return single_earth_station
 
@@ -1630,7 +1610,8 @@ class StationFactory(object):
             10 *
             np.log10(
                 param_mss.bandwidth *
-                1e6))
+                1e6) + 30
+        )
 
         return mss_ss
 
@@ -1695,7 +1676,8 @@ class StationFactory(object):
             10 *
             np.log10(
                 params.bandwidth *
-                1e6))
+                1e6) + 30
+        )
 
        # Configure satellite positions in the StationManager
         mss_d2d.x = mss_d2d_values["sat_x"]
