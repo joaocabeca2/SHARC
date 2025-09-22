@@ -17,6 +17,7 @@ from sharc.parameters.parameters import Parameters
 from sharc.simulation import Simulation
 from sharc.station_factory import StationFactory
 from sharc.support.enumerations import StationType
+from sharc.parameters.constants import BOLTZMANN_CONSTANT
 
 warn = warnings.warn
 
@@ -494,7 +495,9 @@ class SimulationDownlink(Simulation):
         rx_interference = 0
 
         bs_active = np.where(self.bs.active)[0]
-        sys_active = np.where(self.system.active)[0]
+        if not self.parameters.general.system == "WIFI":
+            sys_active = np.where(self.system.active)[0]
+
         for bs in bs_active:
             active_beams = [
                 i for i in range(

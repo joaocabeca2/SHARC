@@ -4,6 +4,8 @@
 from dataclasses import dataclass, field
 import typing
 
+from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
+from sharc.parameters.parameters_antenna import ParametersAntenna
 from sharc.parameters.parameters_base import ParametersBase
 from sharc.parameters.parameters_p619 import ParametersP619
 from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
@@ -28,6 +30,14 @@ class ParametersWifiSystem(ParametersBase):
     guard_band_ratio: float = 0.1
     antenna_pattern: str = "Modified ITU-R S.465"
     max_dist_hotspot_ue: float = 70
+    adjacent_ch_reception: str = "ACS"
+
+    # Adjacent channel emissions type
+    # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
+    adjacent_ch_emissions: str = "OFF"
+
+    # Spectral mask used for the IMT system when adjacent_ch_emissions is set to "SPECTRAL_MASK"
+    spectral_mask: str = "WIFI-2020"
 
     @dataclass
     class ParametersAP(ParametersBase):
@@ -36,8 +46,14 @@ class ParametersWifiSystem(ParametersBase):
         height: float = 6.0
         noise_figure: float = 10.0
         ohmic_loss: float = 3.0
-        distribution_type: str = "CELL"
-        antenna: ParametersAntennaWifi = field(default_factory=ParametersAntennaWifi)
+        # Adjacent Channel Selectivity in dB
+        adjacent_ch_selectivity: float = None
+        # Adjacent channel leakage ratio in dB used if adjacent_ch_emissions is set to "ACLR"
+        adjacent_ch_leak_ratio: float = 45.0
+        antenna: ParametersAntenna = field(
+            default_factory=lambda: ParametersAntenna(
+                pattern="ARRAY", array=ParametersAntennaWifi(
+                    downtilt=0.0)))
 
     ap: ParametersAP = field(default_factory=ParametersAP)
 
@@ -71,7 +87,12 @@ class ParametersWifiSystem(ParametersBase):
         noise_figure: float = 10.0
         ohmic_loss: float = 3.0
         body_loss: float = 4.0
-        antenna: ParametersAntennaWifi = field(default_factory=lambda: ParametersAntennaWifi(downtilt=0.0))
+        adjacent_ch_selectivity: float = 33  # Adjacent Channel Selectivity in dB
+        # Adjacent channel leakage ratio in dB used if adjacent_ch_emissions is set to "ACLR"
+        adjacent_ch_leak_ratio: float = 45.0
+        antenna: ParametersAntenna = field(
+            default_factory=lambda: ParametersAntenna(
+                pattern="ARRAY"))
 
     sta: ParametersSTA = field(default_factory=ParametersSTA)
 
@@ -132,14 +153,17 @@ class ParametersWifiSystem(ParametersBase):
         self.frequency = float(self.frequency)
 
         self.ap.antenna.set_external_parameters(
-            adjacent_antenna_model=self.adjacent_antenna_model
+            adjacent_antenna_model=self.adjacent_antenna_model,
+            frequency=self.frequency,
+            bandwidth=self.bandwidth,
         )
 
         self.sta.antenna.set_external_parameters(
-            adjacent_antenna_model=self.adjacent_antenna_model
+            adjacent_antenna_model=self.adjacent_antenna_model,
+            frequency=self.frequency,
+            bandwidth=self.bandwidth,
         )
 
-        self.validate("wifi")
     
 
     

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Parameters definitions for IMT systems
 """
 from dataclasses import dataclass, field
@@ -89,8 +88,8 @@ class ParametersImt(ParametersBase):
         k_m: int = 1
         indoor_percent: int = 5.0
         distribution_type: str = "ANGLE_AND_DISTANCE"
-        distribution_distance: str = "UNIFORM"
-        distribution_azimuth: str = "UNIFORM"
+        distribution_distance: str = "RAYLEIGH"
+        distribution_azimuth: str = "NORMAL"
         azimuth_range: tuple = (-60, 60)
         tx_power_control: bool = True
         p_o_pusch: float = -95.0
@@ -110,11 +109,11 @@ class ParametersImt(ParametersBase):
 
         def validate(self, ctx: str):
             """Validate the UE antenna beamsteering range parameters."""
-            if self.antenna.array.horizontal_beamsteering_range != (-180., 180.)\
-                    or self.antenna.array.vertical_beamsteering_range != (0., 180.):
+            if self.antenna.array.horizontal_beamsteering_range != (-180., 179.9999)\
+                    or self.antenna.array.vertical_beamsteering_range != (0., 179.9999):
                 raise NotImplementedError(
                     "UE antenna beamsteering limit has not been implemented. Default values of\n"
-                    "horizontal = (-180., 180.), vertical = (0., 180.) should not be changed")
+                    "horizontal = (-180., 179.9999), vertical = (0., 179.9999) should not be changed")
 
     ue: ParametersUE = field(default_factory=ParametersUE)
 
@@ -144,14 +143,10 @@ class ParametersImt(ParametersBase):
     # the BS space station and the UEs on Earth's surface.
     # For now, the NTN footprint is centered over the BS nadir point, therefore
     # the paramters imt_lag_deg and imt_long_diff_deg SHALL be zero.
-    #    space_station_alt_m - altitude of IMT space station (meters)
     #    earth_station_alt_m - altitude of IMT earth stations (UEs) (in meters)
     #    earth_station_lat_deg - latitude of IMT earth stations (UEs) (in degrees)
-    #    earth_station_long_diff_deg - difference between longitudes of IMT space and earth stations
-    #      (positive if space-station is to the East of earth-station)
     #    season - season of the year.
     param_p619 = ParametersP619()
-    season: str = "SUMMER"
 
     # TODO: create parameters for where this is needed
     los_adjustment_factor: float = 18.0
@@ -193,18 +188,13 @@ class ParametersImt(ParametersBase):
             raise ValueError(f"ParamtersImt: \
                              Invalid value for parameter channel_model - {self.channel_model}. \
                              Possible values are \"FSPL\",\"CI\", \"UMa\", \"UMi\", \"TVRO-URBAN\", \"TVRO-SUBURBAN\", \
-                             \"ABG\", \"P619\", \"P1411\".")
+                             \"ABG\", \"P619\".")
 
         if self.topology.type == "NTN" and self.channel_model not in [
                 "FSPL", "P619"]:
             raise ValueError(
                 f"ParametersImt: Invalid channel model {
                     self.channel_model} for topology NTN", )
-
-        if self.season not in ["SUMMER", "WINTER"]:
-            raise ValueError(f"ParamtersImt: \
-                             Invalid value for parameter season - {self.season}. \
-                             Possible values are \"SUMMER\", \"WINTER\".")
 
         if self.topology.type == "NTN":
             self.is_space_to_earth = True

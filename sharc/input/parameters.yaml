@@ -20,46 +20,17 @@ general:
     # if FALSE, then a new output directory is created
     overwrite_output: TRUE
 imt:
-    ###########################################################################
-    # Minimum 2D separation distance from BS to UE [m]
-    minimum_separation_distance_bs_ue: 1.3
-    ###########################################################################
-    # Defines if IMT service is the interferer or interfered-with service
-    #   TRUE: IMT suffers interference
-    #   FALSE : IMT generates interference
-    interfered_with: FALSE
-    ###########################################################################
-    # IMT center frequency [MHz]
-    frequency: 7000
-    ###########################################################################
-    # IMT bandwidth [MHz]
-    bandwidth: 20
-    ###########################################################################
-    # IMT resource block bandwidth [MHz]
-    rb_bandwidth: 0.181
-    ###########################################################################
-    # IMT spectrum emission mask. Options are:
-    #   "IMT-2020" : for mmWave as described in ITU-R TG 5/1 Contribution 36
-    #   "3GPP E-UTRA" : for E-UTRA bands > 1 GHz as described in
-    #                   TS 36.104 v11.2.0 (BS) and TS 36.101 v11.2.0 (UE)
-    ###########################################################################
-    #WIFI 
-    spectral_mask: 3GPP E-UTRA
-    ###########################################################################
-    # level of spurious emissions [dBm/MHz]
-    spurious_emissions: -13.1
-    ###########################################################################
-    # Amount of guard band wrt total bandwidth. Setting this parameter to 0.1
-    # means that 10% of the total bandwidth will be used as guard band: 5% in
-    # the lower
-    guard_band_ratio: 0.14
-    ###########################################################################
-    # Adjacent Interference model used when IMT is victim. Possible values are ACIR or SPECTRAL_MASK.
-    # When using ACIR the interfence power from the other system is calculted by using the ACLR and ACS.
-    # Whith the SPECTRAL_MASK the the interference power from the other system is calculated from it's spectral mask.
-    adjacent_interf_model: ACIR
-    ###########################################################################
-    # Network topology parameters.
+    minimum_separation_distance_bs_ue: 5              # Minimum 2D distance between BS and UE [m]
+    interfered_with: FALSE                            # TRUE = IMT is victim; FALSE = IMT is interferer
+    frequency: 7300.0                                 # IMT center frequency [MHz]
+    bandwidth: 100                                    # Total IMT bandwidth [MHz]
+    rb_bandwidth: 0.180                               # Resource Block bandwidth [MHz]
+    adjacent_antenna_model: SINGLE_ELEMENT            # Antenna model: SINGLE_ELEMENT or BEAMFORMING
+    spectral_mask: IMT-2020                           # Spectral mask model
+    spurious_emissions: -13                           # Spurious emission level [dBm/MHz]
+    guard_band_ratio: 0.1                             # Ratio of total bandwidth used as guard band
+    channel_model: UMi                                # Channel model: FSPL, CI, UMa, UMi, etc.
+    shadowing: TRUE  
     topology:
         ###########################################################################
         # This parameter is only used when other system has satellite that needs
@@ -81,33 +52,7 @@ imt:
         # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
         # "INDOOR", "MSS_DC"
         type: INDOOR
-        ###########################################################################
-        # Macrocell Topology parameters. Relevant when imt.topology.type == "MACROCELL"
-        macrocell:
-            ###########################################################################
-            # Inter-site distance in macrocell network topology [m]
-            intersite_distance: 500
-            ###########################################################################
-            # Enable wrap around.
-            wrap_around: true
-            ###########################################################################
-            # Number of clusters in macro cell topology
-            num_clusters: 1
-        ###########################################################################
-        # Single Base Station Topology parameters. Relevant when imt.topology.type == "SINGLE_BS"
-        single_bs:
-            ###########################################################################
-            # Inter-site distance or Cell Radius in single Base Station network topology [m]
-            # You can either provide 'cell_radius' or 'intersite_distance' for this topology
-            # The relationship used is cell_radius = intersite_distance * 2 / 3
-            cell_radius: 543
-            # intersite_distance: 1
-            ###########################################################################
-            # Number of clusters in single base station topology
-            # You can simulate 1 or 2 BS's with this topology
-            num_clusters: 2
-
-        ###########################################################################
+    
         # Hotspot Topology parameters. Relevant when imt.topology.type == "HOTSPOT"
         hotspot:
             ###########################################################################
@@ -580,8 +525,8 @@ imt:
     #                                    "ABG" (Alpha-Beta-Gamma)
     #                                    "P619"
     #                                    "P1411"
-    channel_model: P1411
-    season: SUMMER
+    channel_model: FSPL
+    #season: SUMMER
     ###########################################################################
     # Adjustment factor for LoS probability in UMi path loss model.
     #       Original value: 18 (3GPP)

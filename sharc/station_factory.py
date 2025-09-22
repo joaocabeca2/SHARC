@@ -5,7 +5,7 @@ Created on Thu Mar 23 16:37:32 2017
 @author: edgar
 """
 import math
-
+import numpy as np
 from sharc.support.enumerations import StationType
 from sharc.parameters.parameters import Parameters
 from sharc.parameters.imt.parameters_imt import ParametersImt
