@@ -82,6 +82,8 @@ class Model(Observable):
         self.current_snapshot = 0
 
         self.simulation.initialize()
+        if self.parameters.general.system == "WIFI":
+            self.simulation.initialize_wifi()
 
         random.seed(self.parameters.general.seed)
 
@@ -116,7 +118,7 @@ class Model(Observable):
             + "\tbandwidth: {:.0f} MHz\n".format(param_system.bandwidth) \
             + "\tpath loss model: {:s}\n".format(param_system.channel_model) \
             + "\tantenna pattern: {:s}\n".format(param_system.antenna_pattern)
-
+                
         return description
 
     def snapshot(self):

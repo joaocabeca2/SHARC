@@ -4,10 +4,6 @@ Created on Thu Mar 23 16:37:32 2017
 
 @author: edgar
 """
-
-from warnings import warn
-import numpy as np
-import sys
 import math
 
 from sharc.support.enumerations import StationType
@@ -37,7 +33,10 @@ from sharc.antenna.antenna_mss_adjacent import AntennaMSSAdjacent
 from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.antenna.antenna_f699 import AntennaF699
 from sharc.antenna.antenna_f1891 import AntennaF1891
+from sharc.antenna.antenna_fss_ss import AntennaFssSs
 from sharc.antenna.antenna_m1466 import AntennaM1466
+from sharc.antenna.antenna_modified_s465 import AntennaModifiedS465
+from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.antenna.antenna_rs1813 import AntennaRS1813
 from sharc.antenna.antenna_rs1861_9a import AntennaRS1861_9A
 from sharc.antenna.antenna_rs1861_9b import AntennaRS1861_9B
@@ -45,13 +44,33 @@ from sharc.antenna.antenna_rs1861_9c import AntennaRS1861_9C
 from sharc.antenna.antenna_rs2043 import AntennaRS2043
 from sharc.antenna.antenna_s465 import AntennaS465
 from sharc.antenna.antenna_rra7_3 import AntennaReg_RR_A7_3
-from sharc.antenna.antenna_modified_s465 import AntennaModifiedS465
 from sharc.antenna.antenna_s580 import AntennaS580
 from sharc.antenna.antenna_s672 import AntennaS672
 from sharc.antenna.antenna_s1528 import AntennaS1528
 from sharc.antenna.antenna_s1855 import AntennaS1855
 from sharc.antenna.antenna_s1528 import AntennaS1528, AntennaS1528Leo, AntennaS1528Taylor
-from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
+from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
+from sharc.mask.spectral_mask_imt import SpectralMaskImt
+from sharc.parameters.constants import EARTH_RADIUS, SPEED_OF_LIGHT
+from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
+from sharc.parameters.imt.parameters_imt import ParametersImt
+from sharc.parameters.parameters import Parameters
+from sharc.parameters.parameters_eess_ss import ParametersEessSS
+from sharc.parameters.parameters_fs import ParametersFs
+from sharc.parameters.parameters_fss_es import ParametersFssEs
+from sharc.parameters.parameters_fss_ss import ParametersFssSs
+from sharc.parameters.parameters_haps import ParametersHaps
+from sharc.parameters.parameters_metsat_ss import ParametersMetSatSS
+from sharc.parameters.parameters_ras import ParametersRas
+from sharc.parameters.parameters_rns import ParametersRns
+from sharc.parameters.parameters_single_earth_station import \
+    ParametersSingleEarthStation
+from sharc.parameters.parameters_space_station import ParametersSpaceStation
+from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
+from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
+from sharc.station_manager import StationManager
+from sharc.support.enumerations import StationType
+from sharc.system.system_wifi import SystemWifi
 from sharc.topology.topology import Topology
 from sharc.topology.topology_ntn import TopologyNTN
 from sharc.topology.topology_macrocell import TopologyMacrocell
@@ -72,6 +91,7 @@ class StationFactory(object):
         param_ant_bs: ParametersAntennaImt,
         topology: Topology,
         random_number_gen: np.random.RandomState,
+
     ):
         """Generate IMT base stations for the given topology and parameters.
 
@@ -95,6 +115,8 @@ class StationFactory(object):
         num_bs = topology.num_base_stations
         imt_base_stations = StationManager(num_bs)
         imt_base_stations.station_type = StationType.IMT_BS
+        
+
         if param.topology.type == "NTN":
             imt_base_stations.x = topology.space_station_x * np.ones(num_bs)
             imt_base_stations.y = topology.space_station_y * np.ones(num_bs)
@@ -120,9 +142,9 @@ class StationFactory(object):
                 imt_base_stations.height = param.bs.height * np.ones(num_bs)
 
         imt_base_stations.azimuth = topology.azimuth
-        imt_base_stations.active = random_number_gen.rand(
-            num_bs,
-        ) < param.bs.load_probability
+        random_values = random_number_gen.rand(num_bs)
+        imt_base_stations.active = random_values < param.bs.load_probability
+
         imt_base_stations.tx_power = param.bs.conducted_power * np.ones(num_bs)
         imt_base_stations.rx_power = dict(
             [(bs, -500 * np.ones(param.ue.k)) for bs in range(num_bs)],
@@ -153,7 +175,7 @@ class StationFactory(object):
         imt_base_stations.antenna = np.empty(
             num_bs, dtype=Antenna,
         )
-
+        
         for i in range(num_bs):
             imt_base_stations.antenna[i] = \
                 AntennaFactory.create_antenna(
@@ -529,6 +551,7 @@ class StationFactory(object):
 
         imt_ue = StationManager(num_ue)
         imt_ue.station_type = StationType.IMT_UE
+
         ue_x = list()
         ue_y = list()
         ue_z = list()
@@ -728,6 +751,8 @@ class StationFactory(object):
         elif parameters.general.system == "RNS":
             return StationFactory.generate_rns(
                 parameters.rns, random_number_gen)
+        elif parameters.general.system == "WIFI":
+            return StationFactory.generate_wifi_system(parameters.wifi, parameters.wifi.ap.antenna, parameters.wifi.sta.antenna, random_number_gen, topology)
         elif parameters.general.system == "MSS_SS":
             return StationFactory.generate_mss_ss(parameters.mss_ss)
         elif parameters.general.system == "MSS_D2D":
@@ -1739,7 +1764,34 @@ class StationFactory(object):
         return mss_d2d  # Return the configured StationManager
 
     @staticmethod
-    def get_random_position(num_stas: int,
+    def generate_wifi_system(param: ParametersWifiSystem,
+                            param_ant_ap: ParametersAntennaWifi,
+                            param_ant_sta: ParametersAntennaWifi,
+                            random_number_gen: np.random.RandomState,
+                            topology: Topology):
+        """
+        Generate a Wi-Fi system with access points and stations.
+
+        Parameters
+        ----------
+        param : ParametersWifiSystem
+            The parameters for the Wi-Fi system.
+        param_ant_ap : ParametersAntennaImt
+            Antenna parameters for the access points.
+        topology : Topology
+            The IMT topology object.
+        random_number_gen : np.random.RandomState
+            Random number generator.
+
+        Returns
+        -------
+        tuple
+            Access points and stations as StationManager objects.
+        """
+        return SystemWifi(param, param_ant_ap, param_ant_sta, random_number_gen, topology)
+
+    @staticmethod
+    def get_random_position(num_ue: int,
                             topology: Topology,
                             random_number_gen: np.random.RandomState,
                             min_dist_to_bs=0.,
@@ -1750,7 +1802,7 @@ class StationFactory(object):
 
         Parameters
         ----------
-        num_stas : int
+        num_ue : int
             Number of UE stations
         topology : Topology
             The IMT topology object
@@ -1776,8 +1828,8 @@ class StationFactory(object):
         bs_x = -hexagon_radius
         bs_y = 0
 
-        while len(x) < num_stas:
-            num_stas_temp = num_stas - len(x)
+        while len(x) < num_ue:
+            num_ue_temp = num_ue - len(x)
             # generate UE uniformly in a triangle
             x_temp = random_number_gen.uniform(
                 0, hexagon_radius * np.cos(np.pi / 6), num_stas_temp)
@@ -1794,7 +1846,7 @@ class StationFactory(object):
                 x_temp[invert_index])
 
             # randomly choose a hextant
-            hextant = random_number_gen.random_integers(0, 5, num_stas_temp)
+            hextant = random_number_gen.random_integers(0, 5, num_ue_temp)
             hextant_angle = np.pi / 6 + np.pi / 3 * hextant
 
             old_x = x_temp
@@ -1829,12 +1881,12 @@ class StationFactory(object):
                 0, len(central_cell_indices[0]) - 1, num_stas)]
         elif deterministic_cell:
             num_bs = topology.num_base_stations
-            stas_per_cell = num_stas / num_bs
-            cell = np.repeat(np.arange(num_bs, dtype=int), stas_per_cell)
+            ue_per_cell = num_ue / num_bs
+            cell = np.repeat(np.arange(num_bs, dtype=int), ue_per_cell)
 
         else:  # random cells
             num_bs = topology.num_base_stations
-            cell = random_number_gen.random_integers(0, num_bs - 1, num_stas)
+            cell = random_number_gen.random_integers(0, num_bs - 1, num_ue)
 
         cell_x = topology.x[cell]
         cell_y = topology.y[cell]
@@ -1863,11 +1915,8 @@ class StationFactory(object):
             # psi is the vertical angle of the UE wrt the serving BS
             distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2)
         else:
-            theta = np.arctan2(
-                y - topology.space_station_y[cell],
-                x - topology.space_station_x[cell])
-            distance = np.sqrt((cell_x - x) ** 2 +
-                               (cell_y - y) ** 2 + (cell_z)**2)
+            theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
+            distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs.height)**2)
 
         return x, y, z, theta, distance
 

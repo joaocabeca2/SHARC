@@ -19,6 +19,7 @@ from sharc.parameters.parameters_haps import ParametersHaps
 from sharc.parameters.parameters_rns import ParametersRns
 from sharc.parameters.parameters_ras import ParametersRas
 from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
+from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
 from sharc.parameters.parameters_mss_ss import ParametersMssSs
 from sharc.parameters.parameters_mss_d2d import ParametersMssD2d
 from sharc.parameters.parameters_single_space_station import ParametersSingleSpaceStation
@@ -44,6 +45,7 @@ class Parameters(object):
         self.single_earth_station = ParametersSingleEarthStation()
         self.single_space_station = ParametersSingleSpaceStation()
         self.metsat_ss = ParametersMetSatSS()
+        self.wifi = ParametersWifiSystem()
         self.mss_ss = ParametersMssSs()
         self.mss_d2d = ParametersMssD2d()
 
@@ -104,12 +106,18 @@ class Parameters(object):
         #######################################################################
         # RAS station
         #######################################################################
-        #self.ras.load_parameters_from_file(self.file_name)
+        ##self.ras.load_parameters_from_file(self.file_name)
 
         #######################################################################
         # EESS passive
         #######################################################################
         self.eess_ss.load_parameters_from_file(self.file_name)
+         #######################################################################
+        # wifi system
+        #######################################################################
+        self.wifi.load_parameters_from_file(self.file_name)
+
+        #######################################################################
 
         #######################################################################
         # Single Earth Station

@@ -391,3 +391,10 @@ def copy_active_stations(stations: StationManager) -> StationManager:
         act_sta.is_space_station = stations.is_space_station
         act_sta.intersite_dist = stations.intersite_dist
     return act_sta
+    
+    def is_wifi_station(self) -> bool:
+        
+        if self.station_type is StationType.WIFI_APS or self.station_type is StationType.WIFI_STA:
+            return True
+        else:
+            return False

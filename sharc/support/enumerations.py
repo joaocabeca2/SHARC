@@ -47,3 +47,5 @@ class StationType(Enum):
     SINGLE_SPACE_STATION = 12
     MSS_D2D = 13  # Mobile Satellite Service - Direct to Device system
     MSS_SS = 14  # Mobile Satellite Service - Space Station
+    WIFI_APS = 15
+    WIFI_STA = 16

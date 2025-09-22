@@ -5,14 +5,18 @@ Created on Wed Jan 11 19:06:41 2017
 @author: edgar
 """
 
+import math
+import warnings
+
 import numpy as np
 import math
 import warnings
 
 from sharc.simulation import Simulation
 from sharc.parameters.parameters import Parameters
+from sharc.simulation import Simulation
 from sharc.station_factory import StationFactory
-from sharc.parameters.constants import BOLTZMANN_CONSTANT
+from sharc.support.enumerations import StationType
 
 warn = warnings.warn
 
@@ -68,12 +72,14 @@ class SimulationDownlink(Simulation):
             self.parameters.imt.bs.antenna.array,
             self.topology, random_number_gen,
         )
+        
 
         # Create the other system (FSS, HAPS, etc...)
         self.system = StationFactory.generate_system(
-            self.parameters, self.topology, random_number_gen,
+            self.parameters, self.system_topology, random_number_gen,
             geometry_converter=self.geometry_converter
         )
+        
 
         # Create IMT user equipments
         self.ue = StationFactory.generate_imt_ue(
@@ -85,6 +91,15 @@ class SimulationDownlink(Simulation):
 
         # self.plot_scenario()
 
+        if self.parameters.general.system == "WIFI":
+            self.system.connect_wifi_sta_to_ap(self.parameters.wifi)
+            self.system.select_sta(random_number_gen, self.parameters.wifi)
+            #Calculate intra wifi coupling loss 
+            self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(
+                self.system.sta, self.system.ap)
+            self.calculate_sinr_wifi()
+            self.power_control_wifi()
+            
         self.connect_ue_to_bs()
         self.select_ue(random_number_gen)
         self.scheduler()
@@ -149,6 +164,26 @@ class SimulationDownlink(Simulation):
         # Update the spectral mask
         if self.adjacent_channel:
             self.bs.spectral_mask.set_mask(p_tx=total_power)
+            #self.wifi_ap.spectral_mask.set_mask(p_tx=total_power_wifi)
+
+    def power_control_wifi(self):
+        """
+        Apply downlink power control algorithm for WiFi
+        """
+        # Currently, the maximum transmit power of the access point is equaly
+        # divided among the selected STAs
+        total_power = self.parameters.wifi.ap.conducted_power \
+            + self.system.ap_power_gain
+        tx_power = total_power - 10 * math.log10(self.parameters.wifi.sta.k)
+        # calculate transmit powers to have a structure such as
+
+        ap_active = np.where(self.system.ap.active)[0]
+        self.system.ap.tx_power = dict(
+            [(ap, tx_power * np.ones(self.parameters.wifi.sta.k))
+             for ap in ap_active],
+        )
+        # Update the spectral mask
+        self.system.ap.spectral_mask.set_mask(p_tx=total_power)
 
     def calculate_sinr(self):
         """
@@ -398,6 +433,48 @@ class SimulationDownlink(Simulation):
         """
         Calculates interference that IMT system generates on other system
         """
+        if self.parameters.general.system == "WIFI":
+
+            if self.co_channel:
+                self.coupling_loss_imt_wifi_ap = self.calculate_coupling_loss_system_imt(
+                    self.system.ap,
+                    self.bs,
+                    is_co_channel=True,
+                )
+
+                self.coupling_loss_imt_wifi_sta = self.calculate_coupling_loss_system_imt(
+                    self.system.sta,
+                    self.bs,
+                    is_co_channel=True,
+                )
+            if self.adjacent_channel:
+                self.coupling_loss_imt_wifi_ap_adjacent = \
+                    self.calculate_coupling_loss_system_imt(
+                        self.system.ap,
+                        self.bs,
+                        is_co_channel=False,
+                    )
+
+                self.coupling_loss_imt_wifi_sta_adjacent = \
+                    self.calculate_coupling_loss_system_imt(
+                        self.system.sta,
+                        self.bs,
+                        is_co_channel=False,
+                    )
+        else:
+            if self.co_channel:
+                self.coupling_loss_imt_system = self.calculate_coupling_loss_system_imt(
+                    self.system,
+                    self.bs,
+                    is_co_channel=True,
+                )
+            if self.adjacent_channel:
+                self.coupling_loss_imt_system_adjacent = \
+                    self.calculate_coupling_loss_system_imt(
+                        self.system,
+                        self.bs,
+                        is_co_channel=False,
+                    )
         if self.co_channel or (
             self.adjacent_channel and self.param_system.adjacent_ch_reception != "OFF"
         ):
@@ -689,3 +766,42 @@ class SimulationDownlink(Simulation):
         if write_to_file:
             self.results.write_files(snapshot_number)
             self.notify_observers(source=__name__, results=self.results)
+    
+    def calculate_sinr_wifi(self):
+        """
+        Calculates the downlink SINR for each STA.
+        """
+        ap_active = np.where(self.system.ap.active)[0]
+        for ap in ap_active:
+            sta = self.system.link[ap]
+            self.system.sta.rx_power[sta] = self.system.ap.tx_power[ap] - \
+                self.coupling_loss_wifi[ap, sta]
+
+            # create a list with access points that generate interference in sta_list
+            ap_interf = [a for a in ap_active if a not in [ap]]
+
+            # calculate intra system interference
+            for ai in ap_interf:
+                interference = self.system.ap.tx_power[ai] - \
+                    self.coupling_loss_wifi[ai, sta]
+
+                self.system.sta.rx_interference[sta] = 10 * np.log10(
+                    np.power(
+                        10, 0.1 * self.system.sta.rx_interference[sta]) + np.power(10, 0.1 * interference),
+                )
+
+        # Thermal noise in dBm
+        self.system.sta.thermal_noise = \
+            10 * math.log10(BOLTZMANN_CONSTANT * self.parameters.wifi.noise_temperature * 1e3) + \
+            10 * np.log10(self.system.sta.bandwidth * 1e6) + \
+            self.system.sta.noise_figure
+
+        self.system.sta.total_interference = \
+            10 * np.log10(
+                np.power(10, 0.1 * self.system.sta.rx_interference) +
+                np.power(10, 0.1 * self.system.sta.thermal_noise),
+            )
+
+        self.system.sta.sinr = self.system.sta.rx_power - self.system.sta.total_interference
+        self.system.sta.snr = self.system.sta.rx_power - self.system.sta.thermal_noise
+                        
