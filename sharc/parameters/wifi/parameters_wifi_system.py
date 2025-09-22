@@ -31,6 +31,7 @@ class ParametersWifiSystem(ParametersBase):
     antenna_pattern: str = "Modified ITU-R S.465"
     max_dist_hotspot_ue: float = 70
     adjacent_ch_reception: str = "ACS"
+    polarization_loss: float = 0.0
 
     # Adjacent channel emissions type
     # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"

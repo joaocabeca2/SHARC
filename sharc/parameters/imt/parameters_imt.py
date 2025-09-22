@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Parameters definitions for IMT systems
 """
 from dataclasses import dataclass, field

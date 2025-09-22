@@ -203,14 +203,20 @@ class Simulation(ABC, Observable):
         num_bs = self.topology.num_base_stations
         num_ue = num_bs * self.parameters.imt.ue.k * self.parameters.imt.ue.k_m
 
-        self.ap_power_gain = 10 * math.log10(
-            self.parameters.wifi.ap.antenna.n_rows *
-            self.parameters.wifi.ap.antenna.n_columns,
-        )
-        self.sta_power_gain = 10 * math.log10(
-            self.parameters.wifi.sta.antenna.n_rows *
-            self.parameters.wifi.sta.antenna.n_columns,
-        )
+        # or antenna itself
+        if self.parameters.wifi.ap.antenna.pattern == "ARRAY":
+            self.ap_power_gain = 10 * math.log10(
+                self.parameters.wifi.ap.antenna.array.n_rows *
+                self.parameters.wifi.ap.antenna.array.n_columns,
+            )
+            self.sta_power_gain = 10 * math.log10(
+                self.parameters.wifi.sta.antenna.array.n_rows *
+                self.parameters.wifi.sta.antenna.array.n_columns,
+            )
+        else:
+            self.ap_power_gain = 0
+            self.sta_power_gain = 0
+
 
         self.wifi_ap_antenna_gain = list()
         self.wifi_sta_antenna_gain = list()
