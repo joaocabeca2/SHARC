@@ -129,14 +129,14 @@ class SystemWifi:
 
         self.wrap_around_enabled = False
 
-        self.ap_power_gain = 10 * math.log10(
+        '''self.ap_power_gain = 10 * math.log10(
             self.parameters.ap.antenna.n_rows *
             self.parameters.ap.antenna.n_columns,
         )
         self.sta_power_gain = 10 * math.log10(
             self.parameters.sta.antenna.n_rows *
             self.parameters.sta.antenna.n_columns,
-        )
+        )'''
         self.ap_antenna_gain = list()
         self.sta_antenna_gain = list()
         self.path_loss = np.empty([self.num_aps, self.num_sta])
@@ -161,7 +161,7 @@ class SystemWifi:
         )
 
         if hasattr(self.parameters, "polarization_loss"):
-            self.polarization_loss = self.param_system.polarization_loss
+            self.polarization_loss = self.parameters.polarization_loss
         else:
             self.polarization_loss = 3.0
 

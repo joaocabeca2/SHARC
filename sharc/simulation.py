@@ -732,7 +732,7 @@ class Simulation(ABC, Observable):
         Calculates the gains of antennas in station_1 in the direction of
         station_2
         """
-    
+
         station_1_active = np.where(station_1.active)[0]
         station_2_active = np.where(station_2.active)[0]
 
@@ -783,7 +783,7 @@ class Simulation(ABC, Observable):
 
         # Calculate gains
         gains = np.zeros(phi.shape)
-        if station_1.station_type is StationType.IMT_BS and not station_2.is_imt_station():
+        if station_1.station_type is StationType.IMT_BS and not station_2.is_imt_station() and not station_2.is_wifi_station():
             off_axis_angle = station_1.get_off_axis_angle(station_2)
             for k in station_1_active:
                 for b in range(

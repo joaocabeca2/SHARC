@@ -49,6 +49,7 @@ from sharc.antenna.antenna_s672 import AntennaS672
 from sharc.antenna.antenna_s1528 import AntennaS1528
 from sharc.antenna.antenna_s1855 import AntennaS1855
 from sharc.antenna.antenna_s1528 import AntennaS1528, AntennaS1528Leo, AntennaS1528Taylor
+from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.mask.spectral_mask_imt import SpectralMaskImt
 from sharc.parameters.constants import EARTH_RADIUS, SPEED_OF_LIGHT
@@ -752,7 +753,7 @@ class StationFactory(object):
             return StationFactory.generate_rns(
                 parameters.rns, random_number_gen)
         elif parameters.general.system == "WIFI":
-            return StationFactory.generate_wifi_system(parameters.wifi, parameters.wifi.ap.antenna, parameters.wifi.sta.antenna, random_number_gen, topology)
+            return StationFactory.generate_wifi_system(parameters.wifi, parameters.wifi.ap.antenna.array, parameters.wifi.sta.antenna.array, random_number_gen, topology)
         elif parameters.general.system == "MSS_SS":
             return StationFactory.generate_mss_ss(parameters.mss_ss)
         elif parameters.general.system == "MSS_D2D":
