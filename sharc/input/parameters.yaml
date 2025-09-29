@@ -294,11 +294,12 @@ imt:
         attenuation_factor: 0.6
         sinr_min: -10
         sinr_max: 30
+
     uplink:
         attenuation_factor: 0.4
         sinr_min: -10
         sinr_max: 22
-    imt_dl_intra_sinr_calculation_disabled: true
+    imt_dl_intra_sinr_calculation_disabled: false
 
 wifi:
     ###########################################################################

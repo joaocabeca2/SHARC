@@ -32,6 +32,7 @@ class ParametersWifiSystem(ParametersBase):
     max_dist_hotspot_ue: float = 70
     adjacent_ch_reception: str = "ACS"
     polarization_loss: float = 0.0
+    adjacent_ch_selectivity: float = 20.0
 
     # Adjacent channel emissions type
     # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
