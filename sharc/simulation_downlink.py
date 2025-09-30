@@ -563,48 +563,53 @@ class SimulationDownlink(Simulation):
                         self.param_system.adjacent_ch_reception}")
         
         ap_active = np.where(self.system.ap.active)[0]
+        #rx_interference_all = []
         rx_interference = 0
-
         for bs in bs_active:
+            for sys in ap_active:
+                #sys = np.array([sys])
+                active_beams = [
+                    i for i in range(
+                        bs *
+                        self.parameters.imt.ue.k, (bs + 1) *
+                        self.parameters.imt.ue.k,
+                    )
+                ]
 
-            active_beams = [
-                i for i in range(
-                    bs *
-                    self.parameters.imt.ue.k, (bs + 1) *
-                    self.parameters.imt.ue.k,
-                )
-            ]
+                if self.co_channel:
+                    rx_interference += np.sum(
+                        10 ** (0.1 * (pow_coch - self.coupling_loss_imt_system[active_beams, sys])),
+                        axis=0
+                    )
 
-            if self.co_channel:
-                rx_interference += np.sum(
-                    10 ** (0.1 * (pow_coch - self.coupling_loss_imt_system[active_beams, ap_active])),
-                    axis=0
-                )
+                if self.adjacent_channel:
 
-            if self.adjacent_channel:
+                    # oob_power per beam
+                    # NOTE: we only consider one beam since all beams should have gain
+                    # of a single element for IMT, and as such the coupling loss should be the
+                    # same for all beams
+                    adj_loss = self.coupling_loss_imt_wifi_ap_adjacent[np.ix_(active_beams, [sys])]
 
-                # oob_power per beam
-                # NOTE: we only consider one beam since all beams should have gain
-                # of a single element for IMT, and as such the coupling loss should be the
-                # same for all beams
-                adj_loss = self.coupling_loss_imt_wifi_ap_adjacent[np.ix_(active_beams, ap_active)]
+                    tx_oob_s = tx_oob - adj_loss
+                    if self.param_system.adjacent_ch_reception != "OFF":
+                        rx_oob_s = rx_oob - self.coupling_loss_imt_wifi_ap_adjacent[active_beams, sys]
 
-                tx_oob_s = tx_oob - adj_loss
-                if self.param_system.adjacent_ch_reception != "OFF":
-                    rx_oob = rx_oob[:, np.newaxis]
-                    rx_oob_s = rx_oob - self.coupling_loss_imt_wifi_ap_adjacent[active_beams][:, ap_active]
-                else:
-                    rx_oob_s = -np.inf
+                    else:
+                        rx_oob_s = -np.inf
 
-                # Out of band power
-                # sum linearly power leaked into band and power received in the
-                # adjacent band
-                oob_power = 10 * np.log10(
-                    10 ** (0.1 * tx_oob_s) + 10 ** (0.1 * rx_oob_s)
-                )
+                    # Out of band power
+                    # sum linearly power leaked into band and power received in the
+                    # adjacent band
+                    oob_power = 10 * np.log10(
+                        10 ** (0.1 * tx_oob_s) + 10 ** (0.1 * rx_oob_s)
+                    )
 
-                # System rx interference
-                rx_interference += np.sum(np.power(10, 0.1 * oob_power))
+                    # System rx interference
+                    rx_interference += np.sum(np.power(10, 0.1 * oob_power))
+        #rx_interference_all.append(10 * np.log10(rx_interference))
+
+        # Total received interference - dBW
+        self.system.rx_interference = 10 * np.log10(rx_interference)
 
         # Total received interference - dBW
         self.system.rx_interference = 10 * np.log10(rx_interference)
@@ -742,7 +747,7 @@ class SimulationDownlink(Simulation):
                     f"No implementation for self.param_system.adjacent_ch_reception == {
                         self.param_system.adjacent_ch_reception}")
 
-        sys_active = np.where(self.system.ap.active)[0]
+        sys_active = np.where(self.system.active)[0]
         if len(sys_active) > 1:
             raise NotImplementedError(
                 "Implementation does not support victim system with more than 1 active station"

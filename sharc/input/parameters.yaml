@@ -791,3 +791,5 @@ wifi:
         ###########################################################################
         # determine whether clutter loss following ITU-R P.2108 is added (TRUE/FALSE)
         clutter_loss: TRUE
+
+
