@@ -12,6 +12,7 @@ from sharc.topology.topology import Topology
 from sharc.propagation.propagation_free_space import PropagationFreeSpace
 from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
 from sharc.mask.spectral_mask_wifi import SpectralMaskWifi
+from sharc.support.sharc_utils import wrap2_180
 
 from itertools import product
 
@@ -102,6 +103,8 @@ class TopologyIndoorWifi(Topology):
 
             # In the end, we have to update the number of base stations
             self.num_base_stations = len(self.x)
+            # height will be added to z in station_factory
+            self.z = np.zeros_like(self.height)
 
             self.azimuth = np.zeros(self.num_base_stations)
             self.indoor = np.ones(self.num_base_stations, dtype=bool)
@@ -186,10 +189,11 @@ class SystemWifi:
 
         wifi_aps.x = self.topology.x
         wifi_aps.y = self.topology.y
+        wifi_aps.z = self.topology.z + self.parameters.ap.height
         wifi_aps.elevation = -param_ant.downtilt * np.ones(num_aps)
-        wifi_aps.height = self.parameters.ap.height * np.ones(num_aps)
+        wifi_aps.height = self.topology.height
 
-        wifi_aps.azimuth = self.topology.azimuth
+        wifi_aps.azimuth =  wrap2_180(self.topology.azimuth)
         random_values = random_number_gen.rand(num_aps)
         wifi_aps.active = random_values < self.parameters.ap.load_probability
         wifi_aps.tx_power = self.parameters.ap.conducted_power * np.ones(num_aps)

@@ -4,8 +4,11 @@ Created on Thu Mar 23 16:37:32 2017
 
 @author: edgar
 """
-import math
+from warnings import warn
 import numpy as np
+import sys
+import math
+
 from sharc.support.enumerations import StationType
 from sharc.parameters.parameters import Parameters
 from sharc.parameters.imt.parameters_imt import ParametersImt
@@ -33,10 +36,7 @@ from sharc.antenna.antenna_mss_adjacent import AntennaMSSAdjacent
 from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.antenna.antenna_f699 import AntennaF699
 from sharc.antenna.antenna_f1891 import AntennaF1891
-from sharc.antenna.antenna_fss_ss import AntennaFssSs
 from sharc.antenna.antenna_m1466 import AntennaM1466
-from sharc.antenna.antenna_modified_s465 import AntennaModifiedS465
-from sharc.antenna.antenna_omni import AntennaOmni
 from sharc.antenna.antenna_rs1813 import AntennaRS1813
 from sharc.antenna.antenna_rs1861_9a import AntennaRS1861_9A
 from sharc.antenna.antenna_rs1861_9b import AntennaRS1861_9B
@@ -44,34 +44,13 @@ from sharc.antenna.antenna_rs1861_9c import AntennaRS1861_9C
 from sharc.antenna.antenna_rs2043 import AntennaRS2043
 from sharc.antenna.antenna_s465 import AntennaS465
 from sharc.antenna.antenna_rra7_3 import AntennaReg_RR_A7_3
+from sharc.antenna.antenna_modified_s465 import AntennaModifiedS465
 from sharc.antenna.antenna_s580 import AntennaS580
 from sharc.antenna.antenna_s672 import AntennaS672
 from sharc.antenna.antenna_s1528 import AntennaS1528
 from sharc.antenna.antenna_s1855 import AntennaS1855
 from sharc.antenna.antenna_s1528 import AntennaS1528, AntennaS1528Leo, AntennaS1528Taylor
 from sharc.antenna.antenna_beamforming_imt import AntennaBeamformingImt
-from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
-from sharc.mask.spectral_mask_imt import SpectralMaskImt
-from sharc.parameters.constants import EARTH_RADIUS, SPEED_OF_LIGHT
-from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
-from sharc.parameters.imt.parameters_imt import ParametersImt
-from sharc.parameters.parameters import Parameters
-from sharc.parameters.parameters_eess_ss import ParametersEessSS
-from sharc.parameters.parameters_fs import ParametersFs
-from sharc.parameters.parameters_fss_es import ParametersFssEs
-from sharc.parameters.parameters_fss_ss import ParametersFssSs
-from sharc.parameters.parameters_haps import ParametersHaps
-from sharc.parameters.parameters_metsat_ss import ParametersMetSatSS
-from sharc.parameters.parameters_ras import ParametersRas
-from sharc.parameters.parameters_rns import ParametersRns
-from sharc.parameters.parameters_single_earth_station import \
-    ParametersSingleEarthStation
-from sharc.parameters.parameters_space_station import ParametersSpaceStation
-from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
-from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
-from sharc.station_manager import StationManager
-from sharc.support.enumerations import StationType
-from sharc.system.system_wifi import SystemWifi
 from sharc.topology.topology import Topology
 from sharc.topology.topology_ntn import TopologyNTN
 from sharc.topology.topology_macrocell import TopologyMacrocell
@@ -79,6 +58,11 @@ from sharc.topology.topology_imt_mss_dc import TopologyImtMssDc
 from sharc.mask.spectral_mask_3gpp import SpectralMask3Gpp
 from sharc.mask.spectral_mask_mss import SpectralMaskMSS
 from sharc.support.sharc_geom import GeometryConverter
+from sharc.support.sharc_utils import wrap2_180
+
+from sharc.system.system_wifi import SystemWifi
+from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
+from sharc.parameters.wifi.parameters_antenna_wifi import ParametersAntennaWifi
 
 
 class StationFactory(object):
@@ -92,7 +76,6 @@ class StationFactory(object):
         param_ant_bs: ParametersAntennaImt,
         topology: Topology,
         random_number_gen: np.random.RandomState,
-
     ):
         """Generate IMT base stations for the given topology and parameters.
 
@@ -116,8 +99,6 @@ class StationFactory(object):
         num_bs = topology.num_base_stations
         imt_base_stations = StationManager(num_bs)
         imt_base_stations.station_type = StationType.IMT_BS
-        
-
         if param.topology.type == "NTN":
             imt_base_stations.x = topology.space_station_x * np.ones(num_bs)
             imt_base_stations.y = topology.space_station_y * np.ones(num_bs)
@@ -142,10 +123,10 @@ class StationFactory(object):
             else:
                 imt_base_stations.height = param.bs.height * np.ones(num_bs)
 
-        imt_base_stations.azimuth = topology.azimuth
-        random_values = random_number_gen.rand(num_bs)
-        imt_base_stations.active = random_values < param.bs.load_probability
-
+        imt_base_stations.azimuth = wrap2_180(topology.azimuth)
+        imt_base_stations.active = random_number_gen.rand(
+            num_bs,
+        ) < param.bs.load_probability
         imt_base_stations.tx_power = param.bs.conducted_power * np.ones(num_bs)
         imt_base_stations.rx_power = dict(
             [(bs, -500 * np.ones(param.ue.k)) for bs in range(num_bs)],
@@ -176,12 +157,13 @@ class StationFactory(object):
         imt_base_stations.antenna = np.empty(
             num_bs, dtype=Antenna,
         )
-        
-        for i in range(num_bs):
-            imt_base_stations.antenna[i] = \
-                AntennaFactory.create_antenna(
-                    param.bs.antenna, imt_base_stations.azimuth[i],
-                    imt_base_stations.elevation[i],)
+
+        imt_base_stations.antenna = AntennaFactory.create_n_antennas(
+            param.bs.antenna,
+            imt_base_stations.azimuth,
+            imt_base_stations.elevation,
+            num_bs
+        )
 
         # imt_base_stations.antenna = [AntennaOmni(0) for bs in range(num_bs)]
         imt_base_stations.bandwidth = param.bandwidth * np.ones(num_bs)
@@ -480,11 +462,12 @@ class StationFactory(object):
 
         # TODO: this piece of code works only for uplink
         ue_param_ant.get_antenna_parameters()
-        for i in range(num_ue):
-            imt_ue.antenna[i] = AntennaFactory.create_antenna(
-                param.ue.antenna, imt_ue.azimuth[i],
-                imt_ue.elevation[i],
-            )
+        imt_ue.antenna = AntennaFactory.create_n_antennas(
+            param.ue.antenna,
+            imt_ue.azimuth,
+            imt_ue.elevation,
+            num_ue,
+        )
 
         # imt_ue.antenna = [AntennaOmni(0) for bs in range(num_ue)]
         imt_ue.bandwidth = param.bandwidth * np.ones(num_ue)
@@ -552,7 +535,6 @@ class StationFactory(object):
 
         imt_ue = StationManager(num_ue)
         imt_ue.station_type = StationType.IMT_UE
-
         ue_x = list()
         ue_y = list()
         ue_z = list()

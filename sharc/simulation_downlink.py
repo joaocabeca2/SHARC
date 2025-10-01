@@ -115,7 +115,7 @@ class SimulationDownlink(Simulation):
                 self.ue, self.bs,
             )
             self.calculate_sinr()
-            self.calculate_sinr_ext()
+            #self.calculate_sinr_ext()
         else:
             # Execute this piece of code if IMT generates interference into
             # the other system
@@ -563,11 +563,8 @@ class SimulationDownlink(Simulation):
                         self.param_system.adjacent_ch_reception}")
         
         ap_active = np.where(self.system.ap.active)[0]
-        #rx_interference_all = []
         rx_interference = 0
         for bs in bs_active:
-            for sys in ap_active:
-                #sys = np.array([sys])
                 active_beams = [
                     i for i in range(
                         bs *
@@ -588,11 +585,11 @@ class SimulationDownlink(Simulation):
                     # NOTE: we only consider one beam since all beams should have gain
                     # of a single element for IMT, and as such the coupling loss should be the
                     # same for all beams
-                    adj_loss = self.coupling_loss_imt_wifi_ap_adjacent[np.ix_(active_beams, [sys])]
+                    adj_loss = self.coupling_loss_imt_wifi_ap_adjacent[active_beams[0]]
 
                     tx_oob_s = tx_oob - adj_loss
                     if self.param_system.adjacent_ch_reception != "OFF":
-                        rx_oob_s = rx_oob - self.coupling_loss_imt_wifi_ap_adjacent[active_beams, sys]
+                        rx_oob_s = rx_oob[:, np.newaxis] - self.coupling_loss_imt_wifi_ap_adjacent[active_beams[0]]
 
                     else:
                         rx_oob_s = -np.inf
@@ -626,7 +623,7 @@ class SimulationDownlink(Simulation):
         # Calculate PFD at the system
         # TODO: generalize this a bit more if needed
         if hasattr(
-                self.system.antenna[0],
+                self.system.ap.antenna[0],
                 "effective_area"):
             for i, sys in enumerate(ap_active):
                 A_eff = self.system.antenna[sys].effective_area
