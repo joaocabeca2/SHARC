@@ -142,6 +142,16 @@ class Results(object):
         self.imt_wifi_building_entry_loss = SampleList()
         self.imt_wifi_diffraction_loss = SampleList()
 
+        self.imt_ap_path_loss = SampleList()
+        self.imt_ap_antenna_gain = SampleList()
+        self.ap_imt_antenna_gain = SampleList()
+        self.imt_ap_antenna_gain_adjacent = SampleList()
+
+        self.imt_sta_path_loss = SampleList()
+        self.imt_sta_antenna_gain = SampleList()
+        self.sta_imt_antenna_gain = SampleList()
+        self.imt_sta_antenna_gain_adjacent = SampleList()
+
         self.__sharc_dir = pathlib.Path(__file__).parent.resolve()
 
     def prepare_to_write(

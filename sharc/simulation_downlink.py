@@ -937,10 +937,6 @@ class SimulationDownlink(Simulation):
             if not self.parameters.imt.imt_dl_intra_sinr_calculation_disabled:
                 self.results.imt_dl_sinr.extend(self.ue.sinr[ue].tolist())
                 self.results.imt_dl_snr.extend(self.ue.snr[ue].tolist())
-
-        if write_to_file:
-            self.results.write_files(snapshot_number)
-            self.notify_observers(source=__name__, results=self.results)
     
     def calculate_sinr_wifi(self):
         """
@@ -991,12 +987,13 @@ class SimulationDownlink(Simulation):
         
 
         ap_active = np.where(self.system.ap.active)[0]
+        sta_active = np.where(self.system.sta.active)[0]
         for ap in ap_active:
             sta = self.system.link[ap]  
             # Coleta resultados básicos do WiFi
             self.results.wifi_path_loss.extend(self.path_loss_wifi[ap, sta])
             self.results.wifi_coupling_loss.extend(self.coupling_loss_wifi[ap, sta])
-            self.results.wifi_ap_antenna_gain.extend(self.ap_antenna_gain[ap, sta])
+            self.results.wifi_.extend(self.ap_antenna_gain[ap, sta])
             self.results.wifi_sta_antenna_gain.extend(self.sta_antenna_gain[ap, sta])
 
             # Coleta resultados de potência e SINR do WiFi
@@ -1037,65 +1034,43 @@ class SimulationDownlink(Simulation):
                 )
                 self.results.imt_dl_tput.extend(tput.tolist())
 
-            if self.parameters.imt.interfered_with:
-                tput_ext = self.calculate_imt_tput(
-                    self.ue.sinr_ext[ue],
-                    self.parameters.imt.downlink.sinr_min,
-                    self.parameters.imt.downlink.sinr_max,
-                    self.parameters.imt.downlink.attenuation_factor,
+             # IMT is the interferer
+            self.results.ap_imt_antenna_gain.extend(
+                    self.ap_imt_antenna_gain[ap_active[:, np.newaxis], ue].flatten(),
                 )
-                self.results.imt_dl_tput_ext.extend(tput_ext.tolist())
-                self.results.imt_dl_sinr_ext.extend(
-                    self.ue.sinr_ext[ue].tolist(),
+            self.results.sta_imt_antenna_gain.extend(
+                    self.sta_imt_antenna_gain[sta_active[:, np.newaxis], ue].flatten(),
                 )
-                self.results.imt_dl_inr.extend(self.ue.inr[ue].tolist())
+            if len(self.imt_ap_antenna_gain):
+                self.results.imt_ap_antenna_gain.extend(
+                    self.imt_ap_antenna_gain[ap_active[:, np.newaxis], ue].flatten(),
+                )
+            if len(self.imt_sta_antenna_gain):
+                self.results.imt_sta_antenna_gain.extend(
+                    self.imt_sta_antenna_gain[sta_active[:, np.newaxis], ue].flatten(),
+                )
+            if len(self.imt_ap_antenna_gain_adjacent):
+                self.results.imt_ap_antenna_gain_adjacent.extend(
+                    self.imt_ap_antenna_gain_adjacent[ap_active[:, np.newaxis], ue].flatten(),
+                )
+            if len(self.imt_sta_antenna_gain_adjacent):
+                self.results.imt_sta_antenna_gain_adjacent.extend(
+                    self.imt_sta_antenna_gain_adjacent[sta_active[:, np.newaxis], ue].flatten(),
+                )
 
-                if self.parameters.general.system != "WIFI":
-                    self.results.system_imt_antenna_gain.extend(
-                        self.system_imt_antenna_gain[0, ue],
-                    )
-                    self.results.imt_system_antenna_gain.extend(
-                        self.imt_system_antenna_gain[0, ue],
-                    )
-                    self.results.imt_system_path_loss.extend(
-                        self.imt_system_path_loss[0, ue],
-                    )
-                    if self.param_system.channel_model == "HDFSS":
-                        self.results.imt_system_build_entry_loss.extend(
-                            self.imt_system_build_entry_loss[0, ue],
-                        )
-                        self.results.imt_system_diffraction_loss.extend(
-                            self.imt_system_diffraction_loss[0, ue],
-                        )
-                else:
-                    pass
-
-            else:
-                if self.parameters.general.system != "WIFI":
-                    active_beams = [
-                        i for i in range(
-                            bs *
-                            self.parameters.imt.ue.k, (bs + 1) *
-                            self.parameters.imt.ue.k,
-                        )
-                    ]
-                    self.results.system_imt_antenna_gain.extend(
-                        self.system_imt_antenna_gain[0, active_beams],
-                    )
-                    self.results.imt_system_antenna_gain.extend(
-                        self.imt_system_antenna_gain[0, active_beams],
-                    )
-                    self.results.imt_system_path_loss.extend(
-                        self.imt_system_path_loss[0, active_beams],
-                    )
-                    if self.param_system.channel_model == "HDFSS":
-                        self.results.imt_system_build_entry_loss.extend(
-                            self.imt_system_build_entry_loss[:, bs],
-                        )
-                        self.results.imt_system_diffraction_loss.extend(
-                            self.imt_system_diffraction_loss[:, bs],
-                        )
-            
+            self.results.imt_ap_path_loss.extend(
+                self.imt_ap_path_loss[ap_active[:, np.newaxis], ue].flatten(),
+            )
+            self.results.imt_sta_path_loss.extend(
+                self.imt_sta_path_loss[sta_active[:, np.newaxis], ue].flatten(),
+            )    
+            if self.param_system.channel_model == "HDFSS":
+                self.results.imt_system_build_entry_loss.extend(
+                    self.imt_system_build_entry_loss[:, bs],
+                )
+                self.results.imt_system_diffraction_loss.extend(
+                    self.imt_system_diffraction_loss[:, bs],
+                )
 
             self.results.imt_dl_tx_power.extend(self.bs.tx_power[bs].tolist())
             self.results.imt_dl_sinr.extend(self.ue.sinr[ue].tolist())

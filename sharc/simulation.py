@@ -483,6 +483,23 @@ class Simulation(ABC, Observable):
         coupling_loss = \
             self.imt_system_path_loss - self.system_imt_antenna_gain - gain_imt_to_sys + additional_loss
 
+        if system_station.station_type is StationType.WIFI_APS:
+            self.imt_ap_path_loss = self.imt_system_path_loss
+            if is_co_channel:
+                self.imt_ap_antenna_gain = self.system_imt_antenna_gain
+            else:
+                self.imt_ap_antenna_gain_adjacent = self.imt_system_antenna_gain_adjacent 
+            
+            self.ap_imt_antenna_gain = self.system_imt_antenna_gain
+        elif system_station.station_type is StationType.WIFI_STA:
+            self.imt_sta_path_loss = self.imt_system_path_loss
+            if is_co_channel:
+                self.imt_sta_antenna_gain = self.system_imt_antenna_gain
+            else:
+                self.imt_sta_antenna_gain_adjacent = self.imt_system_antenna_gain_adjacent
+    
+            self.sta_imt_antenna_gain = self.system_imt_antenna_gain
+
         # Simulator expects imt_stations x system_stations shape
         return np.transpose(coupling_loss)
 
