@@ -320,7 +320,7 @@ class SystemWifi:
                 (self.topology.x[ap] - x)**2 + (self.topology.y[ap] - y)**2,
             )
             psi = np.degrees(
-                np.arctan((self.parameters.sta.height - self.parameters.sta.height) / distance),
+                np.arctan((self.parameters.ap.height - self.parameters.sta.height) / distance),
             )
             wifi_sta.elevation[idx] = elevation[idx] + psi
 
@@ -335,11 +335,11 @@ class SystemWifi:
             else:
                 out = (y > self.topology.y[ap] + self.topology.b_d / 2) | \
                     (y < self.topology.y[ap] - self.topology.b_d / 2)
-                wifi_sta.indoor[idx] = ~out
+            wifi_sta.indoor[idx] = ~out
 
         wifi_sta.x = np.array(sta_x)
         wifi_sta.y = np.array(sta_y)
-        wifi_sta.height = np.array(sta_z)
+        wifi_sta.z = np.array(sta_z)
 
         wifi_sta.active = np.zeros(self.num_sta, dtype=bool)
         wifi_sta.rx_interference = -500 * np.ones(self.num_sta)
@@ -359,6 +359,7 @@ class SystemWifi:
                 StationType.WIFI_STA,
                 self.parameters.spurious_emissions,
             )
+        wifi_sta.spectral_mask.set_mask()
 
         return wifi_sta
     

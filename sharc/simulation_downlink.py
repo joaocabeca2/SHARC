@@ -993,7 +993,7 @@ class SimulationDownlink(Simulation):
             # Coleta resultados básicos do WiFi
             self.results.wifi_path_loss.extend(self.path_loss_wifi[ap, sta])
             self.results.wifi_coupling_loss.extend(self.coupling_loss_wifi[ap, sta])
-            self.results.wifi_.extend(self.ap_antenna_gain[ap, sta])
+            self.results.wifi_ap_antenna_gain.extend(self.ap_antenna_gain[ap, sta])
             self.results.wifi_sta_antenna_gain.extend(self.sta_antenna_gain[ap, sta])
 
             # Coleta resultados de potência e SINR do WiFi

@@ -149,6 +149,7 @@ class StationManager(object):
         np.array
             3D distance matrix between stations.
         """
+
         dx = np.subtract.outer(self.x, station.x).astype(np.float64)
         dy = np.subtract.outer(self.y, station.y).astype(np.float64)
         dz = np.subtract.outer(self.z, station.z).astype(np.float64)

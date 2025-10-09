@@ -634,6 +634,7 @@ class StationFactory(object):
 
         imt_ue.x = np.array(ue_x)
         imt_ue.y = np.array(ue_y)
+        imt_ue.z = np.array(ue_z)
         imt_ue.height = np.array(ue_z)
 
         imt_ue.active = np.zeros(num_ue, dtype=bool)

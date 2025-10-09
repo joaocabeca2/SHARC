@@ -310,12 +310,13 @@ wifi:
     bandwidth: 80
     ###########################################################################
     # System receive noise temperature [K]
-    noise_temperature: 300
+    noise_temperature: 190
     ###########################################################################
     # Peak transmit power spectral density (clear sky) [dBW/Hz]
     tx_power_density: -65
     # Adjacent channel selectivity [dB]
     ###########################################################################
+    adjacent_ch_selectivity: 35
     #spectrum emission mask for WIFI.
     #   "WIFI-2020" : for 802.11ad/ay as described in IEEE 802.11-2020
     spectral_mask: WIFI-2020
@@ -329,30 +330,6 @@ wifi:
         # Topology Type. Possible values are "HOTSPOT"
         type: INDOOR
         ###########################################################################
-        # Hotspot Topology parameters. Relevant when imt.topology.type == "HOTSPOT"
-        hotspot:
-            ###########################################################################
-            # Inter-site distance in hotspot network topology [m]
-            intersite_distance: 500
-            ###########################################################################
-            # Enable wrap around.
-            wrap_around: true
-            ###########################################################################
-            # Number of clusters in macro cell topology
-            num_clusters: 7
-            ###########################################################################
-            # Number of hotspots per macro cell (sector)
-            num_hotspots_per_cell: 1
-            ###########################################################################
-            # Maximum 2D distance between hotspot and UE [m]
-            # This is the hotspot radius
-            max_dist_hotspot_ue: 99.9
-            ###########################################################################
-            # Minimum 2D distance between macro cell base station and hotspot [m]
-            min_dist_bs_hotspot: 1.2
-         # Network topology parameters.
-        ###########################################################################
-        # Indoor Topology parameters. Relevant when imt.topology.type == "INOOR"
         indoor:
             ###########################################################################
             # Basic path loss model for indoor topology. Possible values:
