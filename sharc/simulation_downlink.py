@@ -984,7 +984,14 @@ class SimulationDownlink(Simulation):
             write_to_file (bool): Whether to write results to file.
             snapshot_number (int): The current snapshot number.
         """
-        
+        if not self.parameters.imt.interfered_with and np.any(self.bs.active):
+            self.results.system_inr.extend(self.system.inr.flatten())
+            self.results.system_dl_interf_power.extend(
+                self.system.rx_interference.flatten(),
+            )
+            self.results.system_dl_interf_power_per_mhz.extend(
+                self.system.rx_interference.flatten() - 10 * math.log10(self.system.bandwidth),
+            )
 
         ap_active = np.where(self.system.ap.active)[0]
         sta_active = np.where(self.system.sta.active)[0]
