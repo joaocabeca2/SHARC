@@ -123,21 +123,13 @@ class Simulation(ABC, Observable):
         self.bs_to_ue_theta = np.empty(0)
         self.bs_to_ue_beam_rbs = np.empty(0)
 
-        #self.ap_to_sta_d_2D = np.empty(0)
-        #self.ap_to_sta_d_3D = np.empty(0)
-        #self.ap_to_sta_phi = np.empty(0)
-        #self.ap_to_sta_theta = np.empty(0)
-        #self.ap_to_sta_beam_rbs = np.empty(0)
 
         self.ue = np.empty(0)
         self.bs = np.empty(0)
-        #self.wifi_ap = np.empty(0)
-        #self.wifi_sta = np.empty(0)
         
         self.system = np.empty(0)
 
         self.link = dict()
-        #self.wifi_link = dict()
 
         self.num_rb_per_bs = 0
         self.num_rb_per_ue = 0
@@ -195,8 +187,10 @@ class Simulation(ABC, Observable):
             self.add_observer(o)
 
     def initialize_wifi(self, *args, **kwargs):
-        from system.system_wifi import TopologyIndoorWifi
-        self.system_topology = TopologyIndoorWifi(self.param_system.topology.indoor)
+        from sharc.topology.topology_hotspot import TopologyHotspot
+        self.system_topology = TopologyHotspot(self.param_system.topology.hotspot,
+                                               self.param_system.topology.hotspot.intersite_distance,
+                                               self.param_system.topology.hotspot.num_clusters)
         self.system_topology.calculate_coordinates()
         num_ap = self.system_topology .num_base_stations
         num_sta = num_ap * self.parameters.wifi.sta.k * self.parameters.wifi.sta.k_m
@@ -222,10 +216,10 @@ class Simulation(ABC, Observable):
         self.wifi_sta_antenna_gain = list()
         self.path_loss_wifi = np.empty([num_ap, num_sta])
 
-        self.coupling_loss_imt_wifi_ap = np.empty(num_ue)
+        '''self.coupling_loss_imt_wifi_ap = np.empty(num_ue)
         self.coupling_loss_imt_wifi_sta = np.empty(num_ue)
         self.coupling_loss_imt_wifi_ap_adjacent = np.empty(num_ue)
-        self.coupling_loss_imt_wifi_sta_adjacent = np.empty(num_ue)
+        self.coupling_loss_imt_wifi_sta_adjacent = np.empty(num_ue)'''
 
         self.ap_to_sta_phi = np.empty([num_ap, num_sta])
         self.ap_to_sta_theta = np.empty([num_ap, num_sta])

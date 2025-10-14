@@ -1775,7 +1775,7 @@ class StationFactory(object):
         return SystemWifi(param, param_ant_ap, param_ant_sta, random_number_gen, topology)
 
     @staticmethod
-    def get_random_position(num_ue: int,
+    def get_random_position(num_stas: int,
                             topology: Topology,
                             random_number_gen: np.random.RandomState,
                             min_dist_to_bs=0.,
@@ -1786,7 +1786,7 @@ class StationFactory(object):
 
         Parameters
         ----------
-        num_ue : int
+        num_stas : int
             Number of UE stations
         topology : Topology
             The IMT topology object
@@ -1812,8 +1812,8 @@ class StationFactory(object):
         bs_x = -hexagon_radius
         bs_y = 0
 
-        while len(x) < num_ue:
-            num_ue_temp = num_ue - len(x)
+        while len(x) < num_stas:
+            num_stas_temp = num_stas - len(x)
             # generate UE uniformly in a triangle
             x_temp = random_number_gen.uniform(
                 0, hexagon_radius * np.cos(np.pi / 6), num_stas_temp)
@@ -1830,7 +1830,7 @@ class StationFactory(object):
                 x_temp[invert_index])
 
             # randomly choose a hextant
-            hextant = random_number_gen.random_integers(0, 5, num_ue_temp)
+            hextant = random_number_gen.random_integers(0, 5, num_stas_temp)
             hextant_angle = np.pi / 6 + np.pi / 3 * hextant
 
             old_x = x_temp
@@ -1865,12 +1865,12 @@ class StationFactory(object):
                 0, len(central_cell_indices[0]) - 1, num_stas)]
         elif deterministic_cell:
             num_bs = topology.num_base_stations
-            ue_per_cell = num_ue / num_bs
-            cell = np.repeat(np.arange(num_bs, dtype=int), ue_per_cell)
+            stas_per_cell = num_stas / num_bs
+            cell = np.repeat(np.arange(num_bs, dtype=int), stas_per_cell)
 
         else:  # random cells
             num_bs = topology.num_base_stations
-            cell = random_number_gen.random_integers(0, num_bs - 1, num_ue)
+            cell = random_number_gen.random_integers(0, num_bs - 1, num_stas)
 
         cell_x = topology.x[cell]
         cell_y = topology.y[cell]
@@ -1899,8 +1899,11 @@ class StationFactory(object):
             # psi is the vertical angle of the UE wrt the serving BS
             distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2)
         else:
-            theta = np.arctan2(y - topology.space_station_y[cell], x - topology.space_station_x[cell])
-            distance = np.sqrt((cell_x - x) ** 2 + (cell_y - y) ** 2 + (topology.bs.height)**2)
+            theta = np.arctan2(
+                y - topology.space_station_y[cell],
+                x - topology.space_station_x[cell])
+            distance = np.sqrt((cell_x - x) ** 2 +
+                               (cell_y - y) ** 2 + (cell_z)**2)
 
         return x, y, z, theta, distance
 

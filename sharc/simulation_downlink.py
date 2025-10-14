@@ -585,31 +585,29 @@ class SimulationDownlink(Simulation):
                     # NOTE: we only consider one beam since all beams should have gain
                     # of a single element for IMT, and as such the coupling loss should be the
                     # same for all beams
-                    adj_loss = self.coupling_loss_imt_wifi_ap_adjacent[active_beams[0]]
+                    for idx in range(len(ap_active)):
+                        adj_loss = self.coupling_loss_imt_wifi_ap_adjacent[np.ix_(active_beams, ap_active[:idx+1])]
 
-                    tx_oob_s = tx_oob - adj_loss
-                    if self.param_system.adjacent_ch_reception != "OFF":
-                        rx_oob_s = rx_oob[:, np.newaxis] - self.coupling_loss_imt_wifi_ap_adjacent[active_beams[0]]
+                        tx_oob_s = tx_oob - adj_loss[0, :]
+                        if self.param_system.adjacent_ch_reception != "OFF":
+                            rx_oob_s = rx_oob[:, np.newaxis] - self.coupling_loss_imt_wifi_ap_adjacent[active_beams, ap_active[:idx+1]]
 
-                    else:
-                        rx_oob_s = -np.inf
+                        else:
+                            rx_oob_s = -np.inf
 
-                    # Out of band power
-                    # sum linearly power leaked into band and power received in the
-                    # adjacent band
-                    oob_power = 10 * np.log10(
-                        10 ** (0.1 * tx_oob_s) + 10 ** (0.1 * rx_oob_s)
-                    )
+                        # Out of band power
+                        # sum linearly power leaked into band and power received in the
+                        # adjacent band
+                        oob_power = 10 * np.log10(
+                            10 ** (0.1 * tx_oob_s) + 10 ** (0.1 * rx_oob_s)
+                        )
 
-                    # System rx interference
-                    rx_interference += np.sum(np.power(10, 0.1 * oob_power))
-        #rx_interference_all.append(10 * np.log10(rx_interference))
-
-        # Total received interference - dBW
-        self.system.rx_interference = 10 * np.log10(rx_interference)
+                        # System rx interference
+                        rx_interference += np.sum(np.power(10, 0.1 * oob_power))
 
         # Total received interference - dBW
         self.system.rx_interference = 10 * np.log10(rx_interference)
+
         # calculate N
         self.system.thermal_noise = \
             10 * math.log10(BOLTZMANN_CONSTANT * self.system.noise_temperature * 1e3) + \

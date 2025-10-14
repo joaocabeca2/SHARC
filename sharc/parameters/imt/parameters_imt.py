@@ -28,7 +28,7 @@ class ParametersImt(ParametersBase):
 
     minimum_separation_distance_bs_ue: float = 0.0
     interfered_with: bool = False
-    frequency: float = 24350.0
+    frequency: float = 25000
     bandwidth: float = 200.0
     rb_bandwidth: float = 0.180
     spurious_emissions: float = -13.0

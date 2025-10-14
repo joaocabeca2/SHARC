@@ -22,12 +22,12 @@ general:
 imt:
     minimum_separation_distance_bs_ue: 5              # Minimum 2D distance between BS and UE [m]
     interfered_with: FALSE                            # TRUE = IMT is victim; FALSE = IMT is interferer
-    frequency: 7300.0                                 # IMT center frequency [MHz]
-    bandwidth: 100                                    # Total IMT bandwidth [MHz]
+    frequency: 25000                                # IMT center frequency [MHz]
+    bandwidth: 80                                    # Total IMT bandwidth [MHz]
     rb_bandwidth: 0.180                               # Resource Block bandwidth [MHz]
     adjacent_antenna_model: SINGLE_ELEMENT            # Antenna model: SINGLE_ELEMENT or BEAMFORMING
     spectral_mask: IMT-2020                           # Spectral mask model
-    spurious_emissions: -13                           # Spurious emission level [dBm/MHz]
+    spurious_emissions: -15                         # Spurious emission level [dBm/MHz]
     guard_band_ratio: 0.1                             # Ratio of total bandwidth used as guard band
     channel_model: UMi                                # Channel model: FSPL, CI, UMa, UMi, etc.
     shadowing: TRUE  
@@ -51,7 +51,7 @@ imt:
         ###########################################################################
         # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
         # "INDOOR", "MSS_DC"
-        type: INDOOR
+        type: HOTSPOT
     
         # Hotspot Topology parameters. Relevant when imt.topology.type == "HOTSPOT"
         hotspot:
@@ -63,17 +63,17 @@ imt:
             wrap_around: true
             ###########################################################################
             # Number of clusters in macro cell topology
-            num_clusters: 7
+            num_clusters: 1
             ###########################################################################
             # Number of hotspots per macro cell (sector)
             num_hotspots_per_cell: 1
             ###########################################################################
             # Maximum 2D distance between hotspot and UE [m]
             # This is the hotspot radius
-            max_dist_hotspot_ue: 99.9
+            max_dist_hotspot_ue: 170
             ###########################################################################
             # Minimum 2D distance between macro cell base station and hotspot [m]
-            min_dist_bs_hotspot: 1.2
+            min_dist_bs_hotspot: 0.0
         ###########################################################################
         # Indoor Topology parameters. Relevant when imt.topology.type == "INOOR"
         indoor:
@@ -328,44 +328,29 @@ wifi:
     topology:
         ###########################################################################
         # Topology Type. Possible values are "HOTSPOT"
-        type: INDOOR
+        type: HOTSPOT
         ###########################################################################
-        indoor:
+        # Hotspot Topology parameters. Relevant when imt.topology.type == "HOTSPOT"
+        hotspot:
             ###########################################################################
-            # Basic path loss model for indoor topology. Possible values:
-            #       "FSPL" (free-space path loss),
-            #       "INH_OFFICE" (3GPP Indoor Hotspot - Office)
-            basic_path_loss: FSPL
+            # Inter-site distance in hotspot network topology [m]
+            intersite_distance: 321
             ###########################################################################
-            # Number of rows of buildings in the simulation scenario
-            n_rows: 3
+            # Enable wrap around.
+            wrap_around: true
             ###########################################################################
-            # Number of colums of buildings in the simulation scenario
-            n_colums: 2
+            # Number of clusters in macro cell topology
+            num_clusters: 1
             ###########################################################################
-            # Number of buildings containing IMT stations. Options:
-            # 'ALL': all buildings contain IMT stations.
-            # Number of buildings.
-            num_imt_buildings: 2
+            # Number of hotspots per macro cell (sector)
+            num_hotspots_per_cell: 1
             ###########################################################################
-            # Street width (building separation) [m]
-            street_width: 30.1
+            # Maximum 2D distance between hotspot and UE [m]
+            # This is the hotspot radius
+            max_dist_hotspot_ue: 200
             ###########################################################################
-            # Intersite distance [m]
-            intersite_distance: 40.1
-            ###########################################################################
-            # Number of cells per floor
-            num_cells: 3
-            ###########################################################################
-            # Number of floors per building
-            num_floors: 1
-            ###########################################################################
-            # Percentage of indoor UE's [0, 1]
-            ue_indoor_percent: .95
-            ###########################################################################
-            # Building class: "TRADITIONAL" or "THERMALLY_EFFICIENT"
-            building_class: THERMALLY_EFFICIENT
-        ###########################################################################
+            # Minimum 2D distance between macro cell base station and hotspot [m]
+            min_dist_bs_hotspot: 1.2
     
     # Base station parameters
     ap:

@@ -76,9 +76,9 @@ class ParametersWifiSystem(ParametersBase):
         k: int = 3
         k_m: int = 1
         indoor_percent: int = 0.0
-        distribution_type: str = "CELL"
-        distribution_distance: str = "CELL"
-        distribution_azimuth: str = "NORMAL"
+        distribution_type: str = "ANGLE_AND_DISTANCE"
+        distribution_distance: str = "SQRT(UNIFORM)"
+        distribution_azimuth: str = "UNIFORM"
         azimuth_range: tuple = (-180, 180)
         tx_power_control: bool = True
         p_o_pusch: float = -95.0
