@@ -25,7 +25,7 @@ imt:
     frequency: 25000                                # IMT center frequency [MHz]
     bandwidth: 80                                    # Total IMT bandwidth [MHz]
     rb_bandwidth: 0.180                               # Resource Block bandwidth [MHz]
-    adjacent_antenna_model: SINGLE_ELEMENT            # Antenna model: SINGLE_ELEMENT or BEAMFORMING
+    adjacent_antenna_model: BEAMFORMING            # Antenna model: SINGLE_ELEMENT or BEAMFORMING
     spectral_mask: IMT-2020                           # Spectral mask model
     spurious_emissions: -15                         # Spurious emission level [dBm/MHz]
     guard_band_ratio: 0.1                             # Ratio of total bandwidth used as guard band
@@ -221,7 +221,7 @@ imt:
                     # Sub array eletrical downtilt [deg]
                     eletrical_downtilt: 3.0
     ue:
-        k: 3
+        k: 1
         k_m: 1
         indoor_percent: 70.0
         distribution_type: UNIFORM_IN_CELL

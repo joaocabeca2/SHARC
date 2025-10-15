@@ -471,6 +471,7 @@ class SimulationDownlink(Simulation):
         # calculate interference only from active UE's
         pow_coch = -np.inf
         # These are in dB. Turn to zero linear.
+        
         tx_oob = -np.inf
         rx_oob = -np.inf
 
@@ -563,50 +564,81 @@ class SimulationDownlink(Simulation):
                         self.param_system.adjacent_ch_reception}")
         
         ap_active = np.where(self.system.ap.active)[0]
+        sta_active = np.where(self.system.sta.active)[0]
+        n_system_station = self.system.ap.num_stations + self.system.sta.num_stations
+        rx_interference_linear = np.zeros(n_system_station)
         rx_interference = 0
         for bs in bs_active:
-                active_beams = [
-                    i for i in range(
-                        bs *
-                        self.parameters.imt.ue.k, (bs + 1) *
-                        self.parameters.imt.ue.k,
-                    )
-                ]
+            # Potência de TX por feixe do BS atual (Array, shape [K] onde K=self.parameters.imt.ue.k)
+            tx_power_db = self.bs.tx_power[bs]
+            K = len(tx_power_db)
+            tx_oob = np.full(K, tx_oob)
+            rx_oob = np.full(K, rx_oob)
+            active_beams = [
+                i for i in range(
+                    bs *
+                    self.parameters.imt.ue.k, (bs + 1) *
+                    self.parameters.imt.ue.k,
+                )
+            ]
 
-                if self.co_channel:
-                    rx_interference += np.sum(
-                        10 ** (0.1 * (pow_coch - self.coupling_loss_imt_system[active_beams, sys])),
-                        axis=0
-                    )
+            if self.co_channel:
+                rx_interference += np.sum(
+                    10 ** (0.1 * (pow_coch - self.coupling_loss_imt_system[active_beams, sys])),
+                    axis=0
+                )
 
-                if self.adjacent_channel:
+            if self.adjacent_channel:
 
-                    # oob_power per beam
-                    # NOTE: we only consider one beam since all beams should have gain
-                    # of a single element for IMT, and as such the coupling loss should be the
-                    # same for all beams
-                    for idx in range(len(ap_active)):
-                        adj_loss = self.coupling_loss_imt_wifi_ap_adjacent[np.ix_(active_beams, ap_active[:idx+1])]
+                # Perda de acoplamento (Matriz K x N_ap)
+                adj_loss_ap = self.coupling_loss_imt_wifi_ap_adjacent[np.ix_(active_beams, ap_active)]
 
-                        tx_oob_s = tx_oob - adj_loss[0, :]
-                        if self.param_system.adjacent_ch_reception != "OFF":
-                            rx_oob_s = rx_oob[:, np.newaxis] - self.coupling_loss_imt_wifi_ap_adjacent[active_beams, ap_active[:idx+1]]
+                # TX OOB Recebida (Matriz K x N_ap)
+                tx_oob_s = tx_oob[:, np.newaxis] - adj_loss_ap
 
-                        else:
-                            rx_oob_s = -np.inf
+                # RX OOB Recebida (Matriz K x N_ap)
+                if self.param_system.adjacent_ch_reception != "OFF":
+                    # Nota: Ajuste a perda de acoplamento se o modelo RX ACS usar a perda co-canal
+                    rx_oob_s = rx_oob[:, np.newaxis] - adj_loss_ap
+                else:
+                    rx_oob_s = np.full((K, len(ap_active)), -np.inf)
 
-                        # Out of band power
-                        # sum linearly power leaked into band and power received in the
-                        # adjacent band
-                        oob_power = 10 * np.log10(
-                            10 ** (0.1 * tx_oob_s) + 10 ** (0.1 * rx_oob_s)
-                        )
+                # Potência OOB total (Matriz K x N_ap)
+                oob_power = 10 * np.log10(
+                    10 ** (0.1 * tx_oob_s) + 10 ** (0.1 * rx_oob_s)
+                )
 
-                        # System rx interference
-                        rx_interference += np.sum(np.power(10, 0.1 * oob_power))
+                # Acumulação Linear para APs (indexa a parte do vetor total rx_interference_linear que corresponde aos APs)
+                rx_interference_linear[ap_active] += np.sum(
+                    np.power(10, 0.1 * oob_power),
+                    axis=0
+                )
+
+                adj_loss_sta = self.coupling_loss_imt_wifi_sta_adjacent[np.ix_(active_beams, sta_active)]
+
+                # TX OOB Recebida (Matriz K x N_sta) - tx_oob é o mesmo (depende do BS IMT)
+                tx_oob_s_sta = tx_oob[:, np.newaxis] - adj_loss_sta
+                
+                # RX OOB Recebida (Matriz K x N_sta)
+                if self.param_system.adjacent_ch_reception != "OFF":
+                    # Nota: Ajuste a perda de acoplamento se o modelo RX ACS usar a perda co-canal
+                    rx_oob_s_sta = rx_oob[:, np.newaxis] - adj_loss_sta
+                else:
+                    rx_oob_s_sta = np.full((K, len(sta_active)), -np.inf)
+
+                # Potência OOB total (Matriz K x N_sta)
+                oob_power_sta = 10 * np.log10(
+                    10 ** (0.1 * tx_oob_s_sta) + 10 ** (0.1 * rx_oob_s_sta)
+                )
+
+                # Acumulação Linear para STAs (indexa a parte do vetor total rx_interference_linear que corresponde às STAs)
+                rx_interference_linear[sta_active] += np.sum(
+                    np.power(10, 0.1 * oob_power_sta),
+                    axis=0
+                )
 
         # Total received interference - dBW
-        self.system.rx_interference = 10 * np.log10(rx_interference)
+        self.system.rx_interference = 10 * np.log10(rx_interference_linear)
 
         # calculate N
         self.system.thermal_noise = \
@@ -620,7 +652,7 @@ class SimulationDownlink(Simulation):
 
         # Calculate PFD at the system
         # TODO: generalize this a bit more if needed
-        if hasattr(
+        '''if hasattr(
                 self.system.ap.antenna[0],
                 "effective_area"):
             for i, sys in enumerate(ap_active):
@@ -628,7 +660,7 @@ class SimulationDownlink(Simulation):
                 self.system.pfd.append(
                     10 * np.log10(10 ** (self.system.rx_interference[i] / 10) / A_eff)
                 )
-            self.system.pfd = np.array(self.system.pfd)
+            self.system.pfd = np.array(self.system.pfd)'''
 
     def calculate_external_interference(self):
         """
