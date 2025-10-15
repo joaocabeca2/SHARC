@@ -36,10 +36,11 @@ class ParametersImt(ParametersBase):
     # Adjacent Interference filter reception used when IMT is victim. Possible
     # values is ACS and OFF
     adjacent_ch_reception: str = "OFF"
+    adjacent_interf_model: str = 'ACIR'
 
     # Adjacent channel emissions type
     # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
-    adjacent_ch_emissions: str = "OFF"
+    adjacent_ch_emissions: str = "ACLR"
 
     # Spectral mask used for the IMT system when adjacent_ch_emissions is set to "SPECTRAL_MASK"
     spectral_mask: str = "IMT-2020"

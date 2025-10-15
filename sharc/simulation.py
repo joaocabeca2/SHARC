@@ -146,7 +146,7 @@ class Simulation(ABC, Observable):
         if (self.overlapping_bandwidth == self.param_system.bandwidth and not self.parameters.imt.interfered_with) or (
                 self.overlapping_bandwidth == self.parameters.imt.bandwidth and self.parameters.imt.interfered_with):
 
-            self.adjacent_channel = False
+            self.adjacent_channel = True
 
         if not self.co_channel and not self.adjacent_channel:
             raise ValueError(
