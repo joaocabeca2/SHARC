@@ -95,10 +95,10 @@ class SimulationDownlink(Simulation):
         if self.parameters.general.system == "WIFI":
             self.system.connect_wifi_sta_to_ap(self.parameters.wifi)
             self.system.run_csma_ca_scheduling(random_number_gen)
-            self.power_control_wifi()
+            self.power_control_wifi(self.parameters.wifi)
 
             self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(
-                self.system.sta, self.system.ap)
+                self.system.wifi,  self.system.wifi,)
             self.calculate_sinr_wifi()
             
             
@@ -181,33 +181,36 @@ class SimulationDownlink(Simulation):
             self.bs.spectral_mask.set_mask(p_tx=total_power)
             #self.wifi_ap.spectral_mask.set_mask(p_tx=total_power_wifi)
 
-    def power_control_wifi(self):
+    def power_control_wifi(self, parameters_wifi):
         """
-        Apply downlink power control algorithm for WiFi
+        Apply downlink power control algorithm for WiFi (Unified Node Model).
+        In this model, active nodes transmit with full conducted power.
         """
-        # Currently, the maximum transmit power of the access point is equaly
-        # divided among the selected STAs
-        total_power = self.parameters.wifi.ap.conducted_power \
-            + self.ap_power_gain
-        tx_power = total_power - 10 * math.log10(self.parameters.wifi.sta.k)
-        # calculate transmit powers to have a structure such as
+        # 1. Define a potência de transmissão
+        # Como não há distinção AP/STA, usamos o parâmetro unificado (ex: sta.conducted_power)
+        # Assumindo que o ganho da antena já está considerado no hardware ou é 0 dBi (Omni)
+        
+        # Se você tiver um ganho extra definido no init (self.power_gain), some-o aqui.
+        # Caso contrário, usamos a potência conduzida direta.
+        conducted_power = parameters_wifi.sta.conducted_power
+        
+        # Opcional: Se houver ganho de array (MIMO) ou direcional configurado
+        # total_power = conducted_power + self.wifi_power_gain 
+        total_power = conducted_power 
 
-        ap_active = np.where(self.system.ap.active)[0]
-        self.system.ap.tx_power = dict(
-            [(ap, tx_power * np.ones(self.parameters.wifi.sta.k))
-             for ap in ap_active],
-        )
-        # Update the spectral mask
-        self.system.ap.spectral_mask.set_mask(p_tx=total_power)
+        # 2. Identificar nós ativos (que ganharam a contenção/CSMA)
+        active_nodes_idx = np.where(self.system.wifi.active)[0]
 
-        total_power = self.parameters.wifi.sta.conducted_power \
-            + self.sta_power_gain
-        sta_active = np.where(self.system.sta.active)[0]
-        self.system.sta.tx_power = dict(
-            [(sta, total_power )
-             for sta in sta_active],)
-        # Update the spectral mask
-        self.system.sta.spectral_mask.set_mask(p_tx=total_power)
+        # 3. Atualizar a potência no StationManager
+        # Diferente do snippet antigo que criava um dicionário (para OFDMA/RU allocation),
+        # aqui atribuímos o valor escalar diretamente ao array de potência dos nós ativos.
+        if len(active_nodes_idx) > 0:
+            self.system.wifi.tx_power[active_nodes_idx] = total_power
+
+        # 4. Atualizar a Máscara Espectral
+        # Assume que self.system.wifi.spectral_mask é o objeto gerenciador da máscara para este sistema
+        if hasattr(self.system.wifi, 'spectral_mask') and self.system.wifi.spectral_mask is not None:
+            self.system.wifi.spectral_mask.set_mask(p_tx=total_power)
 
 
     def calculate_sinr(self):
@@ -1129,66 +1132,80 @@ class SimulationDownlink(Simulation):
     
     def calculate_sinr_wifi(self):
         """
-        Calcula o SINR interno para o sistema WiFi (STAs e APs), 
-        garantindo a conversão de dicionários para arrays para evitar TypeErrors.
+        Calcula o SINR para o modelo Wi-Fi Unificado (Mesh/Ad Hoc).
+        Assume que self.wifi.coupling_loss [N x N] já está calculado e atualizado.
         """
-        ap_active = np.where(self.system.ap.active)[0]
-        sta_active = np.where(self.system.sta.active)[0]
+        # 1. Resetar arrays de resultados (valor baixo = silêncio)
+        self.system.wifi.rx_power[:] = -500.0
+        self.system.wifi.rx_interference[:] = -500.0
+        self.system.wifi.total_interference[:] = -500.0
+        self.system.wifi.sinr[:] = -500.0
+        self.system.wifi.snr[:] = -500.0
 
-        # --- 1. FUNÇÃO AUXILIAR DE CONVERSÃO ---
-        def to_numpy_array(manager, attr_name):
-            val = getattr(manager, attr_name)
-            if isinstance(val, dict):
-                # Cria array preenchido com valor nulo (-500 dBm) e mapeia as chaves
-                arr = np.full(manager.num_stations, -500.0)
-                for k, v in val.items():
-                    # v pode ser uma lista [K] vinda do IMT, pegamos o primeiro elemento
-                    arr[k] = np.atleast_1d(v)[0]
-                return arr
-            return np.atleast_1d(val)
+        # 2. Identificar nós ativos (Transmissores neste snapshot)
+        nodes_active = np.where(self.system.wifi.active)[0]
 
-        # --- 2. CÁLCULO DE POTÊNCIAS (DOWNLINK E UPLINK) ---
-        # (Loops de sinal desejado e interferência mantidos com proteção de chave)
-        for ap in ap_active:
-            if ap in self.system.ap.tx_power:
-                stas = np.atleast_1d(self.system.link[ap])
-                tx_pwr_ap = np.atleast_1d(self.system.ap.tx_power[ap])[0]
-                self.system.sta.rx_power[stas] = tx_pwr_ap - self.coupling_loss_wifi[ap, stas]
-
-                # Acumulação de interferência intra-sistema
-                ap_interf = [a for a in ap_active if a != ap]
-                for ai in ap_interf:
-                    if ai in self.system.ap.tx_power:
-                        interference = np.atleast_1d(self.system.ap.tx_power[ai])[0] - \
-                                       self.coupling_loss_wifi[ai, stas]
-                        self.system.sta.rx_interference[stas] = 10 * np.log10(
-                            np.power(10, 0.1 * self.system.sta.rx_interference[stas]) +
-                            np.power(10, 0.1 * interference))
-
-        # --- 3. CÁLCULO FINAL UNIFICADO (Onde ocorria o erro) ---
-        noise_floor_base = 10 * math.log10(BOLTZMANN_CONSTANT * self.parameters.wifi.noise_temperature * 1e3) + \
-                           10 * np.log10(self.param_system.bandwidth * 1e6)
-
-        for manager in [self.system.sta, self.system.ap]:
-            # CONVERSÃO EXPLÍCITA: Transformamos dicts em arrays antes da conta
-            rx_power_arr = to_numpy_array(manager, 'rx_power')
-            rx_interf_arr = to_numpy_array(manager, 'rx_interference')
+        # 3. Loop de Cálculo de Sinal e Interferência
+        for tx_node in nodes_active:
+            # Lista de receptores deste transmissor (definido no CSMA/Link)
+            rx_list = self.link[tx_node]
             
-            # Cálculo do ruído térmico (kTB + Noise Figure)
-            manager.thermal_noise = noise_floor_base + manager.noise_figure
-            thermal_noise_arr = np.atleast_1d(manager.thermal_noise)
+            for rx_node in rx_list:
+                # --- A. SINAL ÚTIL (Signal) ---
+                # P_rx = P_tx - CouplingLoss
+                # Usa a matriz de coupling loss já existente
+                signal_dbm = self.system.wifi.tx_power[tx_node] - \
+                             self.system.wifi.coupling_loss[tx_node, rx_node]
+                
+                self.system.wifi.rx_power[rx_node] = signal_dbm
 
-            # Cálculo da Interferência Total (Soma linear em mW)
-            # manager.total_interference agora recebe um array NumPy
-            total_interf_mw = np.power(10, 0.1 * rx_interf_arr) + \
-                              np.power(10, 0.1 * thermal_noise_arr)
-            manager.total_interference = 10 * np.log10(total_interf_mw)
+                # --- B. INTERFERÊNCIA (Agregada) ---
+                # Lista de interferentes: Todos os ativos exceto o próprio transmissor
+                interferers_list = [node for node in nodes_active if node != tx_node]
+                
+                # Acumulador de interferência linear (mW)
+                total_interf_linear = 0.0
+                
+                for interf_node in interferers_list:
+                    # Interferência de um nó específico
+                    i_val_dbm = self.system.wifi.tx_power[interf_node] - \
+                                self.system.wifi.coupling_loss[interf_node, rx_node]
+                    
+                    # Converte para mW e soma
+                    total_interf_linear += np.power(10, 0.1 * i_val_dbm)
+                
+                # Armazena interferência externa (intra-sistema) em dBm
+                if total_interf_linear > 0:
+                    self.system.wifi.rx_interference[rx_node] = 10 * np.log10(total_interf_linear)
 
-            # CÁLCULO DO SINR (Agora garantido: Array - Array)
-            # Isso resolve o TypeError: unsupported operand type(s) for -: 'dict' and 'float'
-            manager.sinr = rx_power_arr - manager.total_interference
-            manager.snr = rx_power_arr - thermal_noise_arr
-    
+        # 4. RUÍDO TÉRMICO (Thermal Noise)
+        # Noise = 10log(kTB) + NF
+        self.system.wifi.thermal_noise = \
+            10 * math.log10(BOLTZMANN_CONSTANT * self.system.wifi.noise_temperature * 1e3) + \
+            10 * np.log10(self.system.wifi.bandwidth * 1e6) + \
+            self.system.wifi.noise_figure
+
+        # 5. CÁLCULO FINAL (SINR e SNR)
+        # Filtra apenas nós que receberam algum sinal útil para evitar contas inúteis
+        valid_rx_indices = np.where(self.system.wifi.rx_power > -200)[0]
+        
+        if len(valid_rx_indices) > 0:
+            # Converte dBm para Linear para somar Ruído + Interferência
+            interf_mw = np.power(10, 0.1 * self.system.wifi.rx_interference[valid_rx_indices])
+            noise_mw = np.power(10, 0.1 * self.system.wifi.thermal_noise[valid_rx_indices])
+            
+            # Total Interference (I + N) em dBm
+            total_interf_dbm = 10 * np.log10(interf_mw + noise_mw)
+            self.system.wifi.total_interference[valid_rx_indices] = total_interf_dbm
+            
+            # SINR = Signal (dBm) - TotalInterference (dBm)
+            self.system.wifi.sinr[valid_rx_indices] = (self.system.wifi.rx_power[valid_rx_indices] - 
+                                                total_interf_dbm)
+            
+            # SNR = Signal (dBm) - ThermalNoise (dBm)
+            self.system.wifi.snr[valid_rx_indices] = (self.system.wifi.rx_power[valid_rx_indices] - 
+                                               self.system.wifi.thermal_noise[valid_rx_indices])
+
     def collect_results_wifi(self, write_to_file: bool, snapshot_number: int):
         """
         Collect and store results for the current downlink simulation snapshot.

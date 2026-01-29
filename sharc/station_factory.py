@@ -736,7 +736,7 @@ class StationFactory(object):
             return StationFactory.generate_rns(
                 parameters.rns, random_number_gen)
         elif parameters.general.system == "WIFI":
-            return StationFactory.generate_wifi_system(parameters.wifi, parameters.wifi.ap.antenna.array, parameters.wifi.sta.antenna.array, random_number_gen, topology)
+            return StationFactory.generate_wifi_system(parameters.wifi, parameters.wifi.ap.antenna.array, random_number_gen, topology)
         elif parameters.general.system == "MSS_SS":
             return StationFactory.generate_mss_ss(parameters.mss_ss)
         elif parameters.general.system == "MSS_D2D":
@@ -1749,8 +1749,7 @@ class StationFactory(object):
 
     @staticmethod
     def generate_wifi_system(param: ParametersWifiSystem,
-                            param_ant_ap: ParametersAntennaWifi,
-                            param_ant_sta: ParametersAntennaWifi,
+                            param_ant: ParametersAntennaWifi,
                             random_number_gen: np.random.RandomState,
                             topology: Topology):
         """
@@ -1772,7 +1771,7 @@ class StationFactory(object):
         tuple
             Access points and stations as StationManager objects.
         """
-        return SystemWifi(param, param_ant_ap, param_ant_sta, random_number_gen, topology)
+        return SystemWifi(param, param_ant, random_number_gen, topology)
 
     @staticmethod
     def get_random_position(num_stas: int,
@@ -1937,21 +1936,18 @@ if __name__ == '__main__':
     imt_ue = factory.generate_imt_ue(params.imt, imt_ant_param, imt_topology, rnd)
     imt_bs = factory.generate_imt_base_stations(params.imt, imt_ant_param, imt_topology, rnd)
 
-    wifi = factory.generate_wifi_system(wifi_param, wifi_ant_param, wifi_ant_param, rnd, wifi_topology)
+    wifi = factory.generate_wifi_system(wifi_param, wifi_ant_param, rnd, wifi_topology)
     # Separar por tipo de estação
     # Base stations
     imt_bs_x = imt_bs.x
     imt_bs_y = imt_bs.y
 
-    wifi_aps_x = wifi.ap.x + 100
-    wifi_aps_y = wifi.ap.y + 100
+    wifi_x = wifi.wifi.x + 100
+    wifi_y = wifi.wifi.y + 100
 
     # User equipments
     imt_ue_x = imt_ue.x 
     imt_ue_y = imt_ue.y
-
-    wifi_sta_x = wifi.sta.x + 100
-    wifi_sta_y = wifi.sta.y + 100
 
     fig = plt.figure(figsize=(8, 8), facecolor='w', edgecolor='k')
     ax = fig.add_subplot(1, 1, 1)
@@ -1964,9 +1960,8 @@ if __name__ == '__main__':
 
     # Plotagem diferenciada
     ax.plot(imt_bs_x, imt_bs_y, "bs", label="IMT BS")       # azul, quadrado
-    ax.plot(wifi_aps_x, wifi_aps_y, "go", label="WiFi AP")  # verde, círculo
+    ax.plot(wifi_x, wifi_y, "go", label="WiFi")  # verde, círculo
     ax.plot(imt_ue_x, imt_ue_y, "r^", label="IMT UE")        # vermelho, triângulo
-    ax.plot(wifi_sta_x, wifi_sta_y, "m.", label="WiFi STA") # magenta, ponto
 
     plt.legend(loc="best")
     plt.tight_layout()

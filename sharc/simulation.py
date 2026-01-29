@@ -693,6 +693,7 @@ class Simulation(ABC, Observable):
             ant_gain_ap_to_sta,
         )
 
+        np.fill_diagonal(path_loss, np.inf)
         # Collect Wi-Fi AP and STA antenna gain samples
         self.path_loss_wifi = np.transpose(path_loss)
         self.ap_antenna_gain = ant_gain_ap_to_sta
@@ -764,7 +765,7 @@ class Simulation(ABC, Observable):
                 beams_idx = self.bs_to_ue_beam_rbs[station_2_active]
                 
             else:
-                phi, theta = station_1.get_pointing_vector_to(station_2)
+                #phi, theta = station_1.get_pointing_vector_to(station_2)
                 phi = np.repeat(phi, self.parameters.imt.ue.k, 0)
                 theta = np.repeat(theta, self.parameters.imt.ue.k, 0)
                 beams_idx = np.tile(
@@ -772,7 +773,7 @@ class Simulation(ABC, Observable):
                 )
 
         
-        elif np.isin(station_1.station_type, [StationType.IMT_UE, StationType.WIFI_STA]).any():
+        elif np.isin(station_1.station_type, [StationType.IMT_UE, StationType.WIFI]).any():
             phi, theta = station_1.get_pointing_vector_to(station_2)
             beams_idx = np.zeros(len(station_2_active), dtype=int)
 
@@ -780,37 +781,24 @@ class Simulation(ABC, Observable):
             phi, theta = station_1.get_pointing_vector_to(station_2)
             beams_idx = np.zeros(len(station_2_active), dtype=int)    
 
-        elif station_1.station_type is StationType.WIFI_APS:
-            if station_2.station_type is StationType.WIFI_STA:
-                phi = self.ap_to_sta_phi
-                theta = self.ap_to_sta_theta
-                beams_idx = self.ap_to_sta_beam_rbs[station_2_active]
-            
-            elif station_2.station_type is StationType.IMT_BS:
-                phi = self.ap_to_bs_phi
-                theta = self.ap_to_bs_theta
-                beams_idx = self.ap_to_bs_beam_rbs[station_2_active]
-            
-            elif station_2.station_type is StationType.IMT_UE:
-                phi = self.ap_to_ue_phi
-                theta = self.ap_to_ue_theta
-                beams_idx = self.ap_to_ue_beam_rbs[station_2_active]
-            else:
-                phi, theta = station_1.get_pointing_vector_to(station_2)
-                beams_idx = np.zeros(len(station_2_active), dtype=int)
-
-        '''elif np.isin(station_1.station_type, [StationType.IMT_UE, StationType.WIFI_STA]).any():
+        else:
             phi, theta = station_1.get_pointing_vector_to(station_2)
-            beams_idx = np.zeros(len(station_2_active), dtype=int)
-
-        elif not station_1.is_imt_station():
-            phi, theta = station_1.get_pointing_vector_to(station_2)
-            beams_idx = np.zeros(len(station_2_active), dtype=int)'''
-                
-        
+            beams_idx = np.zeros(len(station_2_active), dtype=int)       
 
         # Calculate gains
         gains = np.zeros(phi.shape)
+        if station_1.station_type is StationType.WIFI and station_2 is StationType.WIFI:
+            for k in station_1_active:
+                gains[k, station_2_active] = station_1.antenna[k].calculate_gain(
+                    phi_vec=phi[k, station_2_active],
+                    theta_vec=theta[
+                        k,
+                        station_2_active,
+                    ],
+                    beams_l=beams_idx,
+                )
+            np.fill_diagonal(gains, 0.0)
+
         if station_1.station_type is StationType.IMT_BS and not station_2.is_imt_station() and not station_2.is_wifi_station():
             off_axis_angle = station_1.get_off_axis_angle(station_2)
             for k in station_1_active:
