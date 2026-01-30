@@ -182,22 +182,44 @@ class SystemWifi:
             
             candidates = remaining
     
-    def connect_wifi_sta_to_ap(self, parameters: ParametersWifiSystem):
+    def connect_wifi_sta_to_ap(self, parameters: ParametersWifiSystem, random_gen):
         """
         Link the Wi-Fi STA's to the serving AP. It is assumed that each group of K
         user equipments are distributed and pointed to a certain access point
         """
-        num_sta_per_ap = parameters.sta.k * parameters.sta.k_m
-        wifi_active = np.where(self.wifi.active)[0]
-        for node in wifi_active:
-            node_list = [
-                i for i in range(
-                    node * num_sta_per_ap, node * num_sta_per_ap + num_sta_per_ap,
-                )
-            ]
-            self.link[node] = node_list
+        # 2. Quem vai transmitir agora? (Vencedores do CSMA)
+        active_nodes = np.where(self.wifi.active)[0]
+        
+        # 3. Pega a matriz de distâncias (já calculada/cacheada se possível)
+        # Se get_distance_to for pesado, considere armazenar o resultado numa variável de classe
+        d_matrix = self.wifi.get_distance_to(self.wifi)
+        
+        # 4. Define o alcance máximo (Ex: 300 metros ou parametrizado)
+        # Tente pegar dos parametros, se não tiver, use um valor fixo seguro
+        try:
+            max_range = self.parameters.max_dist_communication
+        except AttributeError:
+            max_range = 0.3 # 300 metros (exemplo padrão Wi-Fi/DSRC)
 
-    
+        # 5. Loop para criar os pares
+        for tx_node in active_nodes:
+            # Encontra candidatos:
+            # a) Distância <= max_range
+            # b) Índice != tx_node (não pode falar consigo mesmo)
+            # c) (Opcional) Rx não pode estar transmitindo (Half-duplex rígido) -> ignorado aqui para simplificar
+            
+            candidates_mask = (d_matrix[tx_node] <= max_range) & \
+                              (np.arange(self.num_nodes) != tx_node)
+            
+            candidate_indices = np.where(candidates_mask)[0]
+            
+            if len(candidate_indices) > 0:
+                # Escolhe UM vizinho aleatoriamente
+                rx_node = random_gen.choice(candidate_indices)
+                self.link[tx_node] = [rx_node]
+            else:
+                # Nó isolado (ninguém por perto), transmite para o "vazio"
+                self.link[tx_node] = []
 
 if __name__ == "__main__":
     from matplotlib import pyplot as plt

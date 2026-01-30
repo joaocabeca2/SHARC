@@ -710,18 +710,6 @@ class Simulation(ABC, Observable):
         return coupling_loss
     
     def scheduler(self):
-        """
-        This scheduler divides the available resource blocks among UE's for
-        a given BS
-        """
-        if self.parameters.general.system == "WIFI":
-            ap_active = np.where(self.system.ap.active)[0]
-            for ap in ap_active:
-                sta = self.system.link[ap]
-                self.system.ap.bandwidth[ap] = self.system.num_rb_per_sta * \
-                    self.parameters.wifi.rb_bandwidth
-                self.system.sta.bandwidth[sta] = self.system.num_rb_per_sta * \
-                    self.parameters.wifi.rb_bandwidth
                 
         bs_active = np.where(self.bs.active)[0]
         self.bs.center_freq = np.zeros(

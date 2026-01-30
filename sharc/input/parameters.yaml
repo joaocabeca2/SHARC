@@ -252,6 +252,10 @@ wifi:
     ###########################################################################
     spurious_emissions: -27
     max_dist_hotspot_ue: 200
+    max_dist_communication: 200
+    ###########################################################################
+    # Sensor center frequency [MHz]
+    frequency: 7000
     ###########################################################################
     adjacent_ch_selectivity: 20.0
     channel_model: UMi                                # Channel model: FSPL, CI, UMa, UMi, etc.
