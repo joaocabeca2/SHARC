@@ -465,14 +465,8 @@ class SimulationDownlink(Simulation):
         if self.co_channel or (
             self.adjacent_channel and self.param_system.adjacent_ch_emissions != "OFF"
         ):
-            self.coupling_loss_imt_system_ap = self.calculate_coupling_loss_system_imt(
-                self.system.ap,
-                self.ue,
-                is_co_channel=True,
-            )
-
-            self.coupling_loss_imt_system_sta = self.calculate_coupling_loss_system_imt(
-                self.system.sta,
+            self.coupling_loss_imt_system = self.calculate_coupling_loss_system_imt(
+                self.system.wifi,
                 self.ue,
                 is_co_channel=True,
             )
@@ -490,8 +484,7 @@ class SimulationDownlink(Simulation):
 
         # applying a bandwidth scaling factor since UE transmits on a portion
         # of the satellite's bandwidth
-        active_ap = np.where(self.system.ap.active)[0]
-        active_sta = np.where(self.system.sta.active)[0]
+        active_wifi = np.where(self.system.wifi.active)[0]
 
         # All UEs are active on an active BS
         bs_active = np.where(self.bs.active)[0]
@@ -516,28 +509,18 @@ class SimulationDownlink(Simulation):
                     #     10 * np.log10(self.overlapping_bandwidth * 1e6) + 30
                     # 1. Interferência linear proveniente dos APs (mW)
                     # Cálculo: PSD + 10log10(BW_afetada) + Ganho_Sobreposição - Perda_Acoplamento
-                    interf_ap_lin = np.sum(10 ** (0.1 * (
+                    interf_wifi_lin = np.sum(10 ** (0.1 * (
                         self.param_system.tx_power_density + 
                         10 * np.log10(self.ue.bandwidth[ue, np.newaxis] * 1e6) + 
                         10 * np.log10(weights)[:, np.newaxis] - 
-                        self.coupling_loss_imt_system_ap[ue, :][:, active_ap]
+                        self.coupling_loss_imt_system[ue, :][:, active_wifi]
                     )), axis=1)
                     
-                    # 2. Interferência linear proveniente das STAs (mW)
-                    # Nota: Assume-se que a densidade de potência (tx_power_density) é aplicada às STAs
-                    interf_sta_lin = np.sum(10 ** (0.1 * (
-                        self.param_system.tx_power_density + 
-                        10 * np.log10(self.ue.bandwidth[ue, np.newaxis] * 1e6) + 
-                        10 * np.log10(weights)[:, np.newaxis] - 
-                        self.coupling_loss_imt_system_sta[ue, :][:, active_sta]
-                    )), axis=1)
 
-                    # 3. Soma das potências (APs + STAs) e conversão para dBm
-                    total_interf_lin = interf_ap_lin + interf_sta_lin
                     # Evita log de zero caso não haja interferência
                     in_band_interf_power = np.full(len(ue), -500.0)
-                    valid_idx = total_interf_lin > 0
-                    in_band_interf_power[valid_idx] = 10 * np.log10(total_interf_lin[valid_idx])
+                    valid_idx = interf_wifi_lin > 0
+                    in_band_interf_power[valid_idx] = 10 * np.log10(interf_wifi_lin[valid_idx])
 
             oob_power = np.resize(-500., (len(ue), 1))
             # Total external interference into the UE in dBm
@@ -592,7 +575,7 @@ class SimulationDownlink(Simulation):
         """
         if self.co_channel or (
             self.adjacent_channel and self.param_system.adjacent_ch_reception != "OFF"):
-                self.coupling_loss_imt_wifi_ap = self.calculate_coupling_loss_system_imt(
+                self.coupling_loss_imt_wifi = self.calculate_coupling_loss_system_imt(
                     self.system.wifi,
                     self.bs,
                     is_co_channel=True,
@@ -651,7 +634,7 @@ class SimulationDownlink(Simulation):
 
             if self.co_channel:
                 rx_interference_linear[wifi_active] += np.sum(
-                    10 ** (0.1 * (pow_coch - self.coupling_loss_imt_wifi_ap[active_beams][:, wifi_active])),
+                    10 ** (0.1 * (pow_coch - self.coupling_loss_imt_wifi[active_beams][:, wifi_active])),
                     axis=0
                 )
 
@@ -661,8 +644,8 @@ class SimulationDownlink(Simulation):
 
         # calculate N
         self.system.wifi.thermal_noise = \
-            10 * math.log10(BOLTZMANN_CONSTANT * self.system.noise_temperature * 1e3) + \
-            10 * math.log10(self.param_system.bandwidth * 1e6)
+            10 * np.log10(BOLTZMANN_CONSTANT * self.param_system.noise_temperature * 1e3) + \
+            10 * np.log10(self.param_system.bandwidth * 1e6)
 
         # Calculate INR at the system - dBm
         self.system.wifi.inr = np.array(
@@ -1071,32 +1054,32 @@ class SimulationDownlink(Simulation):
             write_to_file (bool): Whether to write results to file.
             snapshot_number (int): The current snapshot number.
         """
-        self.results.wifi_dl_inr.extend(self.system.inr.flatten())
+        self.results.wifi_dl_inr.extend(self.system.wifi.inr.flatten())
         self.results.system_dl_interf_power.extend(
-            self.system.rx_interference.flatten(),
+            self.system.wifi.rx_interference.flatten(),
         )
         self.results.system_dl_interf_power_per_mhz.extend(
-            self.system.rx_interference.flatten() - 10 * math.log10(self.system.bandwidth),
+            self.system.wifi.rx_interference.flatten() - 10 * np.log10(self.system.wifi.bandwidth),
         )
 
-        ap_active = np.where(self.system.ap.active)[0]
-        sta_active = np.where(self.system.sta.active)[0]
-        for ap in ap_active:
-            sta = self.system.link[ap]  
+        wifi_active = np.where(self.system.wifi.active)[0]
+
+        for node in wifi_active:
+            linked_nodes = self.system.link[node]  
             # Coleta resultados básicos do WiFi
-            self.results.wifi_path_loss.extend(self.path_loss_wifi[ap, sta])
-            self.results.wifi_coupling_loss.extend(self.coupling_loss_wifi[ap, sta])
-            self.results.wifi_ap_antenna_gain.extend(self.ap_antenna_gain[ap, sta])
-            self.results.wifi_sta_antenna_gain.extend(self.sta_antenna_gain[ap, sta])
+            self.results.wifi_path_loss.extend(self.path_loss_wifi[node, linked_nodes])
+            self.results.wifi_coupling_loss.extend(self.coupling_loss_wifi[node, linked_nodes])
+            self.results.wifi_ap_antenna_gain.extend(self.ap_antenna_gain[node, linked_nodes])
+            self.results.wifi_sta_antenna_gain.extend(self.sta_antenna_gain[node, linked_nodes])
 
             # Coleta resultados de potência e SINR do WiFi
-            #self.results.wifi_dl_tx_power.extend(self.system.ap.tx_power[ap].tolist())
-            self.results.wifi_dl_sinr.extend(self.system.sta.sinr[sta].tolist())
-            self.results.wifi_dl_snr.extend(self.system.sta.snr[sta].tolist())
+            #self.results.wifi_tx_power.extend(self.system.wifi.tx_power[linked_nodes].tolist())
+            self.results.wifi_dl_sinr.extend(self.system.wifi.sinr[linked_nodes].tolist())
+            self.results.wifi_dl_snr.extend(self.system.wifi.snr[linked_nodes].tolist())
         
             #Calculate throughput for wifi
             wifi_tput = self.calculate_imt_tput(
-                self.system.sta.sinr[sta],
+                self.system.wifi.sinr[linked_nodes],
                 self.parameters.wifi.downlink.sinr_min,
                 self.parameters.wifi.downlink.sinr_max,
                 self.parameters.wifi.downlink.attenuation_factor,
@@ -1128,7 +1111,7 @@ class SimulationDownlink(Simulation):
                 self.results.imt_dl_tput.extend(tput.tolist())
 
             self.results.imt_dl_inr.extend(self.ue.inr[ue].tolist())
-            self.results.ap_imt_antenna_gain.extend(
+            '''self.results.ap_imt_antenna_gain.extend(
                     self.ap_imt_antenna_gain[ap_active[:, np.newaxis], ue].flatten(),
                 )
             self.results.sta_imt_antenna_gain.extend(
@@ -1142,13 +1125,27 @@ class SimulationDownlink(Simulation):
                 self.results.imt_sta_antenna_gain.extend(
                     self.imt_sta_antenna_gain[sta_active[:, np.newaxis], ue].flatten(),
                 )
+            if len(self.imt_wifi_antenna_gain):
+                self.results.imt_wifi_antenna_gain.extend(
+                    self.imt_wifi_antenna_gain[wifi_active[:, np.newaxis], ue].flatten(),
+                )
+            if len(self.imt_wifi_antenna_gain_adjacent):
+                self.results.imt_wifi_antenna_gain_adjacent.extend(
+                    self.imt_wifi_antenna_gain_adjacent[wifi_active[:, np.newaxis], ue].flatten(),
+                )
+            if len(self.imt_wifi_building_entry_loss):
+                self.results.imt_wifi_building_entry_loss.extend(
+                    self.imt_wifi_building_entry_loss[wifi_active[:, np.newaxis], ue].flatten(),
+                )
+            if len(self.imt_wifi_diffraction_loss):
+                self.results.imt_wifi_diffraction_loss.extend(
+                    self.imt_wifi_diffraction_loss[wifi_active[:, np.newaxis], ue].flatten(),
+                )'''
 
-            self.results.imt_ap_path_loss.extend(
-                self.imt_ap_path_loss[ap_active[:, np.newaxis], ue].flatten(),
+            self.results.imt_wifi_path_loss.extend(
+                self.imt_wifi_path_loss[wifi_active[:, np.newaxis], ue].flatten(),
             )
-            self.results.imt_sta_path_loss.extend(
-                self.imt_sta_path_loss[sta_active[:, np.newaxis], ue].flatten(),
-            )    
+             
             if self.param_system.channel_model == "HDFSS":
                 self.results.imt_system_build_entry_loss.extend(
                     self.imt_system_build_entry_loss[:, bs],

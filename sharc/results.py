@@ -141,7 +141,13 @@ class Results(object):
         self.imt_wifi_building_entry_loss = SampleList()
         self.imt_wifi_diffraction_loss = SampleList()
 
-        self.imt_ap_path_loss = SampleList()
+        self.imt_wifi_path_loss = SampleList()
+        self.imt_wifi_antenna_gain = SampleList()
+        self.imt_wifi_antenna_gain_adjacent = SampleList()
+
+        self.imt_wifi_building_entry_loss = SampleList()
+        self.imt_wifi_diffraction_loss = SampleList()
+
         self.imt_ap_antenna_gain = SampleList()
         self.ap_imt_antenna_gain = SampleList()
         self.imt_ap_antenna_gain_adjacent = SampleList()

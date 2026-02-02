@@ -221,6 +221,56 @@ class SystemWifi:
                 # Nó isolado (ninguém por perto), transmite para o "vazio"
                 self.link[tx_node] = []
 
+    def configure_node_parameters(self):
+        """
+        Configura os nós unificados com valores heterogêneos baseados nos
+        parâmetros de 'ap' e 'sta' do arquivo de configuração.
+        
+        Embora todos sejam 'WIFI_NODE', os primeiros 'num_aps' terão características
+        de infraestrutura (AP) e o restante terá características de terminais (STA).
+        """
+        # 1. Definição das Fatias (Slices)
+        # APs ocupam as primeiras posições correspondentes aos sites da topologia
+        self.num_aps = self.num_nodes  // 2
+        idx_aps = slice(0, self.num_aps)
+        # STAs ocupam o restante
+        idx_stas = slice(self.num_aps, self.num_nodes)
+
+        p_ap = self.parameters.ap  # Atalho para os parametros
+        
+        # Potência (dBm)
+        self.wifi.conducted_power[idx_aps] = p_ap.conducted_power
+        
+        # Altura (m) - Importante: Sobrescreve a altura gerada anteriormente se necessário
+        # Nota: Se a topologia já define Z (terreno), somamos a altura do mastro
+        self.wifi.height[idx_aps] = self.topology.z + p_ap.height
+        self.wifi.z[idx_aps] = self.wifi.height[idx_aps]
+
+        # Ruído e Perdas
+        self.wifi.noise_figure[idx_aps] = p_ap.noise_figure
+        # Se houver perdas de cabo/ohmic definidas
+        if hasattr(p_ap, 'ohmic_loss'):
+            self.wifi.ohmic_loss[idx_aps] = p_ap.ohmic_loss
+
+
+        # =================================================================
+        # CONFIGURAÇÃO TIPO 'STA' (Terminais)
+        # =================================================================
+        p_sta = self.parameters.sta # Atalho para os parametros
+        
+        # Potência (dBm)
+        self.wifi.conducted_power[idx_stas] = p_sta.conducted_power
+        
+        # Altura (m)
+        # Para STAs, a altura é geralmente fixa (ex: 1.5m) somada ao terreno (Z) onde caíram
+        # Nota: O array self.wifi.z[idx_stas] já deve ter a cota do terreno vinda da distribuição espacial
+        ground_z_stas = self.wifi.z[idx_stas] # Assume que Z atual é o solo
+        self.wifi.height[idx_stas] = ground_z_stas + p_sta.height
+        self.wifi.z[idx_stas] = self.wifi.height[idx_stas]
+
+        # Ruído e Perdas
+        self.wifi.noise_figure[idx_stas] = p_sta.noise_figure
+
 if __name__ == "__main__":
     from matplotlib import pyplot as plt
     from sharc.parameters.wifi.parameters_hotspot import ParametersHotspot
