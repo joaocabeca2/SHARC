@@ -6,6 +6,7 @@ Created on Wed Jan 11 19:06:41 2017
 """
 
 import math
+import os
 import warnings
 
 import numpy as np
@@ -94,7 +95,7 @@ class SimulationDownlink(Simulation):
 
         if self.parameters.general.system == "WIFI":
             self.system.run_csma_ca_scheduling(random_number_gen)
-            self.system.connect_wifi_sta_to_ap(self.parameters.wifi)
+            self.system.create_random_links(random_number_gen)
             #self.power_control_wifi(self.parameters.wifi)
 
             self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(
@@ -638,8 +639,6 @@ class SimulationDownlink(Simulation):
                     axis=0
                 )
 
-        #rx_interference_filtered = rx_interference_linear_total[rx_interference_linear_total > 0.0]   
-        # Total received interference - dBW
         self.system.wifi.rx_interference = 10 * np.log10(np.sum(rx_interference_linear, axis=0))
 
         # calculate N
@@ -972,8 +971,7 @@ class SimulationDownlink(Simulation):
     
     def calculate_sinr_wifi(self):
         """
-        Calcula o SINR para o modelo Wi-Fi Unificado (Mesh/Ad Hoc).
-        Assume que self.wifi.coupling_loss [N x N] já está calculado e atualizado.
+        Calcula o SINR para o modelo Wi-Fi Unificado
         """
         
         nodes_active = np.where(self.system.wifi.active)[0]
@@ -998,32 +996,22 @@ class SimulationDownlink(Simulation):
                     10 ** (0.1 * self.system.wifi.rx_interference[linked_nodes]) +
                     10 ** (0.1 * interference)
                 )
-            
+
         self.system.wifi.thermal_noise = \
             10 * np.log10(BOLTZMANN_CONSTANT * self.system.wifi.noise_temperature * 1e3) + \
             10 * np.log10(self.system.wifi.bandwidth * 1e6) + \
             self.system.wifi.noise_figure
 
-        # 5. CÁLCULO FINAL (SINR e SNR)
-        # Filtra apenas nós que receberam algum sinal útil para evitar contas inúteis
-        valid_rx_indices = np.where(self.system.wifi.rx_power > -200)[0]
-        
-        if len(valid_rx_indices) > 0:
-            # Converte dBm para Linear para somar Ruído + Interferência
-            interf_mw = np.power(10, 0.1 * self.system.wifi.rx_interference[valid_rx_indices])
-            noise_mw = np.power(10, 0.1 * self.system.wifi.thermal_noise[valid_rx_indices])
-            
-            # Total Interference (I + N) em dBm
-            total_interf_dbm = 10 * np.log10(interf_mw + noise_mw)
-            self.system.wifi.total_interference[valid_rx_indices] = total_interf_dbm
-            
-            # SINR = Signal (dBm) - TotalInterference (dBm)
-            self.system.wifi.sinr[valid_rx_indices] = (self.system.wifi.rx_power[valid_rx_indices] - 
-                                                total_interf_dbm)
-            
-            # SNR = Signal (dBm) - ThermalNoise (dBm)
-            self.system.wifi.snr[valid_rx_indices] = (self.system.wifi.rx_power[valid_rx_indices] - 
-                                               self.system.wifi.thermal_noise[valid_rx_indices])
+        self.system.wifi.total_interference = \
+            10 * np.log10(
+                np.power(10, 0.1 * self.system.wifi.rx_interference) +
+                np.power(10, 0.1 * self.system.wifi.thermal_noise),
+            )
+
+        self.system.wifi.sinr = self.system.wifi.rx_power - self.system.wifi.total_interference
+        self.system.wifi.snr = self.system.wifi.rx_power - self.system.wifi.thermal_noise
+
+     
 
     def collect_results_wifi(self, write_to_file: bool, snapshot_number: int):
         """

@@ -151,21 +151,26 @@ class SystemWifi:
             
             candidates = remaining
     
-    def connect_wifi_sta_to_ap(self, parameters: ParametersWifiSystem):
-        """
-        Link the Wi-Fi STA's to the serving AP. It is assumed that each group of K
-        user equipments are distributed and pointed to a certain access point
-        """
-        num_sta_per_ap = parameters.sta.k * parameters.sta.k_m
-        wifi_active = np.where(self.wifi.active)[0]
-        for node in wifi_active:
-            node_list = [
-                i for i in range(
-                    node * num_sta_per_ap, node * num_sta_per_ap + num_sta_per_ap,
-                )
-            ]
-            self.link[node] = node_list
-
+    def create_random_links(self, random_number_gen):
+        
+        # 2. Cria array de índices [0, 1, 2, ..., N]
+        all_indices = np.arange(self.num_nodes)
+        
+        # 3. Embaralha usando a instância RandomState do SHARC
+        # Isso altera 'all_indices' in-place mantendo a reprodutibilidade
+        random_number_gen.shuffle(all_indices)
+        
+        # 4. Cria os pares
+        limit = len(all_indices) - (len(all_indices) % 2)
+        
+        for i in range(0, limit, 2):
+            node_a = all_indices[i]
+            node_b = all_indices[i+1]
+            
+            # Link Bidirecional
+            self.link[node_a] = [node_b]
+            self.link[node_b] = [node_a]
+            
     def configure_node_parameters(self):
 
         self.num_aps = self.num_nodes  // 2
