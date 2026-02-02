@@ -34,24 +34,21 @@ class SystemWifi:
         self.wifi.thermal_noise = -500 * np.ones(self.num_nodes)
         self.wifi.noise_figure = self.parameters.sta.noise_figure * np.ones(self.num_nodes) # Exemplo
         
-        # Antenas
         self.wifi.antenna = [AntennaOmni() for _ in range(self.num_nodes)]
         self.wifi.elevation = -param_ant.downtilt * np.ones(self.num_nodes)
+        self.wifi.rx_power[:] = -500.0
+        self.wifi.rx_interference[:] = -500.0
+        self.wifi.total_interference[:] = -500.0
+        self.wifi.sinr[:] = -500.0
+        self.wifi.snr[:] = -500.0
 
-        #self.configure_node_parameters()
-
-        # --- LÓGICA DE POSICIONAMENTO (A parte que faltava) ---
-        
-        # Listas temporárias para acumular as coordenadas geradas
+        self.configure_node_parameters()
         node_x = []
         node_y = []
         node_z = []
 
-        # Parâmetros de distribuição angular e radial
         azimuth_range = self.parameters.sta.azimuth_range
         
-        # Gera ângulos e raios para TODOS os nós de uma vez (vetorizado)
-        # Nota: random_number_gen.rand vs random_sample depende da sua versão do numpy, mantenha consistência
         angle = (azimuth_range[1] - azimuth_range[0]) * \
                 random_number_gen.random_sample(self.num_nodes) + azimuth_range[0]
 
@@ -65,24 +62,17 @@ class SystemWifi:
         else: # Fallback ou outra distribuição
             radius = r_min + random_number_gen.random_sample(self.num_nodes) * (r_max - r_min)
 
-        # Loop para posicionar cada grupo de nós ao redor do seu respectivo "Site" da topologia
         for site_idx in range(self.topology.num_base_stations):
-            # Índices dos nós que pertencem a este site/cluster
             idx_start = site_idx * self.nodes_per_site
             idx_end = idx_start + self.nodes_per_site
             indices = range(idx_start, idx_end)
 
-            # 1. Coordenadas polares locais
-            # Theta local relativo ao azimute do site (se houver rotação do site)
             theta = self.topology.azimuth[site_idx] + angle[indices]
             
-            # 2. Converte para Cartesiano Local
             x_local = radius[indices] * np.cos(np.radians(theta))
             y_local = radius[indices] * np.sin(np.radians(theta))
             z_local = np.zeros_like(x_local) # Altura relativa inicial
 
-            # 3. Transforma para Global (aplica rotação e translação do Site)
-            # Usa o método da topologia para mover o ponto (x,y) para a posição do Site
             x_global, y_global, z_global = self.topology.transform_ue_xyz(
                 site_idx, x_local, y_local, z_local
             )
@@ -91,20 +81,11 @@ class SystemWifi:
             node_y.extend(y_global)
             node_z.extend(z_global)
 
-            # Define Azimute e Elevação finais do Nó
-            # (Lógica original adaptada: Azimute do nó aponta 'para fora' ou aleatório?)
-            # Aqui mantendo a lógica de "olhar para o centro" + 180 graus
             self.wifi.azimuth[indices] = (angle[indices] + self.topology.azimuth[site_idx] + 180) % 360
             
-            # Cálculo de Elevação (Psi) baseada na distância e diferença de altura
-            # Assumindo altura do nó = altura definida nos parâmetros + z_global
-            # Se topology.z já inclui altura do terreno, cuidado para não somar duas vezes
             
             dist_2d = np.sqrt((self.topology.x[site_idx] - x_global)**2 + (self.topology.y[site_idx] - y_global)**2)
             
-            # Exemplo: Elevação olhando para o horizonte ou para o site? 
-            # Se for rede ad-hoc plana, elevation pode ser 0. 
-            # Se mantiver a lógica original (olhando para o AP):
             psi = np.degrees(np.arctan((self.parameters.ap.height - self.parameters.sta.height) / dist_2d))
             self.wifi.elevation[indices] = -param_ant.downtilt + psi # Exemplo
 
@@ -116,17 +97,7 @@ class SystemWifi:
         self.wifi.z = np.array(node_z) + self.parameters.sta.height 
         self.wifi.height = self.wifi.z
 
-        # --- FIM DA LÓGICA DE POSICIONAMENTO ---
-
-        # Configuração de Interferência e Potência (Inicialização)
         self.wifi.active = random_number_gen.rand(self.num_nodes) < self.parameters.ap.load_probability # Ou outra prob
-        self.wifi.tx_power = self.parameters.sta.conducted_power * np.ones(self.num_nodes) # Potência de transmissão
-        
-        # Dicionários de Resultados (agora indexados de 0 a num_nodes)
-        # Nota: Inicializar com array vazio ou valor default
-        self.wifi.rx_power = np.full(self.num_nodes, -500.0) 
-        self.wifi.sinr = np.full(self.num_nodes, -500.0)
-        # Se precisar de histórico por RB ou Snapshot, a estrutura pode ser diferente (dict ou tensor)
         
         if self.parameters.spectral_mask == "WIFI-2020":
             self.wifi.spectral_mask = SpectralMaskWifi(
@@ -180,80 +151,43 @@ class SystemWifi:
             
             candidates = remaining
     
-    def connect_wifi_sta_to_ap(self, parameters: ParametersWifiSystem, random_gen):
+    def connect_wifi_sta_to_ap(self, parameters: ParametersWifiSystem):
         """
         Link the Wi-Fi STA's to the serving AP. It is assumed that each group of K
         user equipments are distributed and pointed to a certain access point
         """
-        # 2. Quem vai transmitir agora? (Vencedores do CSMA)
-        active_nodes = np.where(self.wifi.active)[0]
-        
-        # 3. Pega a matriz de distâncias (já calculada/cacheada se possível)
-        # Se get_distance_to for pesado, considere armazenar o resultado numa variável de classe
-        d_matrix = self.wifi.get_distance_to(self.wifi)
-        
-        # 4. Define o alcance máximo (Ex: 300 metros ou parametrizado)
-        # Tente pegar dos parametros, se não tiver, use um valor fixo seguro
-        try:
-            max_range = self.parameters.max_dist_communication
-        except AttributeError:
-            max_range = 0.3 # 300 metros (exemplo padrão Wi-Fi/DSRC)
-
-        # 5. Loop para criar os pares
-        for tx_node in active_nodes:
-            # Encontra candidatos:
-            # a) Distância <= max_range
-            # b) Índice != tx_node (não pode falar consigo mesmo)
-            # c) (Opcional) Rx não pode estar transmitindo (Half-duplex rígido) -> ignorado aqui para simplificar
-            
-            candidates_mask = (d_matrix[tx_node] <= max_range) & \
-                              (np.arange(self.num_nodes) != tx_node)
-            
-            candidate_indices = np.where(candidates_mask)[0]
-            
-            if len(candidate_indices) > 0:
-                # Escolhe UM vizinho aleatoriamente
-                rx_node = random_gen.choice(candidate_indices)
-                self.link[tx_node] = [rx_node]
-            else:
-                # Nó isolado (ninguém por perto), transmite para o "vazio"
-                self.link[tx_node] = []
+        num_sta_per_ap = parameters.sta.k * parameters.sta.k_m
+        wifi_active = np.where(self.wifi.active)[0]
+        for node in wifi_active:
+            node_list = [
+                i for i in range(
+                    node * num_sta_per_ap, node * num_sta_per_ap + num_sta_per_ap,
+                )
+            ]
+            self.link[node] = node_list
 
     def configure_node_parameters(self):
 
         self.num_aps = self.num_nodes  // 2
         idx_aps = slice(0, self.num_aps)
-        # STAs ocupam o restante
         idx_stas = slice(self.num_aps, self.num_nodes)
 
-        p_ap = self.parameters.ap  # Atalho para os parametros
+        p_ap = self.parameters.ap  
         
         # Potência (dBm)
-        self.wifi.conducted_power[idx_aps] = p_ap.conducted_power
+        self.wifi.tx_power[idx_aps] = p_ap.conducted_power
         
-        # Altura (m) - Importante: Sobrescreve a altura gerada anteriormente se necessário
-        # Nota: Se a topologia já define Z (terreno), somamos a altura do mastro
-        self.wifi.height[idx_aps] = self.topology.z + p_ap.height
+        self.wifi.height[idx_aps] = self.topology.z[:self.num_aps] + p_ap.height
         self.wifi.z[idx_aps] = self.wifi.height[idx_aps]
 
         # Ruído e Perdas
         self.wifi.noise_figure[idx_aps] = p_ap.noise_figure
-        # Se houver perdas de cabo/ohmic definidas
-        if hasattr(p_ap, 'ohmic_loss'):
-            self.wifi.ohmic_loss[idx_aps] = p_ap.ohmic_loss
-
-
-        # =================================================================
-        # CONFIGURAÇÃO TIPO 'STA' (Terminais)
-        # =================================================================
-        p_sta = self.parameters.sta # Atalho para os parametros
+       
+        p_sta = self.parameters.sta 
         
         # Potência (dBm)
-        self.wifi.conducted_power[idx_stas] = p_sta.conducted_power
+        self.wifi.tx_power[idx_stas] = p_sta.conducted_power
         
-        # Altura (m)
-        # Para STAs, a altura é geralmente fixa (ex: 1.5m) somada ao terreno (Z) onde caíram
-        # Nota: O array self.wifi.z[idx_stas] já deve ter a cota do terreno vinda da distribuição espacial
         ground_z_stas = self.wifi.z[idx_stas] # Assume que Z atual é o solo
         self.wifi.height[idx_stas] = ground_z_stas + p_sta.height
         self.wifi.z[idx_stas] = self.wifi.height[idx_stas]

@@ -94,8 +94,8 @@ class SimulationDownlink(Simulation):
 
         if self.parameters.general.system == "WIFI":
             self.system.run_csma_ca_scheduling(random_number_gen)
-            self.system.connect_wifi_sta_to_ap(self.parameters.wifi, random_number_gen)
-            self.power_control_wifi(self.parameters.wifi)
+            self.system.connect_wifi_sta_to_ap(self.parameters.wifi)
+            #self.power_control_wifi(self.parameters.wifi)
 
             self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(
                 self.system.wifi,  self.system.wifi,)
@@ -975,20 +975,16 @@ class SimulationDownlink(Simulation):
         Calcula o SINR para o modelo Wi-Fi Unificado (Mesh/Ad Hoc).
         Assume que self.wifi.coupling_loss [N x N] já está calculado e atualizado.
         """
-        # 1. Resetar arrays de resultados (valor baixo = silêncio)
-        self.system.wifi.rx_power[:] = -500.0
-        self.system.wifi.rx_interference[:] = -500.0
-        self.system.wifi.total_interference[:] = -500.0
-        self.system.wifi.sinr[:] = -500.0
-        self.system.wifi.snr[:] = -500.0
-
-        # 2. Identificar nós ativos (Transmissores neste snapshot)
+        
         nodes_active = np.where(self.system.wifi.active)[0]
 
         # 3. Loop de Cálculo de Sinal e Interferência
         for nodes in nodes_active:
 
             linked_nodes = self.system.link[nodes]
+            if len(linked_nodes) == 0:
+                continue
+
             self.system.wifi.rx_power[linked_nodes] = self.system.wifi.tx_power[nodes] - \
                                                      self.coupling_loss_wifi[nodes, linked_nodes]
             
