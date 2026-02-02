@@ -986,40 +986,23 @@ class SimulationDownlink(Simulation):
         nodes_active = np.where(self.system.wifi.active)[0]
 
         # 3. Loop de Cálculo de Sinal e Interferência
-        for tx_node in nodes_active:
-            # Lista de receptores deste transmissor (definido no CSMA/Link)
-            rx_list = self.system.link[tx_node]
+        for nodes in nodes_active:
+
+            linked_nodes = self.system.link[nodes]
+            self.system.wifi.rx_power[linked_nodes] = self.system.wifi.tx_power[nodes] - \
+                                                     self.coupling_loss_wifi[nodes, linked_nodes]
             
-            for rx_node in rx_list:
-                # --- A. SINAL ÚTIL (Signal) ---
-                # P_rx = P_tx - CouplingLoss
-                # Usa a matriz de coupling loss já existente
-                signal_dbm = self.system.wifi.tx_power[tx_node] - \
-                             self.system.wifi.coupling_loss[tx_node, rx_node]
-                
-                self.system.wifi.rx_power[rx_node] = signal_dbm
+            nodes_interfer = [n for n in nodes_active if n not in [nodes]]
 
-                # --- B. INTERFERÊNCIA (Agregada) ---
-                # Lista de interferentes: Todos os ativos exceto o próprio transmissor
-                interferers_list = [node for node in nodes_active if node != tx_node]
-                
-                # Acumulador de interferência linear (mW)
-                total_interf_linear = 0.0
-                
-                for interf_node in interferers_list:
-                    # Interferência de um nó específico
-                    i_val_dbm = self.system.wifi.tx_power[interf_node] - \
-                                self.system.wifi.coupling_loss[interf_node, rx_node]
-                    
-                    # Converte para mW e soma
-                    total_interf_linear += np.power(10, 0.1 * i_val_dbm)
-                
-                # Armazena interferência externa (intra-sistema) em dBm
-                if total_interf_linear > 0:
-                    self.system.wifi.rx_interference[rx_node] = 10 * np.log10(total_interf_linear)
+            for ni in nodes_interfer:
+                interference = self.system.wifi.tx_power[ni] - \
+                               self.coupling_loss_wifi[ni, linked_nodes]
 
-        # 4. RUÍDO TÉRMICO (Thermal Noise)
-        # Noise = 10log(kTB) + NF
+                self.system.wifi.rx_interference[linked_nodes] = 10 * np.log10(
+                    10 ** (0.1 * self.system.wifi.rx_interference[linked_nodes]) +
+                    10 ** (0.1 * interference)
+                )
+            
         self.system.wifi.thermal_noise = \
             10 * np.log10(BOLTZMANN_CONSTANT * self.system.wifi.noise_temperature * 1e3) + \
             10 * np.log10(self.system.wifi.bandwidth * 1e6) + \

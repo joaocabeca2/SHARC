@@ -16,10 +16,6 @@ class SystemWifi:
         self.parameters = param
         self.topology = topology
         self.parameters_antenna = param_ant
-
-        # 1. Ajuste a contagem total de nós
-        # Se você quer espalhar nós ao redor dos pontos da topologia, o total é (N_sites * K_nós_por_site)
-        # Se 'k' não for mais relevante, defina um número fixo ou use param.sta.k como "densidade"
         self.nodes_per_site = self.parameters.sta.k 
         self.num_nodes = self.topology.num_base_stations
 
@@ -41,6 +37,8 @@ class SystemWifi:
         # Antenas
         self.wifi.antenna = [AntennaOmni() for _ in range(self.num_nodes)]
         self.wifi.elevation = -param_ant.downtilt * np.ones(self.num_nodes)
+
+        #self.configure_node_parameters()
 
         # --- LÓGICA DE POSICIONAMENTO (A parte que faltava) ---
         
@@ -222,15 +220,7 @@ class SystemWifi:
                 self.link[tx_node] = []
 
     def configure_node_parameters(self):
-        """
-        Configura os nós unificados com valores heterogêneos baseados nos
-        parâmetros de 'ap' e 'sta' do arquivo de configuração.
-        
-        Embora todos sejam 'WIFI_NODE', os primeiros 'num_aps' terão características
-        de infraestrutura (AP) e o restante terá características de terminais (STA).
-        """
-        # 1. Definição das Fatias (Slices)
-        # APs ocupam as primeiras posições correspondentes aos sites da topologia
+
         self.num_aps = self.num_nodes  // 2
         idx_aps = slice(0, self.num_aps)
         # STAs ocupam o restante
