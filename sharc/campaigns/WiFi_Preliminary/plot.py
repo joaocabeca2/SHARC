@@ -13,7 +13,7 @@ load_factors = {
     "30%": "LF30",
     "50%": "LF50",
     "70%": "LF70",
-    "100%": "LF100" # Altere para LF_90p se for o seu caso
+    "90%": "LF90" # Altere para LF_90p se for o seu caso
 }
 
 # Nome do arquivo CSV que queremos ler em cada pasta

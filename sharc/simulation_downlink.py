@@ -97,7 +97,7 @@ class SimulationDownlink(Simulation):
             self.system.run_csma_ca_scheduling(random_number_gen)
             self.system.create_random_links(random_number_gen)
             #self.power_control_wifi(self.parameters.wifi)
-
+            
             self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(
                 self.system.wifi,  self.system.wifi,)
             self.calculate_sinr_wifi()
@@ -998,7 +998,7 @@ class SimulationDownlink(Simulation):
                 )
 
         self.system.wifi.thermal_noise = \
-            10 * np.log10(BOLTZMANN_CONSTANT * self.system.wifi.noise_temperature * 1e3) + \
+            10 * np.log10(BOLTZMANN_CONSTANT * self.param_system.noise_temperature * 1e3) + \
             10 * np.log10(self.system.wifi.bandwidth * 1e6) + \
             self.system.wifi.noise_figure
 
