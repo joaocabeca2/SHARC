@@ -615,8 +615,9 @@ class SimulationDownlink(Simulation):
                 ),
             )
         
-        wifi_active = np.where(self.system.wifi.active)[0]  # assuming all APs have same parameters
+        wifi_active = np.where(self.system.wifi.active)[0] 
         rx_interference_linear = np.zeros(self.system.wifi.num_stations)
+        rx_interference_linear[wifi_active] = np.power(10, 0.1 * self.system.wifi.rx_interference[wifi_active].flatten())
 
         for bs in bs_active:
             # Potência de TX por feixe do BS atual (Array, shape [K] onde K=self.parameters.imt.ue.k)
@@ -639,7 +640,7 @@ class SimulationDownlink(Simulation):
                     axis=0
                 )
 
-        self.system.wifi.rx_interference = 10 * np.log10(np.sum(rx_interference_linear, axis=0))
+        self.system.wifi.rx_interference = 10 * np.log10(np.maximum(rx_interference_linear, 1e-20))
 
         # calculate N
         self.system.wifi.thermal_noise = \
@@ -987,6 +988,8 @@ class SimulationDownlink(Simulation):
                                                      self.coupling_loss_wifi[nodes, linked_nodes]
             
             nodes_interfer = [n for n in nodes_active if n not in [nodes]]
+            if nodes_interfer == []:
+                continue
 
             for ni in nodes_interfer:
                 interference = self.system.wifi.tx_power[ni] - \
@@ -999,8 +1002,7 @@ class SimulationDownlink(Simulation):
 
         self.system.wifi.thermal_noise = \
             10 * np.log10(BOLTZMANN_CONSTANT * self.param_system.noise_temperature * 1e3) + \
-            10 * np.log10(self.system.wifi.bandwidth * 1e6) + \
-            self.system.wifi.noise_figure
+            10 * np.log10(self.system.wifi.bandwidth * 1e6) 
 
         self.system.wifi.total_interference = \
             10 * np.log10(
