@@ -640,7 +640,7 @@ class SimulationDownlink(Simulation):
                     axis=0
                 )
 
-        self.system.wifi.rx_interference = 10 * np.log10(np.maximum(rx_interference_linear, 1e-20))
+        self.system.wifi.rx_interference = 10 * np.log10(rx_interference_linear)
 
         # calculate N
         self.system.wifi.thermal_noise = \
