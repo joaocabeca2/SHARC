@@ -1216,10 +1216,19 @@ class SimulationDownlink(Simulation):
         """
         ap_active = np.where(self.system.ap.active)[0]
         sta_active = np.where(self.system.sta.active)[0]
+        sta_active_set = set(sta_active.tolist())
 
         #AP -> STA
         for ap in ap_active:
-            linked_stas = self.system.link[ap]
+            # Uma STA pode estar associada/linkada ao AP (self.system.link)
+            # mas não estar ativa neste snapshot; power_control_wifi só cria
+            # tx_power para STAs ativas, então filtramos aqui para evitar
+            # KeyError e para não computar rx_power/interferência de STAs
+            # que não existem de fato nesta rodada.
+            linked_stas = np.array([
+                s for s in np.atleast_1d(self.system.link[ap]).astype(int)
+                if s in sta_active_set
+            ], dtype=int)
             if len(linked_stas) == 0:
                 continue
             self.system.sta.rx_power[linked_stas] = self.system.ap.tx_power[ap] - \
@@ -1240,7 +1249,10 @@ class SimulationDownlink(Simulation):
         coupling_loss_sta_ap = self.coupling_loss_wifi.T 
 
         for ap in ap_active:
-            linked_stas = self.system.link[ap]
+            linked_stas = np.array([
+                s for s in np.atleast_1d(self.system.link[ap]).astype(int)
+                if s in sta_active_set
+            ], dtype=int)
             if len(linked_stas) == 0:
                 continue
             
