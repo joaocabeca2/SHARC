@@ -516,7 +516,13 @@ class SimulationDownlink(Simulation):
             weights = np.clip(overlap_bw / float(self.param_system.bandwidth), 0.0, 1.0)
 
 
-            in_band_interf_power = -500.
+            # Acumuladores SEMPRE em mW linear, inicializados em zero de
+            # verdade (não um placeholder em dBm/"-500" cru). Isso evita
+            # misturar "ainda não calculado" com "já calculado" na soma
+            # final, que é a causa do NaN quando co_channel=False e do
+            # achatamento (dupla conversão) quando adjacent_channel=True.
+            # Mesmo padrão usado em calculate_external_interference_wifi.
+            in_band_interf_power_lin = np.zeros(len(ue))
             if self.co_channel:
                 # Inteferer transmit power in dBm over the overlapping band
                 # (MHz) with UEs.
@@ -535,13 +541,9 @@ class SimulationDownlink(Simulation):
                     )), axis=1)
 
                     # 3. Soma das potências (APs + STAs) em mW
-                    in_band_interf_power = interf_ap_lin + interf_sta_lin
-                    '''# Evita log de zero caso não haja interferência
-                    in_band_interf_power = np.full(len(ue), -500.0)
-                    valid_idx = total_interf_lin > 0
-                    in_band_interf_power[valid_idx] = 10 * np.log10(total_interf_lin[valid_idx])'''
+                    in_band_interf_power_lin = interf_ap_lin + interf_sta_lin
 
-            oob_power = np.full(len(ue), -500.0)
+            oob_power_lin = np.zeros(len(ue))
 
             if self.adjacent_channel:
                 # fraction of the WIFI system bandwidth that does NOT overlap
@@ -572,13 +574,13 @@ class SimulationDownlink(Simulation):
                     # portion of the UE's own bandwidth not overlapping the WIFI band
                     non_overlap_imt_bw = self.ue.bandwidth[ue] * non_overlap_weight
 
-                    ap_tx_oob_dbm = self.system.ap.tx_power[active_ap][np.newaxis, :] - aclr_dB + \
+                    ap_tx_oob_dbm = tx_power_ap_arr[np.newaxis, :] - aclr_dB + \
                         10 * np.log10(non_overlap_imt_bw / measurement_bw)[:, np.newaxis]
                     tx_oob_ap_lin = np.sum(10 ** (0.1 * (
                         ap_tx_oob_dbm - self.coupling_loss_imt_system_ap_adjacent[ue, :][:, active_ap]
                     )), axis=1)
 
-                    sta_tx_oob_dbm = self.system.sta.tx_power[active_sta][np.newaxis, :] - aclr_dB + \
+                    sta_tx_oob_dbm = tx_power_sta_arr[np.newaxis, :] - aclr_dB + \
                         10 * np.log10(non_overlap_imt_bw / measurement_bw)[:, np.newaxis]
                     tx_oob_sta_lin = np.sum(10 ** (0.1 * (
                         sta_tx_oob_dbm - self.coupling_loss_imt_system_sta_adjacent[ue, :][:, active_sta]
@@ -616,10 +618,13 @@ class SimulationDownlink(Simulation):
                         f"No implementation for parameters.imt.adjacent_ch_reception == {
                             self.parameters.imt.adjacent_ch_reception}")
 
-                oob_power = tx_oob_ap_lin + tx_oob_sta_lin + rx_oob_ap_lin + rx_oob_sta_lin
+                # já em mW (linear); NÃO reconverter com 10**(0.1*x) abaixo,
+                # pois isso já foi feito em cada parcela (_lin) acima.
+                oob_power_lin = tx_oob_ap_lin + tx_oob_sta_lin + rx_oob_ap_lin + rx_oob_sta_lin
 
-             
-            ue_ext_int = in_band_interf_power + np.power(10,0.1 * oob_power)
+            # Ambas as parcelas já estão em mW linear -> soma direta, uma
+            # única conversão para dBm.
+            ue_ext_int = in_band_interf_power_lin + oob_power_lin
 
             self.ue.ext_interference[ue] = 10 * np.log10(ue_ext_int)
 
@@ -801,8 +806,7 @@ class SimulationDownlink(Simulation):
         sta_active = np.where(self.system.sta.active)[0]
         rx_interference_linear_ap = np.zeros(self.system.ap.num_stations)
         rx_interference_linear_sta = np.zeros(self.system.sta.num_stations)
-        #rx_interference_linear_ap[ap_active] = np.power(10, 0.1 * self.system.ap.rx_interference[ap_active].flatten())
-        #rx_interference_linear_sta[sta_active] = np.power(10, 0.1 * self.system.sta.rx_interference[sta_active].flatten())
+
 
         for bs in bs_active:
             # Potência de TX por feixe do BS atual (Array, shape [K] onde K=self.parameters.imt.ue.k)
@@ -1355,65 +1359,33 @@ class SimulationDownlink(Simulation):
         ap_active = np.where(self.system.ap.active)[0]
         sta_active = np.where(self.system.sta.active)[0]
 
-        '''offset_sta_start = self.system.ap.sinr.size
-        # Cria cópia para não alterar a simulação em andamento
-        global_sinr_clean = np.array(self.system.sinr, copy=True)
-        global_snr_clean  = np.array(self.system.snr, copy=True)
-
-        # Aplica Teto (Hardware Limit: 45 dB)
-        global_sinr_clean = np.clip(global_sinr_clean, a_min=None, a_max=45.0)
-        global_snr_clean  = np.clip(global_snr_clean,  a_min=None, a_max=45.0)
-
-        # Aplica Piso (Remover Mortos/Erros: -120 dB)
-        global_sinr_clean[global_sinr_clean < -120] = -120.0
-        global_snr_clean[global_snr_clean < -120]   = -120.0'''
-
         for ap in ap_active:
-            sta_indices = np.atleast_1d(self.system.link[ap]).astype(int)
             sta = self.system.link[ap]
-            # Coleta resultados básicos do WiFi
+            
+            # Perda de percurso e ganhos de antena
             self.results.wifi_path_loss.extend(self.path_loss_wifi[ap, sta])
             path_loss_ap_ap = self.path_loss_ap_ap[ap, ap_active]
             path_loss_sta_sta = self.path_loss_sta_sta[sta, sta_active]
             self.results.wifi_path_loss.extend(path_loss_ap_ap[np.isfinite(path_loss_ap_ap)])
             self.results.wifi_path_loss.extend(path_loss_sta_sta[np.isfinite(path_loss_sta_sta)])
 
-            #coupling_loss_ap_ap = self.coupling_loss_ap_ap[ap, ap_active]
-            #coupling__loss_sta_sta = self.coupling_loss_sta_sta[sta, sta_active]
-            #self.results.wifi_coupling_loss.extend(self.coupling_loss_wifi[ap, sta])
-            #self.results.wifi_coupling_loss.extend(coupling_loss_ap_ap[np.isfinite(coupling_loss_ap_ap)])
-            #self.results.wifi_coupling_loss.extend(coupling__loss_sta_sta[np.isfinite(coupling__loss_sta_sta)])
             self.results.wifi_ap_antenna_gain.extend(self.ap_antenna_gain[ap, sta])
             self.results.wifi_sta_antenna_gain.extend(self.sta_antenna_gain[ap, sta])
 
-            ''' val_ul_sinr = global_sinr_clean[ap]
-            val_ul_sinr = np.repeat(val_ul_sinr, len(sta_indices))
-            
-            val_ul_snr  = global_snr_clean[ap]
-            val_ul_snr  = np.repeat(val_ul_snr, len(sta_indices))
+            # --- Coleta de SINR e SNR (STA e AP) ---
+            sta_sinr = np.atleast_1d(self.system.sta.sinr[sta])
+            sta_snr = np.atleast_1d(self.system.sta.snr[sta])
+            ap_sinr = np.atleast_1d(self.system.ap.sinr[ap])
+            ap_snr = np.atleast_1d(self.system.ap.snr[ap])
 
-            # 3. DOWNLINK (STA) - RECUPERAÇÃO COM OFFSET
-            # Agora funciona: array([0, 5]) + 100 = array([100, 105])
-            # IMPORTANTE: Use 'sta_indices' aqui, NÃO use 'sta'
-            val_dl_sinr = global_sinr_clean[offset_sta_start + sta_indices]
-            val_dl_snr  = global_snr_clean[offset_sta_start + sta_indices]
+            # Coleta do Downlink
+            self.results.wifi_dl_sinr.extend(sta_sinr.tolist())
+            self.results.wifi_dl_snr.extend(sta_snr.tolist())
+            self.results.wifi_dl_sinr.extend(ap_sinr.tolist())
+            self.results.wifi_dl_snr.extend(ap_snr.tolist())
 
-            # 4. CONCATENAÇÃO
-            # Junta o que a STA ouviu com o que o AP ouviu
-            link_sinr = np.concatenate((val_dl_sinr, val_ul_sinr))
-            link_snr  = np.concatenate((val_dl_snr, val_ul_snr))
-
-            # 5. SALVA NOS RESULTADOS
-            self.results.wifi_dl_sinr.extend(link_sinr.tolist())
-            self.results.wifi_dl_snr.extend(link_snr.tolist())'''
-        
-            #Calculate throughput for wifi
-            wifi_tput = self.calculate_imt_tput(
-                self.system.sta.sinr[sta],
-                self.parameters.wifi.downlink.sinr_min,
-                self.parameters.wifi.downlink.sinr_max,
-                self.parameters.wifi.downlink.attenuation_factor,
-            )
+            # Throughput WiFi das STAs
+            wifi_tput = self.calculate_wifi_tput(sta_sinr)
             self.results.wifi_dl_tput.extend(wifi_tput.tolist())
             
         bs_active = np.where(self.bs.active)[0]

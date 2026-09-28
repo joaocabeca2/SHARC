@@ -20,7 +20,7 @@ general:
     overwrite_output: TRUE
     ###########################################################################
     # output destination folder - this is relative SHARC/sharc directory
-    output_dir  : campaigns/huaweii_uma_indoor_uplink/output/LF90
+    output_dir  : campaigns/huaweii_uma_indoor_uplink_ADJACENT/output/LF90
     ###########################################################################
     # output folder prefix
     output_dir_prefix  : output_IMT_WIFI
@@ -35,7 +35,12 @@ imt:
     spurious_emissions: -15                         # Spurious emission level [dBm/MHz]
     guard_band_ratio: 0.1                             # Ratio of total bandwidth used as guard band
     channel_model: UMa                          # Channel model: FSPL, CI, UMa, UMi, etc.
-    shadowing: TRUE  
+    shadowing: TRUE 
+    ###########################################################################
+    # >>> NOVO: modelo de recepção da UE no canal adjacente (interferência
+    # WIFI->UE), via ACS (Adjacent Channel Selectivity)
+    adjacent_ch_reception: ACS
+    ###########################################################################
     ###########################################################################
     # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
     # "INDOOR", "MSS_DC"
@@ -264,6 +269,13 @@ wifi:
     channel_model: INDOOR_BUILDING                      
     shadowing: TRUE
     polarization_loss: 2
+    ###########################################################################
+    # >>> NOVO: modelo de emissão fora da banda da BS (interferência BS->WIFI)
+    # SPECTRAL_MASK usa a máscara "3GPP E-UTRA" já definida acima.
+    # Se preferir o modelo ACLR (mais simples, um único número), troque para
+    # "ACLR" e use o valor em imt.bs.adjacent_ch_leak_ratio.
+    adjacent_ch_emissions: ACLR
+    adjacent_ch_leak_ratio: 45.0
     topology:
         ###########################################################################
         # Topology Type. Possible values are "HOTSPOT"

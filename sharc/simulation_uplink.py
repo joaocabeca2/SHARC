@@ -569,7 +569,7 @@ class SimulationUplink(Simulation):
             weights = np.clip(overlap_bw / float(self.param_system.bandwidth), 0.0, 1.0)
 
             # --- Interferência em banda (co-canal), já em mW (linear) ---
-            in_band_interf_power = np.zeros(len(ue))
+            in_band_interf_power = -500
             if self.co_channel and self.overlapping_bandwidth > 0:
                 interf_ap_lin = np.sum(10 ** (0.1 * (
                         tx_power_ap_arr +
@@ -586,7 +586,7 @@ class SimulationUplink(Simulation):
                 # Soma das potências (APs + STAs) em mW
                 in_band_interf_power = interf_ap_lin + interf_sta_lin
 
-            # --- Interferência fora de banda (canal adjacente), em dB ---
+            # --- Interferência fora de banda (canal adjacente), já em mW (linear) ---
             oob_power = np.full(len(ue), -500.0)
 
             if self.adjacent_channel:
@@ -666,10 +666,11 @@ class SimulationUplink(Simulation):
                         f"No implementation for parameters.imt.adjacent_ch_reception == {
                             self.parameters.imt.adjacent_ch_reception}")
 
-                oob_power = tx_oob_ap_lin + tx_oob_sta_lin + rx_oob_ap_lin + rx_oob_sta_lin
+                # já em mW (linear); NÃO reconverter com 10**(0.1*x) abaixo,
+                # pois isso já foi feito em cada parcela (_lin) acima.
+                oob_power_lin = tx_oob_ap_lin + tx_oob_sta_lin + rx_oob_ap_lin + rx_oob_sta_lin
 
-            # --- Soma total em mW e conversão ÚNICA para dBm (sem +30) ---
-            bs_ext_int = in_band_interf_power + np.power(10, 0.1 * oob_power)
+            bs_ext_int = in_band_interf_power + oob_power_lin
             self.bs.ext_interference[bs] = 10 * np.log10(bs_ext_int)
 
             # Recalcula SINR Externo: S / (I_intra + I_ext + N)
@@ -899,15 +900,13 @@ class SimulationUplink(Simulation):
             # calculate_sinr_ext_wifi: overlap de banda entre cada UE e
             # a banda do sistema WIFI). Usado tanto pelo co-canal quanto
             # pelo ACLR/ACS do canal adjacente.
-            ue_min_f = self.ue.center_freq[ue] - self.ue.bandwidth[ue] / 2
-            ue_max_f = self.ue.center_freq[ue] + self.ue.bandwidth[ue] / 2
-
-            sys_min_f = float(self.param_system.frequency) - float(self.param_system.bandwidth) / 2
-            sys_max_f = float(self.param_system.frequency) + float(self.param_system.bandwidth) / 2
-
-            overlap_bw = np.minimum(ue_max_f, sys_max_f) - np.maximum(ue_min_f, sys_min_f)
-
-            weights = np.clip(overlap_bw / float(self.param_system.bandwidth), 0.0, 1.0)
+            weights = self.calculate_bw_weights(
+                self.ue.bandwidth[ue],
+                self.ue.center_freq[ue],
+                self.param_system.bandwidth,
+                self.param_system.frequency,
+                self.ue.bandwidth[ue],
+            )
 
             if self.co_channel:
                 # Potência de cada UE (dB) já ponderada pela fração de banda
@@ -1177,81 +1176,145 @@ class SimulationUplink(Simulation):
         ap_active = np.where(self.system.ap.active)[0]
         sta_active = np.where(self.system.sta.active)[0]
 
-        offset_sta_start = self.system.ap.sinr.size
-        # Cria cópia para não alterar a simulação em andamento
-        global_sinr_clean = np.array(self.system.sinr, copy=True)
-        global_snr_clean  = np.array(self.system.snr, copy=True)
-
-        # Aplica Teto (Hardware Limit: 45 dB)
-        global_sinr_clean = np.clip(global_sinr_clean, a_min=None, a_max=45.0)
-        global_snr_clean  = np.clip(global_snr_clean,  a_min=None, a_max=45.0)
-
-        # Aplica Piso (Remover Mortos/Erros: -120 dB)
-        global_sinr_clean[global_sinr_clean < -120] = -120.0
-        global_snr_clean[global_snr_clean < -120]   = -120.0
-        
-        # Collect WiFi Metrics (Uplink: at AP)
         for ap in ap_active:
-            sta_indices = np.atleast_1d(self.system.link[ap]).astype(int)
             sta = self.system.link[ap]
-            # Coleta resultados básicos do WiFi
+            
+            # Perda de percurso e ganhos de antena
             self.results.wifi_path_loss.extend(self.path_loss_wifi[ap, sta])
-            self.results.wifi_coupling_loss.extend(self.coupling_loss_wifi[ap, sta])
+            path_loss_ap_ap = self.path_loss_ap_ap[ap, ap_active]
+            path_loss_sta_sta = self.path_loss_sta_sta[sta, sta_active]
+            self.results.wifi_path_loss.extend(path_loss_ap_ap[np.isfinite(path_loss_ap_ap)])
+            self.results.wifi_path_loss.extend(path_loss_sta_sta[np.isfinite(path_loss_sta_sta)])
+
             self.results.wifi_ap_antenna_gain.extend(self.ap_antenna_gain[ap, sta])
             self.results.wifi_sta_antenna_gain.extend(self.sta_antenna_gain[ap, sta])
 
-            # NOTA: bloco de val_ul_sinr/val_dl_sinr baseado em offset_sta_start
-            # foi desativado aqui, igual ao downlink - self.system.sinr/.snr só
-            # têm o tamanho do número de APs+STAs ATIVOS no snapshot, não do
-            # índice bruto da STA (sta_indices), o que causava IndexError.
-            '''val_ul_sinr = global_sinr_clean[ap]
-            val_ul_sinr = np.repeat(val_ul_sinr, len(sta_indices))
-            
-            val_ul_snr  = global_snr_clean[ap]
-            val_ul_snr  = np.repeat(val_ul_snr, len(sta_indices))
+            # --- Coleta de SINR e SNR (STA e AP) ---
+            sta_sinr = np.atleast_1d(self.system.sta.sinr[sta])
+            sta_snr = np.atleast_1d(self.system.sta.snr[sta])
+            ap_sinr = np.atleast_1d(self.system.ap.sinr[ap])
+            ap_snr = np.atleast_1d(self.system.ap.snr[ap])
 
-            # 3. DOWNLINK (STA) - RECUPERAÇÃO COM OFFSET
-            # Agora funciona: array([0, 5]) + 100 = array([100, 105])
-            # IMPORTANTE: Use 'sta_indices' aqui, NÃO use 'sta'
-            val_dl_sinr = global_sinr_clean[offset_sta_start + sta_indices]
-            val_dl_snr  = global_snr_clean[offset_sta_start + sta_indices]
+            # Coleta do Uplink
+            self.results.wifi_ul_sinr.extend(sta_sinr.tolist())
+            self.results.wifi_ul_snr.extend(sta_snr.tolist())
+            self.results.wifi_ul_sinr.extend(ap_sinr.tolist())
+            self.results.wifi_ul_snr.extend(ap_snr.tolist())
 
-            # 4. CONCATENAÇÃO
-            # Junta o que a STA ouviu com o que o AP ouviu
-            link_sinr = np.concatenate((val_dl_sinr, val_ul_sinr))
-            link_snr  = np.concatenate((val_dl_snr, val_ul_snr))
-
-            # 5. SALVA NOS RESULTADOS
-            self.results.wifi_dl_sinr.extend(link_sinr.tolist())
-            self.results.wifi_dl_snr.extend(link_snr.tolist())'''
-        
-            #Calculate throughput for wifi
-            wifi_tput = self.calculate_imt_tput(
-                self.system.sta.sinr[sta],
-                self.parameters.wifi.downlink.sinr_min,
-                self.parameters.wifi.downlink.sinr_max,
-                self.parameters.wifi.downlink.attenuation_factor,
-            )
-            self.results.wifi_dl_tput.extend(wifi_tput.tolist())
+            # Throughput WiFi das STAs
+            wifi_tput = self.calculate_wifi_tput(sta_sinr)
+            self.results.wifi_ul_tput.extend(wifi_tput.tolist())
         
         bs_active = np.where(self.bs.active)[0]
+
         for bs in bs_active:
             ue = self.link[bs]
-            self.results.imt_path_loss.extend(self.path_loss_imt[bs, ue])
-            self.results.imt_coupling_loss.extend(
-                self.coupling_loss_imt[bs, ue],
+
+            if not self.parameters.imt.imt_ul_intra_sinr_calculation_disabled:
+                self.results.imt_path_loss.extend(
+                    self.path_loss_imt[bs, ue],
+                )
+                self.results.imt_coupling_loss.extend(
+                    self.coupling_loss_imt[bs, ue],
+                )
+
+                self.results.imt_bs_antenna_gain.extend(
+                    self.imt_bs_antenna_gain[bs, ue],
+                )
+                self.results.imt_ue_antenna_gain.extend(
+                    self.imt_ue_antenna_gain[bs, ue],
+                )
+
+                tput = self.calculate_imt_tput(
+                    self.bs.sinr[bs],
+                    self.parameters.imt.uplink.sinr_min,
+                    self.parameters.imt.uplink.sinr_max,
+                    self.parameters.imt.uplink.attenuation_factor,
+                )
+                self.results.imt_ul_tput.extend(
+                    tput.tolist(),
+                )
+
+            self.results.imt_ul_inr.extend(
+                self.bs.inr[bs].tolist(),
             )
-            
-            tput = self.calculate_imt_tput(
-                self.bs.sinr[bs],
-                self.parameters.imt.uplink.sinr_min,
-                self.parameters.imt.uplink.sinr_max,
-                self.parameters.imt.uplink.attenuation_factor,
+
+            self.results.ap_imt_antenna_gain.extend(
+                self.ap_imt_antenna_gain[
+                    ap_active[:, np.newaxis],
+                    ue,
+                ].flatten(),
             )
-            self.results.imt_ul_tput.extend(tput.tolist())
-            self.results.imt_ul_sinr.extend(self.bs.sinr[bs].tolist())
-            self.results.imt_ul_inr.extend(self.bs.inr[bs].tolist())
-            self.results.imt_ul_ext_interf_power.extend(self.bs.ext_interference[bs].tolist())
+
+            self.results.sta_imt_antenna_gain.extend(
+                self.sta_imt_antenna_gain[
+                    sta_active[:, np.newaxis],
+                    ue,
+                ].flatten(),
+            )
+
+            if len(self.imt_ap_antenna_gain):
+                self.results.imt_ap_antenna_gain.extend(
+                    self.imt_ap_antenna_gain[
+                        ap_active[:, np.newaxis],
+                        ue,
+                    ].flatten(),
+                )
+
+            if len(self.imt_sta_antenna_gain):
+                self.results.imt_sta_antenna_gain.extend(
+                    self.imt_sta_antenna_gain[
+                        sta_active[:, np.newaxis],
+                        ue,
+                    ].flatten(),
+                )
+
+            self.results.imt_system_path_loss.extend(
+                self.imt_ap_path_loss[
+                    ap_active[:, np.newaxis],
+                    ue,
+                ].flatten(),
+            )
+
+            self.results.imt_system_path_loss.extend(
+                self.imt_sta_path_loss[
+                    sta_active[:, np.newaxis],
+                    ue,
+                ].flatten(),
+            )
+
+            if self.param_system.channel_model == "HDFSS":
+                self.results.imt_system_build_entry_loss.extend(
+                    self.imt_system_build_entry_loss[:, bs],
+                )
+                self.results.imt_system_diffraction_loss.extend(
+                    self.imt_system_diffraction_loss[:, bs],
+                )
+
+            self.results.imt_ul_ext_interf_power.extend(
+                self.bs.ext_interference[bs].tolist(),
+            )
+
+            self.results.imt_ul_intra_interf_power.extend(
+                self.bs.rx_interference[bs].tolist(),
+            )
+
+            self.results.imt_ul_interf_power.extend(
+                self.bs.interf_power_total[bs].tolist(),
+            )
+
+            self.results.imt_ul_tx_power.extend(
+                self.ue.tx_power[ue].tolist(),
+            )
+
+            self.results.imt_ul_sinr.extend(
+                self.bs.sinr[bs].tolist(),
+            )
+
+            self.results.imt_ul_snr.extend(
+                self.bs.snr[bs].tolist(),
+            )
+
 
         if write_to_file:
             self.results.write_files(snapshot_number)

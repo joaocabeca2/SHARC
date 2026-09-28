@@ -99,5 +99,5 @@ def run_campaign_re(campaign_name, param_name_regex):
 
 if __name__ == "__main__":
     # Example usage
-    campaign_name = sys.argv[1]
-    run_campaign(campaign_name)
+    #campaign_name = sys.argv[1]
+    run_campaign('huaweii_uma_indoor_uplink_ADJACENT')

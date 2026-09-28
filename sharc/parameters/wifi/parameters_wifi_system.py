@@ -31,6 +31,7 @@ class ParametersWifiSystem(ParametersBase):
     antenna_pattern: str = "Modified ITU-R S.465"
     max_dist_hotspot_ue: float = 70
     adjacent_ch_reception: str = "ACS"
+    adjacent_ch_leak_ratio: float = 45.0
     polarization_loss: float = 0.0
     adjacent_ch_selectivity: float = 20.0
     tx_power_density: float = -65

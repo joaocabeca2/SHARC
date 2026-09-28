@@ -3,7 +3,7 @@ general:
     # Number of simulation snapshots
     num_snapshots: 500
     # IMT link that will be simulated (DOWNLINK or UPLINK)
-    imt_link: UPLINK
+    imt_link: DOWNLINK
     ###########################################################################
     # The chosen system for sharing study
     # EESS_PASSIVE, FSS_SS, FSS_ES, FS, RAS, SINGLE_EARTH_STATION
@@ -14,8 +14,8 @@ general:
     # adjacente. Se quiser rodar os dois simultaneamente, basta colocar TRUE
     # aqui também (nesse caso, cuidado: se as bandas voltarem a se sobrepor,
     # o resultado de adjacent channel deixa de fazer sentido).
-    enable_cochannel: TRUE
-    enable_adjacent_channel: FALSE
+    enable_cochannel: FALSE
+    enable_adjacent_channel: TRUE
     ###########################################################################
     # Seed for random number generator
     seed: 101
@@ -44,12 +44,6 @@ imt:
     guard_band_ratio: 0.1                             # Ratio of total bandwidth used as guard band
     channel_model: UMa                          # Channel model: FSPL, CI, UMa, UMi, etc.
     shadowing: TRUE
-    ###########################################################################
-    # >>> NOVO: modelo de emissão fora da banda da BS (interferência BS->WIFI)
-    # SPECTRAL_MASK usa a máscara "3GPP E-UTRA" já definida acima.
-    # Se preferir o modelo ACLR (mais simples, um único número), troque para
-    # "ACLR" e use o valor em imt.bs.adjacent_ch_leak_ratio.
-    adjacent_ch_emissions: SPECTRAL_MASK
     ###########################################################################
     # >>> NOVO: modelo de recepção da UE no canal adjacente (interferência
     # WIFI->UE), via ACS (Adjacent Channel Selectivity)
@@ -274,7 +268,7 @@ wifi:
     # o único responsável pela interferência entre os dois sistemas.
     # Se quiser uma "guard band" (mais realista), aumente ainda mais essa
     # frequência (ex.: 7090, 7100...).
-    frequency: 7000
+    frequency: 7080
     ###########################################################################
     # Sensor bandwidth [MHz]
     bandwidth: 80
@@ -298,6 +292,13 @@ wifi:
     channel_model: INDOOR_BUILDING                      
     shadowing: TRUE
     polarization_loss: 2
+    ###########################################################################
+    # >>> NOVO: modelo de emissão fora da banda da BS (interferência BS->WIFI)
+    # SPECTRAL_MASK usa a máscara "3GPP E-UTRA" já definida acima.
+    # Se preferir o modelo ACLR (mais simples, um único número), troque para
+    # "ACLR" e use o valor em imt.bs.adjacent_ch_leak_ratio.
+    adjacent_ch_emissions: ACLR
+    adjacent_ch_leak_ratio: 45.0
     topology:
         ###########################################################################
         # Topology Type. Possible values are "HOTSPOT"

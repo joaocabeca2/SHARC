@@ -154,8 +154,8 @@ class Simulation(ABC, Observable):
 
         if (self.overlapping_bandwidth == self.param_system.bandwidth and not self.parameters.imt.interfered_with) or (
                 self.overlapping_bandwidth == self.parameters.imt.bandwidth and self.parameters.imt.interfered_with):
-
-            self.adjacent_channel = False
+            pass
+            #self.adjacent_channel = False
 
         if not self.co_channel and not self.adjacent_channel:
             raise ValueError(
@@ -934,6 +934,100 @@ class Simulation(ABC, Observable):
             tput[id_min] = tput_min
         if len(id_max) > 0:
             tput[id_max] = tput_max
+
+        return tput
+
+    def calculate_wifi_tput(
+        self,
+        sinr: np.array,
+    ) -> np.array:
+        """
+        Calculate Wi-Fi 6 throughput based on SINR and MCS.
+
+        This model considers Wi-Fi 6 (IEEE 802.11ax) operating with:
+
+            - Channel bandwidth: 80 MHz
+            - Number of spatial streams: 1
+            - Guard Interval (GI): 0.8 us
+
+        The throughput values correspond to the theoretical PHY rates
+        for an 80 MHz channel and 1 spatial stream.
+
+        The SINR thresholds used to select each MCS are approximate
+        values for simulation purposes. They are not normative SINR
+        thresholds defined by IEEE 802.11ax.
+
+        Args:
+            sinr (np.array):
+                Array containing SINR values in dB.
+
+        Returns:
+            np.array:
+                Array containing the corresponding Wi-Fi throughput
+                values in Mbps.
+
+        MCS:
+            MCS 0  -> 36.0 Mbps
+            MCS 1  -> 72.1 Mbps
+            MCS 2  -> 108.1 Mbps
+            MCS 3  -> 144.1 Mbps
+            MCS 4  -> 216.2 Mbps
+            MCS 5  -> 288.2 Mbps
+            MCS 6  -> 324.3 Mbps
+            MCS 7  -> 360.3 Mbps
+            MCS 8  -> 432.4 Mbps
+            MCS 9  -> 480.4 Mbps
+            MCS 10 -> 540.4 Mbps
+            MCS 11 -> 600.5 Mbps
+
+        Note:
+            The throughput values above are specifically for an
+            80 MHz Wi-Fi 6 channel with one spatial stream and
+            0.8 us guard interval.
+        """
+
+        mcs_sinr_thresholds = np.array([
+            2,   # MCS 0
+            5,   # MCS 1
+            8,   # MCS 2
+            11,  # MCS 3
+            14,  # MCS 4
+            17,  # MCS 5
+            19,  # MCS 6
+            21,  # MCS 7
+            24,  # MCS 8
+            27,  # MCS 9
+            30,  # MCS 10
+        ])
+
+        mcs_throughput = np.array([
+            36.0,   # MCS 0  - 80 MHz
+            72.1,   # MCS 1  - 80 MHz
+            108.1,  # MCS 2  - 80 MHz
+            144.1,  # MCS 3  - 80 MHz
+            216.2,  # MCS 4  - 80 MHz
+            288.2,  # MCS 5  - 80 MHz
+            324.3,  # MCS 6  - 80 MHz
+            360.3,  # MCS 7  - 80 MHz
+            432.4,  # MCS 8  - 80 MHz
+            480.4,  # MCS 9  - 80 MHz
+            540.4,  # MCS 10 - 80 MHz
+            600.5,  # MCS 11 - 80 MHz
+        ])
+
+        tput = np.zeros_like(sinr, dtype=float)
+
+        
+        for mcs, threshold in enumerate(mcs_sinr_thresholds):
+            if mcs == len(mcs_sinr_thresholds) - 1:
+                mask = sinr >= threshold
+            else:
+                next_threshold = mcs_sinr_thresholds[mcs + 1]
+                mask = (sinr >= threshold) & (sinr < next_threshold)
+
+            tput[mask] = mcs_throughput[mcs]
+
+        tput[sinr < mcs_sinr_thresholds[0]] = 0.0
 
         return tput
 
