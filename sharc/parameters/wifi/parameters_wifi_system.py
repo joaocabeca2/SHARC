@@ -40,7 +40,7 @@ class ParametersWifiSystem(ParametersBase):
 
     # Adjacent channel emissions type
     # Possible values are "ACLR", "SPECTRAL_MASK" and "OFF"
-    adjacent_ch_emissions: str = "OFF"
+    adjacent_ch_emissions: str = "ACLR"
 
     # Spectral mask used for the IMT system when adjacent_ch_emissions is set to "SPECTRAL_MASK"
     spectral_mask: str = "WIFI-2020"
