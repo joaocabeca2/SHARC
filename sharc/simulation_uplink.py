@@ -569,7 +569,9 @@ class SimulationUplink(Simulation):
             weights = np.clip(overlap_bw / float(self.param_system.bandwidth), 0.0, 1.0)
 
             # --- Interferência em banda (co-canal), já em mW (linear) ---
-            in_band_interf_power = -500
+            # Acumuladores em mW (LINEAR): 0 = sem interferência. Não usar -500 aqui,
+            # pois esses valores são somados no domínio linear.
+            in_band_interf_power = np.zeros(len(ue))
             if self.co_channel and self.overlapping_bandwidth > 0:
                 interf_ap_lin = np.sum(10 ** (0.1 * (
                         tx_power_ap_arr +
@@ -587,7 +589,7 @@ class SimulationUplink(Simulation):
                 in_band_interf_power = interf_ap_lin + interf_sta_lin
 
             # --- Interferência fora de banda (canal adjacente), já em mW (linear) ---
-            oob_power = np.full(len(ue), -500.0)
+            oob_power_lin = np.zeros(len(ue))  # mW (linear); 0 se não houver canal adjacente
 
             if self.adjacent_channel:
                 # fração da banda do WIFI que NÃO se sobrepõe à banda de cada feixe
@@ -671,7 +673,8 @@ class SimulationUplink(Simulation):
                 oob_power_lin = tx_oob_ap_lin + tx_oob_sta_lin + rx_oob_ap_lin + rx_oob_sta_lin
 
             bs_ext_int = in_band_interf_power + oob_power_lin
-            self.bs.ext_interference[bs] = 10 * np.log10(bs_ext_int)
+            # piso de 1e-50 mW (-500 dBm) evita log10(0) quando não há interferência
+            self.bs.ext_interference[bs] = 10 * np.log10(np.maximum(bs_ext_int, 1e-50))
 
             # Recalcula SINR Externo: S / (I_intra + I_ext + N)
             i_intra_noise_lin = 10 ** (0.1 * self.bs.total_interference[bs])
@@ -1210,30 +1213,29 @@ class SimulationUplink(Simulation):
         for bs in bs_active:
             ue = self.link[bs]
 
-            if not self.parameters.imt.imt_ul_intra_sinr_calculation_disabled:
-                self.results.imt_path_loss.extend(
-                    self.path_loss_imt[bs, ue],
-                )
-                self.results.imt_coupling_loss.extend(
-                    self.coupling_loss_imt[bs, ue],
-                )
+            self.results.imt_path_loss.extend(
+                self.path_loss_imt[bs, ue],
+            )
+            self.results.imt_coupling_loss.extend(
+                self.coupling_loss_imt[bs, ue],
+            )
 
-                self.results.imt_bs_antenna_gain.extend(
-                    self.imt_bs_antenna_gain[bs, ue],
-                )
-                self.results.imt_ue_antenna_gain.extend(
-                    self.imt_ue_antenna_gain[bs, ue],
-                )
+            self.results.imt_bs_antenna_gain.extend(
+                self.imt_bs_antenna_gain[bs, ue],
+            )
+            self.results.imt_ue_antenna_gain.extend(
+                self.imt_ue_antenna_gain[bs, ue],
+            )
 
-                tput = self.calculate_imt_tput(
-                    self.bs.sinr[bs],
-                    self.parameters.imt.uplink.sinr_min,
-                    self.parameters.imt.uplink.sinr_max,
-                    self.parameters.imt.uplink.attenuation_factor,
-                )
-                self.results.imt_ul_tput.extend(
-                    tput.tolist(),
-                )
+            tput = self.calculate_imt_tput(
+                self.bs.sinr[bs],
+                self.parameters.imt.uplink.sinr_min,
+                self.parameters.imt.uplink.sinr_max,
+                self.parameters.imt.uplink.attenuation_factor,
+            )
+            self.results.imt_ul_tput.extend(
+                tput.tolist(),
+            )
 
             self.results.imt_ul_inr.extend(
                 self.bs.inr[bs].tolist(),
