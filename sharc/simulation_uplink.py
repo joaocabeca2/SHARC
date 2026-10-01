@@ -673,8 +673,16 @@ class SimulationUplink(Simulation):
                 oob_power_lin = tx_oob_ap_lin + tx_oob_sta_lin + rx_oob_ap_lin + rx_oob_sta_lin
 
             bs_ext_int = in_band_interf_power + oob_power_lin
-            # piso de 1e-50 mW (-500 dBm) evita log10(0) quando não há interferência
-            self.bs.ext_interference[bs] = 10 * np.log10(np.maximum(bs_ext_int, 1e-50))
+            self.bs.ext_interference[bs] = 10 * np.log10(bs_ext_int)
+
+            #print(np.array(self.bs.rx_interference))
+            bs_rx_interf_arr = np.array(list(self.bs.rx_interference.values()))
+            intra_bs_mw = np.power(10, 0.1 * bs_rx_interf_arr).flatten()
+
+            bs_ext_interf_arr = np.array(list(self.bs.ext_interference.values()))
+            total_interf_bs_mw = intra_bs_mw + np.power(10, 0.1 * bs_ext_interf_arr.flatten())
+            
+            self.bs.interf_power_total = 10 * np.log10(total_interf_bs_mw)
 
             # Recalcula SINR Externo: S / (I_intra + I_ext + N)
             i_intra_noise_lin = 10 ** (0.1 * self.bs.total_interference[bs])
@@ -1171,6 +1179,9 @@ class SimulationUplink(Simulation):
         self.results.system_ext_ul_interf_power.extend(
             self.system.ext_interference.flatten(),
         )
+        self.results.imt_ul_interf_power.extend(
+                self.bs.interf_power_total.flatten(),
+                    )
 
         self.results.system_ul_interf_power_per_mhz.extend(
             self.system.rx_interference.flatten() - 10 * math.log10(self.system.bandwidth),
@@ -1301,9 +1312,6 @@ class SimulationUplink(Simulation):
                 self.bs.rx_interference[bs].tolist(),
             )
 
-            self.results.imt_ul_interf_power.extend(
-                self.bs.interf_power_total[bs].tolist(),
-            )
 
             self.results.imt_ul_tx_power.extend(
                 self.ue.tx_power[ue].tolist(),
