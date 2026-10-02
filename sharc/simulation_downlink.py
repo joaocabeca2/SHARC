@@ -872,20 +872,6 @@ class SimulationDownlink(Simulation):
 
         self.system.ext_interference = np.concatenate((self.system.ap.ext_interference.flatten(), self.system.sta.ext_interference.flatten()))
 
-        intra_ap_mw = np.power(10, 0.1 * self.system.ap.rx_interference).flatten()
-        intra_sta_mw = np.power(10, 0.1 * self.system.sta.rx_interference).flatten()
-        
-        total_interf_ap_mw = intra_ap_mw
-        total_interf_sta_mw = intra_sta_mw
-        
-        total_interf_ap_mw[ap_active] += rx_interference_linear_ap[ap_active]
-        total_interf_sta_mw[sta_active] += rx_interference_linear_sta[sta_active]
-        # Atualiza visão global concatenada
-        self.system.rx_interference = np.concatenate((
-            10 * np.log10(total_interf_ap_mw), 
-            10 * np.log10(total_interf_sta_mw)
-        ))
-
         # calculate N
         self.system.thermal_noise = \
             10 * math.log10(BOLTZMANN_CONSTANT * self.system.noise_temperature * 1e3) + \
@@ -893,7 +879,7 @@ class SimulationDownlink(Simulation):
 
         # Calculate INR at the system - dBm
         self.system.inr = np.array(
-            [self.system.rx_interference - self.system.thermal_noise],
+            [self.system.ext_interference - self.system.thermal_noise],
         )
 
         # Calculate PFD at the system
