@@ -20,7 +20,7 @@ general:
     overwrite_output: TRUE
     ###########################################################################
     # output destination folder - this is relative SHARC/sharc directory
-    output_dir  : campaigns/huaweii_uma_indoor_uplink_ADJACENT/output/LF90
+    output_dir  : campaigns/IMT_WIFI_URBANO_LF_IMT_ADJACENT/output/UL_LF90
     ###########################################################################
     # output folder prefix
     output_dir_prefix  : output_IMT_WIFI
@@ -47,7 +47,7 @@ imt:
     topology:
         type: MACROCELL
         macrocell:
-            intersite_distance: 450
+            intersite_distance: 500
             wrap_around: true
             num_clusters: 1
        
@@ -289,7 +289,7 @@ wifi:
             num_aps: 57
             min_dist_bs: 20.0
             min_dist_nodes_indoor: 2.0 
-            buildings_per_cell: 3
+            buildings_per_cell: 5
     
     # Base station parameters
     ap:

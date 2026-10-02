@@ -20,7 +20,7 @@ general:
     overwrite_output: TRUE
     ###########################################################################
     # output destination folder - this is relative SHARC/sharc directory
-    output_dir  : campaigns/huaweii_uma_indoor_ADJACENT/output/LF20
+    output_dir  : campaigns/IMT_WIFI_URBANO_LF_IMT_ADJACENT/output/DL_LF50
     ###########################################################################
     # output folder prefix
     output_dir_prefix  : output_IMT_WIFI
@@ -46,7 +46,7 @@ imt:
     topology:
         type: MACROCELL
         macrocell:
-            intersite_distance: 450
+            intersite_distance: 500
             wrap_around: true
             num_clusters: 1
        
@@ -56,7 +56,7 @@ imt:
         # The load probability (or activity factor) models the statistical
         # variation of the network load by defining the number of fully loaded
         # base stations that are simultaneously transmitting
-        load_probability: 0.2
+        load_probability: 0.5
         ###########################################################################
         # Conducted power per antenna element [dBm/bandwidth]
         conducted_power: 22.0
@@ -288,7 +288,7 @@ wifi:
             num_aps: 57
             min_dist_bs: 20.0
             min_dist_nodes_indoor: 2.0 
-            buildings_per_cell: 3
+            buildings_per_cell: 5
     
     # Base station parameters
     ap:

@@ -10,8 +10,8 @@ general:
     system: "WIFI"
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
-    enable_cochannel: TRUE
-    enable_adjacent_channel: FALSE
+    enable_cochannel: FALSE
+    enable_adjacent_channel: TRUE
     ###########################################################################
     # Seed for random number generator
     seed: 101
@@ -20,7 +20,7 @@ general:
     overwrite_output: TRUE
     ###########################################################################
     # output destination folder - this is relative SHARC/sharc directory
-    output_dir  : campaigns/huawei_uma/output/LF90
+    output_dir  : campaigns/IMT_WIFI_URBANO_LF_IMT_ADJACENT/output/DL_LF20
     ###########################################################################
     # output folder prefix
     output_dir_prefix  : output_IMT_WIFI
@@ -36,13 +36,17 @@ imt:
     guard_band_ratio: 0.1                             # Ratio of total bandwidth used as guard band
     channel_model: UMa                          # Channel model: FSPL, CI, UMa, UMi, etc.
     shadowing: TRUE  
+     ###########################################################################
+    # >>> NOVO: modelo de recepção da UE no canal adjacente (interferência
+    # WIFI->UE), via ACS (Adjacent Channel Selectivity)
+    adjacent_ch_reception: ACS
     ###########################################################################
     # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
     # "INDOOR", "MSS_DC"
     topology:
         type: MACROCELL
         macrocell:
-            intersite_distance: 450
+            intersite_distance: 500
             wrap_around: true
             num_clusters: 1
        
@@ -52,7 +56,7 @@ imt:
         # The load probability (or activity factor) models the statistical
         # variation of the network load by defining the number of fully loaded
         # base stations that are simultaneously transmitting
-        load_probability: 0.9
+        load_probability: 0.2
         ###########################################################################
         # Conducted power per antenna element [dBm/bandwidth]
         conducted_power: 22.0
@@ -171,7 +175,7 @@ imt:
         height: 1.5
         noise_figure: 9
         ohmic_loss: 2
-        body_loss: 0
+        body_loss: 4
         antenna:
             array:
                 ###########################################################################
@@ -240,7 +244,7 @@ imt:
 wifi:
     ###########################################################################
     # Sensor center frequency [MHz]
-    frequency: 7000
+    frequency: 7080
     ###########################################################################
     # Sensor bandwidth [MHz]
     bandwidth: 80
@@ -261,35 +265,30 @@ wifi:
     wall_loss: 0
     ###########################################################################
     # Channel model: FSPL, CI, UMa, UMi, etc.
-    channel_model: UMa                       
+    channel_model: INDOOR_BUILDING                      
     shadowing: TRUE
     polarization_loss: 2
+    ###########################################################################
+    # >>> NOVO: modelo de emissão fora da banda da BS (interferência BS->WIFI)
+    # SPECTRAL_MASK usa a máscara "3GPP E-UTRA" já definida acima.
+    # Se preferir o modelo ACLR (mais simples, um único número), troque para
+    # "ACLR" e use o valor em imt.bs.adjacent_ch_leak_ratio.
+    adjacent_ch_emissions: ACLR
+    adjacent_ch_leak_ratio: 45.0
     topology:
         ###########################################################################
         # Topology Type. Possible values are "HOTSPOT"
-        type: HOTSPOT
+        type: INDOOR_BUILDING
         ###########################################################################
         # Hotspot Topology parameters. Relevant when imt.topology.type == "HOTSPOT"
-        hotspot:
+        indoor:
             ###########################################################################
             # Inter-site distance in hotspot network topology [m]
             intersite_distance: 321
-            ###########################################################################
-            # Enable wrap around.
-            wrap_around: true
-            ###########################################################################
-            # Number of clusters in macro cell topology
-            num_clusters: 1
-            ###########################################################################
-            # Number of hotspots per macro cell (sector)
-            num_hotspots_per_cell: 1
-            ###########################################################################
-            # Maximum 2D distance between hotspot and UE [m]
-            # This is the hotspot radius
-            max_dist_hotspot_ue: 200
-            ###########################################################################
-            # Minimum 2D distance between macro cell base station and hotspot [m]
-            min_dist_bs_hotspot: 1.2
+            num_aps: 57
+            min_dist_bs: 20.0
+            min_dist_nodes_indoor: 2.0 
+            buildings_per_cell: 5
     
     # Base station parameters
     ap:

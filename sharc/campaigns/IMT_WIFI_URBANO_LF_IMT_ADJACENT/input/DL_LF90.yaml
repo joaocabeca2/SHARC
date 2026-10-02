@@ -10,8 +10,8 @@ general:
     system: "WIFI"
     ###########################################################################
     # Compatibility scenario (co-channel and/or adjacent channel interference)
-    enable_cochannel: TRUE
-    enable_adjacent_channel: FALSE
+    enable_cochannel: FALSE
+    enable_adjacent_channel: TRUE
     ###########################################################################
     # Seed for random number generator
     seed: 101
@@ -20,7 +20,7 @@ general:
     overwrite_output: TRUE
     ###########################################################################
     # output destination folder - this is relative SHARC/sharc directory
-    output_dir  : campaigns/huaweii_fspl_indoor/output/LF50
+    output_dir  : campaigns/IMT_WIFI_URBANO_LF_IMT_ADJACENT/output/DL_LF90
     ###########################################################################
     # output folder prefix
     output_dir_prefix  : output_IMT_WIFI
@@ -34,15 +34,19 @@ imt:
     spectral_mask: 3GPP E-UTRA                           # Spectral mask model
     spurious_emissions: -15                         # Spurious emission level [dBm/MHz]
     guard_band_ratio: 0.1                             # Ratio of total bandwidth used as guard band
-    channel_model: UMa                         # Channel model: FSPL, CI, UMa, UMi, etc.
+    channel_model: UMa                          # Channel model: FSPL, CI, UMa, UMi, etc.
     shadowing: TRUE  
+     ###########################################################################
+    # >>> NOVO: modelo de recepção da UE no canal adjacente (interferência
+    # WIFI->UE), via ACS (Adjacent Channel Selectivity)
+    adjacent_ch_reception: ACS
     ###########################################################################
     # Topology Type. Possible values are "MACROCELL", "HOTSPOT", "SINGLE_BS"
     # "INDOOR", "MSS_DC"
     topology:
         type: MACROCELL
         macrocell:
-            intersite_distance: 450
+            intersite_distance: 500
             wrap_around: true
             num_clusters: 1
        
@@ -52,7 +56,7 @@ imt:
         # The load probability (or activity factor) models the statistical
         # variation of the network load by defining the number of fully loaded
         # base stations that are simultaneously transmitting
-        load_probability: 0.5
+        load_probability: 0.9
         ###########################################################################
         # Conducted power per antenna element [dBm/bandwidth]
         conducted_power: 22.0
@@ -240,7 +244,7 @@ imt:
 wifi:
     ###########################################################################
     # Sensor center frequency [MHz]
-    frequency: 7000
+    frequency: 7080
     ###########################################################################
     # Sensor bandwidth [MHz]
     bandwidth: 80
@@ -264,6 +268,13 @@ wifi:
     channel_model: INDOOR_BUILDING                      
     shadowing: TRUE
     polarization_loss: 2
+    ###########################################################################
+    # >>> NOVO: modelo de emissão fora da banda da BS (interferência BS->WIFI)
+    # SPECTRAL_MASK usa a máscara "3GPP E-UTRA" já definida acima.
+    # Se preferir o modelo ACLR (mais simples, um único número), troque para
+    # "ACLR" e use o valor em imt.bs.adjacent_ch_leak_ratio.
+    adjacent_ch_emissions: ACLR
+    adjacent_ch_leak_ratio: 45.0
     topology:
         ###########################################################################
         # Topology Type. Possible values are "HOTSPOT"
@@ -277,7 +288,7 @@ wifi:
             num_aps: 57
             min_dist_bs: 20.0
             min_dist_nodes_indoor: 2.0 
-            buildings_per_cell: 3
+            buildings_per_cell: 5
     
     # Base station parameters
     ap:
