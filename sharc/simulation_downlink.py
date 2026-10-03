@@ -870,16 +870,18 @@ class SimulationDownlink(Simulation):
         self.system.ap.ext_interference = 10 * np.log10(rx_interference_linear_ap)
         self.system.sta.ext_interference = 10 * np.log10(rx_interference_linear_sta)
 
-        self.system.ext_interference = np.concatenate((self.system.ap.ext_interference.flatten(), self.system.sta.ext_interference.flatten()))
-
         # calculate N
         self.system.thermal_noise = \
             10 * math.log10(BOLTZMANN_CONSTANT * self.system.noise_temperature * 1e3) + \
             10 * math.log10(self.param_system.bandwidth * 1e6)
 
         # Calculate INR at the system - dBm
-        self.system.inr = np.array(
-            [self.system.ext_interference - self.system.thermal_noise],
+
+        self.system.ap.inr = np.array(
+            [self.system.ap.ext_interference - self.system.thermal_noise],
+        )
+        self.system.sta.inr = np.array(
+            [self.system.sta.ext_interference - self.system.thermal_noise],
         )
 
         # Calculate PFD at the system
@@ -1328,19 +1330,6 @@ class SimulationDownlink(Simulation):
             write_to_file (bool): Whether to write results to file.
             snapshot_number (int): The current snapshot number.
         """
-        self.results.wifi_dl_inr.extend(self.system.inr.flatten())
-        self.results.system_dl_interf_power.extend(
-            self.system.rx_interference.flatten(),
-        )
-        self.results.system_intra_dl_interf_power.extend(
-            self.system.intra_interference.flatten(),
-        )
-        self.results.system_ext_dl_interf_power.extend(
-            self.system.ext_interference.flatten(),
-        )
-        self.results.system_dl_interf_power_per_mhz.extend(
-            self.system.rx_interference.flatten() - 10 * math.log10(self.system.bandwidth),
-        )
 
         ap_active = np.where(self.system.ap.active)[0]
         sta_active = np.where(self.system.sta.active)[0]
@@ -1354,6 +1343,15 @@ class SimulationDownlink(Simulation):
             path_loss_sta_sta = self.path_loss_sta_sta[sta, sta_active]
             self.results.wifi_path_loss.extend(path_loss_ap_ap[np.isfinite(path_loss_ap_ap)])
             self.results.wifi_path_loss.extend(path_loss_sta_sta[np.isfinite(path_loss_sta_sta)])
+
+            self.results.wifi_dl_inr.extend(self.system.ap.inr[ap])
+            self.results.wifi_dl_inr.extend(self.system.sta.inr[sta])
+
+            self.results.system_dl_interf_power.extend(self.system.ap.ext_interference[ap])
+            self.results.system_dl_interf_power.extend(self.system.sta.ext_interference[sta])
+
+            self.results.system_intra_dl_interf_power.extend(self.system.ap.rx_interference[ap])
+            self.results.system_intra_dl_interf_power.extend(self.system.sta.rx_interference[sta])
 
             self.results.wifi_ap_antenna_gain.extend(self.ap_antenna_gain[ap, sta])
             self.results.wifi_sta_antenna_gain.extend(self.sta_antenna_gain[ap, sta])
@@ -1373,7 +1371,12 @@ class SimulationDownlink(Simulation):
             # Throughput WiFi das STAs
             wifi_tput = self.calculate_wifi_tput(sta_sinr)
             self.results.wifi_dl_tput.extend(wifi_tput.tolist())
-            
+
+
+        self.results.system_dl_interf_power_per_mhz.extend(
+                self.results.system_dl_interf_power.flatten() - 10 * math.log10(self.system.bandwidth),
+                )
+        
         bs_active = np.where(self.bs.active)[0]
         for bs in bs_active:
             ue = self.link[bs]

@@ -1154,25 +1154,6 @@ class SimulationUplink(Simulation):
         Collect and store results for the current uplink simulation snapshot when using WiFi.
         """
 
-        self.results.wifi_ul_inr.extend(self.system.inr.flatten())
-        self.results.system_ul_interf_power.extend(
-            self.system.rx_interference.flatten(),
-        )
-
-        self.results.system_intra_ul_interf_power.extend(
-            self.system.intra_interference.flatten(),
-        )
-        self.results.system_ext_ul_interf_power.extend(
-            self.system.ext_interference.flatten(),
-        )
-        self.results.imt_ul_interf_power.extend(
-                self.bs.interf_power_total.flatten(),
-                    )
-
-        self.results.system_ul_interf_power_per_mhz.extend(
-            self.system.rx_interference.flatten() - 10 * math.log10(self.system.bandwidth),
-        )
-
         ap_active = np.where(self.system.ap.active)[0]
         sta_active = np.where(self.system.sta.active)[0]
 
@@ -1189,6 +1170,16 @@ class SimulationUplink(Simulation):
             self.results.wifi_ap_antenna_gain.extend(self.ap_antenna_gain[ap, sta])
             self.results.wifi_sta_antenna_gain.extend(self.sta_antenna_gain[ap, sta])
 
+            self.results.wifi_ul_inr.extend(self.system.ap.inr[ap])
+            self.results.wifi_ul_inr.extend(self.system.sta.inr[sta])
+
+            self.results.system_ul_interf_power.extend(self.system.ap.ext_interference[ap])
+            self.results.system_ul_interf_power.extend(self.system.sta.ext_interference[sta])
+
+            self.results.system_intra_ul_interf_power.extend(self.system.ap.rx_interference[ap])
+            self.results.system_intra_ul_interf_power.extend(self.system.sta.rx_interference[sta])
+            
+
             # --- Coleta de SINR e SNR (STA e AP) ---
             sta_sinr = np.atleast_1d(self.system.sta.sinr[sta])
             sta_snr = np.atleast_1d(self.system.sta.snr[sta])
@@ -1204,6 +1195,10 @@ class SimulationUplink(Simulation):
             # Throughput WiFi das STAs
             wifi_tput = self.calculate_wifi_tput(sta_sinr)
             self.results.wifi_ul_tput.extend(wifi_tput.tolist())
+
+        self.results.system_ul_interf_power_per_mhz.extend(
+                        self.results.system_ul_interf_power.flatten() - 10 * math.log10(self.system.bandwidth),
+                        )
         
         bs_active = np.where(self.bs.active)[0]
 
