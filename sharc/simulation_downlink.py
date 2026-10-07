@@ -870,6 +870,8 @@ class SimulationDownlink(Simulation):
         self.system.ap.ext_interference = 10 * np.log10(rx_interference_linear_ap)
         self.system.sta.ext_interference = 10 * np.log10(rx_interference_linear_sta)
 
+        self.system.ext_interference = np.concatenate((self.system.ap.ext_interference, self.system.sta.ext_interference))
+
         # calculate N
         self.system.thermal_noise = \
             10 * math.log10(BOLTZMANN_CONSTANT * self.system.noise_temperature * 1e3) + \
@@ -877,12 +879,14 @@ class SimulationDownlink(Simulation):
 
         # Calculate INR at the system - dBm
 
-        self.system.ap.inr = np.array(
-            [self.system.ap.ext_interference - self.system.thermal_noise],
+        self.system.ap.inr = (
+            self.system.ap.ext_interference - self.system.thermal_noise
         )
-        self.system.sta.inr = np.array(
-            [self.system.sta.ext_interference - self.system.thermal_noise],
+        self.system.sta.inr = (
+            self.system.sta.ext_interference - self.system.thermal_noise
         )
+
+        self.system.inr = np.concatenate((self.system.ap.inr, self.system.sta.inr))
 
         # Calculate PFD at the system
         # TODO: generalize this a bit more if needed
@@ -1312,8 +1316,8 @@ class SimulationDownlink(Simulation):
             self.system.sta.rx_interference.flatten()
         ))
         
-        self.system.ap.snr = self.system.ap.rx_power - self.system.ap.thermal_noise[:, np.newaxis]
-        self.system.sta.snr = self.system.sta.rx_power - self.system.sta.thermal_noise  
+        self.system.ap.snr = self.system.ap.rx_power - self.system.thermal_noise
+        self.system.sta.snr = self.system.sta.rx_power - self.system.thermal_noise  
         self.system.ap.sinr = self.system.ap.rx_power - self.system.ap.total_interference
         self.system.sta.sinr = self.system.sta.rx_power - self.system.sta.total_interference
 
@@ -1333,6 +1337,12 @@ class SimulationDownlink(Simulation):
 
         ap_active = np.where(self.system.ap.active)[0]
         sta_active = np.where(self.system.sta.active)[0]
+        self.results.wifi_dl_inr.extend(self.system.ap.inr[ap_active].tolist())
+        self.results.wifi_dl_inr.extend(self.system.sta.inr[sta_active].tolist())   
+        self.results.system_dl_interf_power.extend(self.system.ap.ext_interference[ap_active].tolist())
+        self.results.system_dl_interf_power.extend(self.system.sta.ext_interference[sta_active].tolist())
+        self.results.system_intra_dl_interf_power.extend(self.system.ap.rx_interference[ap_active].tolist())
+        self.results.system_intra_dl_interf_power.extend(self.system.sta.rx_interference[sta_active].tolist())
 
         for ap in ap_active:
             sta = self.system.link[ap]
@@ -1344,17 +1354,12 @@ class SimulationDownlink(Simulation):
             self.results.wifi_path_loss.extend(path_loss_ap_ap[np.isfinite(path_loss_ap_ap)])
             self.results.wifi_path_loss.extend(path_loss_sta_sta[np.isfinite(path_loss_sta_sta)])
 
-            self.results.wifi_dl_inr.extend(self.system.ap.inr[ap])
-            self.results.wifi_dl_inr.extend(self.system.sta.inr[sta])
-
-            self.results.system_dl_interf_power.extend(self.system.ap.ext_interference[ap])
-            self.results.system_dl_interf_power.extend(self.system.sta.ext_interference[sta])
-
-            self.results.system_intra_dl_interf_power.extend(self.system.ap.rx_interference[ap])
-            self.results.system_intra_dl_interf_power.extend(self.system.sta.rx_interference[sta])
-
             self.results.wifi_ap_antenna_gain.extend(self.ap_antenna_gain[ap, sta])
             self.results.wifi_sta_antenna_gain.extend(self.sta_antenna_gain[ap, sta])
+
+            
+            
+            
 
             # --- Coleta de SINR e SNR (STA e AP) ---
             sta_sinr = np.atleast_1d(self.system.sta.sinr[sta])
@@ -1373,9 +1378,9 @@ class SimulationDownlink(Simulation):
             self.results.wifi_dl_tput.extend(wifi_tput.tolist())
 
 
-        self.results.system_dl_interf_power_per_mhz.extend(
+        '''self.results.system_dl_interf_power_per_mhz.extend(
                 self.results.system_dl_interf_power.flatten() - 10 * math.log10(self.system.bandwidth),
-                )
+                )'''
         
         bs_active = np.where(self.bs.active)[0]
         for bs in bs_active:

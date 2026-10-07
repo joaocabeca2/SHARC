@@ -308,8 +308,8 @@ class SimulationUplink(Simulation):
             10 ** (0.1 * self.system.sta.rx_interference) +
             10 ** (0.1 * self.system.thermal_noise)
         )
-        self.system.ap.snr = self.system.ap.rx_power - self.system.ap.thermal_noise[:, np.newaxis]
-        self.system.sta.snr = self.system.sta.rx_power - self.system.sta.thermal_noise  
+        self.system.ap.snr = self.system.ap.rx_power - self.system.thermal_noise
+        self.system.sta.snr = self.system.sta.rx_power - self.system.thermal_noise  
         self.system.ap.sinr = self.system.ap.rx_power - self.system.ap.total_interference
         self.system.sta.sinr = self.system.sta.rx_power - self.system.sta.total_interference
 
@@ -1023,9 +1023,15 @@ class SimulationUplink(Simulation):
             ) + \
             10 * math.log10(self.param_system.bandwidth * 1e6)
 
-        self.system.inr = np.array(
-            [self.system.ext_interference - self.system.thermal_noise],
+
+        self.system.ap.inr = (
+                    self.system.ap.ext_interference - self.system.thermal_noise
+                )
+        self.system.sta.inr = (
+            self.system.sta.ext_interference - self.system.thermal_noise
         )
+
+        self.system.inr = np.concatenate((self.system.ap.inr.flatten(), self.system.sta.inr.flatten()))
 
     def collect_results(self, write_to_file: bool, snapshot_number: int):
         """
@@ -1157,6 +1163,13 @@ class SimulationUplink(Simulation):
         ap_active = np.where(self.system.ap.active)[0]
         sta_active = np.where(self.system.sta.active)[0]
 
+        self.results.wifi_ul_inr.extend(self.system.ap.inr[ap_active].tolist())
+        self.results.wifi_ul_inr.extend(np.atleast_1d(self.system.sta.inr[sta]))
+        self.results.system_ul_interf_power.extend(np.atleast_1d(self.system.ap.ext_interference[ap]))
+        self.results.system_ul_interf_power.extend(np.atleast_1d(self.system.sta.ext_interference[sta]))
+        self.results.system_intra_ul_interf_power.extend(np.atleast_1d(self.system.ap.rx_interference[ap]))
+        self.results.system_intra_ul_interf_power.extend(np.atleast_1d(self.system.sta.rx_interference[sta]))
+
         for ap in ap_active:
             sta = self.system.link[ap]
             
@@ -1170,15 +1183,6 @@ class SimulationUplink(Simulation):
             self.results.wifi_ap_antenna_gain.extend(self.ap_antenna_gain[ap, sta])
             self.results.wifi_sta_antenna_gain.extend(self.sta_antenna_gain[ap, sta])
 
-            self.results.wifi_ul_inr.extend(self.system.ap.inr[ap])
-            self.results.wifi_ul_inr.extend(self.system.sta.inr[sta])
-
-            self.results.system_ul_interf_power.extend(self.system.ap.ext_interference[ap])
-            self.results.system_ul_interf_power.extend(self.system.sta.ext_interference[sta])
-
-            self.results.system_intra_ul_interf_power.extend(self.system.ap.rx_interference[ap])
-            self.results.system_intra_ul_interf_power.extend(self.system.sta.rx_interference[sta])
-            
 
             # --- Coleta de SINR e SNR (STA e AP) ---
             sta_sinr = np.atleast_1d(self.system.sta.sinr[sta])
@@ -1196,10 +1200,10 @@ class SimulationUplink(Simulation):
             wifi_tput = self.calculate_wifi_tput(sta_sinr)
             self.results.wifi_ul_tput.extend(wifi_tput.tolist())
 
-        self.results.system_ul_interf_power_per_mhz.extend(
+        '''self.results.system_ul_interf_power_per_mhz.extend(
                         self.results.system_ul_interf_power.flatten() - 10 * math.log10(self.system.bandwidth),
                         )
-        
+        '''
         bs_active = np.where(self.bs.active)[0]
 
         for bs in bs_active:
