@@ -1010,8 +1010,8 @@ class SimulationUplink(Simulation):
                     10 ** (0.1 * tx_oob_sta) + 10 ** (0.1 * rx_oob_sta), axis=0,
                 )
 
-        self.system.ap.ext_interference = 10 * np.log10(rx_interference_linear_ap)
-        self.system.sta.ext_interference = 10 * np.log10(rx_interference_linear_sta)
+        self.system.ap.ext_interference = 10 * np.log10(rx_interference_linear_ap[ap_active])
+        self.system.sta.ext_interference = 10 * np.log10(rx_interference_linear_sta[sta_active])
 
         self.system.ext_interference = np.concatenate((self.system.ap.ext_interference.flatten(), self.system.sta.ext_interference.flatten()))
 
@@ -1163,12 +1163,12 @@ class SimulationUplink(Simulation):
         ap_active = np.where(self.system.ap.active)[0]
         sta_active = np.where(self.system.sta.active)[0]
 
-        self.results.wifi_ul_inr.extend(self.system.ap.inr[ap_active].tolist())
-        self.results.wifi_ul_inr.extend(np.atleast_1d(self.system.sta.inr[sta]))
-        self.results.system_ul_interf_power.extend(np.atleast_1d(self.system.ap.ext_interference[ap]))
-        self.results.system_ul_interf_power.extend(np.atleast_1d(self.system.sta.ext_interference[sta]))
-        self.results.system_intra_ul_interf_power.extend(np.atleast_1d(self.system.ap.rx_interference[ap]))
-        self.results.system_intra_ul_interf_power.extend(np.atleast_1d(self.system.sta.rx_interference[sta]))
+        self.results.wifi_ul_inr.extend(self.system.ap.inr.flatten())
+        self.results.wifi_ul_inr.extend(self.system.sta.inr.flatten())   
+        self.results.system_ul_interf_power.extend(self.system.ap.ext_interference.flatten())
+        self.results.system_ul_interf_power.extend(self.system.sta.ext_interference.flatten())
+        self.results.system_intra_ul_interf_power.extend(self.system.ap.rx_interference.flatten())
+        self.results.system_intra_ul_interf_power.extend(self.system.sta.rx_interference.flatten())
 
         for ap in ap_active:
             sta = self.system.link[ap]

@@ -867,8 +867,8 @@ class SimulationDownlink(Simulation):
                     axis=0
                 )
 
-        self.system.ap.ext_interference = 10 * np.log10(rx_interference_linear_ap)
-        self.system.sta.ext_interference = 10 * np.log10(rx_interference_linear_sta)
+        self.system.ap.ext_interference = 10 * np.log10(rx_interference_linear_ap[ap_active])
+        self.system.sta.ext_interference = 10 * np.log10(rx_interference_linear_sta[sta_active])
 
         self.system.ext_interference = np.concatenate((self.system.ap.ext_interference, self.system.sta.ext_interference))
 
@@ -1337,12 +1337,12 @@ class SimulationDownlink(Simulation):
 
         ap_active = np.where(self.system.ap.active)[0]
         sta_active = np.where(self.system.sta.active)[0]
-        self.results.wifi_dl_inr.extend(self.system.ap.inr[ap_active].tolist())
-        self.results.wifi_dl_inr.extend(self.system.sta.inr[sta_active].tolist())   
-        self.results.system_dl_interf_power.extend(self.system.ap.ext_interference[ap_active].tolist())
-        self.results.system_dl_interf_power.extend(self.system.sta.ext_interference[sta_active].tolist())
-        self.results.system_intra_dl_interf_power.extend(self.system.ap.rx_interference[ap_active].tolist())
-        self.results.system_intra_dl_interf_power.extend(self.system.sta.rx_interference[sta_active].tolist())
+        self.results.wifi_dl_inr.extend(self.system.ap.inr.flatten())
+        self.results.wifi_dl_inr.extend(self.system.sta.inr.flatten())   
+        self.results.system_dl_interf_power.extend(self.system.ap.ext_interference.flatten())
+        self.results.system_dl_interf_power.extend(self.system.sta.ext_interference.flatten())
+        self.results.system_intra_dl_interf_power.extend(self.system.ap.rx_interference.flatten())
+        self.results.system_intra_dl_interf_power.extend(self.system.sta.rx_interference.flatten())
 
         for ap in ap_active:
             sta = self.system.link[ap]
