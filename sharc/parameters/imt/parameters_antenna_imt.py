@@ -220,7 +220,7 @@ class ParametersAntennaImt(ParametersBase):
         else:
             self.normalization_data = None
 
-    def get_antenna_parameters(self) -> "ParametersAntennaImt":
+    def get_antenna_parameters(self):
         """
         Get the antenna parameters loadind normalization values if needed.
 

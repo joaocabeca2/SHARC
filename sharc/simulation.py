@@ -438,7 +438,7 @@ class Simulation(ABC, Observable):
                     ),
                 )
             additional_loss = self.parameters.imt.bs.ohmic_loss \
-                + self.polarization_loss + self.param_system.wall_loss
+                + self.polarization_loss 
                 
         else:
             # should never reach this line
@@ -818,13 +818,9 @@ class Simulation(ABC, Observable):
                 phi, theta = station_1.get_pointing_vector_to(station_2)
                 beams_idx = np.zeros(len(station_2_active), dtype=int)
 
-        '''elif np.isin(station_1.station_type, [StationType.IMT_UE, StationType.WIFI_STA]).any():
+        else:
             phi, theta = station_1.get_pointing_vector_to(station_2)
             beams_idx = np.zeros(len(station_2_active), dtype=int)
-
-        elif not station_1.is_imt_station():
-            phi, theta = station_1.get_pointing_vector_to(station_2)
-            beams_idx = np.zeros(len(station_2_active), dtype=int)'''
                 
         
 
@@ -1036,8 +1032,7 @@ class Simulation(ABC, Observable):
             bw_ue: np.array,
             fc_ue: np.array,
             bw_sys: float,
-            fc_sys: float,
-            bw_agressor: float) -> np.array:
+            fc_sys: float) -> np.array:
         """
         Calculates the weight that each resource block group of IMT base stations
         will have when estimating the interference to other systems based on
@@ -1060,11 +1055,11 @@ class Simulation(ABC, Observable):
         sys_min_f = fc_sys - bw_sys / 2
         sys_max_f = fc_sys + bw_sys / 2
 
-        overlap_bw = np.minimum(ue_max_f, sys_max_f) - np.maximum(ue_min_f, sys_min_f)
-
         # NOTE: using clip is necessary to prevent
         # floating point error to impact the expected result range [0, 1]
-        overlap = np.clip(overlap_bw / bw_agressor, 0.0, 1.0)
+        overlap = np.clip((
+            np.minimum(ue_max_f, sys_max_f) - np.maximum(ue_min_f, sys_min_f)
+        ) / bw_ue, 0.0, 1.0)
 
         return overlap
 

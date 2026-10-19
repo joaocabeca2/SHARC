@@ -1908,7 +1908,91 @@ class StationFactory(object):
 
 
 if __name__ == '__main__':
+
+    import os
+    import numpy as np
     from matplotlib import pyplot as plt
+
+    from sharc.parameters.parameters import Parameters
+    from sharc.parameters.imt.parameters_antenna_imt import ParametersAntennaImt
+    from sharc.topology.topology_macrocell import TopologyMacrocell
+    from sharc.station_factory import StationFactory
+    from sharc.parameters.parameters_single_earth_station import ParametersSingleEarthStation
+    from sharc.support.enumerations import StationType
+
+    # ----------------------------------------------------------
+    # 1. Parâmetros e topologia
+    # ----------------------------------------------------------
+    param_file = os.path.join(os.getcwd(), "sharc/input", "parameters.yaml")
+    params = Parameters()
+    params.set_file_name(param_file)
+    params.read_params()
+
+    random_number_gen = np.random.RandomState(params.general.seed)
+
+    # Topologia IMT (macrocélula): usa os valores do YAML
+    imt_topology = TopologyMacrocell(
+        params.imt.topology.macrocell.intersite_distance,
+        params.imt.topology.macrocell.num_clusters,
+    )
+
+    parameter_ant = ParametersAntennaImt()
+    imt_topology.calculate_coordinates()
+
+    # ----------------------------------------------------------
+    # 2. Estações IMT (BS e UE)
+    # ----------------------------------------------------------
+    bs = StationFactory.generate_imt_base_stations(
+        params.imt, parameter_ant, imt_topology, random_number_gen
+    )
+    ue = StationFactory.generate_imt_ue(
+        params.imt, parameter_ant, imt_topology, random_number_gen
+    )
+
+    # ----------------------------------------------------------
+    # 3. Single Earth Station
+    # ----------------------------------------------------------
+    ses = StationFactory.generate_single_earth_station(
+        params.single_earth_station,
+        random_number_gen,
+        StationType.SINGLE_EARTH_STATION,   # ajuste se o seu enum for outro
+        imt_topology,
+    )
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+
+    # Hexágonos (um por site; os 3 setores compartilham a mesma posição)
+    imt_topology.plot(ax)   # se não desenhar, use o fallback abaixo
+
+    # --- Fallback manual (descomente se necessário) ---
+    # R = params.imt.topology.macrocell.intersite_distance / np.sqrt(3)
+    # for x, y in set(zip(np.round(bs.x, 3), np.round(bs.y, 3))):
+    #     ax.add_patch(RegularPolygon((x, y), numVertices=6, radius=R,
+    #                  orientation=np.deg2rad(30), fill=False, edgecolor="black"))
+
+    ax.scatter(ue.x, ue.y, c="blue", s=8, alpha=0.5, zorder=2, label="UEs (IMT)")
+    ax.scatter(bs.x, bs.y, c="red", marker="^", s=60,
+            edgecolors="black", zorder=3, label="BSs (IMT)")
+
+    # Single Earth Station no centro
+    ax.scatter(ses.x, ses.y, c="green", marker="*", s=400,
+            edgecolors="black", zorder=5, label="Single Earth Station")
+
+    # Seta de azimute (ilustrativa, antena OMNI)
+    az = np.deg2rad(np.atleast_1d(ses.azimuth)[0])
+    L = imt_topology.intersite_distance * 0.8
+    ax.arrow(ses.x[0], ses.y[0], L * np.cos(az), L * np.sin(az),
+            head_width=L * 0.1, color="green", length_includes_head=True, zorder=5)
+
+    ax.set_title("Macrocélula IMT (hexágonos) com Single Earth Station no centro")
+    ax.set_xlabel("x (m)")
+    ax.set_ylabel("y (m)")
+    ax.set_aspect("equal")
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="upper right")
+    plt.tight_layout()
+    plt.show()
+    '''from matplotlib import pyplot as plt
     from sharc.parameters.wifi.parameters_hotspot import ParametersHotspot
     from sharc.topology.topology_hotspot import TopologyHotspot
     from sharc.topology.topology_macrocell import TopologyMacrocell
@@ -1983,4 +2067,4 @@ if __name__ == '__main__':
 
     plt.legend()
     plt.grid(True)
-    plt.show()
+    plt.show()'''

@@ -141,11 +141,13 @@ class SimulationDownlink(Simulation):
                 self.calculate_sinr()
             
             if self.parameters.general.system == "WIFI":
+                self.calculate_sinr_wifi()
                 self.calculate_external_interference_wifi()
                 self.calculate_sinr_ext_wifi()
                 self.collect_results_wifi(write_to_file, snapshot_number)
             else:
                 self.calculate_external_interference()
+                self.calculate_sinr_ext()
                 self.collect_results(write_to_file, snapshot_number)
 
     def finalize(self, *args, **kwargs):
@@ -258,7 +260,7 @@ class SimulationDownlink(Simulation):
             self.adjacent_channel and self.param_system.adjacent_ch_emissions != "OFF"
         ):
             self.coupling_loss_imt_system = self.calculate_coupling_loss_system_imt(
-                self.system.ap,
+                self.system,
                 self.ue,
                 is_co_channel=True,
             )
@@ -724,7 +726,6 @@ class SimulationDownlink(Simulation):
                 self.ue.center_freq[ue],
                 self.param_system.bandwidth,
                 self.param_system.frequency,
-                float(self.ue.bandwidth[ue][0]),
             )
 
             interference = self.bs.tx_power[first_bs]
@@ -1201,10 +1202,16 @@ class SimulationDownlink(Simulation):
                     )
 
             self.results.imt_dl_tx_power.extend(self.bs.tx_power[bs].tolist())
+            self.results.imt_dl_inr.extend(self.ue.inr[ue].tolist())
+            self.results.imt_dl_ext_interf_power.extend(self.ue.ext_interference[ue].tolist()) 
 
             if not self.parameters.imt.imt_dl_intra_sinr_calculation_disabled:
                 self.results.imt_dl_sinr.extend(self.ue.sinr[ue].tolist())
                 self.results.imt_dl_snr.extend(self.ue.snr[ue].tolist())
+
+        if write_to_file:
+            self.results.write_files(snapshot_number)
+            self.notify_observers(source=__name__, results=self.results)
     
     def calculate_sinr_wifi(self):
         """

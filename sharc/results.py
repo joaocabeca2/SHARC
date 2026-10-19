@@ -104,6 +104,7 @@ class Results(object):
         self.system_ul_interf_power = SampleList()
         self.system_intra_ul_interf_power = SampleList()
         self.system_ext_ul_interf_power = SampleList()
+        self.system_inr = SampleList()
         # Interference Power [dBm/MHz]
         # NOTE: this may not be what you want for a correct
         # protection criteria analysis since it is

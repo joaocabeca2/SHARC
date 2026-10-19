@@ -51,56 +51,55 @@ class TopologyIndoorBuilding(Topology):
 
     def calculate_coordinates(self, random_number_gen=np.random.RandomState()):
         """Calcula a posição dos edifícios e dos Access Points (APs) Wi-Fi."""
-        if not self.static_base_stations:
-            self.static_base_stations = True
-            self.buildings = []
-            
-            min_dist_bs = self.parameters.min_dist_bs # Distância mínima da antena do IMT
-            max_radius = self.imt_topology.intersite_distance / 2
-            
-            for bs_idx in range(self.imt_topology.num_base_stations):
-                bs_x = self.imt_topology.x[bs_idx]
-                bs_y = self.imt_topology.y[bs_idx]
-                
-                created_buildings = 0
-                loop_count = 0
-                
-                # Gera prédios evitando sobreposição (Overlap)
-                while created_buildings < self.buildings_per_cell and loop_count < self.MAX_NUM_LOOPS:
-                    loop_count += 1
-                    
-                    width = random_number_gen.uniform(20.0, 40.0)
-                    length = random_number_gen.uniform(20.0, 40.0)
-                    floors = random_number_gen.randint(2, 11) # Até 10 andares
-                    
-                    safe_radius = max_radius - max(width, length)
-                    if safe_radius < min_dist_bs:
-                        safe_radius = min_dist_bs + 1.0
-                    
-                    angle = random_number_gen.uniform(0, 2 * np.pi)
-                    distance = np.sqrt(random_number_gen.uniform(0, 1)) * (safe_radius - min_dist_bs) + min_dist_bs
-                    
-                    x_center = bs_x + (distance * math.cos(angle))
-                    y_center = bs_y + (distance * math.sin(angle))
-                    
-                    temp_b = Building(len(self.buildings), x_center, y_center, width, length, floors)
-                    
-                    overlap = False
-                    for existing_b in self.buildings:
-                        if temp_b.polygon.intersects(existing_b.polygon.buffer(1.0)):
-                            overlap = True
-                            break
-                    
-                    if not overlap:
-                        self.buildings.append(temp_b)
-                        created_buildings += 1
 
-            # Gera as coordenadas nativas dos APs dentro dos prédios criados
-            self.x, self.y, self.z, self.floor, self.building_id = self.generate_indoor_coordinates(self.num_aps, random_number_gen)
+        self.buildings = []
+        
+        min_dist_bs = self.parameters.min_dist_bs # Distância mínima da antena do IMT
+        max_radius = self.imt_topology.intersite_distance / 2
+        
+        for bs_idx in range(self.imt_topology.num_base_stations):
+            bs_x = self.imt_topology.x[bs_idx]
+            bs_y = self.imt_topology.y[bs_idx]
             
-            self.indoor = np.ones(self.num_aps, dtype=bool)
-            self.azimuth = np.zeros(self.num_aps) 
-            self.num_base_stations = self.num_aps
+            created_buildings = 0
+            loop_count = 0
+            
+            # Gera prédios evitando sobreposição (Overlap)
+            while created_buildings < self.buildings_per_cell and loop_count < self.MAX_NUM_LOOPS:
+                loop_count += 1
+                
+                width = random_number_gen.uniform(20.0, 40.0)
+                length = random_number_gen.uniform(20.0, 40.0)
+                floors = random_number_gen.randint(2, 11) # Até 10 andares
+                
+                safe_radius = max_radius - max(width, length)
+                if safe_radius < min_dist_bs:
+                    safe_radius = min_dist_bs + 1.0
+                
+                angle = random_number_gen.uniform(0, 2 * np.pi)
+                distance = np.sqrt(random_number_gen.uniform(0, 1)) * (safe_radius - min_dist_bs) + min_dist_bs
+                
+                x_center = bs_x + (distance * math.cos(angle))
+                y_center = bs_y + (distance * math.sin(angle))
+                
+                temp_b = Building(len(self.buildings), x_center, y_center, width, length, floors)
+                
+                overlap = False
+                for existing_b in self.buildings:
+                    if temp_b.polygon.intersects(existing_b.polygon.buffer(1.0)):
+                        overlap = True
+                        break
+                
+                if not overlap:
+                    self.buildings.append(temp_b)
+                    created_buildings += 1
+
+        # Gera as coordenadas nativas dos APs dentro dos prédios criados
+        self.x, self.y, self.z, self.floor, self.building_id = self.generate_indoor_coordinates(self.num_aps, random_number_gen)
+        
+        self.indoor = np.ones(self.num_aps, dtype=bool)
+        self.azimuth = np.zeros(self.num_aps) 
+        self.num_base_stations = self.num_aps
 
     def generate_indoor_coordinates(self, num_nodes: int, rng_state: np.random.RandomState):
         """Devolve coordenadas seguras dentro dos prédios, evitando sobreposição física."""

@@ -94,13 +94,19 @@ class SimulationUplink(Simulation):
             self.ue,
             self.bs,
         )
+
+
+        if self.parameters.general.system == "WIFI":
+            self.calculate_sinr_wifi()
+            self.calculate_external_interference_wifi()
+            self.calculate_sinr_ext_wifi()
+            self.collect_results_wifi(write_to_file, snapshot_number)
+        else:
+            self.calculate_external_interference()
+            self.calculate_sinr_ext()
+            self.collect_results(write_to_file, snapshot_number)
+
         
-
-        self.calculate_sinr()
-        self.calculate_external_interference_wifi()
-        self.calculate_sinr_ext_wifi()
-
-        self.collect_results_wifi(write_to_file, snapshot_number)
 
     def power_control(self):
         """
@@ -916,7 +922,6 @@ class SimulationUplink(Simulation):
                 self.ue.center_freq[ue],
                 self.param_system.bandwidth,
                 self.param_system.frequency,
-                self.ue.bandwidth[ue],
             )
 
             if self.co_channel:
@@ -1042,9 +1047,9 @@ class SimulationUplink(Simulation):
             snapshot_number (int): The current snapshot number.
         """
         if not self.parameters.imt.interfered_with and np.any(self.bs.active):
-            self.results.system_inr.extend(self.system.inr.tolist())
+            self.results.system_inr.extend(self.system.inr.flatten())
             self.results.system_ul_interf_power.extend(
-                [self.system.rx_interference],
+                self.system.rx_interference.flatten()
             )
             self.results.system_ul_interf_power_per_mhz.extend(
                 [self.system.rx_interference - 10 * math.log10(self.system.bandwidth)],
@@ -1150,6 +1155,12 @@ class SimulationUplink(Simulation):
             )
             self.results.imt_ul_sinr.extend(self.bs.sinr[bs].tolist())
             self.results.imt_ul_snr.extend(self.bs.snr[bs].tolist())
+            self.results.imt_ul_ext_interf_power.extend(
+                self.bs.ext_interference[bs].tolist(),
+            )
+            self.results.imt_ul_inr.extend(
+                            self.bs.inr[bs].tolist(),
+            )
 
         if write_to_file:
             self.results.write_files(snapshot_number)
