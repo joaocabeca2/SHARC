@@ -228,10 +228,32 @@ class FloorPenetrationLoss:
             array with Lf values [dB], same shape as inputs
         """
         environment = environment.upper()
-        vec_loss = np.vectorize(
-            lambda f, n: cls._loss_scalar(f, int(n), environment),
+        freq, floors = np.broadcast_arrays(
+            np.asarray(frequency_MHz, dtype=float), np.asarray(n_floors),
         )
-        return vec_loss(frequency_MHz, n_floors)
+        if freq.size == 0:
+            return np.zeros(freq.shape)
+        f_flat = freq.ravel()
+        if np.all(f_flat == f_flat[0]):
+            # Single frequency (usual case): lookup table over the small
+            # range of floor counts, filled with the scalar rule (same values
+            # as the generic path below, without sorting the whole array)
+            fl = floors.ravel().astype(int)
+            fl_min = int(fl.min())
+            lut = np.array(
+                [cls._loss_scalar(f_flat[0], n, environment)
+                 for n in range(fl_min, int(fl.max()) + 1)], dtype=float,
+            )
+            return lut[fl - fl_min].reshape(freq.shape)
+        # Few distinct (frequency, n_floors) pairs: evaluate the scalar rule
+        # once per pair and scatter the results (same values as np.vectorize)
+        pairs, inverse = np.unique(
+            np.stack([freq.ravel(), floors.ravel().astype(int)]), axis=1, return_inverse=True,
+        )
+        values = np.array(
+            [cls._loss_scalar(f, int(n), environment) for f, n in pairs.T], dtype=float,
+        )
+        return values[inverse.reshape(-1)].reshape(freq.shape)
 
 
 class PropagationIndoorBuilding(Propagation):
@@ -405,10 +427,15 @@ class PropagationIndoorBuilding(Propagation):
             outdoor_loss = self._get_outdoor_loss(
                 distance_3D, distance_2D, frequency, height_a, height_b, shadowing_flag,
             )
-            bel_loss = self.bel.get_loss(
+            # exit and entry walls are different walls: two independent
+            # BEL draws (not one draw doubled)
+            bel_exit = self.bel.get_loss(
                 frequency, elevation, "RANDOM", self.building_class,
             )
-            loss[diff_building] = (outdoor_loss + 2 * bel_loss)[diff_building]
+            bel_entry = self.bel.get_loss(
+                frequency, elevation, "RANDOM", self.building_class,
+            )
+            loss[diff_building] = (outdoor_loss + bel_exit + bel_entry)[diff_building]
 
         # ---- (3) Indoor <-> Outdoor: outdoor path (UMa) + ONE Building
         # Entry Loss ----

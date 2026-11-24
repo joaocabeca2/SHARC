@@ -350,8 +350,11 @@ class StationFactory(object):
                 np.arctan((param.bs.height - param.ue.height) / distance),
             )
 
-            imt_ue.azimuth = (azimuth + theta + np.pi / 2)
-            imt_ue.elevation = elevation + psi
+            # theta (radians) is the direction BS -> UE: the UE faces its
+            # BS (theta + 180 deg) plus the random azimuth, all in degrees,
+            # as in the ANGLE_AND_DISTANCE branch below
+            imt_ue.azimuth = (azimuth + np.degrees(theta) + 180) % 360
+            imt_ue.elevation = np.clip(elevation + psi, -90, 90)
 
         elif param.ue.distribution_type.upper() == "ANGLE_AND_DISTANCE":
             # The Rayleigh and Normal distribution parameters (mean, scale and cutoff)
@@ -447,7 +450,7 @@ class StationFactory(object):
                 psi = np.degrees(
                     np.arctan((param.bs.height - param.ue.height) / distance),
                 )
-                imt_ue.elevation[idx] = elevation[idx] + psi
+                imt_ue.elevation[idx] = np.clip(elevation[idx] + psi, -90, 90)
 
         else:
             sys.stderr.write(
@@ -1810,7 +1813,12 @@ class StationFactory(object):
         tuple
             x, y, z, azimuth and elevation angles.
         """
-        hexagon_radius = topology.intersite_distance * 2 / 3
+        if isinstance(topology, TopologyMacrocell):
+            # Sector hexagons have side ISD/3, with the BS at a vertex.
+            # cell_radius = 2*ISD/3 is the distance to the opposite vertex.
+            hexagon_radius = topology.intersite_distance / 3
+        else:
+            hexagon_radius = topology.intersite_distance * 2 / 3
 
         x = np.array([])
         y = np.array([])

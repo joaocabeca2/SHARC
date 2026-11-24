@@ -127,6 +127,11 @@ class Results(object):
         self.system_dl_snr = SampleList()
         self.system_dl_inr = SampleList()
         self.system_dl_tput = SampleList()
+        self.system_dl_tput_ext = SampleList()
+        # CCA counters, one sample per snapshot in POWER mode.
+        self.system_cca_links_intent = SampleList()
+        self.system_cca_links_tx = SampleList()
+        self.system_cca_links_blocked_imt = SampleList()
 
         self.system_imt_ul_coupling_loss = SampleList()
         self.system_imt_ul_interf_power = SampleList()

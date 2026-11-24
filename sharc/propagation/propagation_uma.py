@@ -118,7 +118,9 @@ class PropagationUMa(Propagation):
             shadowing_los = 0
             shadowing_nlos = 0
 
-        los_probability = self.get_los_probability(distance_2d, ue_height)
+        # get_loss uses UEs on the rows (see get_loss_los: h_ue[:, np.newaxis]),
+        # while get_los_probability expects UEs on the columns: transpose.
+        los_probability = self.get_los_probability(distance_2d.T, ue_height).T
         los_condition = self.get_los_condition(los_probability)
 
         i_los = np.where(los_condition)[:2]

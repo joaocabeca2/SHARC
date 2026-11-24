@@ -101,6 +101,12 @@ class ParametersImt(ParametersBase):
         noise_figure: float = 10.0
         ohmic_loss: float = 3.0
         body_loss: float = 4.0
+        # Building entry loss (ITU-R P.2109, random per BS-UE pair) on the
+        # IMT links (BS <-> UE) of the UEs flagged as indoor
+        # (indoor_percent). False (default) keeps the previous behaviour.
+        indoor_bel: bool = False
+        # P.2109 building class: "TRADITIONAL" or "THERMALLY_EFFICIENT"
+        indoor_bel_building_class: str = "TRADITIONAL"
         adjacent_ch_selectivity: float = 33  # Adjacent Channel Selectivity in dB
         # Adjacent channel leakage ratio in dB used if adjacent_ch_emissions is set to "ACLR"
         adjacent_ch_leak_ratio: float = 45.0

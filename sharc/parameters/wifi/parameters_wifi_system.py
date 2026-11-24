@@ -36,6 +36,12 @@ class ParametersWifiSystem(ParametersBase):
     adjacent_ch_selectivity: float = 20.0
     tx_power_density: float = -65
     max_dist_nodes_wifi: float = 20.0
+    # None keeps independent legacy activity; otherwise one transmitter per link.
+    prob_DL: float = None
+    cca_mode: str = "DISTANCE"
+    cca_pd_threshold: float = -82.0
+    cca_ed_threshold: float = -62.0
+    cca_detect_imt: bool = True
     wall_loss: float = 0.0
 
     # Adjacent channel emissions type
@@ -52,6 +58,8 @@ class ParametersWifiSystem(ParametersBase):
         height: float = 6.0
         noise_figure: float = 10.0
         ohmic_loss: float = 3.0
+        # Optional EIRP limit [dBm over the full channel].
+        max_eirp: float = None
         antenna: ParametersAntenna = field(
             default_factory=lambda: ParametersAntenna(
                 pattern="ARRAY", array=ParametersAntennaWifi(
@@ -90,6 +98,8 @@ class ParametersWifiSystem(ParametersBase):
         height: float = 1.5
         noise_figure: float = 10.0
         ohmic_loss: float = 3.0
+        # Optional EIRP limit [dBm over the full channel].
+        max_eirp: float = None
         body_loss: float = 4.0
         adjacent_ch_selectivity: float = 33  # Adjacent Channel Selectivity in dB
         # Adjacent channel leakage ratio in dB used if adjacent_ch_emissions is set to "ACLR"
@@ -148,6 +158,25 @@ class ParametersWifiSystem(ParametersBase):
                              Possible values are \"FSPL\",\"CI\", \"UMa\", \"UMi\", \"TVRO-URBAN\", \"TVRO-SUBURBAN\", \
                              \"ABG\", \"P619\", \"INDOOR_BUILDING\".")
 
+
+        if self.prob_DL is not None:
+            self.prob_DL = float(self.prob_DL)
+            if not 0.0 <= self.prob_DL <= 1.0:
+                raise ValueError("wifi.prob_DL must be between 0 and 1")
+        self.cca_mode = str(self.cca_mode).upper()
+        if self.cca_mode not in ("DISTANCE", "POWER"):
+            raise ValueError("wifi.cca_mode must be DISTANCE or POWER")
+        if self.cca_mode == "POWER" and self.prob_DL is None:
+            raise ValueError("wifi.cca_mode POWER requires wifi.prob_DL")
+        self.cca_pd_threshold = float(self.cca_pd_threshold)
+        self.cca_ed_threshold = float(self.cca_ed_threshold)
+        if isinstance(self.cca_detect_imt, str):
+            value = self.cca_detect_imt.strip().lower()
+            if value not in ("true", "false"):
+                raise ValueError("wifi.cca_detect_imt must be a boolean")
+            self.cca_detect_imt = value == "true"
+        else:
+            self.cca_detect_imt = bool(self.cca_detect_imt)
 
         if self.season not in ["SUMMER", "WINTER"]:
             raise ValueError(f"ParamtersImt: \

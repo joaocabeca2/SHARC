@@ -142,15 +142,18 @@ class AntennaSubarrayIMT(object):
         if isinstance(phi_arr, float) and isinstance(theta_arr, float):
             return self._calculate_single_dir_gain(phi_arr, theta_arr)
 
-        n_direct = len(phi_arr)
+        # Vectorized over directions (same expressions as
+        # _calculate_single_dir_gain): element gain + sub-array factor
+        phi_arr = np.asarray(phi_arr, dtype=float)
+        theta_arr = np.asarray(theta_arr, dtype=float)
+        elem_g = np.asarray(self.element.element_pattern(phi_arr, theta_arr), dtype=float)
+        m = np.arange(self.n_rows)
+        v_vec = np.exp(1.0j * 2 * np.pi * m[np.newaxis, :] * self.dv_sub *
+                       np.cos(np.deg2rad(theta_arr))[:, np.newaxis])
+        w_vec = self._weight_vector(self.eletrical_downtilt, self.n_rows, self.dv_sub)
+        array_g = 10 * np.log10(np.abs(v_vec @ w_vec) ** 2)
 
-        gains = np.zeros(n_direct)
-
-        for i in range(n_direct):
-            gains[i] = self._calculate_single_dir_gain(
-                phi_arr[i], theta_arr[i])
-
-        return gains
+        return array_g + elem_g
 
 
 if __name__ == '__main__':

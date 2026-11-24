@@ -45,6 +45,37 @@ class ParametersAntennaWifi(ParametersBase):
     n_rows: int = 8
     n_columns: int = 8
 
+    # If True, the AP uses this array with one beam pointed at its STA
+    # (AntennaBeamformingWifi). If False (default), the AP keeps the
+    # omnidirectional 0 dBi antenna and the fields below are ignored.
+    beamforming: bool = False
+
+    # Array element (same conventions as ParametersAntennaImt). Default:
+    # isotropic element (FIXED, 0 dBi), e.g. a linear array of vertical
+    # dipoles seen as omnidirectional in azimuth.
+    element_pattern: str = "FIXED"
+    element_max_g: float = 0.0
+    element_phi_3db: float = 90.0
+    element_theta_3db: float = 90.0
+    element_am: float = 30.0
+    element_sla_v: float = 30.0
+    multiplication_factor: int = 12
+    element_horiz_spacing: float = 0.5
+    element_vert_spacing: float = 0.5
+    minimum_array_gain: float = -200.0
+
+    # Set from wifi.adjacent_antenna_model by ParametersAntenna.set_external_parameters
+    # (only attributes that already exist are set there)
+    adjacent_antenna_model: str = "SINGLE_ELEMENT"
+
+    # SHARC beamforming normalization files are not used for Wi-Fi: the
+    # array gain is normalized numerically (mean gain over the sphere = 0 dBi)
+    # by AntennaBeamformingWifi.
+    normalization: bool = False
+    normalization_file: str = ""
+
+    subarray: ParametersAntennaSubarrayWifi = field(
+        default_factory=ParametersAntennaSubarrayWifi)
 
     def __post_init__(self):
         self.normalization_data = None

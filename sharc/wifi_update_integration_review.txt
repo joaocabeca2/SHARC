@@ -1,0 +1,88 @@
+INTEGRACAO WIFI: HALF-DUPLEX E CCA COM OS NOMES DE CSV DO USUARIO
+Base do pacote do professor: 89252e6c
+Ultimo commit do usuario: 3f1b9170
+Estado: modos integrados e validados; alteracoes locais, sem commit ou push.
+
+CONTRATO DOS ARQUIVOS (MANTIDO)
+- system_{dl,ul}_interf_power.csv: interferencia externa do IMT no Wi-Fi.
+- system_intra_{dl,ul}_interf_power.csv: interferencia de outros transmissores
+  Wi-Fi, excluindo o sinal util do enlace associado.
+- system_interf_power_total.csv: soma linear da interferencia intra e externa,
+  convertida para dBm. O ruido do receptor nao entra nessa grandeza.
+- imt_{dl,ul}_interf_power.csv: interferencia externa do Wi-Fi no IMT.
+- imt_{dl,ul}_intra_interf_power.csv: interferencia interna do IMT.
+- imt_{dl,ul}_interf_power_total.csv: soma linear das duas interferencias IMT.
+- system_{dl,ul}_sinr.csv: sinal / (interferencia Wi-Fi + ruido).
+- system_{dl,ul}_sinr_ext.csv: sinal / (interferencia Wi-Fi + IMT + ruido).
+- Os arquivos de throughput usam a SINR correspondente: tput e tput_ext.
+- Os nomes existentes nao foram trocados para wifi_* nem para system_ext_*.
+- As perdas e os ganhos de antena continuam sendo coletados.
+- O cabecalho dos CSVs continua sendo samples.
+
+NOVAS SAIDAS
+- system_dl_tput_ext.csv completa a coleta de throughput com IMT no downlink.
+- system_cca_links_intent.csv: enlaces candidatos por snapshot.
+- system_cca_links_tx.csv: enlaces que venceram a CCA por potencia.
+- system_cca_links_blocked_imt.csv: enlaces bloqueados pela energia do IMT.
+Os tres contadores de CCA so recebem amostras no modo POWER.
+
+ATIVACAO NO YAML EXISTENTE
+wifi:
+    prob_DL: 0.5
+    cca_mode: POWER
+    cca_detect_imt: true
+
+prob_DL=1: todos os enlaces Wi-Fi em DL; prob_DL=0: todos em UL.
+Valores intermediarios sorteiam um sentido por enlace/snapshot.
+ap.load_probability controla a atividade oferecida dos enlaces nesse modo;
+sta.load_probability nao e usada no sorteio half-duplex.
+cca_mode=DISTANCE usa contencao por distancia; POWER usa potencia recebida.
+prob_DL=null, com DISTANCE, mantem o modo de atividade independente.
+Nenhum YAML de campanha existente foi alterado automaticamente.
+
+ESTADOS E INDICES
+- ap_tx/sta_tx listam os transmissores; ap_rx/sta_rx listam os receptores.
+- Half-duplex tem um transmissor e um receptor por enlace vencedor.
+- Os vetores de resultados mantem o tamanho total de APs/STAs e os IDs originais.
+- No half-duplex, as amostras de interferencia sao dos receptores reais, na ordem
+  APs receptores e depois STAs receptoras. SINR e SINR_ext seguem os mesmos IDs.
+- No modo legado, a coleta de interferencia mantem a selecao por nos ativos;
+  as metricas de enlace usam os receptores identificados.
+- A associacao AP/STA e independente da atividade do AP.
+- O beamforming aponta para a STA realmente sorteada, inclusive com k/k_m > 1.
+- A potencia half-duplex nao e dividida por STAs que nao foram escalonadas.
+- A CCA e a SINR reutilizam a mesma realizacao de canal dentro do snapshot.
+- Ganhos AP/STA -> IMT usam transmissores Wi-Fi; ganhos IMT -> AP/STA usam
+  receptores Wi-Fi. No uplink, as colunas desses ganhos usam IDs de feixes IMT,
+  evitando confundir as UEs candidatas (k_m > 1) com as colunas por feixe.
+- Quando a SINR intra-IMT em DL esta desabilitada, nao sao exportadas metricas
+  IMT que nao foram calculadas (SINR/SNR, intra e total). INR e externa permanecem.
+
+OUTRAS ALTERACOES INTEGRADAS
+- Vetorizacao de antenas e sub-arranjos IMT, correcoes angulares e de orientacao.
+- Geometria das UEs dentro dos hexagonos e normalizacao da parcela ACS.
+- Exclusao do sinal util da interferencia intra-RLAN e ruido por receptor.
+- Beamforming e limite de EIRP opcionais; BEL opcional nas UEs indoor do IMT.
+- Perdas independentes entre edificios e otimizacoes de propagacao/geometria.
+- Contencao por andar, ferramentas de campanhas e diagrama de antena.
+- plot_scenario_3d.py e plot_coverage_map.py adaptados aos dados e ao cache atuais.
+
+COMPATIBILIDADE PRESERVADA
+- Campanha padrao do executor e mascara espectral acrescentada pelo usuario.
+- Parametro body_loss do Wi-Fi, sem remocao forcada.
+- Arranjos de banda e suporte a SPECTRAL_MASK ja existentes; nao foi adicionada
+  a validacao restritiva do pacote. As restricoes antigas do IMT permanecem.
+- Os YAMLs WIFI_ITU_* e o gerador de campanhas nao constam do bundle recebido.
+
+VALIDACAO
+- Antes desta etapa: 204 testes, 185 aprovados, 5 falhas e 14 erros.
+- Depois: 223 testes, 204 aprovados, as mesmas 5 falhas e 14 erros.
+- Nenhuma falha nova; os 19 testes acrescentados nesta etapa passaram.
+- 20 cenarios completos verificaram arquivos, indices e a soma intra+externa.
+- Casos: legado, half-duplex DL/UL/misto, CCA com/sem IMT, beamforming,
+  varias STAs/candidatos, canal adjacente ACLR/SPECTRAL_MASK, IMT sem atividade,
+  bloqueio total e SINR intra-IMT desabilitada.
+- Adaptadores de cenario 3D e cobertura conferidos com diferenca numerica zero.
+- O tempfile ausente foi fornecido so ao ambiente temporario de testes.
+  A instalacao do Python nao foi modificada.
+

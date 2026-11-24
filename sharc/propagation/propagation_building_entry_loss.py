@@ -7,7 +7,7 @@ Created on Wed Aug 30 10:31:00 2017
 
 from sharc.propagation.propagation import Propagation
 import numpy as np
-from scipy.stats import norm
+from scipy.special import ndtri
 import matplotlib.pyplot as plt
 
 
@@ -73,8 +73,11 @@ class PropagationBuildingEntryLoss(Propagation):
         sigma_1 = u + v * np.log10(f_GHz)
         sigma_2 = y + z * np.log10(f_GHz)
 
-        a_dB = norm.ppf(prob) * sigma_1 + mu_1
-        b_dB = norm.ppf(prob) * sigma_2 + mu_2
+        # ndtri is the standard-normal quantile used by scipy's norm.ppf
+        # (identical values, without the scipy.stats argument handling)
+        q = ndtri(prob)
+        a_dB = q * sigma_1 + mu_1
+        b_dB = q * sigma_2 + mu_2
 
         a_lin = 10 ** (a_dB / 10)
         b_lin = 10 ** (b_dB / 10)

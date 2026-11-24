@@ -6,7 +6,11 @@ Created on Wed Jan 11 19:04:03 2017
 """
 
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from sharc.support.observable import Observable
+from sharc.propagation.propagation_building_entry_loss import PropagationBuildingEntryLoss
+from sharc.antenna.antenna_beamforming_wifi import AntennaBeamformingWifi
+from sharc.support.sharc_utils import wrap2_180
 
 import numpy as np
 import math
@@ -17,6 +21,7 @@ from sharc.support.enumerations import StationType
 from sharc.topology.topology_factory import TopologyFactory
 from sharc.support.sharc_geom import GeometryConverter
 from sharc.parameters.parameters import Parameters
+from sharc.parameters.constants import BOLTZMANN_CONSTANT
 from sharc.station_manager import StationManager
 from sharc.results import Results
 from sharc.propagation.propagation_factory import PropagationFactory
@@ -175,6 +180,10 @@ class Simulation(ABC, Observable):
             self.param_system,
             random_number_gen,
         )
+        # Optional building entry loss on IMT links of indoor UEs.
+        self.imt_indoor_bel = None
+        if getattr(self.parameters.imt.ue, "indoor_bel", False):
+            self.imt_indoor_bel = PropagationBuildingEntryLoss(random_number_gen)
 
 
     def add_observer_list(self, observers: list):
@@ -367,7 +376,7 @@ class Simulation(ABC, Observable):
         self.results.write_files(snapshot_number)
 
                 
-    def calculate_coupling_loss_system_imt(
+    def _calculate_coupling_loss_system_imt_uncached(
         self,
         system_station: StationManager,
         imt_station: StationManager,
@@ -499,7 +508,7 @@ class Simulation(ABC, Observable):
         if system_station.station_type is StationType.WIFI_APS:
             self.imt_ap_path_loss = self.imt_system_path_loss
             if is_co_channel:
-                self.imt_ap_antenna_gain = self.system_imt_antenna_gain
+                self.imt_ap_antenna_gain = gain_imt_to_sys
             else:
                 self.imt_ap_antenna_gain_adjacent = self.imt_system_antenna_gain_adjacent 
             
@@ -507,7 +516,7 @@ class Simulation(ABC, Observable):
         elif system_station.station_type is StationType.WIFI_STA:
             self.imt_sta_path_loss = self.imt_system_path_loss
             if is_co_channel:
-                self.imt_sta_antenna_gain = self.system_imt_antenna_gain
+                self.imt_sta_antenna_gain = gain_imt_to_sys
             else:
                 self.imt_sta_antenna_gain_adjacent = self.imt_system_antenna_gain_adjacent
     
@@ -569,6 +578,18 @@ class Simulation(ABC, Observable):
 
         # Collect IMT BS and UE antenna gain samples
         self.path_loss_imt = np.transpose(path_loss)
+
+        # Building entry loss (P.2109) for the UEs flagged as indoor, on
+        # every BS <-> UE link (serving and interfering), with the elevation
+        # angle of the same (wrapped) geometry used for the beams
+        if getattr(self, "imt_indoor_bel", None) is not None:
+            elevation = np.abs(self.bs_to_ue_theta - 90.0)
+            bel = self.imt_indoor_bel.get_loss(
+                float(self.parameters.imt.frequency) * np.ones(elevation.shape),
+                elevation, "RANDOM",
+                self.parameters.imt.ue.indoor_bel_building_class,
+            )
+            self.path_loss_imt = self.path_loss_imt + bel * imt_ue_station.indoor[np.newaxis, :]
         self.imt_bs_antenna_gain = ant_gain_bs_to_ue
         self.imt_ue_antenna_gain = np.transpose(ant_gain_ue_to_bs)
         additional_loss = self.parameters.imt.bs.ohmic_loss \
@@ -623,18 +644,22 @@ class Simulation(ABC, Observable):
                 for ue in self.link[bs]:
                     # add beam to BS antennas
 
-                    # limit beamforming angle
-                    bs_beam_phi = np.clip(
-                        self.bs_to_ue_phi[bs, ue],
-                        *(self.parameters.imt.bs.antenna.array.horizontal_beamsteering_range + self.bs.azimuth[bs])
-                    )
+                    # limit beamforming angle (ITU-R WP 5D, Annex 4.2 to
+                    # Doc. 5D/413, BS antenna table):
+                    # - horizontal coverage range relative to the sector
+                    #   azimuth, wrapped so the clip does not break across
+                    #   +-180 deg;
+                    # - vertical coverage range in the GLOBAL coordinate
+                    #   system (90 deg = horizon), which already includes
+                    #   the mechanical downtilt (Note 1 of that table).
+                    bs_antenna = self.bs.antenna[bs]
+                    h_range = self.parameters.imt.bs.antenna.array.horizontal_beamsteering_range
+                    v_range = self.parameters.imt.bs.antenna.array.vertical_beamsteering_range
+                    rel_phi = wrap2_180(self.bs_to_ue_phi[bs, ue] - self.bs.azimuth[bs])
+                    bs_beam_phi = self.bs.azimuth[bs] + np.clip(rel_phi, *h_range)
+                    bs_beam_theta = np.clip(self.bs_to_ue_theta[bs, ue], *v_range)
 
-                    bs_beam_theta = np.clip(
-                        self.bs_to_ue_theta[bs, ue],
-                        *self.parameters.imt.bs.antenna.array.vertical_beamsteering_range
-                    )
-
-                    self.bs.antenna[bs].add_beam(
+                    bs_antenna.add_beam(
                         bs_beam_phi,
                         bs_beam_theta,
                     )
@@ -652,6 +677,278 @@ class Simulation(ABC, Observable):
                     self.bs_to_ue_beam_rbs[ue] = len(
                         self.bs.antenna[bs].beams_list,
                     ) - 1
+
+    @staticmethod
+    def wifi_conducted_power(conducted: float, peak_gain: float, ohmic_loss: float, max_eirp) -> float:
+        """
+        Conducted power [dBm] of a Wi-Fi node after the optional e.i.r.p.
+        limit: e.i.r.p. = conducted + peak antenna gain - ohmic loss. If it
+        exceeds max_eirp (dBm over the channel), the conducted power is
+        reduced by the excess. max_eirp = None means no limit.
+        """
+        if max_eirp is None:
+            return conducted
+        excess = conducted + peak_gain - ohmic_loss - max_eirp
+        return conducted - max(excess, 0.0)
+
+    def wifi_half_duplex_enabled(self):
+        return getattr(self.parameters.wifi, "prob_DL", None) is not None
+
+    def wifi_cca_power_enabled(self):
+        return (self.parameters.general.system == "WIFI"
+                and getattr(self.parameters.wifi, "cca_mode", "DISTANCE") == "POWER")
+
+    def wifi_transmitter_indices(self):
+        return self.system.ap_tx, self.system.sta_tx
+
+    def wifi_sample_indices(self):
+        """Interference samples: receivers in half-duplex; legacy active nodes otherwise."""
+        if self.wifi_half_duplex_enabled():
+            return self.system.ap_rx, self.system.sta_rx
+        return np.flatnonzero(self.system.ap.active), np.flatnonzero(self.system.sta.active)
+
+    def wifi_serving_link_pairs(self):
+        if self.wifi_half_duplex_enabled():
+            return [(ap, [sta]) for ap, sta, _ in self.system.scheduled_links]
+        return [(ap, self.system.link[ap]) for ap in np.flatnonzero(self.system.ap.active)]
+
+    @contextmanager
+    def wifi_active_nodes(self, ap_indices, sta_indices):
+        """Enable antenna/path-loss evaluation without changing TX/RX membership."""
+        ap, sta = self.system.ap, self.system.sta
+        ap_active, sta_active = ap.active.copy(), sta.active.copy()
+        ap.active[np.asarray(ap_indices, dtype=int)] = True
+        sta.active[np.asarray(sta_indices, dtype=int)] = True
+        try:
+            yield
+        finally:
+            ap.active[:] = ap_active
+            sta.active[:] = sta_active
+
+    def clear_wifi_coupling_cache(self, station=None):
+        if station is None:
+            self._wifi_coupling_cache = {}
+        else:
+            cache = getattr(self, "_wifi_coupling_cache", {})
+            for key in list(cache):
+                if cache[key][0] is station:
+                    del cache[key]
+
+    def calculate_coupling_loss_system_imt(self, system_station, imt_station, is_co_channel=True):
+        # CCA and SINR must use the same channel realization within a snapshot.
+        use_cache = (self.parameters.general.system == "WIFI"
+                     and getattr(self.parameters.wifi, "cca_mode", "DISTANCE") == "POWER")
+        key = (id(system_station), id(imt_station), bool(is_co_channel))
+        cache = getattr(self, "_wifi_coupling_cache", {})
+        if use_cache and key in cache:
+            _, _, result, metadata = cache[key]
+            self.__dict__.update(metadata)
+            return result
+        result = self._calculate_coupling_loss_system_imt_uncached(
+            system_station, imt_station, is_co_channel)
+        if use_cache:
+            names = (
+                "imt_system_path_loss", "system_imt_antenna_gain",
+                "imt_system_antenna_gain", "imt_system_antenna_gain_adjacent",
+                "imt_ap_path_loss", "imt_sta_path_loss",
+                "ap_imt_antenna_gain", "sta_imt_antenna_gain",
+                "imt_ap_antenna_gain", "imt_sta_antenna_gain",
+                "imt_ap_antenna_gain_adjacent", "imt_sta_antenna_gain_adjacent",
+            )
+            metadata = {name: getattr(self, name) for name in names if hasattr(self, name)}
+            cache[key] = (system_station, imt_station, result, metadata)
+            self._wifi_coupling_cache = cache
+        return result
+
+    def run_wifi_snapshot(self, random_number_gen, write_to_file, snapshot_number):
+        self.clear_wifi_coupling_cache()
+        self.connect_ue_to_bs()
+        self.select_ue(random_number_gen)
+        self.scheduler()
+        uplink = self.parameters.general.imt_link == "UPLINK"
+        if uplink:
+            self.coupling_loss_imt = self.calculate_intra_imt_coupling_loss(self.ue, self.bs)
+            self.power_control()
+            self.calculate_sinr()
+        else:
+            self.power_control()
+            if (self.parameters.imt.interfered_with
+                    or not self.parameters.imt.imt_dl_intra_sinr_calculation_disabled):
+                self.coupling_loss_imt = self.calculate_intra_imt_coupling_loss(self.ue, self.bs)
+                self.calculate_sinr()
+
+        self.system.connect_wifi_sta_to_ap(self.parameters.wifi)
+        if self.wifi_cca_power_enabled():
+            self.run_wifi_cca_power(random_number_gen)
+        else:
+            self.system.run_csma_ca_scheduling(random_number_gen)
+            self.system.point_ap_beams()
+            self.power_control_wifi()
+            self.calculate_sinr_wifi()
+
+        self.calculate_external_interference_wifi()
+        self.calculate_sinr_ext_wifi()
+        self.collect_results_wifi(write_to_file, snapshot_number)
+
+    def calculate_sinr_wifi(self, reuse_coupling_loss=False):
+        """Wi-Fi link powers and metrics, always indexed by original node ID."""
+        ap, sta = self.system.ap, self.system.sta
+        ap_tx, sta_tx = self.system.ap_tx, self.system.sta_tx
+        ap_rx, sta_rx = self.system.ap_rx, self.system.sta_rx
+        ap_samples, sta_samples = self.wifi_sample_indices()
+        needed_ap = np.union1d(ap_tx, np.union1d(ap_rx, ap_samples))
+        needed_sta = np.union1d(sta_tx, np.union1d(sta_rx, sta_samples))
+        if not reuse_coupling_loss:
+            with self.wifi_active_nodes(needed_ap, needed_sta):
+                self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(sta, ap)
+                self.coupling_loss_ap_ap = self.calculate_intra_wifi_coupling_loss(ap, ap)
+                self.coupling_loss_sta_sta = self.calculate_intra_wifi_coupling_loss(sta, sta)
+
+        for node in (ap, sta):
+            node.rx_power = np.full(node.num_stations, -500.0)
+            for field in ("rx_interference", "intra_interference", "total_interference",
+                          "interf_power_total", "snr", "sinr", "sinr_ext"):
+                setattr(node, field, np.full(node.num_stations, -np.inf))
+            node.has_link = np.zeros(node.num_stations, dtype=bool)
+
+        sta_to_ap = np.full(sta.num_stations, -1, dtype=int)
+        for a, stations in self.system.link.items():
+            sta_to_ap[np.asarray(stations, dtype=int)] = a
+        p_ap = np.array([ap.tx_power[int(i)] for i in ap_tx])
+        p_sta = np.array([sta.tx_power[int(i)] for i in sta_tx])
+        cl = self.coupling_loss_wifi
+
+        # Every signal is summed in mW; associated useful signals are excluded.
+        ap_sta = 10 ** (0.1 * (p_ap[:, None] - cl[ap_tx, :]))
+        own_ap_sta = ap_tx[:, None] == sta_to_ap[None, :]
+        sta_power = np.sum(ap_sta * ~own_ap_sta, axis=0)
+        sta_ap = 10 ** (0.1 * (p_sta[None, :] - cl[:, sta_tx]))
+        own_sta_ap = np.arange(ap.num_stations)[:, None] == sta_to_ap[sta_tx][None, :]
+        ap_power = np.sum(sta_ap * ~own_sta_ap, axis=1)
+
+        ap_ap = 10 ** (0.1 * (p_ap[:, None] - self.coupling_loss_ap_ap[ap_tx, :]))
+        ap_ap[ap_tx[:, None] == np.arange(ap.num_stations)[None, :]] = 0.0
+        ap_power += ap_ap.sum(axis=0)
+        sta_sta = 10 ** (0.1 * (p_sta[:, None] - self.coupling_loss_sta_sta[sta_tx, :]))
+        sta_sta[sta_tx[:, None] == np.arange(sta.num_stations)[None, :]] = 0.0
+        sta_power += sta_sta.sum(axis=0)
+
+        with np.errstate(divide="ignore"):
+            ap.rx_power[ap_rx] = 10 * np.log10(np.sum(sta_ap * own_sta_ap, axis=1)[ap_rx])
+            if len(ap_tx):
+                served = own_ap_sta[:, sta_rx].any(axis=0)
+                receivers = sta_rx[served]
+                rows = np.argmax(own_ap_sta[:, receivers], axis=0)
+                sta.rx_power[receivers] = p_ap[rows] - cl[ap_tx[rows], receivers]
+            ap.rx_interference[ap_rx] = 10 * np.log10(ap_power[ap_rx])
+            sta.rx_interference[sta_rx] = 10 * np.log10(sta_power[sta_rx])
+            ap.intra_interference[ap_samples] = 10 * np.log10(ap_power[ap_samples])
+            sta.intra_interference[sta_samples] = 10 * np.log10(sta_power[sta_samples])
+
+        self.calculate_thermal_noise_wifi()
+        for node, receivers in ((ap, ap_rx), (sta, sta_rx)):
+            node.has_link[receivers] = True
+            node.total_interference[receivers] = 10 * np.log10(
+                10 ** (0.1 * node.rx_interference[receivers])
+                + 10 ** (0.1 * node.thermal_noise[receivers]))
+            node.snr[receivers] = node.rx_power[receivers] - node.thermal_noise[receivers]
+            node.sinr[receivers] = node.rx_power[receivers] - node.total_interference[receivers]
+        self.ap_rx_active, self.sta_rx_active = ap_rx.copy(), sta_rx.copy()
+        self.system.sinr = np.concatenate((ap.sinr[ap_rx], sta.sinr[sta_rx]))
+        self.system.snr = np.concatenate((ap.snr[ap_rx], sta.snr[sta_rx]))
+
+    def imt_power_at_wifi_nodes(self):
+        ap = np.flatnonzero(self.system.ap.active)
+        sta = np.flatnonzero(self.system.sta.active)
+        linear_ap, linear_sta = self.imt_to_wifi_linear(ap, sta)
+        with np.errstate(divide="ignore"):
+            return 10 * np.log10(linear_ap), 10 * np.log10(linear_sta)
+
+    def run_wifi_cca_power(self, random_number_gen):
+        wifi, system = self.parameters.wifi, self.system
+        ap, sta = system.ap, system.sta
+        links = system.draw_csma_links(random_number_gen)
+        system.set_links_state(links)
+        system.point_ap_beams()
+        self.power_control_wifi()
+        self.coupling_loss_wifi = self.calculate_intra_wifi_coupling_loss(sta, ap)
+        self.coupling_loss_ap_ap = self.calculate_intra_wifi_coupling_loss(ap, ap)
+        self.coupling_loss_sta_sta = self.calculate_intra_wifi_coupling_loss(sta, sta)
+        n = len(links)
+        if wifi.cca_detect_imt and n:
+            imt_ap, imt_sta = self.imt_power_at_wifi_nodes()
+        else:
+            imt_ap = np.full(ap.num_stations, -np.inf)
+            imt_sta = np.full(sta.num_stations, -np.inf)
+        is_ap = np.array([link[2] for link in links], dtype=bool)
+        idx = np.array([a if dl else s for a, s, dl in links], dtype=int)
+        power = np.array([ap.tx_power[i] if dl else sta.tx_power[i]
+                          for dl, i in zip(is_ap, idx)], dtype=float)
+        # Index each station type separately; np.where would evaluate both arrays.
+        imt = np.empty(n)
+        imt[is_ap] = imt_ap[idx[is_ap]]
+        imt[~is_ap] = imt_sta[idx[~is_ap]]
+        a, s = np.flatnonzero(is_ap), np.flatnonzero(~is_ap)
+        coupling = np.empty((n, n))
+        coupling[np.ix_(a, a)] = self.coupling_loss_ap_ap[np.ix_(idx[a], idx[a])]
+        coupling[np.ix_(a, s)] = self.coupling_loss_wifi[np.ix_(idx[a], idx[s])]
+        coupling[np.ix_(s, a)] = self.coupling_loss_wifi[np.ix_(idx[a], idx[s])].T
+        coupling[np.ix_(s, s)] = self.coupling_loss_sta_sta[np.ix_(idx[s], idx[s])]
+        transmits, blocked_imt = system.cca_power_contention(
+            power[:, None] - coupling, imt, float(wifi.bandwidth),
+            wifi.cca_pd_threshold, wifi.cca_ed_threshold)
+        winners = [link for link, won in zip(links, transmits) if won]
+        system.set_links_state(winners)
+        system.cca_links_intent = n
+        system.cca_links_tx = len(winners)
+        system.cca_links_blocked_imt = int(np.sum(blocked_imt))
+        for field, value in (("system_cca_links_intent", n),
+                             ("system_cca_links_tx", len(winners)),
+                             ("system_cca_links_blocked_imt", int(np.sum(blocked_imt)))):
+            getattr(self.results, field).append(value)
+        system.point_ap_beams()
+        self.power_control_wifi()
+        self.calculate_sinr_wifi(reuse_coupling_loss=True)
+
+    def calculate_external_interference_wifi(self):
+        ap_samples, sta_samples = self.wifi_sample_indices()
+        ap_needed = np.union1d(ap_samples, self.system.ap_rx)
+        sta_needed = np.union1d(sta_samples, self.system.sta_rx)
+        linear_ap, linear_sta = self.imt_to_wifi_linear(ap_needed, sta_needed)
+        self.calculate_thermal_noise_wifi()
+        for node, needed, samples, receivers, linear in (
+            (self.system.ap, ap_needed, ap_samples, self.system.ap_rx, linear_ap),
+            (self.system.sta, sta_needed, sta_samples, self.system.sta_rx, linear_sta),
+        ):
+            node.ext_interference = np.full(node.num_stations, -np.inf)
+            with np.errstate(divide="ignore"):
+                node.ext_interference[needed] = 10 * np.log10(linear[needed])
+            node.inr = node.ext_interference - node.thermal_noise
+            # Total interference excludes receiver noise.
+            node.interf_power_total[samples] = 10 * np.log10(
+                10 ** (0.1 * node.intra_interference[samples]) + linear[samples])
+            node.sinr_ext[receivers] = node.rx_power[receivers] - 10 * np.log10(
+                10 ** (0.1 * node.total_interference[receivers]) + linear[receivers])
+        self.system.inr = np.concatenate((
+            self.system.ap.inr[ap_samples], self.system.sta.inr[sta_samples]))
+        self.system.ext_interference = np.concatenate((
+            self.system.ap.ext_interference[ap_samples],
+            self.system.sta.ext_interference[sta_samples]))
+        self.system.sinr_ext = np.concatenate((
+            self.system.ap.sinr_ext[self.system.ap_rx],
+            self.system.sta.sinr_ext[self.system.sta_rx]))
+
+
+
+    def calculate_thermal_noise_wifi(self):
+        """Calculate Wi-Fi receiver noise [dBm], including each node's noise figure."""
+        noise_no_nf = (
+            10 * np.log10(BOLTZMANN_CONSTANT * self.param_system.noise_temperature * 1e3)
+            + 10 * np.log10(self.param_system.bandwidth * 1e6)
+        )
+        self.system.thermal_noise = noise_no_nf
+        self.system.ap.thermal_noise = noise_no_nf + self.system.ap.noise_figure
+        self.system.sta.thermal_noise = noise_no_nf + self.system.sta.noise_figure
 
     def calculate_intra_wifi_coupling_loss(self,
             wifi_sta_station: StationManager,
@@ -713,16 +1010,16 @@ class Simulation(ABC, Observable):
         else:
             # Collect Wi-Fi AP and STA antenna gain samples
             self.path_loss_wifi = np.transpose(path_loss)
-        self.ap_antenna_gain = ant_gain_ap_to_sta
-        self.sta_antenna_gain = np.transpose(ant_gain_sta_to_ap)
+            self.ap_antenna_gain = ant_gain_ap_to_sta
+            self.sta_antenna_gain = np.transpose(ant_gain_sta_to_ap)
     
         additional_loss = self.parameters.wifi.ap.ohmic_loss \
             + self.parameters.wifi.sta.ohmic_loss \
             + self.parameters.wifi.sta.body_loss
 
         # calculate coupling loss
-        coupling_loss = np.squeeze(
-            np.transpose(path_loss) - self.ap_antenna_gain - self.sta_antenna_gain,
+        coupling_loss = (
+            np.transpose(path_loss) - ant_gain_ap_to_sta - np.transpose(ant_gain_sta_to_ap)
         ) + additional_loss
 
         return coupling_loss
@@ -791,6 +1088,14 @@ class Simulation(ABC, Observable):
                 )
 
         
+        elif station_1.station_type is StationType.IMT_UE and \
+                station_2.station_type is StationType.IMT_BS and self.wrap_around_enabled:
+            # Same geometry as the path loss and the BS beams (wrap-around):
+            # the UE -> BS direction is the reverse of the wrapped BS -> UE one
+            phi = wrap2_180(np.transpose(self.bs_to_ue_phi) + 180)
+            theta = 180 - np.transpose(self.bs_to_ue_theta)
+            beams_idx = np.zeros(len(station_2_active), dtype=int)
+
         elif np.isin(station_1.station_type, [StationType.IMT_UE, StationType.WIFI_STA]).any():
             phi, theta = station_1.get_pointing_vector_to(station_2)
             beams_idx = np.zeros(len(station_2_active), dtype=int)
@@ -800,23 +1105,11 @@ class Simulation(ABC, Observable):
             beams_idx = np.zeros(len(station_2_active), dtype=int)    
 
         elif station_1.station_type is StationType.WIFI_APS:
-            if station_2.station_type is StationType.WIFI_STA:
-                phi = self.ap_to_sta_phi
-                theta = self.ap_to_sta_theta
-                beams_idx = self.ap_to_sta_beam_rbs[station_2_active]
-            
-            elif station_2.station_type is StationType.IMT_BS:
-                phi = self.ap_to_bs_phi
-                theta = self.ap_to_bs_theta
-                beams_idx = self.ap_to_bs_beam_rbs[station_2_active]
-            
-            elif station_2.station_type is StationType.IMT_UE:
-                phi = self.ap_to_ue_phi
-                theta = self.ap_to_ue_theta
-                beams_idx = self.ap_to_ue_beam_rbs[station_2_active]
-            else:
-                phi, theta = station_1.get_pointing_vector_to(station_2)
-                beams_idx = np.zeros(len(station_2_active), dtype=int)
+            # The ap_to_*_phi/theta matrices allocated in initialize_wifi are
+            # never filled; use the actual geometry (as for STAs) so that a
+            # directional or beamforming AP antenna gets correct angles.
+            phi, theta = station_1.get_pointing_vector_to(station_2)
+            beams_idx = np.zeros(len(station_2_active), dtype=int)
 
         else:
             phi, theta = station_1.get_pointing_vector_to(station_2)
@@ -861,12 +1154,17 @@ class Simulation(ABC, Observable):
         elif station_1.is_wifi_station():
             off_axis_angle = station_1.get_off_axis_angle(station_2)
             for k in station_1_active:
-                # O WiFi não usa beamforming complexo do IMT, então não passamos beams_l
-                gains[k, station_2_active] = station_1.antenna[k].calculate_gain(
+                kw = dict(
                     off_axis_angle_vec=off_axis_angle[k, station_2_active],
                     phi_vec=phi[k, station_2_active],
-                    theta_vec=theta[k, station_2_active]
+                    theta_vec=theta[k, station_2_active],
                 )
+                if isinstance(station_1.antenna[k], AntennaBeamformingWifi):
+                    # AP with beamforming: gain of its single beam (pointed
+                    # at its STA), not the best beam for each direction
+                    kw["beams_l"] = np.zeros(len(station_2_active), dtype=int)
+                    kw["co_channel"] = c_channel
+                gains[k, station_2_active] = station_1.antenna[k].calculate_gain(**kw)
 
         elif station_1.station_type is StationType.RNS:
             gains[0, station_2_active] = station_1.antenna[0].calculate_gain(

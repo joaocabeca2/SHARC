@@ -200,26 +200,19 @@ class AntennaBeamformingImt(Antenna):
 
         lo_phi_vec, lo_theta_vec = self.to_local_coord(phi_vec, theta_vec)
 
-        n_direct = len(lo_theta_vec)
-
-        gains = np.zeros(n_direct)
-
         if co_channel:
-            for g in range(n_direct):
-                gains[g] = self._beam_gain(
-                    lo_phi_vec[g], lo_theta_vec[g],
-                    beams_l[g],
-                )\
-                    + correction_factor[correction_factor_idx[g]]
+            # One beam / correction index per direction; extra entries are
+            # ignored, as in the original per-direction loop
+            n_direct = len(lo_theta_vec)
+            beams_l = np.ravel(beams_l)[:n_direct]
+            correction = np.asarray(correction_factor, dtype=float)[
+                np.ravel(np.asarray(correction_factor_idx, dtype=int))[:n_direct]
+            ]
+            gains = self._beam_gain_vec(lo_phi_vec, lo_theta_vec, beams_l) + correction
         else:
-            for g in range(n_direct):
-                elem_g = self.element.element_pattern(
-                    lo_phi_vec[g],
-                    lo_theta_vec[g],
-                )
-
-                gains[g] = elem_g \
-                    + self.adj_correction_factor
+            gains = np.asarray(
+                self.element.element_pattern(lo_phi_vec, lo_theta_vec), dtype=float,
+            ) + self.adj_correction_factor
 
         gains = np.maximum(gains, self.minimum_array_gain)
 
@@ -330,6 +323,67 @@ class AntennaBeamformingImt(Antenna):
 
         return gain
 
+    def _beam_gain_vec(self, phi: np.array, theta: np.array, beams: np.array) -> np.array:
+        """
+        Vectorized version of _beam_gain: gain for many directions at once,
+        each with its own beam index (-1 = beam of maximum gain).
+        Angles are in the local coordinate system.
+
+        Parameters
+        ----------
+            phi (np.array): azimuth angles [degrees]
+            theta (np.array): elevation angles [degrees]
+            beams (np.array): beam index for each direction
+
+        Returns
+        -------
+            gain (np.array): beam gains [dBi]
+        """
+        phi = np.asarray(phi, dtype=float)
+        theta = np.asarray(theta, dtype=float)
+        beams = np.asarray(beams).astype(int)
+
+        if self.subarray is None:
+            element_g = np.asarray(self.element.element_pattern(phi, theta), dtype=float)
+        else:
+            # sub-array "element" pattern (element + fixed sub-array factor)
+            element_g = np.asarray(self.subarray.calculate_gain(phi, theta), dtype=float)
+
+        # Steering angles of each direction's beam (local coordinates), as
+        # used by _weight_vector: stored beams or, for -1, the direction itself
+        phi_t = phi.copy()
+        theta_t = theta - 90
+        stored = beams != -1
+        if np.any(stored):
+            beam_angles = np.asarray(self.beams_list, dtype=float).reshape(-1, 2)
+            phi_t[stored] = beam_angles[beams[stored], 0]
+            theta_t[stored] = beam_angles[beams[stored], 1]
+
+        r_phi, r_theta = np.deg2rad(phi), np.deg2rad(theta)
+        r_phi_t, r_theta_t = np.deg2rad(phi_t), np.deg2rad(theta_t)
+
+        # sum_{n,m} v*w is separable: (1/sqrt(N*M)) * D_N(x_v) * D_M(x_h), where
+        # D_K(x) = sum_{k=0}^{K-1} exp(j*k*x), |D_K(x)| = |sin(K*x/2) / sin(x/2)|
+        # (same phase arguments as _super_position_vector and _weight_vector)
+        x_v = 2 * np.pi * self.dv * (np.cos(r_theta) + np.sin(r_theta_t))
+        x_h = 2 * np.pi * self.dh * (
+            np.sin(r_theta) * np.sin(r_phi) - np.cos(r_theta_t) * np.sin(r_phi_t)
+        )
+        af2 = (self._dirichlet_sq(x_v, self.n_rows) * self._dirichlet_sq(x_h, self.n_cols)
+               / (self.n_rows * self.n_cols))
+        with np.errstate(divide="ignore"):
+            array_g = 10 * np.log10(af2)
+
+        return element_g + array_g
+
+    @staticmethod
+    def _dirichlet_sq(x: np.array, k: int) -> np.array:
+        """|sum_{i=0}^{k-1} exp(j*i*x)|^2 in closed form (k^2 where sin(x/2) = 0)."""
+        den = np.sin(x / 2)
+        small = np.abs(den) < 1e-9
+        ratio = np.sin(k * x / 2) / np.where(small, 1.0, den)
+        return np.where(small, float(k * k), ratio * ratio)
+
     def to_local_coord(self, phi: float, theta: float) -> tuple:
         """Returns phi and theta to antennas local coordintate system
 
@@ -371,6 +425,43 @@ class AntennaBeamformingImt(Antenna):
         )
 
         return lo_phi, lo_theta
+
+    def to_global_coord(self, phi: float, theta: float) -> tuple:
+        """Inverse of to_local_coord: antenna local angles to the simulator's
+        coordinate system (degrees, theta taken with z axis as reference).
+
+        Parameters
+        ----------
+        phi : float
+            phi in the antenna's coordinate system
+        theta : float
+            theta in the antenna's coordinate system
+
+        Returns
+        -------
+        tuple
+            phi, theta in the simulator's coordinate system
+        """
+        phi_rad = np.ravel(np.array([np.deg2rad(phi)]))
+        theta_rad = np.ravel(np.array([np.deg2rad(theta)]))
+
+        points = np.matrix([
+            np.sin(theta_rad) * np.cos(phi_rad),
+            np.sin(theta_rad) * np.sin(phi_rad),
+            np.cos(theta_rad),
+        ])
+
+        # rotation_mtx is orthonormal: its inverse is its transpose
+        global_points = np.transpose(self.rotation_mtx) * points
+
+        gl_phi = np.ravel(np.asarray(np.rad2deg(
+            np.arctan2(global_points[1], global_points[0]),
+        )))
+        gl_theta = np.ravel(np.asarray(np.rad2deg(
+            np.arccos(np.clip(global_points[2], -1.0, 1.0)),
+        )))
+
+        return gl_phi, gl_theta
 
     def _calculate_rotation_matrix(self):
 

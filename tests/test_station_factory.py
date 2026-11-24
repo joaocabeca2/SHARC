@@ -12,6 +12,7 @@ import numpy.testing as npt
 from sharc.parameters.imt.parameters_imt import ParametersImt
 from sharc.station_factory import StationFactory
 from sharc.topology.topology_ntn import TopologyNTN
+from sharc.topology.topology_macrocell import TopologyMacrocell
 from sharc.parameters.parameters_single_space_station import ParametersSingleSpaceStation
 
 
@@ -177,6 +178,35 @@ class StationFactoryTest(unittest.TestCase):
         space_station = StationFactory.generate_single_space_station(param)
         npt.assert_almost_equal(get_ground_elevation(space_station), 0, 5)
         npt.assert_almost_equal(space_station.height, 0, 0)
+
+    def test_get_random_position_inside_sector(self):
+        """UEs sorteadas por célula devem cair no setor da BS servidora:
+        hexágono de lado ISD/3 com a BS num vértice."""
+        isd = 500
+        topology = TopologyMacrocell(isd, 1)
+        topology.calculate_coordinates()
+        n_per_cell = 200
+        rng = np.random.RandomState(7)
+        x, y, _, theta, distance = StationFactory.get_random_position(
+            n_per_cell * topology.num_base_stations, topology, rng,
+            deterministic_cell=True,
+        )
+        x, y = np.array(x), np.array(y)
+        cell = np.repeat(np.arange(topology.num_base_stations), n_per_cell)
+
+        # Distância máxima ao vértice oposto do setor: 2*ISD/3
+        self.assertLessEqual(np.max(distance), 2 * isd / 3 + 1e-6)
+
+        # Dentro do hexágono do setor (centro a ISD/3 na direção do azimute)
+        side = isd / 3
+        az = np.radians(topology.azimuth[cell])
+        cx = topology.x[cell] + side * np.cos(az)
+        cy = topology.y[cell] + side * np.sin(az)
+        ang = np.arctan2(y - cy, x - cx)
+        # distância do centro até a borda de um hexágono com vértices a 0°, 60°, ...
+        rel = np.mod(ang, np.pi / 3) - np.pi / 6
+        edge = side * np.cos(np.pi / 6) / np.cos(rel)
+        self.assertTrue(np.all(np.hypot(x - cx, y - cy) <= edge + 1e-6))
 
 
 if __name__ == '__main__':

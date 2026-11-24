@@ -56,14 +56,17 @@ class TopologyIndoorBuilding(Topology):
         
         min_dist_bs = self.parameters.min_dist_bs # Distância mínima da antena do IMT
         max_radius = self.imt_topology.intersite_distance / 2
-        
+
+        # Limites dos prédios já criados, para o teste de sobreposição vetorizado
+        b_x_min, b_x_max, b_y_min, b_y_max = [], [], [], []
+
         for bs_idx in range(self.imt_topology.num_base_stations):
             bs_x = self.imt_topology.x[bs_idx]
             bs_y = self.imt_topology.y[bs_idx]
-            
+
             created_buildings = 0
             loop_count = 0
-            
+
             # Gera prédios evitando sobreposição (Overlap)
             while created_buildings < self.buildings_per_cell and loop_count < self.MAX_NUM_LOOPS:
                 loop_count += 1
@@ -84,14 +87,23 @@ class TopologyIndoorBuilding(Topology):
                 
                 temp_b = Building(len(self.buildings), x_center, y_center, width, length, floors)
                 
+                # Sobreposição com margem de 1 m: equivale a
+                # polygon.intersects(other.buffer(1.0)), mas como os prédios são
+                # retângulos alinhados aos eixos basta a distância entre eles.
                 overlap = False
-                for existing_b in self.buildings:
-                    if temp_b.polygon.intersects(existing_b.polygon.buffer(1.0)):
-                        overlap = True
-                        break
-                
+                if b_x_min:
+                    dx = np.maximum(0.0, np.maximum(
+                        np.subtract(b_x_min, temp_b.x_max), temp_b.x_min - np.asarray(b_x_max)))
+                    dy = np.maximum(0.0, np.maximum(
+                        np.subtract(b_y_min, temp_b.y_max), temp_b.y_min - np.asarray(b_y_max)))
+                    overlap = bool(np.any(dx * dx + dy * dy <= 1.0))
+
                 if not overlap:
                     self.buildings.append(temp_b)
+                    b_x_min.append(temp_b.x_min)
+                    b_x_max.append(temp_b.x_max)
+                    b_y_min.append(temp_b.y_min)
+                    b_y_max.append(temp_b.y_max)
                     created_buildings += 1
 
         # Gera as coordenadas nativas dos APs dentro dos prédios criados

@@ -3,6 +3,7 @@ import sys
 
 import numpy as np
 from sharc.antenna.antenna_omni import AntennaOmni
+from sharc.antenna.antenna_beamforming_wifi import AntennaBeamformingWifi
 from sharc.parameters.wifi.parameters_hotspot import ParametersHotspot
 from sharc.parameters.wifi.parameters_wifi_system import ParametersWifiSystem
 from sharc.station_manager import StationManager
@@ -25,6 +26,10 @@ class SystemWifi:
         self.topology.calculate_coordinates(random_number_gen)
         self.num_aps = self.topology.num_base_stations
         self.num_sta = self.num_aps * self.parameters.sta.k * self.parameters.sta.k_m
+        if getattr(self.parameters_antenna, "beamforming", False) and (
+                self.parameters.sta.k * self.parameters.sta.k_m != 1
+                and getattr(self.parameters, "prob_DL", None) is None):
+            raise ValueError("Wi-Fi AP beamforming currently requires exactly one STA per AP")
 
         self.wrap_around_enabled = True
 
@@ -111,8 +116,17 @@ class SystemWifi:
         wifi_aps.sinr_ext = np.full(num_aps, -500.0)
         wifi_aps.inr = np.full(num_aps, -500.0)
 
-        for i in range(num_aps):
-            wifi_aps.antenna[i] = AntennaOmni()
+        if getattr(param_ant, "beamforming", False):
+            # Array with one beam per AP, pointed at its STA every snapshot
+            # (point_ap_beams). Peak gain used for the e.i.r.p. limit.
+            for i in range(num_aps):
+                wifi_aps.antenna[i] = AntennaBeamformingWifi(
+                    param_ant, wifi_aps.azimuth[i], wifi_aps.elevation[i])
+            self.ap_peak_gain = wifi_aps.antenna[0].peak_gain if num_aps else 0.0
+        else:
+            for i in range(num_aps):
+                wifi_aps.antenna[i] = AntennaOmni()
+            self.ap_peak_gain = 0.0
     
         wifi_aps.bandwidth = self.parameters.bandwidth * np.ones(num_aps)
         wifi_aps.center_freq = self.parameters.frequency * np.ones(num_aps)
@@ -185,6 +199,17 @@ class SystemWifi:
             wifi_sta.y = sta_y
             wifi_sta.z = sta_z
             wifi_sta.height = sta_z
+
+            # 6. Orientação (graus): a STA aponta para o seu AP, mais o
+            #    desvio aleatório já sorteado, como as UEs do IMT
+            sta_ap = np.arange(self.num_sta) // num_sta_per_ap
+            dx = self.ap.x[sta_ap] - sta_x
+            dy = self.ap.y[sta_ap] - sta_y
+            dz = self.ap.z[sta_ap] - sta_z
+            to_ap_az = np.degrees(np.arctan2(dy, dx))
+            to_ap_el = np.degrees(np.arctan2(dz, np.hypot(dx, dy)))
+            wifi_sta.azimuth = (azimuth + to_ap_az) % 360
+            wifi_sta.elevation = np.clip(elevation + to_ap_el, -90, 90)
         
         else:
             sta_x = list()
@@ -241,7 +266,7 @@ class SystemWifi:
                     psi = np.degrees(
                         np.arctan((self.parameters.ap.height - self.parameters.sta.height) / distance),
                     )
-                    wifi_sta.elevation[idx] = elevation[idx] + psi
+                    wifi_sta.elevation[idx] = np.clip(elevation[idx] + psi, -90, 90)
 
         wifi_sta.x = np.array(sta_x)
         wifi_sta.y = np.array(sta_y)
@@ -250,7 +275,8 @@ class SystemWifi:
 
 
         random_values = random_number_gen.rand(self.num_sta)
-        wifi_sta.active = random_values < self.parameters.sta.load_probability        
+        wifi_sta.active = random_values < self.parameters.sta.load_probability
+        wifi_sta.rx_power = np.full(self.num_sta, -500.0)
         wifi_sta.rx_interference = np.full(self.num_sta, -500.0)
         wifi_sta.ext_interference = np.full(self.num_sta, -500.0)
         wifi_sta.interf_power_total = np.full(self.num_sta, -500.0)
@@ -292,6 +318,19 @@ class SystemWifi:
         d_ap_ap = self.ap.get_distance_to(self.ap)
         d_ap_sta = self.ap.get_distance_to(self.sta)
         d_sta_sta = self.sta.get_distance_to(self.sta)
+
+        # Prédios (INDOOR_BUILDING): só disputam o canal nós no mesmo prédio
+        # e no mesmo andar; uma laje (>= 22 dB, P.1238 Tabela 5) ou as
+        # paredes externas bastam para os nós não se escutarem. Para os
+        # demais pares a distância vira infinita (nunca bloqueia).
+        if self.parameters.topology.type == "INDOOR_BUILDING":
+            def same_floor(a, b):
+                return (a.building_id[:, np.newaxis] == b.building_id[np.newaxis, :]) & \
+                    (a.floor[:, np.newaxis] == b.floor[np.newaxis, :])
+            d_ap_ap = np.where(same_floor(self.ap, self.ap), d_ap_ap, np.inf)
+            d_ap_sta = np.where(same_floor(self.ap, self.sta), d_ap_sta, np.inf)
+            d_sta_sta = np.where(same_floor(self.sta, self.sta), d_sta_sta, np.inf)
+
         
         # Mapeamento para facilitar a busca dinâmica por tipo
         dist_map = {
@@ -300,6 +339,10 @@ class SystemWifi:
             (StationType.WIFI_STA, StationType.WIFI_APS): d_ap_sta.T, # Transposta
             (StationType.WIFI_STA, StationType.WIFI_STA): d_sta_sta
         }
+
+        if getattr(self.parameters, "prob_DL", None) is not None:
+            self._run_csma_ca_links(random_gen, dist_map, self.parameters.max_dist_nodes_wifi)
+            return
 
         # 2. Pegar os índices dos que 'querem' transmitir (Intent to transmit)
         ap_candidates = np.where(self.ap.active)[0]
@@ -347,7 +390,138 @@ class SystemWifi:
         print(f"   -> APs: {n_aps_after} (Perda: {n_aps_before - n_aps_after})")
         print(f"   -> STAs: {n_stas_after} (Perda: {n_stas_before - n_stas_after})")
         print(f"   -> Total Transmitindo: {n_aps_after + n_stas_after}\n")'''
+        SystemWifi.set_legacy_link_roles(self)
     
+
+
+
+
+    def set_legacy_link_roles(self):
+        self.ap_tx = np.flatnonzero(self.ap.active)
+        self.sta_tx = np.flatnonzero(self.sta.active)
+        ap_rx, sta_rx = [], []
+        for ap, stations in self.link.items():
+            stations = np.asarray(stations, dtype=int)
+            if np.any(self.sta.active[stations]):
+                ap_rx.append(ap)
+            if self.ap.active[ap]:
+                sta_rx.extend(stations[~self.sta.active[stations]].tolist())
+        self.ap_rx = np.array(sorted(ap_rx), dtype=int)
+        self.sta_rx = np.array(sorted(sta_rx), dtype=int)
+        self.scheduled_links = []
+        self.selected_sta_by_ap = {}
+
+    def _run_csma_ca_links(self, random_gen, dist_map, radius_m):
+        links = self.draw_csma_links(random_gen)
+        winners = []
+        while links:
+            link = links.pop(0)
+            winners.append(link)
+            a, s, dl = link
+            mgr, idx = (self.ap, a) if dl else (self.sta, s)
+            remaining = []
+            for other in links:
+                a2, s2, dl2 = other
+                mgr2, idx2 = (self.ap, a2) if dl2 else (self.sta, s2)
+                if dist_map[(mgr.station_type, mgr2.station_type)][idx, idx2] >= radius_m:
+                    remaining.append(other)
+            links = remaining
+        SystemWifi.set_links_state(self, winners)
+
+    def draw_csma_links(self, random_gen) -> list:
+        """
+        Half-duplex links of the snapshot (wifi.prob_DL set), in random
+        contention order (backoff): one link per AP with intent to transmit
+        (ap.active), with one of its STAs; the AP transmits with probability
+        prob_DL, otherwise the STA. Returns [(ap, sta, ap_transmits), ...].
+        """
+        prob_dl = self.parameters.prob_DL
+        links = []
+        for ap in np.where(self.ap.active)[0]:
+            stas = self.link[ap]
+            if not len(stas):
+                continue
+            sta = stas[random_gen.randint(len(stas))] if len(stas) > 1 else stas[0]
+            links.append((int(ap), int(sta), bool(random_gen.random_sample() < prob_dl)))
+        random_gen.shuffle(links)
+        return links
+
+    def set_links_state(self, links: list):
+        """
+        Marks both ends of the given links as active and sets the transmitter
+        and receiver index arrays (ap_tx, sta_tx, ap_rx, sta_rx).
+        """
+        self.scheduled_links = list(links)
+        self.selected_sta_by_ap = {ap: sta for ap, sta, _ in links}
+        self.ap.active[:] = False
+        self.sta.active[:] = False
+        ap_tx, sta_tx, ap_rx, sta_rx = [], [], [], []
+        for ap, sta, ap_transmits in links:
+            self.ap.active[ap] = True
+            self.sta.active[sta] = True
+            if ap_transmits:
+                ap_tx.append(ap)
+                sta_rx.append(sta)
+            else:
+                sta_tx.append(sta)
+                ap_rx.append(ap)
+        self.ap_tx = np.sort(np.array(ap_tx, dtype=int))
+        self.sta_tx = np.sort(np.array(sta_tx, dtype=int))
+        self.ap_rx = np.sort(np.array(ap_rx, dtype=int))
+        self.sta_rx = np.sort(np.array(sta_rx, dtype=int))
+
+    @staticmethod
+    def cca_power_contention(rx_wifi_dbm: np.ndarray, imt_dbm: np.ndarray, bandwidth_mhz: float,
+                             pd_threshold: float, ed_threshold: float) -> tuple:
+        """
+        CSMA/CA with clear channel assessment by received power.
+
+        The candidate links contend in index order (already shuffled). When its
+        turn comes, a link transmits unless its transmitter senses, from the
+        links that already won the channel:
+          - one Wi-Fi transmission above pd_threshold (preamble detection), or
+          - total energy (winning Wi-Fi + IMT) above ed_threshold (energy
+            detection).
+        The IMT does not sense the channel and is always present, so a link
+        whose IMT energy alone exceeds ed_threshold never transmits.
+        Thresholds are in dBm per 20 MHz; the powers (over the Wi-Fi
+        bandwidth) are scaled by 10log10(20 / bandwidth_mhz).
+
+        Parameters
+        ----------
+            rx_wifi_dbm : [n x n] power [dBm] received by the transmitter of
+                link j from the transmitter of link i (row i, column j)
+            imt_dbm : [n] IMT power [dBm] at the transmitter of each link
+                (-inf without IMT)
+            bandwidth_mhz : Wi-Fi channel bandwidth [MHz]
+
+        Returns
+        -------
+            (transmits, blocked_by_imt): boolean arrays [n]; blocked_by_imt
+            marks the links blocked by the IMT energy alone.
+        """
+        n = len(imt_dbm)
+        to_20 = 10 * np.log10(20.0 / bandwidth_mhz)
+        imt_lin = np.power(10, 0.1 * np.asarray(imt_dbm, dtype=float))
+        blocked_by_imt = 10 * np.log10(np.maximum(imt_lin, 1e-300)) + to_20 > ed_threshold
+        blocked = blocked_by_imt.copy()
+        transmits = np.zeros(n, dtype=bool)
+        wifi_lin = np.zeros(n)
+        wifi_max = np.full(n, -np.inf)
+        rx = np.array(rx_wifi_dbm, dtype=float).reshape(n, n)
+        for i in range(n):
+            if blocked[i]:
+                continue
+            transmits[i] = True
+            row = rx[i].copy()
+            row[i] = -np.inf
+            wifi_lin += np.power(10, 0.1 * row)
+            wifi_max = np.maximum(wifi_max, row)
+            energy = 10 * np.log10(np.maximum(wifi_lin + imt_lin, 1e-300)) + to_20
+            blocked |= (wifi_max + to_20 > pd_threshold) | (energy > ed_threshold)
+        return transmits, blocked_by_imt
+
+
     def connect_wifi_sta_to_ap(self, parameters: ParametersWifiSystem):
         """
         Vincula estaticamente cada STA ao AP que a gerou (sem recálculo por
@@ -364,11 +538,26 @@ class SystemWifi:
         diferente do AP), este método precisa mudar junto.
         """
         num_sta_per_ap = parameters.sta.k * parameters.sta.k_m
-        ap_active = np.where(self.ap.active)[0]
-        for ap in ap_active:
+        for ap in range(self.num_aps):
             start = ap * num_sta_per_ap
             end = start + num_sta_per_ap
             self.link[ap] = list(range(start, end))
+
+    def point_ap_beams(self):
+        """
+        Point each participating AP beam at the scheduled STA (half-duplex),
+        or its single associated STA (legacy mode), including receive-only APs.
+        Must follow association and scheduling; no effect with omni antennas.
+        """
+        ap_active = np.union1d(np.flatnonzero(self.ap.active), getattr(self, 'ap_rx', np.array([], dtype=int)))
+        if len(ap_active) == 0 or not isinstance(self.ap.antenna[ap_active[0]], AntennaBeamformingWifi):
+            return
+        phi, theta = self.ap.get_pointing_vector_to(self.sta)
+        for ap in ap_active:
+            sta = getattr(self, 'selected_sta_by_ap', {}).get(ap, self.link[ap][0])
+            antenna = self.ap.antenna[ap]
+            antenna.reset_beams()
+            antenna.add_beam(phi[ap, sta], theta[ap, sta])
 
     def select_sta(self, random_number_gen: np.random.RandomState):
         """
